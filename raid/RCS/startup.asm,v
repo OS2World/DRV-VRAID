@@ -1,0 +1,563 @@
+head	1.9;
+access;
+symbols
+	vrflt031113:1.8
+	vrflt010903:1.8
+	PREV010803:1.8
+	VRAIDv0_85:1.7
+	VRAIDv0_84:1.6
+	VRAIDv0_82:1.6
+	VRAIDv0_70:1.4
+	VRAIDv0_60:1.4
+	VRAIDv0_51:1.4
+	VRAIDv0_50:1.3
+	VRAIDv0_40:1.3
+	VRAIDv0_30:1.3
+	ALPHA1:1.2;
+locks; strict;
+comment	@;; @;
+
+
+1.9
+date	2003.10.20.22.20.37;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.07.22.00.33.50;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.06.25.00.25.11;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2000.03.14.02.00.03;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2000.02.13.12.59.19;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	98.11.05.00.51.40;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.06.26.23.04.20;	author vitus;	state Stab;
+branches;
+next	1.2;
+
+1.2
+date	98.02.17.23.41.51;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.02.12.01.32.42;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Assembler startup code
+@
+
+
+1.9
+log
+@- implemented QueryFlatDS(), gets descriptor for complete memory
+- implemented MemCpy32(), copies large memory areas
+@
+text
+@;*
+;* $Source: r:/source/driver/raid/RCS/startup.asm,v $
+;* $Revision: 1.8 $
+;* $Date: 2001/07/22 00:33:50 $
+;* $Locker: vitus $
+;*
+;*	Assembler startup code.
+;*
+;* $Log: startup.asm,v $
+;* Revision 1.8  2001/07/22 00:33:50  vitus
+;* - BUILDHOOK: calls UpdateBuilds()
+;*
+;* Revision 1.7  2001/06/25 00:25:11  vitus
+;* - MEMORYHOOK: calls FreeFixed() with EAX
+;*
+;* Revision 1.6  2000/03/14 02:00:03  vitus
+;* - _lock/_unlock: changed to use BX.  Saves push,pop opcodes.
+;*
+;* Revision 1.5  2000/02/13 12:59:19  vitus
+;* - _unlock: there was a window where it restored the wrong interrupt state
+;* - _unlock: Warp Server SMB compatible
+;*
+;* Revision 1.4  1998/11/05 00:51:40  vitus
+;* - szDriverName real ASCIIZ
+;*
+;* Revision 1.3  1998/06/26 23:04:20  vitus
+;* - added _CallADD
+;*
+;* Revision 1.2  1998/02/17 23:41:51  vitus
+;* - added AsmTimer()
+;* - added _lock/_unlock
+;*
+;* Revision 1.1  1998/02/12 01:32:42  vitus
+;* Initial revision
+;* ---------------------------------------------
+;* This code is Copyright Vitus Jensen 1997-2001
+;*
+.386p
+.SEQ
+
+	PUBLIC	_DiskDDHeader
+	PUBLIC	_szDriverName
+	PUBLIC	_AsmTimer
+	PUBLIC	MEMORYHOOK,	BUILDHOOK
+	PUBLIC	_CallADD			; passes IORB to ADD
+	PUBLIC	_QueryFlatDS,	_MemCpy32
+	PUBLIC	__lock, __unlock
+
+INCLUDE	devhdr.inc				; device header format
+INCLUDE segments.inc				; segment order
+
+
+	EXTRN	Dos32FlatDS:ABS			; imported through os2286p.lib
+
+
+
+	;; The very first segment has to contain the
+	;; device driver header.  Use own segment for
+	;; this purpose (but in DGROUP).
+
+DDHeader	SEGMENT
+
+_DiskDDHeader	DD	-1
+		DW	DEV_CHAR_DEV OR DEV_30 OR DEVLEV_3
+		DW	OFFSET AsmStrategy
+		DW	0
+		DB	"VUJRAID$"
+		DW	0
+		DW	0
+		DW	0
+		DW	0
+		DD	DEV_INITCOMPLETE OR DEV_ADAPTER_DD OR DEV_16MB OR DEV_IOCTL2
+		DW	0
+
+_szDriverName	DB	"VUJRAID$",0
+
+DDHeader	ENDS
+
+
+
+
+	;; Start of code segments
+	;; There is really code contained: small stubs
+	;; to call C routines and save/restore registers.
+
+_TEXT		SEGMENT
+	ASSUME	CS:CGROUP
+	EXTRN	_Strategy : NEAR	; C routines
+	EXTRN	_Timer : NEAR
+	EXTRN	_FreeFixed : NEAR
+	EXTRN	_UpdateBuilds : NEAR
+
+
+AsmStrategy	PROC	FAR
+		push	es
+		push	bx
+		call	_Strategy
+		add	sp, 4
+		retf
+AsmStrategy	ENDP
+
+
+
+
+	;; Called every NTICKS to check all used commands for TIMEOUT_TICKS.
+	;; Save all register!!
+
+_AsmTimer	PROC	FAR
+		pushf
+		pusha
+		push	ds
+		push	es
+		sti				; run with interrupts enabled
+
+		mov	ax, DGROUP
+		mov	ds, ax
+		call	_Timer
+
+		pop	es
+		pop	ds
+		popa
+		popf
+		ret
+_AsmTimer	ENDP
+
+
+
+
+;*# ----------------------------------------------------------------------
+;* MEMORYHOOK
+;*
+;* PARAMETER
+;*	EAX		parameter passed to ArmCtxHook
+;*
+;* RETURNS
+;*	(nothing, no register changed!)
+;*
+;* DESCRIPTION
+;*	Delayed execution if someone want to call FreeFixed()
+;*	from interrupt context where this is not possible.
+;*
+;* REMARKS
+;*
+MEMORYHOOK	PROC	FAR
+	db	66h
+	pusha
+
+	push	eax
+	call	_FreeFixed
+	add	sp,4
+
+	db	66h
+	popa
+	ret
+MEMORYHOOK	ENDP
+
+
+
+
+;*# ----------------------------------------------------------------------
+;* BUILDHOOK
+;*
+;* PARAMETER
+;*	EAX		parameter passed to ArmCtxHook
+;*
+;* RETURNS
+;*	(nothing, no register changed!)
+;*
+;* DESCRIPTION
+;*	Delayed execution if someone want to call UpdateBuilds()
+;*
+;* REMARKS
+;*
+BUILDHOOK	PROC	FAR
+	db	66h
+	pusha
+
+	push	eax
+	call	_UpdateBuilds			; Parameter ignored
+	add	sp,4
+
+	db	66h
+	popa
+	ret
+BUILDHOOK	ENDP
+
+
+
+
+_CallADD	PROC	NEAR
+		enter	0,0
+		pusha
+		push	ds
+
+		les	bx,[bp+8]
+		push	es
+		push	bx
+		call	DWORD PTR [bp+4]
+		add	sp,4
+
+		pop	ds
+		popa
+		leave
+		ret
+_CallADD	ENDP
+
+
+
+
+_QueryFlatDS	PROC	NEAR
+		mov	ax,Dos32FlatDS
+		ret
+_QueryFlatDS	ENDP
+
+
+
+
+
+;*# ----------------------------------------------------------------------
+;* MemCpy32(ULONG doffs, SEL dsel, ULONG soffs, SEL ssel, ULONG bcnt);
+;*
+;* PARAMETER
+;* RETURNS
+;* DESCRIPTION
+;* REMARKS
+;*
+_MemCpy32	PROC	NEAR
+		enter	0,0
+		push	esi
+		push	edi
+		push	ds
+
+		les	edi,[bp+4]
+		les	esi,[bp+10]
+		mov	ecx,[bp+16]
+		cld
+		rep movs BYTE PTR es:[edi],ds:[esi]
+
+		pop	ds
+		pop	edi
+		pop	esi
+		leave
+		ret
+_MemCpy32	ENDP
+
+
+
+
+__lock		PROC	NEAR
+	enter	0,0
+	
+	les	bx,[bp+4]		; pointer to lock handle (ULONG)
+	pushf				; save flags (to be restored)
+	
+	;; Try to set bit 0 of lock handle. Do that in a way
+	;; which inhibits interactions from all other processes
+	;; (whether they run on this or any other processor).
+lock_busy:	
+	cli				; this processor
+   lock bts	WORD PTR es:[bx],0	; all processors
+	jc	lock_busy		; lock is busy, retry
+
+	pop	WORD PTR es:[bx+2]	; save old flags
+					; in highword of lock handle
+
+	;; - least significant bit in lock handle is set to indicate
+	;;   locked handle
+	;; - interrupts are disabled (DO NOT ENABLE!!!)
+	;; - previous state of [interrupt] flag is saved in
+	;;   the lock handle
+
+	leave
+	ret
+__lock		ENDP	
+
+__unlock	PROC	NEAR
+	enter	0,0
+	les	bx,[bp+4]		; lock handle
+
+	mov	ax,WORD PTR es:[bx+2]	; retrieve old flags
+   lock btr	WORD PTR es:[bx],0	; clear lock bit
+	;jnc	fatal			; fatal error: not locked!!!!!
+
+	test	ax,0200h		; were interrupts enabled?
+	jz	@@@@Z			; No -> keep disabled
+	sti				; Yes -> enable
+@@@@Z:
+	leave
+	ret
+__unlock	ENDP
+
+
+
+
+_TEXT		ENDS
+
+
+	END
+@
+
+
+1.8
+log
+@- BUILDHOOK: calls UpdateBuilds()
+@
+text
+@d3 2
+a4 2
+;* $Revision: 1.7 $
+;* $Date: 2001/06/25 00:25:11 $
+d10 3
+d46 1
+d53 4
+d206 39
+@
+
+
+1.7
+log
+@- MEMORYHOOK: calls FreeFixed() with EAX
+@
+text
+@d3 2
+a4 2
+;* $Revision: 1.6 $
+;* $Date: 2000/03/14 02:00:03 $
+d10 3
+d32 2
+a33 2
+;* --------------------------------------------------
+;* This code is Copyright Vitus Jensen 1997-1998,2000
+d41 2
+a42 2
+	PUBLIC	MEMORYHOOK
+	PUBLIC	_CallADD		; passes IORB to ADD
+d83 1
+d148 30
+@
+
+
+1.6
+log
+@- _lock/_unlock: changed to use BX.  Saves push,pop opcodes.
+@
+text
+@d3 2
+a4 2
+;* $Revision: 1.5 $
+;* $Date: 2000/02/13 12:59:19 $
+d10 3
+d38 1
+d79 1
+d113 31
+@
+
+
+1.5
+log
+@- _unlock: there was a window where it restored the wrong interrupt state
+- _unlock: Warp Server SMB compatible
+@
+text
+@d3 2
+a4 2
+;* $Revision: 1.4 $
+;* $Date: 1998/11/05 00:51:40 $
+d7 1
+a7 1
+;* Assembler startup code.
+d10 4
+d26 2
+a27 2
+;* ---------------------------------------------
+;* This code is Copyright Vitus Jensen 1997-1998
+a133 1
+	push	di
+d135 1
+a135 1
+	les	di, [bp+4]		; pointer to lock handle (ULONG)
+d140 1
+a140 1
+	;; (whether thy run on this or any other processor).
+d143 1
+a143 1
+   lock bts	WORD PTR es:[di],0	; all processors
+d146 1
+a146 1
+	pop	WORD PTR es:[di+2]	; save old flags
+d154 1
+a154 1
+	pop	di
+d161 1
+a161 2
+	push	di
+	les	di, [bp+4]		; lock handle
+d163 2
+a164 2
+	mov	ax,WORD PTR es:[di+2]	; retrieve old flags
+   lock btr	WORD PTR es:[di],0	; clear lock bit
+a170 1
+	pop	di
+@
+
+
+1.4
+log
+@- szDriverName real ASCIIZ
+@
+text
+@d3 2
+a4 2
+;* $Revision: 1.3 $
+;* $Date: 1998/06/26 23:04:20 $
+d10 3
+d140 1
+a140 1
+   lock bts	WORD PTR es:[di], 0	; all processors
+d160 3
+a162 1
+   lock btr	WORD PTR es:[di], 0	; clear lock bit
+d165 4
+a168 3
+	push	WORD PTR es:[di+2]
+	popf				; restore [interrupt] flag
+
+@
+
+
+1.3
+log
+@- added _CallADD
+@
+text
+@d3 2
+a4 2
+;* $Revision: 1.2 $
+;* $Date: 1998/02/17 23:41:51 $
+d10 3
+d45 1
+a45 1
+_szDriverName	DB	"VUJRAID$"
+d52 2
+@
+
+
+1.2
+log
+@- added AsmTimer()
+- added _lock/_unlock
+@
+text
+@d2 3
+a4 3
+;* $Source: d:/source/driver/raid/RCS/startup.asm,v $
+;* $Revision: 1.1 $
+;* $Date: 1998/02/12 01:32:42 $
+d10 4
+d25 1
+d96 20
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+;* $Source$
+;* $Revision$
+;* $Date$
+;* $Locker$
+d9 3
+a11 1
+;* $Log$
+d15 2
+a16 1
+.286c						; at least!
+d20 2
+d55 3
+a57 2
+
+	EXTRN	_Strategy : NEAR		; C routines
+d67 72
+@

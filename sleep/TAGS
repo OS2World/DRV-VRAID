@@ -1,0 +1,490 @@
+
+cmdparse.c,817
+# define  INCL_NOBASEAPI70,1500
+# define  INCL_NOPMAPI71,1525
+#define  TOKVBUF_LEN 76,1616
+#define  UNDEFINED 77,1643
+Command_Parser(123,2360
+Insert_End_Token(264,5736
+STATIC BOOL NEAR Locate_First_Slash(303,6428
+STATIC INT NEAR FarStrLen(352,7224
+STATIC BOOL NEAR strncmp(389,7841
+Parse_Option_Value(430,8583
+Skip_Over_Blanks(528,10105
+char_parser(557,10660
+d_parser(589,11282
+dd_parser(624,11928
+dddd_parser(673,12610
+ulist_parser(724,13419
+hh_parser(820,15331
+HH_Char_To_Byte(863,16099
+hhhh_parser(923,17147
+format_parser(985,18296
+#define  M_BYTES 998,18502
+#define  K_BYTES 999,18572
+scsi_id_parser(1075,20302
+VOID NEAR dev_id_parser(1169,22123
+geometry_parser(1289,24805
+chgline_parser(1375,26277
+Insert_Token(1416,27131
+Locate_Next_Slash(1465,28085
+Validate_State_Index(1523,29126
+
+data.c,133
+#define INCL_NOBASEAPI39,1130
+#define INCL_NOPMAPI40,1153
+#define INCL_INITRP_ONLY41,1174
+#define MSG_REPLACEMENT_STRING	75,1725
+
+dsl.c,480
+#define INCL_DOS51,1476
+#define DEVICENAME	59,1537
+#define MODE_DISPLAY	61,1601
+#define MODE_CHANGE	62,1624
+#define MODE_MESSAGE	63,1646
+#define MODE_QUERY	64,1669
+#define MODE_IMMEDIATE	65,1690
+#define MODE_LASTSTATUS	66,1715
+usage(78,1850
+help(83,1963
+DumpBuffer(106,2907
+DisplayVersion(131,3213
+DisplayMessages(192,4463
+DisplayLaststatus(266,5917
+DisplaySettings(334,7424
+ChangeSetting(399,8729
+DisplayCurrent(446,9717
+ChangeCurrent(547,11795
+main(602,12873
+
+genkey.c,121
+#define INCL_BASE21,472
+#define REG_MAGIC	25,509
+#define REG_KEYLEN	26,538
+GenKey(35,667
+Help(70,1145
+main(80,1223
+
+init1.c,724
+#define INCL_DOSERRORS15,390
+#define INCL_NOPMAPI16,413
+#define INCL_INITRP_ONLY17,434
+#define GETINITRAM(GETINITRAM29,616
+#define INITMSG	31,689
+#define REG_MAGIC	112,4376
+#define REG_KEYLEN	113,4405
+} REGSTRUCT;REGSTRUCT120,4560
+} TO_OPTION;TO_OPTION135,4873
+Code_End(149,5115
+DumpStatusblock(156,5182
+SendIORBNotify(213,6439
+SendIORB(245,6971
+TestOperation(295,8082
+CheckAdapterInfo(385,10061
+CheckUnitInfo(445,11590
+InstallFilter(526,13225
+RemoveFilter(688,17116
+Add2TOTable(805,19932
+QueryTOTable(850,20730
+ScanDevices(894,21536
+InstallTimer(1122,27118
+#define ENTRY_STATE	1138,27371
+#define MAX_STATES	1139,27396
+AnalyseCmdLine(1221,28979
+CheckRegistration(1390,32284
+InitBase(1440,33333
+
+ioctl.c,426
+#define INCL_NOBASEAPI59,1888
+#define INCL_DOSERRORS60,1911
+#define INCL_NOPMAPI61,1934
+#define PTRDIFF(PTRDIFF69,2041
+#define _inswap	79,2356
+#define CheckPointer(CheckPointer89,2596
+DriverVersion(110,2916
+DeviceList(152,3889
+ChangeList(207,5101
+QueryDeviceState(288,6923
+SetDeviceState(350,8475
+ReadMessages(412,9963
+ClearMessages(463,11258
+GetLaststatus(497,11847
+SaveMessage(563,13646
+GenIOCtl(598,14203
+
+iorb.c,496
+#define INCL_NOBASEAPI20,667
+#define INCL_NOPMAPI21,690
+#define INCL_INITRP_ONLY22,711
+#define APM_PWRSTATESTANDBY	33,893
+#define APM_PWRSTATESUSPEND	34,925
+#define APM_PWRSTATEOFF	35,957
+AllocateIorb(71,1760
+FreeIorb(106,2209
+} ADDWS, FAR * PADDWS;PADDWS124,2576
+QueueIorb(150,3092
+YankQueue(195,3997
+StartComplete(265,5596
+IssueStart(396,9275
+APMSuspend(449,10904
+APMEventHandler(467,11108
+FilterFunction(516,12204
+StopComplete(698,16376
+IssueStop(735,17143
+Timer(813,19253
+
+printk.c,306
+#define PRIVATE 21,478
+#define PUBLIC22,501
+#define FNULL	25,518
+typedef char _far *va_list;va_list27,551
+#define va_start(va_start28,579
+#define va_arg(va_arg29,631
+#define va_end(va_end30,686
+#define MAXDIG	41,879
+_itoa(49,949
+ltoa(75,1303
+#define GETARG(GETARG101,1641
+sprintk(104,1692
+
+regme.c,248
+#define INCL_DOS31,748
+#define REG_MAGIC	35,784
+#define REG_KEYLEN	36,813
+} REGSTRUCT;REGSTRUCT43,968
+Usage(55,1152
+Help(62,1248
+ReadCompleteFile(82,1813
+SearchRegInfo(101,2153
+DoRegistration(129,2713
+DisplayUser(184,3724
+main(224,4353
+
+str1.c,222
+#define INCL_DOSERRORS43,1251
+#define INCL_NOPMAPI44,1274
+#define INCL_INITRP_ONLY45,1295
+_fmemset(65,1695
+_fmemcpy(75,1821
+_fmemcmp(85,1994
+_fstrlen(96,2234
+_fstrcpy(106,2361
+Shutdown(142,3022
+Strategy(207,4212
+
+Dprintf.asm,1336
+PUBLIC	120,4236
+COM1_PORT	123,4254
+COM2_PORT	124,4274
+DEFAULT_PORT	127,4296
+CAR_RET 129,4324
+LINE_FEED	130,4341
+BELL	131,4359
+COM_LSR 132,4373
+COM_DAT 133,4390
+s_frame 137,4410
+s_bp	139,4426
+s_ptr_delta	140,4452
+s_ret	142,4535
+s_string	143,4562
+s_ptrs	144,4606
+s_frame 146,4650
+_TEXT	154,4747
+_dprintf	158,4799
+dprintf_loop:172,5156
+dprintf_more:185,5560
+dprintf_type:190,5769
+dprintf_try_c:198,6008
+dprintf_try_s:209,6397
+dprintf_next_s:217,6694
+dprintf_try_u:227,6975
+dprintf_try_x:272,8106
+dprintf_try_lx:284,8521
+dprintf_do_lx:291,8814
+dprintf_try_p:303,9268
+dprintf_try_w:331,10108
+dprintf_try_z:349,10639
+dprintf_do_z:353,10773
+dprintf_z_a:364,11091
+dprintf_z_b:396,12134
+dprintf_z_c:399,12229
+dprintf_z_e:406,12516
+dprintf_z_g:416,12771
+dprintf_z_i:424,12960
+dprintf_z_k:434,13229
+dprintf_z_z:454,13714
+dprintf_error:458,13823
+dprintf_put_ch:469,14095
+_dprintf	472,14205
+put_left_nib	474,14220
+put_left_nib_a:483,14453
+put_left_nib	489,14588
+put_right_nib	491,14607
+put_rght_nib_a:500,14844
+put_right_nib	506,14978
+put_hex_byte	508,14998
+put_hex_byte	518,15217
+put_hex_word	521,15237
+put_hex_word	533,15482
+IODelay 540,15620
+a:543,15656
+PollC	546,15665
+plc1:566,16021
+PollC	567,16031
+put_char	573,16098
+pc1:587,16349
+pc2:593,16547
+put_char	612,16789
+_TEXT	614,16804
+
+segments.asm,253
+.286c	30,794
+INCLUDE 32,817
+INCLUDE 33,861
+DDHeader	44,1128
+DiskDDHeader	46,1146
+DDHeader	58,1354
+_TEXT	66,1498
+AsmStrategy	73,1597
+AsmStrategy	79,1674
+_AsmTimer	82,1693
+_AsmTimer	98,1897
+_CallADD	103,1916
+_CallADD	118,2068
+_TEXT	121,2084
+
+cmdparse.h,1451
+typedef unsigned char BYTE;BYTE63,1225
+typedef struct _tbytes _tbytes65,1254
+} TBYTES;TBYTES68,1315
+typedef union _number _number70,1326
+} NUMBER;NUMBER73,1386
+typedef union _charbyte _charbyte75,1397
+} CHARBYTE;CHARBYTE78,1469
+typedef struct _cc _cc80,1482
+} CC;CC83,1550
+#define NO_ERR	89,1618
+#define SYNTAX_ERR	90,1640
+#define BUF_TOO_SMALL_ERR 91,1665
+#define UNDEFINED_TYPE_ERR 92,1695
+#define UNDEFINED_STATE_ERR 93,1725
+#define NO_OPTIONS_FND_ERR 94,1755
+#define REQ_OPT_ERR	95,1785
+#define INVALID_OPT_ERR 96,1811
+typedef struct _opt _opt290,9216
+} OPT, FAR *POPT;POPT296,9442
+typedef struct _optiontable _optiontable298,9461
+} OPTIONTABLE, FAR *POPTIONTABLE;POPTIONTABLE302,9558
+#define TOK_ID_END	310,9637
+#define TOKL_ID_END	311,9697
+#define TYPE_0	318,9834
+#define TYPE_CHAR	319,9901
+#define TYPE_D	320,9973
+#define TYPE_DD 321,10021
+#define TYPE_HH 322,10071
+#define TYPE_HHHH	323,10132
+#define TYPE_FORMAT	324,10193
+#define TYPE_SCSI_ID	325,10251
+#define TYPE_GEOMETRY	326,10324
+#define TYPE_CHGLINE	328,10445
+#define TYPE_DEV_ID	329,10520
+#define TYPE_DDDD	330,10585
+#define TYPE_ULIST	331,10628
+ #define CHGLINETYPE_NONE	338,10724
+ #define CHGLINETYPE_AT 339,10752
+ #define CHGLINETYPE_PS2	340,10779
+#define E	346,10843
+#define O	347,10897
+#define R	348,10960
+#define TOKL_LEN	354,11063
+#define TOKL_ID 355,11126
+#define TOKL_VALUE	356,11186
+#define TOK_MIN_LENGTH	357,11251
+
+cmdpdefs.h,1509
+#define TOK_ID_ADAPTER	78,1642
+#define TOK_ID_PORT	79,1673
+#define TOK_ID_UNIT	80,1701
+#define TOK_ID_DMA	81,1729
+#define TOK_ID_IRQ	82,1756
+#define TOK_ID_AHS	83,1783
+#define TOK_ID_NOT_AHS	84,1810
+#define TOK_ID_FORMAT	85,1841
+#define TOK_ID_S_BYTES	86,1871
+#define TOK_ID_MCA	87,1902
+#define TOK_ID_PS2	88,1929
+#define TOK_ID_SLOT	89,1964
+#define TOK_ID_DM	90,1992
+#define TOK_ID_NOT_DM	91,2018
+#define TOK_ID_SM	92,2048
+#define TOK_ID_NOT_SM	93,2074
+#define TOK_ID_HCW	94,2104
+#define TOK_ID_NOT_HCW	95,2131
+#define TOK_ID_HCR	96,2162
+#define TOK_ID_NOT_HCR	97,2189
+#define TOK_ID_DEV0	98,2220
+#define TOK_ID_CAM	99,2248
+#define TOK_ID_NOT_CAM	100,2275
+#define TOK_ID_FDT	101,2306
+#define TOK_ID_NOT_FDT	102,2333
+#define TOK_ID_GEO	103,2364
+#define TOK_ID_SMS	104,2391
+#define TOK_ID_NOT_SMS	105,2418
+#define TOK_ID_SN	106,2449
+#define TOK_ID_NOT_SN	107,2475
+#define TOK_ID_ET	108,2505
+#define TOK_ID_NOT_ET	109,2531
+#define TOK_ID_CHGLINE	110,2561
+#define TOK_ID_VERBOSE	112,2593
+#define TOK_ID_BS	113,2620
+#define TOK_ID_MAXBL	114,2642
+#define TOK_ID_EISA	115,2667
+#define TOK_ID_AM	116,2691
+#define TOK_ID_NOT_AM	117,2713
+#define	TOK_ID_RESERVE	119,2740
+#define	TOK_ID_NOSCAN	120,2767
+#define	TOK_ID_ABOVE16	121,2793
+#define	TOK_ID_UT	122,2820
+#define	TOK_ID_NOT_UT	123,2842
+#define	TOK_ID_FIX	125,2869
+#define	TOK_ID_NOT_FIX	126,2914
+#define TOK_ID_TIME	128,2965
+#define TOK_ID_DEBUG	129,2989
+#define TOK_ID_SR	131,3015
+#define TOK_ID_NOT_SR	132,3037
+
+cmdphdr.h,0
+
+cmdproto.h,25
+  #define STATIC 59,971
+
+dsksleep.h,2725
+typedef USHORT NEAR *NPUSHORT;NPUSHORT33,596
+typedef VOID   NEAR *NPVOID;NPVOID34,627
+# define _Cdecl	37,713
+#define VERSION	47,806
+#define SUBVERSION	48,825
+#define MAX_UNITS	54,875
+#define MAX_DEVICETABLE_SIZE	55,897
+#define DISPLAYBUFFER_SIZE	56,935
+#define START_TIMEOUT	58,972
+#define DRIVERFLAGS	62,1085
+#define DRIVERCLASS_ADD	63,1108
+# define PRIVATE	67,1157
+# define PRIVATE69,1187
+#define PUBLIC71,1211
+#define _intext 73,1227
+#define _ininit 74,1270
+#define _inconst 75,1316
+#define	_inldata	76,1361
+#define MK_FP(MK_FP79,1408
+#define FP_SEL(FP_SEL80,1446
+#define FP_OFF(FP_OFF81,1480
+#define pushf(pushf88,1580
+#define popf(popf89,1609
+#define cli(cli90,1636
+#define sti(sti91,1662
+#define TIMER_TMS	107,1966
+#define SLEEP_TIME	108,2031
+typedef UCHAR NEAR *NPUCHAR;NPUCHAR113,2150
+#define STDEV	117,2226
+#define STATUS_ERR_UNKUNIT	118,2282
+#define STATUS_ERR_NOTREADY	119,2332
+#define STATUS_ERR_UNKCMD	120,2383
+#define STATUS_ERR_CRC	121,2432
+#define STATUS_ERR_REQLEN	122,2479
+#define STATUS_ERR_SEEK	123,2528
+#define STATUS_ERR_UNKMEDIA	124,2576
+#define STATUS_ERR_NOTFOUND	125,2627
+#define STATUS_ERR_PAPEROUT	126,2678
+#define STATUS_ERR_WRFAULT	127,2729
+#define STATUS_ERR_RDFAULT	128,2779
+#define STATUS_ERR_GENERR	129,2829
+#define STATUS_ERR_CHGDISK	130,2878
+#define STATUS_ERR_UNCERTAIN	131,2928
+#define STATUS_ERR_INTERRUPTED	132,2980
+#define STATUS_ERR_NOMONITOR	133,3034
+#define STATUS_ERR_INVPARAM	134,3086
+#define STATUS_ERR_DEVINUSE	135,3137
+#define STATUS_ERR_INITFAILED	136,3188
+typedef struct _DEVICE _DEVICE139,3243
+# define DEBMSG(DEBMSG197,4638
+# define DEBMSG1(DEBMSG1198,4686
+# define DEBMSG2(DEBMSG2199,4740
+# define DEBMSG3(DEBMSG3200,4800
+# define DEBMSG4(DEBMSG4201,4866
+# define ERRMSG(ERRMSG202,4938
+# define ERRMSG1(ERRMSG1203,5000
+# define ERRMSG2(ERRMSG2204,5068
+# define ERRMSG3(ERRMSG3205,5142
+# define DEBMSG(DEBMSG208,5229
+# define DEBMSG1(DEBMSG1209,5250
+# define DEBMSG2(DEBMSG2210,5275
+# define DEBMSG3(DEBMSG3211,5303
+# define DEBMSG4(DEBMSG4212,5334
+# define ERRMSG(ERRMSG213,5368
+# define ERRMSG1(ERRMSG1214,5389
+# define ERRMSG2(ERRMSG2215,5414
+# define ERRMSG3(ERRMSG3216,5442
+# define INFMSG(INFMSG222,5513
+# define INFMSG1(INFMSG1223,5562
+# define INFMSG2(INFMSG2224,5617
+# define INFMSG3(INFMSG3225,5678
+# define INFMSG4(INFMSG4226,5745
+# define INFMSG(INFMSG229,5825
+# define INFMSG1(INFMSG1230,5846
+# define INFMSG2(INFMSG2231,5871
+# define INFMSG3(INFMSG3232,5899
+# define INFMSG4(INFMSG4233,5930
+#  define DBSTOP(DBSTOP241,6017
+#  define DBSTOP(DBSTOP243,6057
+# define DBSTOP(DBSTOP246,6098
+# define DO(DO251,6144
+# define DO(DO253,6172
+
+dskslpub.h,1531
+#define _DSKSLPUB_H35,934
+#define IOCTL_DSKSLEEP_CATEGORY	42,1048
+#define DSKSL_QUERY_VERSION	43,1116
+#define DSKSL_QUERY_TIMEOUT	44,1181
+#define DSKSL_SET_TIMEOUT	45,1240
+#define DSKSL_QUERY_DEVSTATE	46,1299
+#define DSKSL_SET_DEVSTATE	47,1349
+#define DSKSL_READ_MSGS	48,1398
+#define DSKSL_CLEAR_MSGS	49,1457
+#define DSKSL_GET_LASTSTATUS	50,1514
+typedef struct _DSKSL_VER_DATA _DSKSL_VER_DATA54,1622
+} DSKSL_VER_DATA;DSKSL_VER_DATA57,1740
+typedef struct _DEVICE_TIMEOUT _DEVICE_TIMEOUT62,1791
+} DEVICE_TIMEOUT;DEVICE_TIMEOUT67,1983
+typedef struct _DSKSL_QL_DATA _DSKSL_QL_DATA72,2042
+} DSKSL_QL_DATA, * PDSKSL_QL_DATA;PDSKSL_QL_DATA79,2312
+typedef struct _DSKSL_SETTO_PARM _DSKSL_SETTO_PARM84,2384
+} DSKSL_SETTO_PARM, * PDSKSL_SETTO_PARM;PDSKSL_SETTO_PARM88,2556
+typedef struct _DSKSL_DEVSTATE_PARM _DSKSL_DEVSTATE_PARM93,2682
+} DSKSL_DEVSTATE_PARM, * PDSKSL_DEVSTATE_PARM;PDSKSL_DEVSTATE_PARM96,2797
+typedef struct _DSKSL_DEVSTATE_DATA _DSKSL_DEVSTATE_DATA108,3193
+} DSKSL_DEVSTATE_DATA, * PDSKSL_DEVSTATE_DATA;PDSKSL_DEVSTATE_DATA112,3372
+typedef struct _DSKSL_MSGS_DATA _DSKSL_MSGS_DATA123,3741
+} DSKSL_MSGS_DATA;DSKSL_MSGS_DATA128,3910
+typedef struct _DSKSL_STATUS_DATA _DSKSL_STATUS_DATA138,4253
+} DSKSL_STATUS_DATA, * PDSKSL_STATUS_DATA;PDSKSL_STATUS_DATA145,4514
+#define DSKIO_ALLOC	147,4558
+#define DSKIO_DEALLOC	148,4580
+#define DSKIO_CHANGEUI	149,4604
+#define DSKIO_START	150,4629
+#define DSKIO_STOP	151,4651
+#define DSKIO_VERIFY	152,4672
+#define DSKIO_TESTREADY	153,4695
+
+extern.h,234
+#define DF_VERBOSE	44,989
+#define DF_DEBUG	45,1015
+#define DF_TESTOP	46,1039
+#define DF_SHUTDOWN	47,1098
+#define DF_REGISTERED	48,1159
+#define DF_INITDONE	49,1188
+#define DF_INITCOMPLETE	50,1215
+#define DF_REGDEVCLASS	51,1273
+
+proto.h,0

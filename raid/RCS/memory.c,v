@@ -1,0 +1,1392 @@
+head	1.15;
+access;
+symbols
+	vrflt031113:1.13
+	vrflt010903:1.13
+	PREV010803:1.13
+	VRAIDv0_85:1.11
+	VRAIDv0_84:1.10
+	VRAIDv0_82:1.10
+	VRAIDv0_70:1.9
+	VRAIDv0_60:1.6
+	VRAIDv0_51:1.5
+	VRAIDv0_50:1.5
+	VRAIDv0_40:1.5
+	VRAIDv0_30:1.4
+	ALPHA1:1.3;
+locks; strict;
+comment	@ * @;
+
+
+1.15
+date	2003.10.20.22.17.33;	author vitus;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2001.10.05.02.59.33;	author vitus;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2001.08.03.02.18.05;	author vitus;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.07.03.07.52.24;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.06.24.22.59.42;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.09.19.23.40.15;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.06.22.00.03.58;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.06.19.00.25.20;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.05.11.23.52.59;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	98.12.20.01.55.31;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	98.09.07.23.15.01;	author vitus;	state Stab;
+branches;
+next	1.4;
+
+1.4
+date	98.06.26.22.56.48;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.04.08.01.14.16;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.03.10.02.40.33;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.02.17.22.31.17;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Memory allocation routines
+@
+
+
+1.15
+log
+@- implemented CopyLin2ScGa()
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/RCS/memory.c,v $
+ * $Revision: 1.14 $
+ * $Date: 2001/10/05 02:59:33 $
+ * $Locker: vitus $
+ *
+ *	Memory allocation routines.
+ *	They use a vector inside an additional data segment which
+ *	is locked by our driver (IOPL plus DevHelper).
+ *	OBS: use memory from this pool only for short-time allocations!
+ *
+ * $Log: memory.c,v $
+ * Revision 1.14  2001/10/05 02:59:33  vitus
+ * - AllocateFixed: request high memory during init phase
+ *
+ * Revision 1.13  2001/08/03 02:18:05  vitus
+ * - AllocateFixed: only allocate memory below 16 if needed
+ *
+ * Revision 1.12  2001/07/03 07:52:24  vitus
+ * - AllocateFixed: removed VMDHA_CONTIG flag, sc/ga lists are OK
+ *
+ * Revision 1.11  2001/06/24 22:59:42  vitus
+ * - implemented AllocateFixed(), FreeFixed()
+ *
+ * Revision 1.10  1999/09/19 23:40:15  vitus
+ * - defined all DBGMSG() strings as located in CONST segment
+ *
+ * Revision 1.9  1999/06/22 00:03:58  vitus
+ * - renamed InitWorkmem to BuildWorkmem
+ * - implemented ReleaseWorkmem, to unlock the memory
+ *
+ * Revision 1.8  1999/06/19 00:25:20  vitus
+ * - ein paar statistische Daten mitfÅhren...
+ *
+ * Revision 1.7  1999/05/11 23:52:59  vitus
+ * - added CRC code from init1.c
+ *
+ * Revision 1.6  1998/12/20 01:55:31  vitus
+ * - lock memory as "any type"
+ *
+ * Revision 1.5  1998/09/07 23:15:01  vitus
+ * - memory routines contain more debugging (mem overwrites)
+ * - AllocateIorb(USHORT const sgcnt)
+ *
+ * Revision 1.4  1998/06/26 22:56:48  vitus
+ * - added missing locking (did cause hangups!)
+ *
+ * Revision 1.3  1998/04/08 01:14:16  vitus
+ * - uses static buffer as memory pool (simpler but change later)
+ *
+ * Revision 1.2  1998/03/10 02:40:33  vitus
+ * - made lowest memory allocation routines public
+ *
+ * Revision 1.1  1998/02/17 22:31:17  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-2001
+ */
+static char const id[]="$Id: memory.c,v 1.14 2001/10/05 02:59:33 vitus Exp vitus $";
+
+#include <string.h>
+
+#define INCL_INITRP_ONLY
+#include "os2intf.h"
+
+#include "vraid.h"
+#include "proto.h"
+#include "extern.h"
+
+
+
+
+#if defined(DEBUG)
+CONSTMSG dszAllocIorb[]=	"\r\n[AllocateIorb] %p";
+CONSTMSG dszFreeIorb[]=		"\r\n[FreeIorb] %p";
+CONSTMSG dszAllocVrio[]=	"\r\n[AllocateVrio] %p";
+CONSTMSG dszFreeVrio[]=		"\r\n[FreeVrio] %p";
+CONSTMSG dszBuildMem[]=		"\r\n[BuildWorkmem] entry";
+CONSTMSG dszBuildMemLock[]=	"\r\n[BuildWorkmem] Lock() failed - rc %w";
+CONSTMSG dszReleaseMem[]=	"\r\n[ReleaseWorkmem] entry";
+CONSTMSG dszReleaseMemNothing[]="\r\n[ReleaseWorkmem] nothing to do!";
+CONSTMSG dszReleaseMemUnlock[]=	"\r\n[ReleaseWorkmem] UnLock() failed - rc %w";
+
+CONSTMSG dszAllocFixed1[]=	"\r\n[AllocateFixed] result placed at %p (= lin %lx)";
+CONSTMSG dszAllocFixed2[]=	"\r\n[AllocateFixed] got memory from phys %lx = lin %lx";
+CONSTMSG dszFreeFixed1[]=	"\r\n[FreeFixed] freeing %lx";
+CONSTMSG dszFreeFixed2[]=	"\r\n[FreeFixed] FreePhys - error %w";
+
+CONSTMSG dszCopyL2SG[]=		"\r\n[CopyLin2ScGa] s/g %p (%lx), lin %#x, cnt %lx";
+#endif
+
+
+
+
+
+
+/* Define memory pool.  It should reside in a seperate, non-swappable
+ * segment.  This is acomplished by referencing a segment 'WORKMEM'
+ * defined in our linker .def file (see Makefile). */
+
+#define _inmem		_based(_segname("WORKMEM"))
+#define MAGIX1		0x1089
+#define MAGIX2		0xDA04
+
+PRIVATE UCHAR _inmem	abWorkMem[WORKMEM_SIZE]; 	/* 1st element!!! */
+
+typedef struct _HEADER {
+    struct _HEADER FAR * ptr;
+    USHORT		magix;			/* MAGIX1 */
+    USHORT		size;			/* [HEADER] */
+} HEADER, FAR * PHEADER;
+
+typedef struct _FOOTER {
+    USHORT	magix[2];			/* MAGIX2, ~MAGIX2 */
+    PHEADER	header;
+} FOOTER, FAR * PFOOTER;			/* same size as HEADER! */
+
+
+
+PRIVATE HEADER _inmem	base = {0};		/* leere Liste zur Initial. */
+PRIVATE PHEADER	_inmem	allocp = NULL;		/* letzter vergebener Block */
+PRIVATE ULONG _inmem	hlMem = 0;		/* lock handle for above */
+PRIVATE ULONG _inmem	hdMemLock = 0;		/* from DevHelp_Lock() */
+
+PRIVATE USHORT		CRCtable[256] = {0};
+
+
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * MemFree(ap)
+ *
+ * PARAMETER
+ *	ap	allocated memory region
+ * RETURNS
+ *	(nothing)
+ * GLOBAL
+ *	allocp
+ * DESCRIPTION
+ *	Frees a previously allocated memory region.
+ *
+ * REMARKS
+ *	From K&R pg 192
+ */
+PUBLIC void NEAR _Cdecl
+MemFree(PVOID const ap)
+{
+    PHEADER const	p = (PHEADER)ap - 1;	/* auf Beschreibung zeigen */
+    PFOOTER const	f = (PFOOTER)(p + p->size - 1);
+    register PHEADER	q;
+
+    ASSERT( p->magix == MAGIX1 );
+    ASSERT( f->magix[0] == MAGIX2 );
+    ASSERT( f->magix[1] == ~MAGIX2 );
+    ASSERT( f->header == p );
+#if defined(DEBUG)
+    _fmemset(ap, 0xCC, p->size+sizeof(FOOTER));
+#endif
+
+    LOCK(hlMem);
+    for( q = allocp; !(p > q  &&  p < q->ptr); q = q->ptr )
+	if( q >= q->ptr  &&  (p > q  ||  p < q->ptr) )
+	    break;				/* am einen oder anderen Ende */
+
+    if( p + p->size == q->ptr )
+    {
+	/* Mit Nachfolger kombinieren */
+
+	p->size += q->ptr->size;
+	p->ptr = q->ptr->ptr;
+    }
+    else
+	p->ptr = q->ptr;
+    if( q + q->size == p )
+    {
+	/* Mit VorgÑnger kombinieren */
+
+	q->size += p->size;
+	q->ptr = p->ptr;
+    }
+    else
+	q->ptr = p;
+    allocp = q;
+    UNLOCK(hlMem);
+
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * MemAlloc(nbytes)
+ *
+ * PARAMETER
+ *	nbytes			size of object to allocate
+ * RETURNS
+ *	pointer to allocated memory or NULL
+ * GLOBAL
+ *	allocp
+ * DESCRIPTION
+ *	Allocates region of memory.
+ *
+ * REMARKS
+ *	From K&R pg 189
+ */
+PUBLIC PVOID NEAR _Cdecl
+MemAlloc(USHORT const nbytes)
+{
+    register PHEADER	p;
+    register PHEADER	q;
+    USHORT const	nunits = (1
+				  + (nbytes + sizeof(HEADER) - 1) / sizeof(HEADER)
+				  + 1);		/* includes FOOTER! */
+    PVOID		result = NULL;		/* default: no room */
+
+    LOCK(hlMem);
+    q = allocp;
+    for( p = q->ptr; ; q = p, p = p->ptr )
+    {
+	if( p->size >= nunits )			/* gro· genug? */
+	{
+	    if( p->size == nunits )		/* passt genau? */
+		q->ptr = p->ptr;
+	    else
+	    {
+		p->size -= nunits;
+		p += p->size;
+		p->size = nunits;
+	    }
+	    allocp = q;
+	    result = (PVOID)(p+1);
+	    p->magix = MAGIX1;
+	    {
+		PFOOTER f = (PFOOTER)(p + p->size - 1);
+
+		f->magix[0] = MAGIX2;
+		f->magix[1] = ~MAGIX2;
+		f->header = p;
+	    }
+	    break;
+	}
+	if( p == allocp )			/* einmal rum um freie Liste? */
+	    break;				/* kein Platz mehr frei! */
+    }
+    UNLOCK(hlMem);
+
+    return result;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Public Entries **************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * AllocateIorb(sgcnt)
+ *
+ * PARAMETER
+ *	sgcnt		size of S/G list
+ * RETURNS
+ *	/0		pointer to IORB
+ *	0		no memory available
+ * GLOBAL
+ *	(none)
+ * DESCRIPTION
+ *	Allocates buffer containing IORB of maximum size and (directly
+ *	following) a scatter/gather list of 'sgcnt' elements.
+ *	Pointer to scatter/gather list is set up and memory is
+ *	initialized to 0.
+ *
+ * REMARKS
+ */
+PUBLIC PIORB_EXECUTEIO NEAR _Cdecl
+AllocateIorb(USHORT const sgcnt)
+{
+    USHORT const	cb = MAX_IORB_SIZE + sgcnt * sizeof(SCATGATENTRY);
+    PIORB_EXECUTEIO const iorb = MemAlloc(cb);
+
+    if( iorb != NULL )
+    {
+	_fmemset(iorb, 0, cb);			/* !!! */
+	iorb->pSGList = (PVOID)((PUCHAR)iorb + MAX_IORB_SIZE);
+	iorb->ppSGList = ppWorkMem + FP_OFF(iorb->pSGList);
+
+	++cIorbAllocated;
+    }
+
+    DEBMSG1(DBG_MEMORY,dszAllocIorb,(PVOID)iorb);
+    return iorb;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * FreeIorb(iorb)
+ *
+ * PARAMETER
+ *	iorb		allocated IORB
+ * RETURNS
+ *	(nothing)
+ * GLOBAL
+ *	(none)
+ * DESCRIPTION
+ *	Frees previously allocated IORB (plus S/G list).
+ *
+ * REMARKS
+ */
+PUBLIC VOID NEAR _Cdecl
+FreeIorb(PIORB_EXECUTEIO iorb)
+{
+    DEBMSG1(DBG_MEMORY,dszFreeIorb,(PVOID)iorb);
+
+    ASSERT( cIorbAllocated != 0 );
+    --cIorbAllocated;
+
+    MemFree(iorb);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * AllocateVrio(working_dev,mother)
+ *
+ * PARAMETER
+ *	working_dev
+ *	mother		mother of this I/O
+ * RETURNS
+ *	PVRIO		allocated structure
+ * GLOBAL
+ *	(none)
+ * DESCRIPTION
+ *	Allocates and initializes (zeroes) VRIO structure.
+ *
+ * REMARKS
+ */
+PUBLIC PVRIO NEAR _Cdecl
+AllocateVrio(PVRDEVHDR working_dev,PVRIO mother)
+{
+    PVRIO const io = MemAlloc(sizeof(VRIO));
+
+    if( io != NULL )
+    {
+	_fmemset(io, 0, sizeof(VRIO));
+	io->mother = mother;
+	io->vrd = working_dev;
+
+	++cVrioAllocated;
+    }
+    DEBMSG1(DBG_MEMORY,dszAllocVrio,(PVOID)io);
+    return io;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * FreeVrio(io)
+ *
+ * PARAMETER
+ *	io		allocated structure
+ * RETURNS
+ *	(nothing)
+ * GLOBAL
+ *	(none)
+ * DESCRIPTION
+ *	Frees previously allocated structure.
+ *
+ * REMARKS
+ */
+PUBLIC VOID NEAR _Cdecl
+FreeVrio(PVRIO io)
+{
+    DEBMSG1(DBG_MEMORY,dszFreeVrio,(PVOID)io);
+
+    ASSERT( cVrioAllocated != 0 );
+    --cVrioAllocated;
+
+    MemFree(io);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * BuildWorkmem(void)
+ *
+ * PARAMETER
+ *	(none)
+ * RETURNS
+ *	0		OK
+ *	/0		OS/2 kernel error?
+ *
+ * DESCRIPTION
+ *	Initializes memory allocation routines.
+ *
+ * REMARKS
+ */
+PUBLIC USHORT NEAR _Cdecl
+BuildWorkmem(void)
+{
+    USHORT	rc;
+    PVOID	pv = abWorkMem;
+
+    DEBMSG(DBG_INIT1,dszBuildMem);
+
+
+    /* Lock whole segment of 'abWorkMem'. */
+
+    rc = DevHelp_Lock(FP_SEL(pv), LOCKTYPE_LONG_ANYMEM, 0, &hdMemLock);
+    if( rc != 0 )
+    {
+	DEBMSG1(DBG_INIT1,dszBuildMemLock,rc);
+	return rc;
+    }
+
+
+    /* Calculate physical address of 'abWorkMem'. */
+
+    if( (rc=DevHelp_VirtToPhys(pv, &ppWorkMem)) )
+    {
+	sprintk(szMsgBuffer, "%s: error converting virtual to physical address",
+		(PSZ)szDriverName);
+	SaveMessage();
+	return rc;
+    }
+
+
+    /* Initialize memory routines. */
+
+    {
+	PHEADER	x = (PVOID)abWorkMem;
+
+	/* Noch keine freie Liste */
+
+	base.ptr = allocp = &base;
+	base.size = 0;
+	x->size = (WORKMEM_SIZE - sizeof(HEADER)) / sizeof(HEADER);
+#if defined(DEBUG)
+	x->magix = MAGIX1;
+	((PFOOTER)(x + x->size - 1))->magix[0] = MAGIX2;
+	((PFOOTER)(x + x->size - 1))->magix[1] = ~MAGIX2;
+	((PFOOTER)(x + x->size - 1))->header = x;
+#endif
+	MemFree(x+1);
+    }
+
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * ReleaseWorkmem(void)
+ *
+ * PARAMETER
+ *	(none)
+ * RETURNS
+ *	0		OK
+ *	/0		OS/2 kernel error?
+ *
+ * DESCRIPTION
+ *	Releases any resources relating to our memory memagement.
+ *
+ * REMARKS
+ */
+PUBLIC USHORT NEAR _Cdecl
+ReleaseWorkmem(void)
+{
+    USHORT	rc;
+
+    DEBMSG(DBG_INIT1,dszReleaseMem);
+
+    if( hdMemLock == 0 )
+    {
+	DEBMSG(DBG_INIT1,dszReleaseMemNothing);
+	return 0;
+    }
+
+
+    rc = DevHelp_UnLock(hdMemLock);
+    if( rc != 0 )
+    {
+	DEBMSG1(DBG_MEMORY,dszReleaseMemUnlock,rc);
+    }
+    return rc;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Big Memory Buffers **********************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * AllocateFixed(size, plin)
+ *
+ * PARAMETER
+ *	size		byte count to allocate
+ *	plin		linear address of allocated memory
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		no memory available
+ *
+ * DESCRIPTION
+ *	Allocates fixed continous memory.
+ *
+ * REMARKS
+ *	Call only at task or kernel time!
+ */
+PUBLIC USHORT NEAR _Cdecl
+AllocateFixed(ULONG size, PLIN plin)
+{
+    ULONG	phys_addr;
+    PULONG 	pphys = &phys_addr;
+    LIN		lin_of_physvar;			/*lin of 'phys' (VMAlloc wants it)*/
+    PVOID	dummy;
+    USHORT	error;
+
+
+    error = DevHelp_VirtToLin(SELECTOROF(pphys), OFFSETOF(pphys),
+			      &lin_of_physvar);
+    if( error == 0 )
+    {
+	ULONG	flags = VMDHA_FIXED;
+
+	if( (fADDFlags & AF_NOT16M) )
+	    flags |= VMDHA_16M;			/* there is some ISA adapter */
+	else if( !(fDriverFlags & DF_INIT1DONE) )
+	    flags |= VMDHA_USEHIGHMEM;
+
+	DEBMSG2(DBG_LEVEL2,dszAllocFixed1,pphys,(PVOID)&lin_of_physvar);
+	error = DevHelp_VMAlloc(flags, size, lin_of_physvar, plin, &dummy);
+	DEBMSG2(DBG_LEVEL1,dszAllocFixed2,pphys,plin);
+    }
+    return error;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * FreeFixed(lin)
+ *
+ * PARAMETER
+ *	lin		linear address of memory block
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		some error
+ *
+ * DESCRIPTION
+ *	Frees memory allocated by AllocateFixed().
+ *
+ * REMARKS
+ *	Call only at task or kernel time!
+ */
+PUBLIC USHORT NEAR _Cdecl
+FreeFixed(LIN lin)
+{
+    USHORT	error;
+
+    DEBMSG1(DBG_LEVEL1,dszFreeFixed1,(PVOID)&lin);
+    error = DevHelp_VMFree(lin);
+    if( error != 0 )
+    {
+	DEBMSG1(DBG_LEVEL1,dszFreeFixed2,error);
+    }
+    return error;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CopyLin2ScGa(sglist, destoffset, src, cnt)
+ *
+ * PARAMETER
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Copy 'cnt' bytes from 'src' to memory areas described in 'sglist'
+ *	and following entries.  Start 'destoffset' bytes from the first
+ *	byte described in 'sglist'.
+ *
+ * REMARKS
+ */
+PUBLIC void NEAR _Cdecl
+CopyLin2ScGa(PSCATGATENTRY sglist, ULONG destoffset, LIN src, ULONG cnt)
+{
+    DEBMSG4(DBG_LEVEL1,dszCopyL2SG,(PVOID)sglist,(PVOID)&destoffset,(PVOID)&src,(PVOID)&cnt);
+
+    /* Jump over Sg/Ga list entries [partly] before 'destoffset'. */
+
+    while( sglist->XferBufLen <= destoffset )
+    {
+	destoffset -= sglist->XferBufLen;
+	++sglist;
+    }
+
+    /* Copy bytes until all bytes are done. */
+
+    while( cnt != 0 )
+    {
+	PVOID	dest;
+	USHORT	rc, us;
+	ULONG	ul;
+
+	ul = (sglist->XferBufLen - destoffset > cnt
+	      ? cnt : sglist->XferBufLen - destoffset);
+
+	/* Get linear address of physical */
+
+	ASSERT( sglist->XferBufLen <= 64*1024ul ); /* see driver flags */
+	rc = DevHelp_PhysToVirt(sglist->ppXferBuf, (USHORT)sglist->XferBufLen,
+				&dest, &us);
+	ASSERT( rc == 0 );
+	MemCpy32(OFFSETOF(dest)+destoffset,SELECTOROF(dest), src,QueryFlatDS(), ul);
+	cnt -= ul;
+	++sglist;
+    }
+
+    return;
+}
+
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Small Helpers (CRC16 calculation, see setup/crc.c) **************
+ * ******************************************************************* */
+
+PRIVATE USHORT
+CalcTable(USHORT data,USHORT genpoly,USHORT accum)
+{
+    int i;
+
+    for( i = 0; i < 8; ++i )
+    {
+	if( (accum^data) & 1 )
+	{
+	    accum >>=1;
+	    accum ^= genpoly;
+	}
+	else
+	    accum >>= 1;
+
+	data >>= 1;
+    }
+    return accum;
+}
+
+
+
+
+PRIVATE USHORT
+UpdateCRC(USHORT crc,UCHAR byte)
+{
+    /* bei MSB first: */
+    /* return( (crc << 8) ^ CRCtable[ (crc >> 8) ^ byte ] ); */
+
+    /* bei LSB first: */
+    return ((crc >> 8) ^ CRCtable[ (crc ^ byte) & 0xFF ]);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CrcInit(uPOLYNOM)
+ *
+ * PARAMETER
+ *	uPOLYNOM		generator polynom
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Builds table for CRC16 calculation.  Call once per session.
+ *
+ * REMARKS
+ */
+PUBLIC VOID NEAR _Cdecl
+CrcInit(USHORT uPOLYNOM)
+{
+    int i;
+
+    for( i = 0; i < 256; ++i )
+	CRCtable[i] = CalcTable(i, uPOLYNOM, 0);
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * Crc16(buffer,cb)
+ *
+ * PARAMETER
+ *	buffer		data buffer
+ *	cb		size of above
+ *
+ * RETURNS
+ *	CRC16
+ *
+ * DESCRIPTION
+ *	Calculates CRC16 over buffer contents.
+ *
+ * REMARKS
+ */
+PUBLIC USHORT NEAR _Cdecl
+Crc16(PVOID buffer,USHORT cb)
+{
+    USHORT	crc = 0;
+    PUCHAR	p = buffer;
+
+    for(; cb != 0; --cb, ++p )
+	crc = UpdateCRC(crc, *p);
+    return crc;
+}
+@
+
+
+1.14
+log
+@- AllocateFixed: request high memory during init phase
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.13 $
+ * $Date: 2001/08/03 02:18:05 $
+d13 3
+d59 1
+a59 1
+static char const id[]="$Id: memory.c,v 1.13 2001/08/03 02:18:05 vitus Exp vitus $";
+d88 2
+d147 1
+a147 1
+PUBLIC VOID NEAR _Cdecl
+d584 57
+@
+
+
+1.13
+log
+@- AllocateFixed: only allocate memory below 16 if needed
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.12 $
+ * $Date: 2001/07/03 07:52:24 $
+d13 3
+d53 2
+a54 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+d56 1
+a56 7
+#if defined(__WATCOMC__)
+# pragma off (unreferenced)
+#endif
+static char const id[]="$Id: memory.c,v 1.12 2001/07/03 07:52:24 vitus Exp vitus $";
+#if defined(__WATCOMC__)
+# pragma on (unreferenced)
+#endif
+d125 2
+d128 2
+a129 2
+ * CALL
+ *	MemFree(ap)
+d190 2
+a191 2
+ * CALL
+ *	MemAlloc(nbytes)
+d258 2
+a259 2
+ * CALL
+ *	AllocateIorb(sgcnt)
+d298 2
+a299 2
+ * CALL
+ *	FreeIorb(iorb)
+d326 2
+a327 2
+ * CALL
+ *	AllocateVrio(working_dev,mother)
+d361 2
+a362 2
+ * CALL
+ *	FreeVrio(io)
+d389 2
+a390 2
+ * CALL
+ *	BuildWorkmem(void)
+d458 2
+a459 2
+ * CALL
+ *	ReleaseWorkmem(void)
+d537 2
+d626 2
+a627 2
+ * CALL
+ *	CrcInit(uPOLYNOM)
+d653 2
+a654 2
+ * CALL
+ *	Crc16(buffer,cb)
+@
+
+
+1.12
+log
+@- AllocateFixed: removed VMDHA_CONTIG flag, sc/ga lists are OK
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.11 $
+ * $Date: 2001/06/24 22:59:42 $
+d13 3
+d56 1
+a56 1
+static char const id[]="$Id: memory.c,v 1.11 2001/06/24 22:59:42 vitus Exp vitus $";
+d534 5
+a538 3
+	ULONG	flags = (VMDHA_16M		/* we really don't know... */
+			 /*| VMDHA_CONTIG*/
+			 | VMDHA_FIXED);
+@
+
+
+1.11
+log
+@- implemented AllocateFixed(), FreeFixed()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/09/19 23:40:15 $
+d13 3
+d53 1
+a53 1
+static char const id[]="$Id: memory.c,v 1.10 1999/09/19 23:40:15 vitus Exp vitus $";
+d83 2
+a84 1
+CONSTMSG dszFreeFixed[]=	"\r\n[FreeFixed] FreePhys - error %w";
+d532 1
+a532 1
+			 | VMDHA_CONTIG
+d534 1
+a534 1
+	DEBMSG2(DBG_LEVEL1,dszAllocFixed1,pphys,(PVOID)&lin_of_physvar);
+d565 1
+d569 1
+a569 1
+	DEBMSG1(DBG_LEVEL1,dszFreeFixed,error);
+@
+
+
+1.10
+log
+@- defined all DBGMSG() strings as located in CONST segment
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/06/22 00:03:58 $
+d13 3
+d50 1
+a50 1
+static char const id[]="$Id: memory.c,v 1.9 1999/06/22 00:03:58 vitus Exp vitus $";
+d77 4
+d485 82
+@
+
+
+1.9
+log
+@- renamed InitWorkmem to BuildWorkmem
+- implemented ReleaseWorkmem, to unlock the memory
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/06/19 00:25:20 $
+d13 4
+d47 1
+a47 1
+static char const id[]="$Id: memory.c,v 1.8 1999/06/19 00:25:20 vitus Exp vitus $";
+d62 19
+d277 1
+a277 1
+    DEBMSG1(DBG_MEMORY,"\r\n[AllocateIorb] %p",(PVOID)iorb);
+d301 1
+a301 1
+    DEBMSG1(DBG_MEMORY,"\r\n[FreeIorb] %p",(PVOID)iorb);
+d340 1
+a340 1
+    DEBMSG1(DBG_MEMORY,"\r\n[AllocateVrio] %p",(PVOID)io);
+d364 1
+a364 1
+    DEBMSG1(DBG_MEMORY,"\r\n[FreeVrio] %p",(PVOID)io);
+d395 1
+a395 1
+    DEBMSG(DBG_INIT1,"\r\n[BuildWorkmem] entry");
+d403 1
+a403 1
+	DEBMSG1(DBG_INIT1,"\r\n[BuildWorkmem] Lock() failed - rc %w",rc);
+d463 1
+a463 1
+    DEBMSG(DBG_INIT1,"\r\n[ReleaseWorkmem] entry");
+d467 1
+a467 1
+	DEBMSG(DBG_INIT1,"\r\n[ReleaseWorkmem] nothing to do!");
+d475 1
+a475 1
+	DEBMSG1(DBG_MEMORY,"\r\n[ReleaseWorkmem] UnLock() failed - rc %w",rc);
+@
+
+
+1.8
+log
+@- ein paar statistische Daten mitfÅhren...
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/05/11 23:52:59 $
+d13 3
+d43 1
+a43 1
+static char const id[]="$Id: memory.c,v 1.7 1999/05/11 23:52:59 vitus Exp vitus $";
+d84 1
+a84 1
+
+d354 1
+a354 1
+ *	InitWorkmem(void)
+d359 2
+a360 1
+ * GLOBAL
+d367 1
+a367 1
+InitWorkmem(void)
+a369 1
+    ULONG	hd;				/* really dummy */
+d372 2
+a373 1
+    DEBMSG(DBG_MEMORY,"\r\n[InitWorkmem] entry");
+d377 1
+a377 1
+    rc = DevHelp_Lock(FP_SEL(pv), LOCKTYPE_LONG_ANYMEM, 0, &hd);
+d380 1
+a380 1
+	DEBMSG1(DBG_MEMORY,"\r\n[InitWorkmem] Lock() failed - rc %w",rc);
+d384 1
+d395 1
+d406 6
+d416 39
+@
+
+
+1.7
+log
+@- added CRC code from init1.c
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1998/12/20 01:55:31 $
+d13 3
+d40 1
+a40 1
+static char const id[]="$Id: memory.c,v 1.6 1998/12/20 01:55:31 vitus Exp vitus $";
+d83 1
+a83 1
+PRIVATE USHORT		CRCtable[256];
+d247 2
+d276 4
+d311 2
+d339 4
+d472 1
+@
+
+
+1.6
+log
+@- lock memory as "any type"
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1998/09/07 23:15:01 $
+d13 3
+d31 2
+a32 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+d37 1
+a37 1
+static char const id[]="$Id: memory.c,v 1.5 1998/09/07 23:15:01 vitus Stab vitus $";
+d60 1
+a60 1
+PRIVATE UCHAR _inmem	abWorkMem[WORKMEM_SIZE];
+d80 2
+d84 2
+a85 1
+/*#
+d147 1
+a147 1
+/*#
+d215 1
+a215 1
+/*#
+d253 1
+a253 1
+/*#
+d277 1
+a277 1
+/*#
+d310 1
+a310 1
+/*#
+d334 1
+a334 1
+/*#
+d389 97
+@
+
+
+1.5
+log
+@- memory routines contain more debugging (mem overwrites)
+- AllocateIorb(USHORT const sgcnt)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1998/06/26 22:56:48 $
+d7 4
+a10 4
+ * Memory allocation routines.
+ * They use a vector inside an additional data segment which
+ * is locked by our driver (IOPL plus DevHelper).
+ * OBS: use memory from this pool only for short-time allocations!
+d13 4
+d34 1
+a34 1
+static char const id[]="$Id: memory.c,v 1.4 1998/06/26 22:56:48 vitus Exp vitus $";
+d352 1
+a352 1
+    rc = DevHelp_Lock(FP_SEL(pv), LOCKTYPE_LONG_HIGHMEM, 0, &hd);
+d354 2
+d357 1
+@
+
+
+1.4
+log
+@- added missing locking (did cause hangups!)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1998/04/08 01:14:16 $
+d13 3
+d27 7
+a33 3
+#pragma off (unreferenced)
+static char const id[]="$Id: memory.c,v 1.3 1998/04/08 01:14:16 vitus Exp vitus $";
+#pragma on (unreferenced)
+d50 2
+d57 2
+a58 1
+    USHORT		size;
+d61 7
+d93 2
+a94 1
+    register PHEADER	p;
+d97 8
+a105 1
+    p = (PHEADER)ap - 1;			/* auf Beschreibung zeigen */
+d130 1
+d157 3
+a159 1
+    register USHORT	nunits;
+a162 1
+    nunits = 1 + (nbytes + sizeof(HEADER) - 1) / sizeof(HEADER);
+d178 8
+d191 1
+a192 1
+    UNLOCK(hlMem);
+d207 1
+a207 1
+ *	AllocateIorb(void)
+d209 1
+a209 1
+ *	(none)
+d217 1
+a217 1
+ *	following) scatter/gather list of maximum size.
+d224 1
+a224 1
+AllocateIorb(void)
+d226 1
+a226 1
+    USHORT const	cb = MAX_IORB_SIZE + MAXSGLISTSIZE;
+d235 2
+d260 1
+d269 1
+a269 1
+ *	AllocateVrio(mother)
+d271 1
+d283 1
+a283 1
+AllocateVrio(PVRIO mother)
+d291 1
+d293 1
+d317 1
+d343 2
+@
+
+
+1.3
+log
+@- uses static buffer as memory pool (simpler but change later)
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/raid/RCS/memory.c,v $
+ * $Revision: 1.2 $
+ * $Date: 1998/03/10 02:40:33 $
+d13 3
+d25 1
+a25 1
+static char const id[]="$Id: memory.c,v 1.2 1998/03/10 02:40:33 vitus Exp vitus $";
+d51 1
+a51 1
+PRIVATE HEADER _inmem	base;			/* leere Liste zur Initial. */
+d53 1
+d73 1
+a73 1
+PUBLIC VOID NEAR
+d79 1
+d104 2
+d126 1
+a126 1
+PUBLIC PVOID NEAR
+d132 1
+d134 1
+d150 2
+a151 1
+	    return (PVOID)(p+1);
+d154 1
+a154 1
+	    return NULL;			/* kein Platz mehr frei! */
+d156 3
+d188 1
+a188 1
+PUBLIC PIORB_EXECUTEIO NEAR
+d220 1
+a220 1
+PUBLIC void NEAR
+d243 1
+a243 1
+PUBLIC PVRIO NEAR
+d273 1
+a273 1
+PUBLIC void NEAR
+d295 1
+a295 1
+PUBLIC USHORT NEAR
+d321 1
+a321 1
+	PHEADER	x = abWorkMem;
+@
+
+
+1.2
+log
+@- made lowest memory allocation routines public
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1998/02/17 22:31:17 $
+d13 3
+d22 1
+a22 1
+static char const id[]="$Id: memory.c,v 1.1 1998/02/17 22:31:17 vitus Exp vitus $";
+d35 1
+a35 1
+/* Define memory pool.  It sould reside in a seperate, non-swappable
+a41 1
+PRIVATE ULONG _inmem	ppWorkMem;
+d48 2
+a49 2
+PRIVATE HEADER	base;				/* leere Liste zur Initial. */
+PRIVATE PHEADER	allocp = NULL;			/* letzter vergebener Block */
+d218 1
+a218 1
+ *	AllocateVrio(void)
+d220 1
+a220 1
+ *	(none)
+d231 1
+a231 1
+AllocateVrio(void)
+d235 5
+a239 1
+    _fmemset(io, 0, sizeof(VRIO));
+d287 1
+d291 1
+a291 1
+    rc = DevHelp_Lock(FP_SEL(abWorkMem), LOCKTYPE_LONG_HIGHMEM, 0, &hd);
+d297 1
+a297 1
+    if( (rc=DevHelp_VirtToPhys(&abWorkMem, &ppWorkMem)) )
+d314 1
+a314 1
+	x->size = WORKMEM_SIZE - sizeof(HEADER);;
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d10 1
+d12 3
+a14 1
+ * $Log$
+d19 1
+a19 1
+static char const id[]="$Id$";
+d54 1
+d56 1
+d58 1
+d60 1
+d62 2
+d67 1
+a67 1
+PRIVATE void NEAR
+d110 1
+d112 2
+d117 1
+a117 1
+PRIVATE PVOID NEAR
+@

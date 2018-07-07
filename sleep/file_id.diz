@@ -1,0 +1,1 @@
+DSKSLEEP.FLT - a filter driver to stop your SCSI disks when they haven't been accessed for some time.  Timeout selection per disk, IOCtl interface.  For OS/2 2.0 and above.  Now with APM support!

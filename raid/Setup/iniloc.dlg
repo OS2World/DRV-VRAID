@@ -1,0 +1,17 @@
+#ifndef OS2_INCLUDED
+   #include <os2.h>
+#endif
+DLGINCLUDE 6 "D:\SOURCE\driver\raid\Setup\resources.H"
+
+DLGTEMPLATE IDW_INILOCATION LOADONCALL MOVEABLE DISCARDABLE
+BEGIN
+    DIALOG  "VSetup - ini file location", IDW_INILOCATION, 66, 92, 200, 47, 
+            FS_NOBYTEALIGN | WS_VISIBLE, FCF_TITLEBAR
+    BEGIN
+        ENTRYFIELD      "", EF_INILOCATION, 65, 31, 121, 8, ES_MARGIN
+                        CTLDATA 8, 32, 0, 0
+        LTEXT           "Directory", -1, 11, 31, 50, 8
+        DEFPUSHBUTTON   "OK", DID_OK, 12, 6, 40, 14
+        PUSHBUTTON      "Cancel", DID_CANCEL, 61, 6, 40, 14
+    END
+END

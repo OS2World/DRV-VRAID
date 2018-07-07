@@ -1,0 +1,525 @@
+head	1.12;
+access;
+symbols
+	VSETUPv0_84:1.12
+	VSETUP_82:1.11
+	VSETUPv0_80:1.10
+	VSETUPv0_71:1.8
+	VSETUPv0_70:1.8
+	VSETUPv0_60:1.6
+	VSETUPv0_52:1.5
+	VSETUPv0_51:1.5
+	VSETUPv0_50:1.4
+	VSETUPv0_20:1.3;
+locks; strict;
+comment	@ * @;
+
+
+1.12
+date	2000.05.28.17.39.32;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2000.03.09.23.17.19;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.06.21.01.30.08;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.04.16.01.03.50;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.03.01.02.21.50;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.02.09.02.54.45;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	98.12.13.22.34.48;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	98.11.03.03.04.10;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	98.09.27.00.11.31;	author vitus;	state Stab;
+branches;
+next	1.3;
+
+1.3
+date	98.06.09.01.28.39;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.05.27.01.55.46;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.05.18.00.46.15;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Interface to drive scanning/creation/etc.
+@
+
+
+1.12
+log
+@- moved DSKAREA structure to pcreate.h
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/drvbuild.h,v $
+ * $Revision: 1.11 $
+ * $Date: 2000/03/09 23:17:19 $
+ * $Locker: vitus $
+ *
+ *	Interface to drive scanning/creation/etc.
+ *
+ * $Log: drvbuild.h,v $
+ * Revision 1.11  2000/03/09 23:17:19  vitus
+ * - struct _DSKAREA_ENTRY contains extstart (start of first extended partition).
+ *   This is important to know!
+ *
+ * Revision 1.10  1999/06/21 01:30:08  vitus
+ * - corrected english spelling
+ *
+ * Revision 1.9  1999/04/16 01:03:50  vitus
+ * - added LookupDisk(), searches record for specific VRDev
+ *
+ * Revision 1.8  1999/03/01 02:21:50  vitus
+ * - removed DSKINFO structure
+ * - any pointer converted to VRDev *
+ *
+ * Revision 1.7  1999/02/09 02:54:45  vitus
+ * - switched to C++
+ *
+ * Revision 1.6  1998/12/13 22:34:48  vitus
+ * - DSKINFO: added access.none substructure
+ *
+ * Revision 1.5  1998/11/03 03:04:10  vitus
+ * - DSKINFO change: 'avail' element changed position
+ *
+ * Revision 1.4  1998/09/27 00:11:31  vitus
+ * - added access.flt and access.none to DSKINFO
+ *
+ * Revision 1.3  1998/06/09 01:28:39  vitus
+ * - switched CHAIN and STRIPE contants
+ *
+ * Revision 1.2  1998/05/27 01:55:46  vitus
+ * - AreaDlgProc() and data structure
+ *
+ * Revision 1.1  1998/05/18 00:46:15  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-2000
+ */
+
+
+#define MAXCHILDREN	32
+
+
+
+typedef struct {
+    HWND	parent;				/* post devices here */
+} THR_DRVSCAN, * PTHR_DRVSCAN;			/* parameter to DrvscanThread*/
+
+
+
+
+typedef struct _MYRECORD {
+    MINIRECORDCORE	record;
+    VRDev *		dsk;			/* see drvscan.cpp */
+} MYRECORD, * PMYRECORD;
+
+
+
+
+/* Passed to DrvtypeDlgProc() */
+typedef struct _DRVBUILD {
+    ULONG	type;				/* DSKTYPE_*, see drvscan.h */
+    ULONG	cnt;
+    PMYRECORD	child[MAXCHILDREN];
+} DRVBUILD, * PDRVBUILD;
+
+
+
+
+/* ----------------------------------------------------------------------
+ * From drvscan.c
+ * -------------------------------------------------------------------- */
+extern void _Optlink	DrvscanThread(void *dummy);
+
+
+/* ----------------------------------------------------------------------
+ * From drvtype.c
+ * -------------------------------------------------------------------- */
+extern MRESULT EXPENTRY	DrvtypeDlgProc(HWND hwnd,ULONG msg,
+				       MPARAM mp1,MPARAM mp2);
+
+
+/* ----------------------------------------------------------------------
+ * From areaselect.c
+ * -------------------------------------------------------------------- */
+extern MRESULT EXPENTRY	AreaDlgProc(HWND hwnd,ULONG msg,
+				    MPARAM mp1,MPARAM mp2);
+
+
+/* ----------------------------------------------------------------------
+ * From container.c
+ * -------------------------------------------------------------------- */
+
+/*
+ * PFNSRCH is used by SearchCnr().  The parameters are:
+ * - container window handle,
+ * - record pointer,
+ * - two user-data pointer.
+ */
+typedef BOOL	(*PFNSRCH)(HWND,PVOID,PVOID,PULONG);
+
+extern BOOL EmphSelect(HWND hwnd,PMYRECORD myrecord,PBOOL pbSelect,PULONG cnt);
+extern BOOL SearchSource(HWND hwnd,PMYRECORD myrecord,PBOOL pbSource,PULONG cnt);
+extern BOOL EmphInuse2Source(HWND hwnd,PMYRECORD myrecord,PBOOL pbSource,PULONG cnt);
+extern BOOL EmphInuse(HWND hwnd,PMYRECORD myrecord,PBOOL pbSource,PULONG cnt);
+extern BOOL EmphSource(HWND hwnd,PMYRECORD myrecord,PBOOL pbSource,PULONG cnt);
+extern BOOL QueryInuse(HWND hwnd,PMYRECORD myrecord,PULONG cnt,PMYRECORD record_array[]);
+extern BOOL QueryAny(HWND hwnd,PMYRECORD myrecord,PULONG cnt,PMYRECORD record_array[]);
+extern BOOL LookupDisk(HWND hwnd,PMYRECORD myrecord,VRDev * disk,PMYRECORD * record_returned);
+
+extern PVOID SearchCnr(HWND hwndCnr,PFNSRCH pfnSearch,PVOID pvUser1,PVOID pvUser2,PVOID pvRsrvd);
+
+@
+
+
+1.11
+log
+@- struct _DSKAREA_ENTRY contains extstart (start of first extended partition).
+  This is important to know!
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/06/21 01:30:08 $
+d10 4
+a73 25
+
+
+
+
+/* Passed to AreaDlgProc() */
+
+struct _DSKAREA_ENTRY {
+    ULONG	start;				/* start of free area */
+    ULONG	size;				/* size of free area */
+
+    UCHAR	type;
+    UCHAR	bootable;
+
+    ULONG	ptsec;				/* sector no of partition table
+						   where this area is left free.
+						   This (and perhaps another) table
+						   has to be modified. */
+    ULONG	extstart;			/* start of first extended partition,
+						   needed for relative addressing. */
+};
+
+typedef struct _DSKAREA {
+    ULONG		  cnt;
+    struct _DSKAREA_ENTRY area[10];
+} DSKAREA, * PDSKAREA;
+@
+
+
+1.10
+log
+@- corrected english spelling
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/04/16 01:03:50 $
+d10 3
+d40 2
+a41 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+d75 16
+d92 2
+a93 5
+    ULONG	cnt;
+    struct {
+	ULONG	start;
+	ULONG	size;
+    } area[4];
+@
+
+
+1.9
+log
+@- added LookupDisk(), searches record for specific VRDev
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/03/01 02:21:50 $
+d10 3
+d42 1
+a42 1
+#define MAXCHILDS	32
+d65 1
+a65 1
+    PMYRECORD	child[MAXCHILDS];
+@
+
+
+1.8
+log
+@- removed DSKINFO structure
+- any pointer converted to VRDev *
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/02/09 02:54:45 $
+d10 4
+d119 1
+@
+
+
+1.7
+log
+@- switched to C++
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1998/12/13 22:34:48 $
+d10 3
+a44 57
+typedef struct _DSKINFO {
+    UCHAR	acc;
+    UCHAR	type;
+    UCHAR	writable;			/* 1: drive may be modified, there
+						   are reasons why this may be 0:
+						   - DSKACC_OS2 not lockable
+						   - DSKACC_NONE inuse by OS/2
+						     (OS2DASD problem) */
+
+    union {
+	struct {
+	    int			os2idx;
+	    ULONG		hd;
+	    DEVICEPARAMETERBLOCK dp;
+	} os2;
+	struct {
+	    USHORT		hd;
+	    ULONG		partsize;
+	} flt;
+	struct {
+	    int			os2_may_access;
+	    int			os2idx;
+	} none;
+    } access;
+
+
+    union {
+	struct {
+	    ULONG		partstart;	/* [sector] */
+	    ULONG		partsize;	/* [sector] */
+	} physical;
+	struct {
+	    USHORT		childs;
+	    struct _DSKINFO *	child[MAXCHILDS];
+	} vrd;
+    } kind;
+
+    ULONG	size;				/* [sector] */
+    DEVID	id;
+    struct _DSKINFO *	parent;
+} DSKINFO, * PDSKINFO;
+
+#define DSKACC_NONE	0			/* non-physical, virtual drive */
+#define DSKACC_OS2	1
+#define DSKACC_FLT	2			/* via VRAID.FLT */
+
+#define DSKTYPE_NONE	0			/* simple OS/2 device */
+#define DSKTYPE_PDEV	99
+
+#define DSKTYPE_SINGLE	1
+#define DSKTYPE_CHAIN	2			/* from here on consistent with */
+#define DSKTYPE_STRIPE	3			/* driver defines! */
+#define DSKTYPE_MIRROR	4
+#define DSKTYPE_RAID4	5
+#define DSKTYPE_RAID5	6
+
+
+d48 1
+a48 1
+    PDSKINFO		dsk;			/* see drvscan.c */
+d53 1
+d60 1
+@
+
+
+1.6
+log
+@- DSKINFO: added access.none substructure
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1998/11/03 03:04:10 $
+d7 1
+a7 1
+ * Interface to drive scanning/creation/etc.
+d10 3
+d27 2
+a28 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+d45 1
+a45 1
+    UCHAR	avail;				/* 1: drive may be modified, there
+d62 1
+a62 1
+	    int			valid;
+d67 1
+d76 1
+a76 1
+	} virtual;
+d131 1
+a131 1
+extern void	DrvscanThread(void *dummy);
+@
+
+
+1.5
+log
+@- DSKINFO change: 'avail' element changed position
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1998/09/27 00:11:31 $
+d10 3
+a27 1
+#include "../dsklayout.h"
+d42 2
+a43 2
+    UCHAR	avail;				/* drive may be modified, there
+						   are reasons why this may be /0:
+d50 1
+a50 2
+	    int			idx;
+	    int			avail;
+d58 4
+@
+
+
+1.4
+log
+@- added access.flt and access.none to DSKINFO
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1998/06/09 01:28:39 $
+d10 3
+d40 5
+a55 1
+	    int			avail;		/* because parent inuse */
+a56 3
+	struct {
+	    int			avail;		/* because inuse by OS/2 */
+	} none;
+@
+
+
+1.3
+log
+@- switched CHAIN and STRIPE contants
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/raid/setup/RCS/drvbuild.h,v $
+ * $Revision: 1.2 $
+ * $Date: 1998/05/27 01:55:46 $
+d10 3
+d45 8
+d73 1
+a73 1
+#define DSKACC_RAID	2
+@
+
+
+1.2
+log
+@- AreaDlgProc() and data structure
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1998/05/18 00:46:15 $
+d10 3
+d46 2
+a47 2
+	    ULONG		partstart;
+	    ULONG		partsize;
+d55 1
+a55 1
+    ULONG	size;
+d68 2
+a69 2
+#define DSKTYPE_STRIPE	2			/* from here on consistent with */
+#define DSKTYPE_CHAIN	3			/* driver defines! */
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 3
+a11 1
+ * $Log$
+d16 2
+d80 1
+d89 11
+d115 7
+d139 2
+@

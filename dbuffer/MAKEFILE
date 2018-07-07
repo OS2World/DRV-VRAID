@@ -1,0 +1,236 @@
+# -*- Mode: makefile -*-
+#
+# Driver Name: DBUFFER.FLT - Lift 24Bit Restriction
+#
+# $Source$
+#
+# $Revision$
+# $Date$
+# $Author$
+#
+#	DMake [debug] [all]
+#
+# Change Log
+#	$Log$
+#
+
+# Unused (DMake):
+#.SUFFIXES:
+#.SUFFIXES: .com .add .exe .obj .mbj .asm .inc .def .lnk .lrf .crf .ref
+#.SUFFIXES: .lst .sym .map .c .h .lib
+
+# Set defaults if not passed on commandline
+#
+LIST *= 0
+
+
+
+
+
+# Locations w/ includes, libs and tools
+#
+DDK = e:\ddk
+
+
+INC    = $(DDK)\inc
+H      = $(DDK)\h
+LIB    = $(DDK)\lib
+TOOLSPATH = $(DDK)\tools
+DISKH  = $(DDK)\\src\\dev\\dasd\\diskh
+DHLIB  = $(DDK)\\src\\dev\\dasd\\devhelp
+ADDLIB = $(DDK)\\src\\dev\\dasd\\addcalls
+HFLAGS= -d -f -w -s
+
+CC = cl -nologo -c
+AS = ml -nologo -c
+LINK = link
+MAPSYM = mapsym
+
+#
+# Since the compiler/linker and other tools use environment
+# variables ( INCLUDE, LIB, etc ) in order to get the location of files,
+# the following line will check the environment for the LIFE of the
+# makefile and will be specific to this set of instructions. All MAKEFILES
+# are requested to use this format to insure that they are using the correct
+# level of files and tools.
+#
+#!if [set INCLUDE=$(H);$(INC)] || \
+#   [set LIB=$(LIB);$(DHLIB);$(ADDLIB)] || [set PATH=$(TOOLSPATH);$(DK_TOOLS)]
+#!endif
+
+
+# Compiler and Linker Options
+#
+AINC	= -I$(INC)
+CINC	= -I$(H) -I$(DISKH)
+AFLAGS	= -Cp
+ADFLAGS	= -Cp -DDEBUG
+CFLAGS	= -Zp1 -G2s -Answ -W3 -Ox
+CDFLAGS	= -Zp1 -G2s -Answ -W3 -DDEBUG -Oi
+LFLAGS	= /map /nod /exepack /packd /a:16 /far
+RFLAGS	= -r
+
+LIBS	= $(DHLIB)\\dhcalls.lib $(ADDLIB)\\addcalls.lib
+
+
+
+#****************************************************************************
+# Set up Macros that will contain all the different dependencies for the
+# executables and dlls etc. that are generated.
+#****************************************************************************
+
+
+# OBJ files
+#
+OBJ1 =  lkdrsegs.obj lkdrdata.obj lkdrstr1.obj
+OBJ2 =  lkdrinit.obj
+OBJ3 =
+
+#       Debug files
+#
+DBJ1 =	$(OBJ1:s/obj/dbj/)
+DBJ2 =	$(OBJ2:s/obj/dbj/)
+DBJ3 =	$(OBJ3:s/obj/dbj/)
+
+# Complete lists
+#
+OBJS =	$(OBJ1) $(OBJ2) $(OBJ3)
+DBJS =	$(DBJ1) $(DBJ2) $(DBJ3)
+
+
+
+#****************************************************************************
+#   Setup the inference rules for compiling and assembling source code to
+#   obejct code.
+#****************************************************************************
+
+
+%.obj : %.asm
+	$(AS) $(AFLAGS) $(AINC) -Fllist\$*.cod $*.asm
+
+%.dbj : %.asm
+	$(AS) $(ADFLAGS) $(AINC) -Fllist\$*.dod -Fo$*.dbj $*.asm
+
+%.obj : %.c
+	$(CC) $(CFLAGS) $(CINC) -Fllist\$*.cod $*.c
+
+%.dbj : %.c
+	$(CC) $(CDFLAGS) $(CINC) -Fllist\$*.dod -Fo$*.dbj $*.c
+
+%.inc : %.h
+	H2INC $(HFLAGS) $*.h -o $*.inc
+
+
+
+
+#****************************************************************************
+#   Target Information
+#****************************************************************************
+#
+# This is a very important step. The following small amount of code MUST
+# NOT be removed from the program. The following directive will do
+# dependency checking every time this component is built UNLESS the
+# following is performed:
+#                    A specific tag is used -- ie. all
+#
+# This allows the developer as well as the B & I group to perform incremental
+# build with a degree of accuracy that has not been used before.
+# There are some instances where certain types of INCLUDE files must be
+# created first. This type of format will allow the developer to require
+# that file to be created first. In order to achive that, all that has to
+# be done is to make the DEPEND.MAK tag have your required target. Below is
+# an example:
+#
+#    depend.mak:   { your file(s) } dephold
+#
+# Please DON'T remove the following line
+#
+
+.INCLUDE: "$(H)\version.mak"
+
+
+# Should be the default tag for all general processing
+#
+all: lockdrv.flt
+
+debug: lockdrvd.flt
+
+
+clean:
+	if exist *.lnk  del *.lnk
+	if exist *.obj  del *.obj
+	if exist *.dbj  del *.dbj
+	if exist *.map  del *.map
+	if exist *.old  del *.old
+	if exist *.cod  del *.cod
+	if exist *.dod  del *.dod
+	if exist *.sym  del *.sym
+	if exist *.sys  del *.sys
+	if exist *.tff  del *.tff
+	if exist *.cod  del *.cod
+	if exist *.add  del *.add
+	if exist *.flt  del *.flt
+
+
+#****************************************************************************
+#   OBJ dependant  rules for compiling and assembling source code
+#****************************************************************************
+
+
+#*****************************************************************************
+#   Specific Description Block Information
+#*****************************************************************************
+
+# This section would only be for specific direction as to how to create
+# unique elements that are necessary to the build process. This could
+# be compiling or assembling, creation of DEF files and other unique
+# files.
+# If all compiler and assembly rules are the same, use an inference rule to
+# perform the compilation.
+#
+
+lockdrv.flt: $(OBJS) $(LIBS) makefile
+	$(LINK) $(LFLAGS) @$(mktmp,$*.lnk	\
+		$(OBJ1) $(OBJ2) $(OBJ3)		\n\
+		$*.flt				\n\
+		$*.map				\n\
+		$(LIBS)				\n\
+		$(mktmp,$*.def			\
+			LIBRARY LOCKDRV		\n\
+			DESCRIPTION "$(FILEVER) OS/2 LOCK DRIVE Filter ADD"	\n\
+			PROTMODE			\n\
+			SEGMENTS			\n\
+			 DDHeader	CLASS 'DATA'	\n\
+			 CONST		CLASS 'CONST'	\n\
+			 _BSS		CLASS 'BSS'	\n\
+			 LIBDATA	CLASS 'DATA'	\n\
+			 _DATA		CLASS 'DATA'	\n\
+			 LIBCODE	CLASS 'CODE' IOPL	\n\
+			 'CODE'		CLASS 'CODE' IOPL	\n\
+			 _TEXT		CLASS 'CODE' IOPL); )
+	$(MAPSYM) $*.map
+
+
+lockdrvd.flt: $(DBJS) $(LIBS) makefile
+	$(LINK) $(LFLAGS) @$(mktmp,$*.lnk	\
+		$(DBJ1) $(DBJ2) $(DBJ3)		\n\
+		$*.flt				\n\
+		$*.map				\n\
+		$(LIBS)				\n\
+		$(mktmp,$*.def			\
+			LIBRARY LOCKDRV		\n\
+			DESCRIPTION "$(FILEVER) OS/2 LOCK DRIVE Filter ADD"	\n\
+			PROTMODE			\n\
+			SEGMENTS			\n\
+			 DDHeader	CLASS 'DATA'	\n\
+			 CONST		CLASS 'CONST'	\n\
+			 _BSS		CLASS 'BSS'	\n\
+			 LIBDATA	CLASS 'DATA'	\n\
+			 _DATA		CLASS 'DATA'	\n\
+			 LIBCODE	CLASS 'CODE' IOPL	\n\
+			 'CODE'		CLASS 'CODE' IOPL	\n\
+			 _TEXT		CLASS 'CODE' IOPL); )
+	$(MAPSYM) $*.map
+
+
+#****************************************************************************

@@ -1,0 +1,505 @@
+head	1.13;
+access;
+symbols
+	VSETUPv0_84:1.13
+	VSETUP_82:1.11
+	VSETUPv0_80:1.9
+	VSETUPv0_71:1.6
+	VSETUPv0_70:1.6
+	VSETUPv0_60:1.6
+	VSETUPv0_52:1.6
+	VSETUPv0_51:1.6
+	VSETUPv0_50:1.6
+	VSETUPv0_20:1.4;
+locks; strict;
+comment	@ * @;
+
+
+1.13
+date	2001.01.15.01.31.48;	author vitus;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2000.08.05.02.55.28;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2000.04.10.01.24.03;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2000.04.10.01.06.23;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.06.19.01.35.50;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.06.02.01.48.15;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.05.13.22.48.43;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	98.09.27.00.12.49;	author vitus;	state Stab;
+branches;
+next	1.5;
+
+1.5
+date	98.09.20.20.42.40;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	98.06.09.01.33.20;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.05.24.02.21.02;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.05.17.16.27.28;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.05.06.22.58.38;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@List of resource identifiers used
+@
+
+
+1.13
+log
+@- added IDM_INVALID_CHILD
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/resources.h,v $
+ * $Revision: 1.12 $
+ * $Date: 2000/08/05 02:55:28 $
+ * $Locker: vitus $
+ *
+ *	List of resource identifiers used.
+ *
+ * $Log: resources.h,v $
+ * Revision 1.12  2000/08/05 02:55:28  vitus
+ * - added IDs for Array Verification Progress
+ *
+ * Revision 1.11  2000/04/10 01:24:03  vitus
+ * - added DID_HELP to give Help buttons an ID as long as they aren't used
+ *   to display a help panel.  This way help buttons may be hidden.
+ *
+ * Revision 1.10  2000/04/10 01:06:23  vitus
+ * - added ST_AREASIZE
+ *
+ * Revision 1.9  1999/06/19 01:35:50  vitus
+ * - added IDM_NOBEEP!  Liesbeth told me to stop the beeping...
+ *
+ * Revision 1.8  1999/06/02 01:48:15  vitus
+ * - added  ICO_INVCHILDPDEV, ICO_INVCHILDARRAY
+ *
+ * Revision 1.7  1999/05/13 22:48:43  vitus
+ * - added IDM_REMOVE_CHILD
+ *
+ * Revision 1.6  1998/09/27 00:12:49  vitus
+ * - added ICO_DISABLEDPDEV, ICO_DISABLEDARRAY
+ *
+ * Revision 1.5  1998/09/20 20:42:40  vitus
+ * - added IDM_DRIVER submenu
+ *
+ * Revision 1.4  1998/06/09 01:33:20  vitus
+ * - added disk area dialog components
+ *
+ * Revision 1.3  1998/05/24 02:21:02  vitus
+ * - added drive type dialog
+ * - more icons
+ *
+ * Revision 1.2  1998/05/17 16:27:28  vitus
+ * - added popup menues
+ *
+ * Revision 1.1  1998/05/06 22:58:38  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-2001
+ */
+
+/* Other IDs */
+
+#define DID_HELP	9			/* Help Button (if unused) */
+#define	DID_START	10
+#define IDW_LOGBOOK	98
+
+
+/* Main window and menu */
+
+#define IDW_MAIN	100
+
+#define IDM_FILE	110
+#define IDM_SAVE	111
+#define IDM_SAVEAS	112
+#define IDM_PRINT	114
+
+#define IDM_EDIT	120
+#define IDM_CUT		121
+#define IDM_COPY	122
+#define IDM_PASTE	123
+#define IDM_CLEAR	124
+
+#define IDM_DRIVER	130
+#define IDM_VERSION	131
+#define IDM_MSGDUMP	132
+#define IDM_NOBEEP	133
+
+#define IDM_DRIVES	140
+#define IDM_DRVSETUP	141
+#define IDM_DRVDUMP	142
+
+#define IDM_HELP	170
+#define IDM_HELPINDEX	171
+#define IDM_GENERALHELP	172
+#define IDM_USINGHELP	173
+#define IDM_KEYSHELP	174
+#define IDM_ABOUT	175
+
+
+/* Drive setup window and popup menues */
+
+#define IDW_DRVSETUP	400
+#define ICO_LOCKEDDRIVE	401
+#define ICO_FREEDRIVE	402
+#define ICO_PDEVDRIVE	403
+#define ICO_RAIDDRIVE	404
+#define ICO_MISSINGDRIVE 405
+#define ICO_DISABLEDPDEV 406
+#define ICO_DISABLEDARRAY 407
+#define ICO_INVCHILDPDEV 408
+#define ICO_INVCHILDARRAY 409
+
+#define IDW_DRVCN	420
+
+#define IDPM_SNGDRV	430
+#define IDPM_MULDRV	431
+#define IDPM_NODRV	432
+#define IDM_CREATE_PDEV	440
+#define IDM_DELETE_PDEV	441
+#define IDM_DESTROY_DRV	442
+#define IDM_REMOVE_CHILD 443
+#define IDM_INVALID_CHILD 444
+#define IDM_REMOVE_SEL	445
+#define IDM_COMBINE_DRV	446
+#define IDM_NOTHING	447
+#define IDM_VERIFY_DRV	448
+#define IDM_REBUILD_DRV	449
+
+
+/* Some smaller windows */
+
+#define IDW_ABOUT	500
+#define ST_DESCRIPTION	501
+
+#define IDW_DRVDUMP	520
+#define EF_DRVINDEX	521
+
+#define IDW_INILOCATION	600
+#define EF_INILOCATION	601
+
+
+/* Drive type selection dialog */
+
+#define IDW_DRVTYPE	700
+#define CB_DRVTYPE	702
+#define SC_DRVSIZE	703
+
+/* disk area selection */
+
+#define IDW_DSKAREA	720
+#define LB_AREASIZE	721
+#define SL_AREAPERCENT	722
+#define ST_AREASIZE	723
+
+/* Array Verification Progress */
+
+#define IDW_PROGRESS	740
+#define SL_PROGPERCENT	742
+#define PB_PAUSERESUME	743
+@
+
+
+1.12
+log
+@- added IDs for Array Verification Progress
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.11 $
+ * $Date: 2000/04/10 01:24:03 $
+d10 3
+d48 1
+a48 1
+ * This code is Copyright Vitus Jensen 1998-2000
+d112 6
+a117 5
+#define IDM_REMOVE_SEL	444
+#define IDM_COMBINE_DRV	445
+#define IDM_NOTHING	446
+#define IDM_VERIFY_DRV	447
+#define IDM_REBUILD_DRV	448
+@
+
+
+1.11
+log
+@- added DID_HELP to give Help buttons an ID as long as they aren't used
+  to display a help panel.  This way help buttons may be hidden.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 2000/04/10 01:06:23 $
+d10 4
+d112 2
+d140 6
+@
+
+
+1.10
+log
+@- added ST_AREASIZE
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/06/19 01:35:50 $
+d10 3
+d46 1
+@
+
+
+1.9
+log
+@- added IDM_NOBEEP!  Liesbeth told me to stop the beeping...
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/06/02 01:48:15 $
+d10 3
+d37 2
+a38 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+d129 1
+@
+
+
+1.8
+log
+@- added  ICO_INVCHILDPDEV, ICO_INVCHILDARRAY
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/05/13 22:48:43 $
+d10 3
+d62 1
+@
+
+
+1.7
+log
+@- added IDM_REMOVE_CHILD
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1998/09/27 00:12:49 $
+d10 3
+d82 2
+@
+
+
+1.6
+log
+@- added ICO_DISABLEDPDEV, ICO_DISABLEDARRAY
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1998/09/20 20:42:40 $
+d7 1
+a7 1
+ * List of resource identifiers used.
+d10 3
+d28 2
+a29 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+d88 4
+a91 3
+#define IDM_REMOVE_SEL	443
+#define IDM_COMBINE_DRV	444
+#define IDM_NOTHING	445
+@
+
+
+1.5
+log
+@- added IDM_DRIVER submenu
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1998/06/09 01:33:20 $
+d10 3
+d74 2
+@
+
+
+1.4
+log
+@- added disk area dialog components
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/raid/setup/RCS/resources.h,v $
+ * $Revision: 1.3 $
+ * $Date: 1998/05/24 02:21:02 $
+d10 3
+d29 1
+a29 1
+#define	IDW_LOGBOOK	98
+d34 1
+a34 1
+#define	IDW_MAIN	100
+d36 25
+a60 21
+#define	IDM_FILE	110
+#define	IDM_SAVE	111
+#define	IDM_SAVEAS	112
+#define	IDM_PRINT	114
+
+#define	IDM_EDIT	120
+#define	IDM_CUT		121
+#define	IDM_COPY	122
+#define	IDM_PASTE	123
+#define	IDM_CLEAR	124
+
+#define	IDM_DRIVES	130
+#define	IDM_DRVSETUP	131
+#define	IDM_DRVDUMP	132
+
+#define	IDM_HELP	170
+#define	IDM_HELPINDEX	171
+#define	IDM_GENERALHELP	172
+#define	IDM_USINGHELP	173
+#define	IDM_KEYSHELP	174
+#define	IDM_ABOUT	175
+d65 6
+a70 6
+#define	IDW_DRVSETUP	400
+#define	ICO_LOCKEDDRIVE	401
+#define	ICO_FREEDRIVE	402
+#define	ICO_PDEVDRIVE	403
+#define	ICO_RAIDDRIVE	404
+#define	ICO_MISSINGDRIVE 405
+d72 1
+a72 1
+#define	IDW_DRVCN	420
+d87 2
+a88 2
+#define	IDW_ABOUT	500
+#define	ST_DESCRIPTION	501
+d90 2
+a91 2
+#define	IDW_DRVDUMP	520
+#define	EF_DRVINDEX	521
+d93 2
+a94 2
+#define	IDW_INILOCATION	600
+#define	EF_INILOCATION	601
+@
+
+
+1.3
+log
+@- added drive type dialog
+- more icons
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1998/05/17 16:27:28 $
+d10 4
+d99 2
+@
+
+
+1.2
+log
+@- added popup menues
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1998/05/06 22:58:38 $
+d10 3
+d19 2
+d24 3
+d52 2
+d55 5
+a59 2
+#define	ICO_DRIVE	401
+#define	ICO_BADDRIVE	402
+d74 2
+d84 11
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 3
+a11 1
+ * $Log$
+d43 1
+d45 15
+a59 1
+#define	IDW_DRVCN	450
+@

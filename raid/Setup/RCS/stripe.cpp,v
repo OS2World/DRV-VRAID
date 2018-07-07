@@ -1,0 +1,1296 @@
+head	1.15;
+access;
+symbols
+	VSETUPv0_84:1.15
+	VSETUP_82:1.13
+	VSETUPv0_80:1.10
+	VSETUPv0_71:1.5
+	VSETUPv0_70:1.5;
+locks; strict;
+comment	@// @;
+
+
+1.15
+date	2001.02.11.01.03.43;	author vitus;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2000.08.15.00.14.59;	author vitus;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2000.04.10.00.51.51;	author vitus;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	99.12.14.00.27.22;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	99.07.05.00.40.45;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.06.21.01.35.36;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.06.19.18.25.46;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.06.02.01.39.25;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.05.13.22.42.57;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.04.13.01.24.48;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	99.03.24.23.02.57;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	99.03.23.00.50.29;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	99.03.22.01.57.50;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	99.03.06.19.56.18;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.03.01.01.17.40;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Implements VStripe class
+@
+
+
+1.15
+log
+@- addChild: removed datav assert, when a child is missing
+  then there is no valid data
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/stripe.cpp,v $
+ * $Revision: 1.14 $
+ * $Date: 2000/08/15 00:14:59 $
+ * $Locker: vitus $
+ *
+ *	Implements VStripe class.
+ *
+ * $Log: stripe.cpp,v $
+ * Revision 1.14  2000/08/15 00:14:59  vitus
+ * - changed addChild() prototype
+ *
+ * Revision 1.13  2000/04/10 00:51:51  vitus
+ * - include VSetup.h instead of proto.h
+ *
+ * Revision 1.12  1999/12/14 00:27:22  vitus
+ * - more error logging
+ *
+ * Revision 1.11  1999/07/05 00:40:45  vitus
+ * - addChild() gets additional flag "config sector valid"
+ * - modifications to keep this flag in child table
+ *
+ * Revision 1.10  1999/06/21 01:35:36  vitus
+ * - corrected english spelling
+ *
+ * Revision 1.9  1999/06/19 18:25:46  vitus
+ * - minor corrections to keep compiler happy
+ *
+ * Revision 1.8  1999/06/02 01:39:25  vitus
+ * - queryIcon() returns ICO_INVCHILDPDEV if parent says that this
+ *   child is invalid
+ *
+ * Revision 1.7  1999/05/13 22:42:57  vitus
+ * - ioRemoveParent: clear parent's admin sector
+ * - ioDeleteYourself: no disk i/o
+ *
+ * Revision 1.6  1999/04/13 01:24:48  vitus
+ * - child now static member of object
+ *
+ * Revision 1.5  1999/03/24 23:02:57  vitus
+ * - allocateDescription() adds drive ID to description
+ * - addChild() array size calculation corrected
+ *
+ * Revision 1.4  1999/03/23 00:50:29  vitus
+ * - read method reads all childs and compares.  Currently differences are
+ *   only logged.  Better ideas?
+ *
+ * Revision 1.3  1999/03/22 01:57:50  vitus
+ * - ioDeleteYourself: first clear own sector and afterwards call childs
+ *
+ * Revision 1.2  1999/03/06 19:56:18  vitus
+ * - implemented queryIcon() method
+ *
+ * Revision 1.1  1999/03/01 01:17:40  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1999-2000
+ */
+static char const vcid[]="$Id: stripe.cpp,v 1.14 2000/08/15 00:14:59 vitus Exp vitus $";
+
+#include <assert.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <limits.h>
+
+#define __IBMC__	0
+#define INCL_WINPOINTERS
+#define INCL_DOS
+#define INCL_DOSDEVIOCTL
+#define INCL_ERRORS
+#include <os2.h>
+
+extern "C" {
+#include "../../../Lib/defines.h"
+#include "../../../Lib/verbose.h"
+}
+#include "VSetup.h"
+#include "resources.h"				// icon resources
+#include "drvif.h"
+
+#include "dskinfo.hpp"
+#include "Stripe.hpp"
+
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VStripe::VStripe(drive_id,nchd)
+ *
+ * PARAMETER
+ *	drive_id	ID of this chain
+ *	nchd		child count
+ *
+ * RETURNS
+ *	(nothing, C++)
+ *
+ * DESCRIPTION
+ *	Creates a new VRAID object in memory.
+ *
+ * REMARKS
+ */
+VStripe::VStripe(DEVID drive_id,int nchd)
+{
+    parent = NULL;
+    children = 0;
+    size = 0;
+    hostdrive = False;
+    writable = True;
+    memcpy(id, drive_id, sizeof(DEVID));
+
+    inv_icon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_INVCHILDARRAY);
+    rw_icon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_RAIDDRIVE);
+    ro_icon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_DISABLEDARRAY);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VStripe::~VStripe()
+ *
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	(nothing, C++)
+ *
+ * DESCRIPTION
+ *	Destroys VRAID memory object.
+ *
+ * REMARKS
+ */
+VStripe::~VStripe()
+{
+    WinDestroyPointer(rw_icon);
+    WinDestroyPointer(ro_icon);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VStripe::queryChildren()
+ *
+ * PARAMETER
+ *	(none)
+ * RETURNS
+ *	count
+ * DESCRIPTION
+ *	Returns count of children.
+ *
+ * REMARKS
+ */
+int
+VStripe::queryChildren()
+{
+    return children;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VStripe::getChild(index)
+ *
+ * PARAMETER
+ *	index		which child
+ * RETURNS
+ *	pointer
+ *
+ * DESCRIPTION
+ *	Returns pointer to a child.
+ *
+ * REMARKS
+ */
+VRDev *
+VStripe::getChild(int index)
+{
+    if( index >= children )
+	return 0;
+    return child[index].rdev;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VStripe::allocateDescription()
+ *
+ * PARAMETER
+ *	(none)
+ * RETURNS
+ *	ASCIIZ
+ *
+ * DESCRIPTION
+ *	Allocates buffer and fills it with description of this object.
+ *
+ * REMARKS
+ */
+char *
+VStripe::allocateDescription()
+{
+    char * descr = new char[80];
+    if( hostdrive == True  &&  os2access != - 1UL )
+	sprintf(descr, "RAID 0 (Striping) (OS/2 Drive %lu)\n"
+		"ID %02X%02X%02X%02X%02X%02X    %lu MByte",
+		os2access,
+		id[0],id[1],id[2],id[3],id[4],id[5],
+		size / 2 / 1024);
+    else
+	sprintf(descr, "RAID 0 (Striping)\n"
+		"ID %02X%02X%02X%02X%02X%02X    %lu MByte",
+		id[0],id[1],id[2],id[3],id[4],id[5],
+		size / 2 / 1024);
+    return descr;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VStripe::queryIcon()
+ *
+ * PARAMETER
+ *	(none)
+ * RETURNS
+ *	HPOINTER to display
+ * DESCRIPTION
+ *	Returns icon to reflect the logical state of this drive.
+ *
+ * REMARKS
+ */
+HPOINTER
+VStripe::queryIcon()
+{
+    if( parent != 0  &&  parent->isValidChild(this) == False )
+	return inv_icon;
+    else if( writable == True )
+	return rw_icon;
+    else
+	return ro_icon;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VStripe::setHostdrive(os2idx)
+ *
+ * PARAMETER
+ *	os2idx		accessable through this PDsk*() index
+ *			or -1 if it isn't accessable.
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Marks this array as a host drive with or w/o
+ *	OS/2 access.
+ *
+ * REMARKS
+ */
+void
+VStripe::setHostdrive(ULONG os2idx)
+{
+    hostdrive = True;
+    os2access = os2idx;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VStripe::addChild(newchild, cfgv, datav)
+ *
+ * PARAMETER
+ *	newchild	pointer to child to add
+ *	cfgv		configuration already written?
+ *	data		whether data of this child is valid (ignored)
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Adds a new child to our VRAID object.
+ *
+ * REMARKS
+ */
+void
+VStripe::addChild(VRDev * newchild, Boolean cfgv, ULONG datav)
+{
+    assert( newchild != NULL );
+
+    /* Set double link between child and parent. */
+
+    child[children].rdev = newchild;
+    child[children].cfgok = cfgv;
+    newchild->setParent(this);
+
+    /* Update our object with child's information. */
+
+    ULONG	childsize = newchild->querySize();
+    for( int i = 0; i < children; ++i )
+    {
+	ULONG	ul;
+
+	if( (ul = child[i].rdev->querySize()) < childsize )
+	    childsize = ul;
+    }
+
+    size = (children + 1) * childsize;
+    if( newchild->isWritable() == False )
+	writable = False;			/* oups, it isn't 'changable' */
+
+    ++children;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VStripe::ioDeleteYourself()
+ *
+ * PARAMETER
+ *	this		to be removed
+ *
+ * RETURNS
+ *	count of errors
+ *
+ * DESCRIPTION
+ *	Remove any traces of ourself from physical storage.
+ *	This is done by telling all children that we are about
+ *	to be killed (they might set the "HOSTDRIVE" in their
+ *	configuration sectors) and clearing our own sector.
+ *
+ * REMARKS
+ */
+int
+VStripe::ioDeleteYourself()
+{
+    int		i;
+    int		errors = 0;
+
+
+    /* Update all children (parent removed -> marked in sector) */
+
+    for( i = 0; i < children; ++i )
+    {
+	if( child[i].rdev != NULL )
+	{
+	    errors += child[i].rdev->ioRemoveParent();
+	    child[i].rdev = NULL;		// forget this child
+	}
+    }
+
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VStripe::ioRemoveParent()
+ *
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	0		OK
+ *
+ * DESCRIPTION
+ *	Removes any traces of parent from configuration sectors.  Means
+ *	this array becomes hostdrive!
+ *
+ * REMARKS
+ */
+int
+VStripe::ioRemoveParent()
+{
+    PSEC_VRDEV	sec = new SEC_VRDEV;
+    int		errors = 0;
+    APIRET	rc;
+
+
+    /* 1st: clear administrative sector of parent. */
+
+    memset(sec, 0, SECTOR_SIZE);
+    rc = write(1, 1, sec);
+    if( rc != 0 )
+    {
+	Verbose(1, "VStripe::ioRemoveParent", "can't clear parent SEC_VRDEV - rc %lu", rc);
+	++errors;
+    }
+
+    /* 2nd: set RDFLAG_HOSTDRIVE */
+
+    do
+    {
+	rc = read(0, 1, sec);			// remember: 0 defines ourself
+	if( rc != 0 )
+	{
+	    Verbose(1, "VStripe::ioRemoveParent", "can't read own SEC_VRDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	sec->u.s.flags |= RDFLAG_HOSTDRIVE;	// no parent means hostdrive
+	sec->timestamp = time(NULL);		// UTC of change
+	sec->crc = Crc16(sec, SECTOR_SIZE-2);	// !!!
+
+	rc = write(0, 1, sec);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VStripe::ioRemoveParent", "can't write own SEC_VRDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	parent = NULL;				// none
+    }
+    while(0);
+
+    delete sec;
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VStripe::ioChangeID(newid)
+ *
+ * PARAMETER
+ *	newid		new ID
+ * RETURNS
+ *	count of errors
+ *
+ * DESCRIPTION
+ *	Changes it's own DEVID.
+ *
+ * REMARKS
+ */
+int
+VStripe::ioChangeID(DEVID newid)
+{
+    PSEC_VRDEV	sec = new SEC_VRDEV;
+    int		errors = 0;
+
+    memcpy(id, newid, sizeof(DEVID));		// update object
+
+    do
+    {
+	APIRET	rc;
+
+	rc = read(0, 1, sec);			// remember: 0 defines ourself
+	if( rc != 0 )
+	{
+	    Verbose(1,"VStripe::ioChangeID","can't read own SEC_VRDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	memcpy(sec->u.s.id, newid, sizeof(DEVID));
+	sec->timestamp = time(NULL);		// UTC of change
+	sec->crc = Crc16(sec, SECTOR_SIZE-2);	// !!!
+
+	rc = write(0, 1, sec);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VStripe::ioChangeID", "can't write own SEC_VRDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+    }
+    while(0);
+
+    delete sec;
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VStripe::ioSync()
+ *
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	count of errors
+ *
+ * DESCRIPTION
+ *	'this' has been changed by the user -> update physical storage.
+ *
+ * REMARKS
+ */
+int
+VStripe::ioSync()
+{
+    PSEC_VRDEV	sec = new SEC_VRDEV;
+    USHORT	i;
+    ULONG	ul;
+    int		errors = 0;
+
+
+    /* First: fill configuration sector of current level. */
+
+    memset(sec, 0, sizeof(*sec));
+    memcpy(sec->sectype, "VRAIDDEVICE     ", 16);
+    sec->timestamp = time(NULL);
+
+    memcpy(sec->u.s.id, id, sizeof(DEVID));
+    sec->u.s.type = RDTYPE_STRIPE;
+    sec->u.s.flags = (UCHAR)(parent != 0 ? 0 : 0x80);
+
+    sec->u.s.children = children;
+
+
+    /* 2nd: recalculate drive size, correct size of children.
+     * The current values were only wild guesses. */
+
+    size = 0;
+    ul = (ULONG)ULONG_MAX;
+    for( i = 0; i < children; ++i )
+    {
+	ul = min(ul, child[i].rdev->querySize());
+    }
+    for( i = 0; i < children; ++i )
+    {
+	sec->u.s.child[i].size = ul;
+	size += ul;
+    }
+
+
+    /* 3rd: update all children and record their IDs. */
+
+    for( i = 0; i < children; ++i )
+    {
+	child[i].rdev->ioSync();
+	memcpy(sec->u.s.child[i].id, child[i].rdev->queryID(), sizeof(DEVID));
+    }
+
+
+    /* Last: write administrative sector of current level. */
+
+    sec->crc = Crc16(sec, SECTOR_SIZE-2);
+    APIRET rc = write(0, 1, sec);
+    if( rc != 0 )
+    {
+	Verbose(1, "VStripe::ioSync", "write(0,1,...) - rc %lu, not updated", rc);
+	++errors;
+    }
+
+    delete sec;
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VStripe::querySize()
+ *
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	size of array
+ *
+ * DESCRIPTION
+ *	Guess!
+ *
+ * REMARKS
+ */
+ULONG
+VStripe::querySize()
+{
+    return size;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VStripe::read(offset,count,buffer)
+ *
+ * PARAMETER
+ *	offset		offset in configuratoin space
+ *	count		sector count
+ *	buffer		sector data
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		APIRET
+ *
+ * DESCRIPTION
+ *	Reads data from configuration sectors of this VRAID drive.
+ *
+ * REMARKS
+ *	Should read all children and compare. xxx
+ *	Should test 'valid'. xxx
+ */
+APIRET
+VStripe::read(ULONG offset,ULONG count,PVOID buffer)
+{
+    PUCHAR	copybuf = new UCHAR[count];
+    int		goodchildren = 0;
+    APIRET	rc = VERROR_NO_CONTENTS;
+
+    for( int i = 0; i < children; ++i )
+    {
+	if( !child[i].cfgok )
+	    continue;				// nothing on this child
+
+	rc = child[i].rdev->read(offset+1, count, buffer);
+	if( rc != 0 )
+	    continue;				// Verbose() already called
+	if( goodchildren == 0 )
+	    memcpy(copybuf, buffer, (size_t)count);
+	else if( memcmp(copybuf, buffer, (size_t)count) != 0 )
+	    Verbose(0, "VStripe", "Data error when reading child %d, ignored", i);
+	++goodchildren;
+    }
+
+    delete[] copybuf;
+    return (goodchildren == 0 ? rc : 0);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VStripe::write(offset,count,buffer)
+ *
+ * PARAMETER
+ *	offset		offset in configuratoin space
+ *	count		sector count
+ *	buffer		sector data
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		APIRET
+ *
+ * DESCRIPTION
+ *	Writes data to configuration sectors of this VRAID drive.
+ *
+ * REMARKS
+ *	Should test 'valid'. xxx
+ */
+APIRET
+VStripe::write(ULONG offset,ULONG count,PVOID buffer)
+{
+    APIRET	rc = 0;
+
+    for( int i = 0; i < children; ++i )
+	rc |= child[i].rdev->write(offset+1, count, buffer);
+    return rc;
+}
+@
+
+
+1.14
+log
+@- changed addChild() prototype
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.13 $
+ * $Date: 2000/04/10 00:51:51 $
+d10 3
+d59 1
+a59 1
+static char const vcid[]="$Id: stripe.cpp,v 1.13 2000/04/10 00:51:51 vitus Exp vitus $";
+d281 1
+a281 1
+ *	data		whether data of this child is valid (uptodate)
+a294 1
+    assert( datav == -1ul );			/* can't handle invalid children */
+@
+
+
+1.13
+log
+@- include VSetup.h instead of proto.h
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.12 $
+ * $Date: 1999/12/14 00:27:22 $
+d10 3
+d56 1
+a56 1
+static char const vcid[]="$Id: stripe.cpp,v 1.12 1999/12/14 00:27:22 vitus Exp vitus $";
+d273 1
+a273 1
+ * VStripe::addChild(newchild,cfgv,datav)
+d289 1
+a289 1
+VStripe::addChild(VRDev * newchild,Boolean cfgv,Boolean datav)
+d292 1
+@
+
+
+1.12
+log
+@- more error logging
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.11 $
+ * $Date: 1999/07/05 00:40:45 $
+d10 3
+d50 2
+a51 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1999
+d53 1
+a53 1
+static char const vcid[]="$Id: stripe.cpp,v 1.11 1999/07/05 00:40:45 vitus Exp vitus $";
+d73 1
+a75 1
+#include "proto.h"
+d85 2
+a86 2
+ * CALL
+ *	VStripe::VStripe(drive_id,nchd)
+d117 2
+a118 2
+ * CALL
+ *	VStripe::~VStripe()
+d139 2
+a140 2
+ * CALL
+ *	VStripe::queryChildren()
+d160 2
+a161 2
+ * CALL
+ *	VStripe::getChild(index)
+d184 2
+a185 2
+ * CALL
+ *	VStripe::allocateDescription()
+d218 2
+a219 2
+ * CALL
+ *	VStripe::queryIcon()
+d244 2
+a245 2
+ * CALL
+ *	VStripe::setHostdrive(os2idx)
+d270 2
+a271 2
+ * CALL
+ *	VStripe::addChild(newchild,cfgv,datav)
+d318 2
+a319 2
+ * CALL
+ *	ioDeleteYourself()
+d359 2
+a360 2
+ * CALL
+ *	VStripe::ioRemoveParent()
+d426 2
+a427 2
+ * CALL
+ *	VStripe::ioChangeID(newid)
+d480 2
+a481 2
+ * CALL
+ *	VStripe::ioSync()
+d557 2
+a558 2
+ * CALL
+ *	VStripe::querySize()
+d579 2
+a580 2
+ * CALL
+ *	VStripe::read(offset,count,buffer)
+d627 2
+a628 2
+ * CALL
+ *	VStripe::write(offset,count,buffer)
+@
+
+
+1.11
+log
+@- addChild() gets additional flag "config sector valid"
+- modifications to keep this flag in child table
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/06/21 01:35:36 $
+d10 4
+d50 1
+a50 1
+static char const vcid[]="$Id: stripe.cpp,v 1.10 1999/06/21 01:35:36 vitus Exp vitus $";
+d374 1
+d380 4
+a383 1
+    if( write(1, 1, sec) != 0 )
+d385 1
+a385 1
+
+a390 2
+	APIRET	rc;
+
+d394 1
+a394 1
+	    Verbose(1, "VStripe", "can't read own SEC_VRDEV - rc %lu", rc);
+d406 1
+a406 1
+	    Verbose(1, "VStripe", "can't write own SEC_VRDEV - rc %lu", rc);
+d450 1
+a450 1
+	    Verbose(1, "VStripe", "can't read own SEC_VRDEV - rc %lu", rc);
+d462 1
+a462 1
+	    Verbose(1, "VStripe", "can't write own SEC_VRDEV - rc %lu", rc);
+d540 1
+a540 1
+    if( rc )
+d542 1
+a542 1
+	Verbose(1, "VStripe", "write(0,1,...) - rc %lu, not updated", rc);
+@
+
+
+1.10
+log
+@- corrected english spelling
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/06/19 18:25:46 $
+d10 3
+d46 1
+a46 1
+static char const vcid[]="$Id: stripe.cpp,v 1.9 1999/06/19 18:25:46 vitus Exp vitus $";
+d66 1
+a66 1
+#include "resources.h"
+d170 1
+a170 1
+    return child[index];
+d264 1
+a264 1
+ *	VStripe::addChild(newchild,valid)
+d267 2
+a268 1
+ *	valid		whether this child is valid (uptodate)
+d279 1
+a279 1
+VStripe::addChild(VRDev * newchild,Boolean valid)
+d285 2
+a286 1
+    child[children] = newchild;
+d296 1
+a296 1
+	if( (ul = child[i]->querySize()) < childsize )
+d338 1
+a338 1
+	if( child[i] != NULL )
+d340 2
+a341 2
+	    errors += child[i]->ioRemoveParent();
+	    child[i] = NULL;			// forget this child
+d512 1
+a512 1
+	ul = min(ul, child[i]->querySize());
+d525 2
+a526 2
+	child[i]->ioSync();
+	memcpy(sec->u.s.child[i].id, child[i]->queryID(), sizeof(DEVID));
+d593 1
+a593 1
+    APIRET	rc;
+d597 4
+a600 1
+	rc = child[i]->read(offset+1, count, buffer);
+d641 1
+a641 1
+	rc |= child[i]->write(offset+1, count, buffer);
+@
+
+
+1.9
+log
+@- minor corrections to keep compiler happy
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/06/02 01:39:25 $
+d10 3
+d43 1
+a43 1
+static char const vcid[]="$Id: stripe.cpp,v 1.8 1999/06/02 01:39:25 vitus Exp vitus $";
+d92 1
+a92 1
+    childs = 0;
+d130 1
+a130 1
+ *	VStripe::queryChilds()
+d136 1
+a136 1
+ *	Returns count of childs.
+d141 1
+a141 1
+VStripe::queryChilds()
+d143 1
+a143 1
+    return childs;
+d165 1
+a165 1
+    if( index >= childs )
+d281 1
+a281 1
+    child[childs] = newchild;
+d287 1
+a287 1
+    for( int i = 0; i < childs; ++i )
+d295 1
+a295 1
+    size = (childs + 1) * childsize;
+d299 1
+a299 1
+    ++childs;
+d316 1
+a316 1
+ *	This is done by telling all childs that we are about
+d329 1
+a329 1
+    /* Update all childs (parent removed -> marked in sector) */
+d331 1
+a331 1
+    for( i = 0; i < childs; ++i )
+d497 1
+a497 1
+    sec->u.s.childs = childs;
+d500 1
+a500 1
+    /* 2nd: recalculate drive size, correct size of childs.
+d504 2
+a505 2
+    ul = ULONG_MAX;
+    for( i = 0; i < childs; ++i )
+d509 1
+a509 1
+    for( i = 0; i < childs; ++i )
+d516 1
+a516 1
+    /* 3rd: update all childs and record their IDs. */
+d518 1
+a518 1
+    for( i = 0; i < childs; ++i )
+d580 1
+a580 1
+ *	Should read all childs and compare. xxx
+d587 1
+a587 1
+    int		goodchilds = 0;
+d590 1
+a590 1
+    for( int i = 0; i < childs; ++i )
+d595 1
+a595 1
+	if( goodchilds == 0 )
+d599 1
+a599 1
+	++goodchilds;
+d603 1
+a603 1
+    return (goodchilds == 0 ? rc : 0);
+d632 1
+a632 1
+    for( int i = 0; i < childs; ++i )
+@
+
+
+1.8
+log
+@- queryIcon() returns ICO_INVCHILDPDEV if parent says that this
+  child is invalid
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/05/13 22:42:57 $
+d10 4
+d40 1
+a40 1
+static char const vcid[]="$Id: stripe.cpp,v 1.7 1999/05/13 22:42:57 vitus Exp vitus $";
+d187 1
+a187 1
+    if( hostdrive == True  &&  os2access != - 1)
+d492 1
+a492 1
+    sec->u.s.flags = (parent != 0 ? 0 : 0x80);
+d593 2
+a594 2
+	    memcpy(copybuf, buffer, count);
+	else if( memcmp(copybuf, buffer, count) != 0 )
+@
+
+
+1.7
+log
+@- ioRemoveParent: clear parent's admin sector
+- ioDeleteYourself: no disk i/o
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1999/04/13 01:24:48 $
+d10 4
+d36 1
+a36 1
+static char const vcid[]="$Id: stripe.cpp,v 1.6 1999/04/13 01:24:48 vitus Exp vitus $";
+d91 1
+d215 3
+a217 1
+    if( writable == True )
+@
+
+
+1.6
+log
+@- child now static member of object
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1999/03/24 23:02:57 $
+d10 3
+d32 1
+a32 1
+static char const vcid[]="$Id: stripe.cpp,v 1.5 1999/03/24 23:02:57 vitus Exp vitus $";
+d315 1
+a315 10
+    /* 1st: clear administrative sector of current level. */
+
+    PUCHAR	buffer = new UCHAR[SECTOR_SIZE];
+    memset(buffer, 0, SECTOR_SIZE);
+    if( write(0, 1, buffer) != 0 )
+	++errors;
+    delete[] buffer;
+
+
+    /* 2nd: update all childs (parent removed -> marked in sector) */
+d351 10
+@
+
+
+1.5
+log
+@- allocateDescription() adds drive ID to description
+- addChild() array size calculation corrected
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1999/03/23 00:50:29 $
+d10 4
+d29 1
+a29 1
+static char const vcid[]="$Id: stripe.cpp,v 1.4 1999/03/23 00:50:29 vitus Exp vitus $";
+a82 1
+    child = new VRDev *[nchd];
+a105 2
+    delete[] child;				// delete table of childs
+
+@
+
+
+1.4
+log
+@- read method reads all childs and compares.  Currently differences are
+  only logged.  Better ideas?
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1999/03/22 01:57:50 $
+d10 4
+d25 1
+a25 1
+static char const vcid[]="$Id: stripe.cpp,v 1.3 1999/03/22 01:57:50 vitus Exp vitus $";
+d175 5
+a179 2
+	sprintf(descr, "RAID 0 (Striping) (OS/2 Drive %lu)\n%lu MByte",
+		os2access, size / 2 / 1024);
+d181 4
+a184 1
+	sprintf(descr, "RAID 0 (Striping)\n%lu MByte", size / 2 / 1024);
+d268 10
+a277 1
+    size += newchild->querySize();
+@
+
+
+1.3
+log
+@- ioDeleteYourself: first clear own sector and afterwards call childs
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1999/03/06 19:56:18 $
+d10 3
+d21 1
+a21 1
+static char const vcid[]="$Id: stripe.cpp,v 1.2 1999/03/06 19:56:18 vitus Exp vitus $";
+d548 18
+a565 1
+    return child[0]->read(offset+1, count, buffer);
+@
+
+
+1.2
+log
+@- implemented queryIcon() method
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1999/03/01 01:17:40 $
+d10 3
+a14 1
+ *
+d18 1
+a18 1
+static char const vcid[]="$Id: stripe.cpp,v 1.1 1999/03/01 01:17:40 vitus Exp vitus $";
+d96 2
+a97 1
+    delete[] child;
+d288 11
+a298 1
+    /* 1st: update all childs (parent removed -> marked in sector) */
+d305 1
+a305 1
+	    child[i] = NULL;
+a307 9
+
+
+    /* 2nd: clear administrative sector of current level. */
+
+    PUCHAR	buffer = new UCHAR[SECTOR_SIZE];
+    memset(buffer, 0, SECTOR_SIZE);
+    if( write(0, 1, buffer) != 0 )
+	++errors;
+    delete[] buffer;
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 4
+a12 1
+ * $Log$
+d16 1
+a16 1
+static char const vcid[]="$Id$";
+d26 1
+d36 1
+d41 1
+a41 1
+
+d71 3
+d95 2
+d177 24
+d243 2
+@

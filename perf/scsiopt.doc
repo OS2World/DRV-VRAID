@@ -1,0 +1,354 @@
+-*- Mode: indented-text -*-
+--- $Id: scsiopt.doc,v 1.4 1998/03/04 02:24:32 vitus Exp $
+
+    SCSI Optimizer - Driver Dokumentation
+
+
+DESCRIPTION
+
+    SCSIOpt is a simple OS/2 filter driver to modify some performance
+    related mode pages of your SCSI devices.
+
+    Source code  is included to serve  as  a sample how  to  write a
+    16bit driver.
+
+
+LEGAL STUFF (we need this, don't we?)
+
+    The author  disclaims all warranties  as to this software, whether
+    express  or  implied,  including  without limitation  any  implied
+    warranties of  merchantability, fitness for  a particular purpose,
+    functionality,  data  integrity  or   protection,   in so  far  as
+    permitted by applicable legislation.
+
+    All trademarks are property of their respective owners and appear
+    for identification purposes only.
+
+    There is a copyright  on some  source code  files in  this archive
+    (cmd* files) but as they are freely distributed via IBM's webpages
+    I don't think this is a problem.  All other sources are put to the
+    public domain in the hope that they may be usefull.
+
+
+CAUTION
+
+    Modifying mode  pages on SCSI devices is  a very low-level action.
+    Although I have  never encountered a  totally useless device  when
+    experimenting with SCSIOpt.flt you may end up reading strange data
+    (which in turn may lock up your  OS/2).  For this reason I decided
+    that this driver  will never save a mode  page permanently.   Just
+    power cycle your machine, remove  SCSIOpt.flt from your config.sys
+    (booting from  floppy if neccessary) and  you are back to what you
+    had before trying SCSIOpt.flt.
+
+
+INSTALLATION
+
+    It is recommended you  have an OS/2 boot disk  ready, just in case
+    the system locks up during the boot process and you want to remove
+    the driver.  On Warp you may use ALT-F1, C for the same purpose to
+    boot to a command line with your orginal Config.Sys.
+
+    Execute DDINSTAL from a  OS/2 command  prompt or double-click  the
+    Device Driver Install object  (located in the System Setup folder)
+    if your system is Warp.  Change the source directory if neccessary
+    and a  selection list will  open asking you   to install the 'SCSI
+    Optimizer'.  Mark that line and click on OK.
+
+    Installation by hand is easy:
+
+	Copy  SCSIOpt.flt to c:\ or  c:\os2\boot, assuming c: is your
+	boot drive.
+
+	Edit  your  c:\Config.Sys file (i.e.  using  the  OS/2 "System
+	Editor"):
+
+	Add the following line to your Config.Sys:
+	BASEDEV=SCSIOpt.flt /V		(no subdirectory name!)
+
+    The  position   of  'BASEDEV=SCSIOpt.flt' in  Config.Sys  doesn't
+    matter.  If, however, you encounter  problems try top of file  (if
+    this  solves  your problems please report  with  a listing of your
+    Config.Sys).
+
+    After installation this driver will do nothing but search for SCSI
+    devices and display  their  coordinates.  This  will allow you  to
+    select the devices you might be able to modify.
+
+    No  modifications  are actually done.   See  below  how  to modify
+    pages.
+
+
+OPTIONS
+
+    Two general options, i.e. option which have to appear before any
+    '/A:n' option:
+
+    /V
+	Verbose, display some usefull and unusefull information (this
+	switch is enabled in automatic installations).
+	Without this switch the driver will be quiet except for fatal
+	errors.
+
+    /DEBUG
+	Debugging display, a lot of.
+
+    One  word  about screen output:    BASEDEV drivers cannot  display
+    anything   on the console  immediately,  they queue messages to be
+    displayed later by  the  system initialization.  Due to  this fact
+    you might not   see any  messages at  all  (if system  hangs/traps
+    before they are yanked to console).
+
+    Best chances to see anything is to copy  this driver to the second
+    of your  "utility disks" (or installation  disks  if you don't run
+    Warp), change  the Config.Sys there (BASEDEV=SCSIOpt.flt /DEBUG
+    and boot from them.  Now you don't rely on any SCSI device.
+
+    If you get  a  SYS2068 at  boot time,  all messages  generated  by
+    BASEDEV    drivers exceed a  kernel limit   and nothing  at all is
+    displayed.  Ignore  that  error and   use SCSIOpt.exe  to  display
+    SCSIOpt.flt messages or change options to display less.
+
+
+    Adapter selection option:
+
+    /A:n
+	'n' is an index, it depends on the ADD order in your
+	Config.Sys and numbers all adapter (including floppy
+	controllers, etc.).
+
+
+    Unit control options (used after /A:n):
+
+    /E:(u1,page1,mask1),(u1,page2,mask2),...
+
+    /!E:(u1,page1,mask1),(u2,page2,mask2),...
+
+	'u' is  an unit index which  the  ADD determines.   BTW: these
+	values  are  displayed by   SCSIOpt.flt during  boot if /V  or
+	/DEBUG option is provided.
+
+	These options allow you to specify which pages to modify.  Use
+	'/E:' to enable   features and '/!E:' to   disable them.   Any
+	combination  is valid, the last  option of conflicting options
+	will survive.
+
+
+MODE PAGE OPTIONS
+
+    As the general layout of a mode page option is (<unit index>,<page
+    number>,<mask>) you have three values to supply:
+
+	<unit index>	this value depends on the ADD which controls
+			a unit.  Enable SCSIOpt's option '/V' and you
+			will see messages telling what indexes were
+			found.
+
+	<page number>	tells SCSIOpt which page to change
+
+	<mask>		tells SCSIOpt which features of a mode page to
+			enable/disable.  This is a bit-coded value
+			(but decimal...).
+
+	page	bit(2^x) description (enable/disable ...)
+
+	2	0	... disconnect because of empty (read) or full
+			(write) buffers
+	2	1	... inactive bus timeout
+	2	2	... disconnect timeout
+	2	3	... connect timeout
+
+	8	0	... write cache
+	8	1	... read cache
+	8	2	... prefetch
+	8	3	... higher importance of prefected data than
+			regular data
+
+	10	0	... tagged queuing
+	10	1	... unrestricted command reordering
+
+	13	<all>	... seconds until CD-ROM stops spinning (up to
+			    1920 supported (= 32 minutes)) [this is *not*
+			    bit-coded!]
+
+
+    Hint: if you set 'page'  to a supported value  and 'mask' to  zero
+    SCSIOpt   will read  that page and    test whether it has  SCSI-II
+    layout.  If you add '/V' to your command line  it will display the
+    current settings, too!
+
+
+SUPPORT PROGRAMS
+
+    SCSIOpt.flt   contains    a simple   IOCtl   interface   to  allow
+    applications to retrieve  messages displayed at  boot time.  It is
+    described in dskpfpub.h and used by SCSIOpt.exe.
+
+    Just execute SCSIOpt without parameters  and it will display those
+    messages.  Very simple.
+
+
+TESTED EQUIPMENT
+
+    I added  a list of option which  were tested with my devices here.
+    Keep in mind that in SCSI many things are free to support, so even
+    with a newer device you might have less options to change.
+
+    If  you happen to  know a vendor unique mode  page  that you think
+    should  be  modified: please mail vendor  string,  device and mode
+    page description.
+
+
+    Western Digital - Piranha SP4200
+
+	Disconnect-reconnect page(2)
+
+	    buffer full/empty	not supported
+	    bus inactive	not supported
+
+	Cache Page(8)
+
+	    Read Cache Disable	supported
+	    Write Cache Enable	not supported
+	    pre-fetch		not supported
+	    priority		not supported
+
+	Control Page(10)	- cannot be read
+
+
+    IBM DORS-32160
+
+	Disconnect-reconnect page(2)
+
+	    buffer full/empty		supported
+	    bus inactive timeout	not supported
+	    connection timeout		not supported
+	    disconnection timeout	not supported
+
+	Cache Page(8)
+
+	    Read Cache Disable	supported
+	    Write Cache Enable	supported
+	    pre-fetch		supported
+	    priority		not supported
+
+	Control Page(10)
+
+	    Algorithm		unrestricted and restricted supported
+	    tagged queuing	not tested
+
+
+    Sony CDU-615S
+
+	Disconnect-reconnect page(2)
+
+	    buffer full		not supported
+	    bus inactive	not supported (device ignores new values)
+
+	Cache Page(8)		- cannot be read
+
+	Control Page(10)	- cannot be read
+
+	CDROM Page(13)		- supported
+
+    Tandberg TDC-3660
+
+	Disconnect-reconnect page(2)	- cannot be read
+
+
+    Seagate WREN Runner 7 (Imprimis)
+
+	Layout of mode pages isn't SCSI-II compatible.
+
+
+
+TODO LIST
+
+    - Ideas from YOU?
+
+    - remove SCSIOpt.flt   from memory  to save  some   KB of  memory.
+      Perhaps  switched on or   off  with a parameter  (/V  -  keep in
+      memory?).
+
+    - Keep SCSIOpt.flt  in  memory and write a  simple  .EXE to change
+      values at any  time.  But this is the   same I already  did with
+      ASPI Router for OS/2  and scache.exe (see aspi01.zip or higher).
+      Pro:  it would  demonstrate  a complete  filter; Con: it's  more
+      dangerous to change at runtime as at  boot time (a SCSI bus hang
+      or reset affects all devices on that bus).
+
+    - easier user  interface to select which pages  and how to modify.
+      I'm most certainly not satisfied with the current solution.
+
+    - Use Daniela Engert's description to make  this driver full 32bit
+      without  mwdd32.zip.   Nice   exercise and would   support  more
+      compilers.
+
+
+COMPILING
+
+    What do you need?
+
+    - IBM's DDK for OS/2:
+
+	available     from   http://service.boulder.ibm.com/ddk/ after
+	registration at no charge.
+
+    - a 16bit C compiler
+
+	supported out of the box  are Micro Soft C  5.1 - 7.0 (request
+	C7OS2.ZIP to get those OS/2 files  Micro Soft removed from the
+	7.0 release) and WatCom C 10.0 and higher.
+
+	IMHO Visual C 1.x should work, too; but you would have to use
+	a MDOS session.
+
+	You should be able to use any other 16bit compiler for OS/2
+	or DOS, but would have to make the modifications yourself.
+
+    - a 16bit assembler
+
+	the DDK  ships with  MASM 5.1 and  ALP.  Makefiles  are mostly
+	written for MASM, but TASM or (brrr) WASM should be possible.
+
+	It's  only a  single file  if you  don't  plan to  rebuild the
+	support libraries supplied by the DDK.
+
+    - DMake
+
+	DMake    3.8  and  4.0   are   available  as  dmake38.zip  and
+	dmake40o.zip.  Porting to a GNU Make compatible tool shouldn't
+	be too much work.
+
+    Actually compiling
+
+    - setup your compiler (PATH and INCLUDE files)
+    - extract long arithmetik support routines (see Makefile)
+    - edit Makefile (path to DDK)
+    - type 'DMake debug all'
+
+    Debugging
+
+    - Debugging device  drivers is documented  in  the DDK.   It's not
+      complicated but you need some time to get used to it, especially
+      if you  plan  to  use a  simple   terminal (as I  like   to do).
+      Expirience with DEBUG or SYMDEB is helpfull.
+
+
+AUTHOR
+
+    Vitus Jensen
+
+    Address: Tischlerstr. 8, D-30916 Isernhagen, Germany
+    Fidonet: 2:2474/424, OS2Net, TeamOS/2 Net
+    Usenet: Vitus_Jensen@teaparty.fido.de
+    BBS: +49-5136-893003 (X.75, V32bis)
+    FAX: +49-5136-893003
+
+    Music: J.S.Bach Orchestersuiten, J.S.Bach Goldberg-Variationen
+
+    Written for Version: 0.71
+    Date: 03.03.1998
+    Other products: dsksl*.zip, dtest*.zip, aspio*.zip
+
+=== The End ===

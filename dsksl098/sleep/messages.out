@@ -1,0 +1,29 @@
+
+SCSI Disk Sleeper                                            Version 0.98
+Copyright 1996-97 by Vitus Jensen (2:2474/424)               Feb 13 2001Not registered for commercial use
+ScanDevices
+Looking for ADDs
+Looking for Adapters
+Looking for Adapters
+Looking for Units
+allocated unit structure: 0642
+InstallFilter 0642
+Registering device class
+InstallFilter endsAdapter 1, Unit 0 installed (40 min)
+Looking for Adapters
+Looking for Units
+allocated unit structure: 07AF
+InstallFilter 07AF
+InstallFilter endsAdapter 2, Unit 0 installed (40 min)
+allocated unit structure: 091C
+InstallFilter 091C
+InstallFilter endsAdapter 2, Unit 1 installed (40 min)
+allocated unit structure: 0A89
+InstallFilter 0A89
+InstallFilter endsAdapter 2, Unit 2 installed (40 min)
+allocated unit structure: 0BF6
+InstallFilter 0BF6
+InstallFilter endsAdapter 2, Unit 3 installed (40 min)
+Looking for Adapters
+Installing timer
+Driver installedSymbols linked (vraid)

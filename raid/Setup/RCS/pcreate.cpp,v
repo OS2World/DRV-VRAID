@@ -1,0 +1,753 @@
+head	1.2;
+access;
+symbols
+	VSETUPv0_84:1.2;
+locks; strict;
+comment	@// @;
+
+
+1.2
+date	2000.05.28.19.53.07;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.28.17.38.06;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Routines to analyse / create partitions
+@
+
+
+1.2
+log
+@- FindFreeExtSpace: adjusted free area searching to new area starts
+  (secondary partitions include the partition sector)
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/pcreate.cpp,v $
+ * $Revision: 1.1 $
+ * $Date: 2000/05/28 17:38:06 $
+ * $Locker: vitus $
+ *
+ *	Routines to analyse the partition layout and find free
+ *	areas.  Results are stored in a DSKAREA structure.
+ *
+ *	PSN	physical sector number
+ *		all sectors on a disk counted starting with zero (the MBR)
+ *
+ *	area	used areas inside an extended partition (i.e. secondary
+ *		partitions) are considered to include the partition sector
+ *		they are defined in.
+ *		This sheme reflects the meaning of 'reserved sectors' as
+ *		stored in boot sectors but can't be used on primary partitions.
+ *
+ * $Log: pcreate.cpp,v $
+ * Revision 1.1  2000/05/28 17:38:06  vitus
+ * Initial revision
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 2000
+ */
+static char const vcid[]="$Id: pcreate.cpp,v 1.1 2000/05/28 17:38:06 vitus Exp vitus $";
+static char const modname[]="PCreate";
+
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <time.h>
+
+#define __IBMC__	0
+#define INCL_DOS
+#define INCL_DOSDEVIOCTL
+#define INCL_ERRORS
+#include <os2.h>
+
+extern "C" {
+#include "../../../Lib/defines.h"
+#include "../../../Lib/verbose.h"
+}
+
+#include "VSetup.h"
+#include "drvif.h"
+#include "dskinfo.hpp"
+#include "pcreate.h"
+
+#include "PartTable.hpp"
+
+
+
+
+#define MIN_VRAID_PART	10240
+
+
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * SayArea(level,msgstart,area)
+ *
+ * PARAMETER
+ *	level		verbosity level
+ *	msgstart	first part of message
+ *	area		pointer to area description
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Write infos about area to log.
+ *
+ * REMARKS
+ */
+PRIVATE void
+SayArea(unsigned level,PSZ const msgstart,struct _DSKAREA_ENTRY const * const area)
+{
+    Verbose(level, modname, "%s area (start %lu, size %lu), PT %lu, EXT %lu",
+	    msgstart, area->start, area->size, area->ptsec, area->extstart);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * <fkt>
+ *
+ * PARAMETER
+ * RETURNS
+ * DESCRIPTION
+ *	Find the entry in 'allocated' ending just before 'secno' and
+ *	return it's 'ptsec' element.  Stop if 'extstart' is reached and
+ *	this value instead.
+ *
+ * REMARKS
+ */
+PRIVATE ULONG
+PreviousPtsec(ULONG secno, ULONG const extstart,
+	      DSKAREA const * const allocated)
+{
+    ULONG	i;
+
+    while( secno > extstart )
+    {
+	for( i = 0; i < allocated->cnt; ++i )
+	    if( secno == allocated->area[i].start + allocated->area[i].size )
+	    {
+		secno = allocated->area[i].ptsec;
+		goto FOUND;
+	    }
+	--secno;
+    }
+  FOUND:
+    return secno;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * ScanExtAllocated(disk, secno, seccnt, extstart, usedspace, found)
+ *
+ * PARAMETER
+ *	disk		OS/2 disk
+ *	secno		sector no of extended partition sector
+ *	seccnt		sector range described by partition table in 'secno'
+ *	extstart	position of first extended partition
+ *	usedspace	table of allocated areas, add here
+ *	found		return index of VRAID partition in 'info' if found
+ *
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Find allocated space in the range 'secno' (contains extended partition
+ *	table) and 'secno+seccnt'.  Enters this space into 'usedspace' table.
+ *
+ * REMARKS
+ */
+PRIVATE APIRET
+ScanExtAllocated(VOS2Disk * const disk,
+		 ULONG const secno, ULONG const seccnt,
+		 ULONG const extstart,
+		 PDSKAREA const usedspace, int * const found)
+{
+    APIRET	rc = 0;
+
+    Verbose(2,modname, "ScanExtAllocated(start %lu, size %lu)", secno, seccnt);
+
+    PartTable	pt(disk, secno, true);
+
+    /* Add used areas through going trough the partition entries.
+     * Detect already existing VRAID partition, too.
+     * There is no need to check for a free entry: only a single
+     * partition per table. */
+
+    for( unsigned i = 0; i < 4; ++i )
+    {
+	switch( pt.entry[i].SysIndicator )
+	{
+	  case 0:
+	    break;				/* empty partition entry  */
+
+	  case EXTENDED_PARTTYPE:
+	    rc = ScanExtAllocated(disk, extstart + pt.entry[i].RelativeSectors,
+				  pt.entry[i].NumSectors, extstart,
+				  usedspace, found);
+	    break;
+
+	  case VRAID_PARTTYPE:
+	    usedspace->area[usedspace->cnt].start
+		= secno + pt.entry[i].RelativeSectors;
+	    usedspace->area[usedspace->cnt].size = pt.entry[i].NumSectors;
+	    *found = usedspace->cnt++;
+	    break;
+
+	  default:
+	    usedspace->area[usedspace->cnt].start = secno;
+	    usedspace->area[usedspace->cnt].size
+		= pt.entry[i].RelativeSectors + pt.entry[i].NumSectors;
+	    usedspace->area[usedspace->cnt].ptsec = secno;
+	    usedspace->area[usedspace->cnt].extstart = extstart;
+	    SayArea(2, "ScanExtAllocated - found used",
+		    &usedspace->area[usedspace->cnt]);
+	    ++usedspace->cnt;
+	    break;
+	}
+    }
+
+    return rc;
+} /* end[ScanExtAllocated] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * FindFreeExtSpace(disk,extstart,extsize,freelist,found)
+ *
+ * PARAMETER
+ *	disk		OS/2 disk
+ *	extstart	sector no of *first* extended partition sector
+ *	extsize		disk area described by partition table in 'extstart'
+ *	freelist	table of free areas, add here
+ *	found		return index of VRAID partition in 'info' if found
+ *
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Find free space in the range 'extstart' (contains extended partition table)
+ *	and 'extstart+extsize'.  Enters this space into 'info' table.
+ *
+ * REMARKS
+ */
+PRIVATE APIRET
+FindFreeExtSpace(VOS2Disk * const disk,
+		 ULONG const extstart, ULONG const extsize,
+		 PDSKAREA const freelist, int * const found)
+{
+    APIRET	rc = 0;
+    DSKAREA	allocated;
+
+
+    Verbose(2,modname, "FindFreeExtSpace(start %lu, size %lu)", extstart, extsize);
+    allocated.cnt = 0;
+
+    do
+    {
+	PartTable	pt(disk, extstart, true);
+
+
+	/* Build list of free areas on disk. */
+	
+	/* 1st: build a list of used areas in 'allocated'.
+	 * Detect already existing VRAID partition, too. */
+
+	for( unsigned i = 0; i < 4; ++i )
+	{
+	    switch( pt.entry[i].SysIndicator )
+	    {
+	      case 0:
+		break;
+
+	      case EXTENDED_PARTTYPE:
+		rc = ScanExtAllocated(disk,
+				      extstart + pt.entry[i].RelativeSectors,
+				      pt.entry[i].NumSectors, extstart,
+				      &allocated, found);
+		if( rc == 0  &&  *found != -1 )
+		{
+		    /* There is a VRAID partition somethere inside the
+		     * extended partition and 'ScanExtAllocated()' found it.
+		     * Copy element from 'allocated' to 'freelist' and
+		     * adjust '*found'. */
+
+		    memcpy(&freelist->area[freelist->cnt], &allocated.area[*found],
+			   sizeof(struct _DSKAREA_ENTRY));
+		    *found = freelist->cnt++;
+		}
+		break;
+
+	      case VRAID_PARTTYPE:
+		freelist->area[freelist->cnt].start
+		    = extstart + pt.entry[i].RelativeSectors;
+		freelist->area[freelist->cnt].size = pt.entry[i].NumSectors;
+		*found = freelist->cnt++;
+		break;
+
+	      default:
+		allocated.area[allocated.cnt].start = extstart;
+		allocated.area[allocated.cnt].size
+		    = pt.entry[i].RelativeSectors + pt.entry[i].NumSectors;
+		allocated.area[allocated.cnt].ptsec = extstart;	    /* correct!!! */
+		allocated.area[allocated.cnt].extstart = extstart;
+		SayArea(2, "FindFreeExtSpace - found used",
+			&allocated.area[allocated.cnt]);
+		++allocated.cnt;
+		break;
+	    }
+	} /* end[for()] */
+
+	if( *found != -1 )
+	    break;				/* use the VRAID partition */
+	Verbose(4,modname, "scanning found %lu used areas", allocated.cnt);
+
+
+
+	/* 2nd: build a list of all free areas in our range (extstart+1
+	 * - extstart+extsize).  Check against all areas added to 'allocated'.
+	 * Don't accept free areas below a certain limit! */
+
+	ULONG const spt = disk->queryDPB().cSectorsPerTrack;
+	ULONG	ul;
+	Boolean	inside = false;
+
+	freelist->area[freelist->cnt].start = extstart;
+	for( ul = extstart; ul < extstart + extsize; ++ul )
+	{
+	    for( i = 0; i < allocated.cnt; ++i )
+	    {
+		if( ul == allocated.area[i].start )
+		{
+		    if( !inside )
+		    {
+			freelist->area[freelist->cnt].size
+			    = ul - freelist->area[freelist->cnt].start;
+			if( freelist->area[freelist->cnt].size >= MIN_VRAID_PART
+			    &&  freelist->area[freelist->cnt].size > spt )
+			{
+			    freelist->area[freelist->cnt].ptsec
+				= PreviousPtsec(ul-1, extstart, &allocated);
+			    freelist->area[freelist->cnt].extstart = extstart;
+			    SayArea(2, "FindFreeExtSpace - 1. found free",
+				    &freelist->area[freelist->cnt]);
+			    ++freelist->cnt;
+			}
+			inside = true;
+		    }
+		    ul += allocated.area[i].size - 1;
+		    freelist->area[freelist->cnt].start = ul + 1;
+		    break;
+		}
+		else if( ul == allocated.area[i].start + allocated.area[i].size )
+		{
+		    inside = false;
+		}
+	    } /* end[for(every partition entry)] */
+	} /* end[for(every sector) */
+	if( !inside )
+	{
+	    freelist->area[freelist->cnt].size
+		= ul - freelist->area[freelist->cnt].start;
+	    freelist->area[freelist->cnt].ptsec =
+		PreviousPtsec(ul-1, extstart, &allocated);
+	    freelist->area[freelist->cnt].extstart = extstart;
+	    SayArea(2, "FindFreeExtSpace - 2. found free",
+		    &freelist->area[freelist->cnt]);
+	    ++freelist->cnt;
+	}
+    }
+    while( 0 );
+
+    Verbose(3, "DrvScan", "FindFreeExtSpace - rc %lu", rc);
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * FindFreeSpace(disk,info,found)
+ *
+ * PARAMETER
+ *	disk		OS/2 disk
+ *	info		table of free areas, add here
+ *	found		return index of VRAID partition in 'info' (if found)
+ *
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Find free space in the range 'secno' (contains MBR partition table)
+ *	and 'secno+seccnt'.  Enters this space into 'info' table.
+ *
+ * REMARKS
+ */
+PUBLIC APIRET
+FindFreeSpace(VOS2Disk * const disk, PDSKAREA const info, int * const found)
+{
+    APIRET	rc = 0;
+
+
+    Verbose(2, "DrvScan", "FindFreeSpace(disk %lu)", disk->queryIndex());
+
+    do
+    {
+	PartTable	pt(disk, 0, true);
+
+
+	/* Build list of free areas on disk. */
+
+	/* 1st: count used partition entries
+	 * Call FindFreeExtSpace() to detect free areas in extended partitions
+	 * Detect already existing VRAID partition. */
+
+	unsigned 	used, i;
+	for( used = i = 0; i < 4; ++i )
+	{
+	    switch( pt.entry[i].SysIndicator )
+	    {
+	      case 0:
+		break;
+
+	      case EXTENDED_PARTTYPE:
+		++used;
+		rc = FindFreeExtSpace(disk,
+				      0 + pt.entry[i].RelativeSectors,
+				      pt.entry[i].NumSectors, info, found);
+		break;
+
+	      case VRAID_PARTTYPE:
+		++used;
+		info->area[info->cnt].start = 0 + pt.entry[i].RelativeSectors;
+		info->area[info->cnt].size = pt.entry[i].NumSectors;
+		*found = info->cnt++;
+		break;
+
+	      default:
+		++used;
+		break;
+	    }
+	} /* end[for()] */
+	if( *found != -1 )
+	    break;				/* use the VRAID partition */
+
+
+	/* 2nd: build a list of all free areas.
+	 * This is easy when the disk is completely empty but
+	 * becomes more complicated with every partition defined.
+	 * Don't accept free areas below a certain limit! */
+
+	ULONG const	spt = disk->queryDPB().cSectorsPerTrack;
+	if( used == 0 )
+	{
+	    /* There isn't any partition defined!
+	     * So it's only one large area. */
+
+	    info->area[info->cnt].start = disk->queryDPB().cHeads * spt;
+	    info->area[info->cnt].size
+		= disk->querySize() - info->area[info->cnt].start;
+	    info->area[info->cnt].ptsec = 0;
+	    info->area[info->cnt].extstart = 0;
+	    SayArea(2, "FindFreeSpace - found free", &info->area[info->cnt]);
+	    ++info->cnt;
+	}
+	else
+	{
+	    ULONG	ul;
+	    BOOL	inside = FALSE;
+
+	    info->area[info->cnt].start = spt;
+	    for( ul = spt; ul < disk->querySize(); ++ul )
+	    {
+		for( i = 0; i < 4; ++i )
+		{
+		    if( ul == pt.entry[i].RelativeSectors )
+		    {
+			if( !inside )
+			{
+			    info->area[info->cnt].size
+				= ul - info->area[info->cnt].start;
+			    if( info->area[info->cnt].size >= MIN_VRAID_PART
+				&&  info->area[info->cnt].size > spt )
+			    {
+				info->area[info->cnt].ptsec = 0;
+				info->area[info->cnt].extstart = 0;
+				SayArea(2, "FindFreeSpace - found free",
+					&info->area[info->cnt]);
+				++info->cnt;
+			    }
+			    inside = TRUE;
+			}
+			ul += pt.entry[i].NumSectors - 1;
+			info->area[info->cnt].start = ul + 1;
+			break;
+		    }
+		    else if( ul == (pt.entry[i].RelativeSectors
+				    + pt.entry[i].NumSectors) )
+		    {
+			inside = FALSE;
+		    }
+		} /* end[for(every partition entry)] */
+	    } /* end[for(every sector) */
+	    if( !inside )
+	    {
+		info->area[info->cnt].size = ul - info->area[info->cnt].start;
+		info->area[info->cnt].ptsec = 0;
+		info->area[info->cnt].extstart = 0;
+		SayArea(2, "FindFreeSpace - found free", &info->area[info->cnt]);
+		++info->cnt;
+	    }
+	}
+    }
+    while( 0 );
+
+    Verbose(3, "DrvScan", "FindFreeSpace - rc %lu", rc);
+    return rc;
+}
+
+
+
+
+
+
+/* ******************************************************************* *
+ * **** Routines to create new partitions **************************** *
+ * ******************************************************************* */
+
+
+/*# ----------------------------------------------------------------------
+ * CreateLogPartition(disk,vpart)
+ *
+ * PARAMETER
+ *	disk		disk object
+ *	ptsec		PSN of partition table inside extended partition
+ *	vpart		describes area to use as VRAID partition
+ *
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Create partition inside an 'extended partition'.
+ *	Adjust vpart->size according to geometry and update partition table(s).
+ *
+ * REMARKS
+ */
+PUBLIC APIRET
+CreateLogPartition(VOS2Disk * const disk,ULONG const ptsec,
+		   struct _DSKAREA_ENTRY * const vpart)
+{
+    assert( ptsec != 0 );
+    Verbose(2,"CreateLogPartition","start %lu, size %lu",vpart->start,vpart->size);
+    Verbose(2,"CreateLogPartition","table %lu", ptsec);
+
+    PartTable	pt(disk, ptsec, vpart->extstart);
+
+    do
+    {
+	/* Check current contents of partition table. */
+
+	int		log_idx = -1;
+	int		ext_idx = -1;
+	for( int i = 0; i < 4; ++i )
+	{
+	    switch( pt.entry[i].SysIndicator )
+	    {
+	      case EXTENDED_PARTTYPE:
+		ext_idx = i;
+		break;
+
+	      default:
+		log_idx = i;
+		break;
+
+	      case 0:
+		break;				/* nothing */
+	    }
+	}
+
+	if( log_idx != -1 )
+	{
+	    PPARTITIONENTRY const le = &pt.entry[log_idx];
+
+	    /* There is a logical partition in this table.  Lies the
+	     * free space before or after it? */
+
+	    if( ptsec + le->RelativeSectors > vpart->start )
+	    {
+		/* Free room before the logical partition.  This means
+		 * that it starts at head 1 and we have to create a new
+		 * partition table just before it (at head 0).
+		 * - create new partition table before 'le'
+		 * - move logical partition to new table
+		 * - move any extended partition to new table
+		 * - create reference to new table in old table
+		 * - add 'vpart' to current table */
+
+		if( le->BegHead != 1 )
+		{
+		    Verbose(1, "CreateLogPartition",
+			    "invalid partition entry %d in sector %lu",
+			    log_idx, ptsec);
+		    return (APIRET)-1;
+		}
+
+		ULONG const	spt = disk->queryDPB().cSectorsPerTrack;
+		PartTable	newpt(disk, ptsec + le->RelativeSectors - spt,
+				      vpart->extstart);
+		newpt.clear();			/* completely new! */
+
+		le->RelativeSectors = spt;
+		newpt.addPE(*le);
+		pt.delPE(le);
+
+		if( ext_idx != -1 )
+		{
+		    PPARTITIONENTRY const ee = &pt.entry[ext_idx];
+		    newpt.addPE(*ee);
+		    pt.delPE(ee);
+		}
+
+		pt.addForeign(EXTENDED_PARTTYPE, 0,
+			      newpt.queryPos(), le->NumSectors + spt);
+		pt.addOwn(VRAID_PARTTYPE, 0x80, vpart->start, vpart->size);
+	    }
+	    else
+	    {
+		/* Free room behind the logical partition:
+		 * - create table at start of free space (newpt)
+		 * - adjust 'vpart' to have room for that table
+		 * - move any extended partition entry from 'pt' to 'newpt'
+		 * - create entry in 'pt' for the new extended partition
+		 * - add 'vpart' to 'newpt' */
+
+		assert(ptsec + le->RelativeSectors + le->NumSectors <= vpart->start);
+		ULONG const spt = disk->queryDPB().cSectorsPerTrack;
+		ULONG const newpt_pos = ptsec + le->RelativeSectors + le->NumSectors;
+		PartTable   newpt(disk, newpt_pos, vpart->extstart);
+		newpt.clear();			/* completely new! */
+
+		vpart->start += spt;
+		vpart->size -= spt;
+
+		ULONG	vpart_ext_size = vpart->size + spt;
+		if( ext_idx != -1 )
+		{
+		    PPARTITIONENTRY const ee = &pt.entry[ext_idx];
+		    vpart_ext_size
+			= ee->RelativeSectors + vpart->extstart - newpt.queryPos();
+
+		    newpt.addPE(*ee);
+		    pt.delPE(ee);
+		}
+
+		pt.addOwn(EXTENDED_PARTTYPE,0, newpt.queryPos(), vpart_ext_size);
+		newpt.addOwn(VRAID_PARTTYPE, 0x80, vpart->start, vpart->size);
+	    }
+	}
+	else
+	{
+	    /* No logical partition at all:
+	     * - add 'vpart' to table */
+
+	    pt.addOwn(VRAID_PARTTYPE, 0x80, vpart->start, vpart->size);
+	}
+    }
+    while( 0 );
+
+    return 0;
+} /* CreateLogPartition */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CreatePriPartition(disk,ptsec,part)
+ *
+ * PARAMETER
+ *	disk
+ *	ptsec
+ *	part
+ *
+ * RETURNS
+ *	0		OK
+ *
+ * DESCRIPTION
+ *	User selected an area, decoded in 'info->area[info->cnt]'.
+ *	Dialog changed .size element to selected percentage.
+ *	Now 
+ *
+ * REMARKS
+ */
+PUBLIC APIRET
+CreatePriPartition(VOS2Disk * const disk,ULONG const ptsec,
+		   struct _DSKAREA_ENTRY * const vpart)
+{
+    assert( ptsec == 0 );
+    Verbose(2,"CreatePriPartition","start %lu, size %lu",vpart->start,vpart->size);
+    Verbose(2,"CreatePriPartition","table %lu", ptsec);
+
+    PartTable	pt(disk, ptsec);
+    pt.addOwn(vpart->type, vpart->bootable, vpart->start, vpart->size);
+
+    return 0;
+}
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d10 12
+a21 1
+ * $Log$
+d25 1
+a25 1
+static char const vcid[]="$Id$";
+d152 1
+a152 1
+    Verbose(2, "DrvScan", "ScanExtAllocated(%lu, %lu)", secno, seccnt);
+d189 1
+a189 1
+	    usedspace->cnt++;
+d228 1
+a228 1
+    Verbose(2, "DrvScan", "FindFreeExtSpace(%lu, %lu)", extstart, extsize);
+d288 1
+d300 2
+a301 2
+	freelist->area[freelist->cnt].start = extstart + spt;
+	for( ul = extstart + spt; ul < extstart + extsize; ++ul )
+d317 1
+a317 1
+			    SayArea(2, "FindFreeExtSpace - found free",
+d340 1
+a340 1
+	    SayArea(2, "FindFreeExtSpace - found free",
+d347 1
+a347 1
+    Verbose(3, "DrvScan", "FindFreeExitSpace - rc %lu", rc);
+@

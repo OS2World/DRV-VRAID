@@ -1,0 +1,633 @@
+
+about.cpp,74
+#define __IBMC__	28,708
+#define INCL_WIN29,727
+AboutDialogProc(61,1333
+
+chain.cpp,579
+#define __IBMC__	64,1950
+#define INCL_WINPOINTERS65,1969
+#define INCL_DOS66,1994
+#define INCL_DOSDEVIOCTL67,2011
+#define INCL_ERRORS68,2036
+VChain::VChain(101,2552
+VChain::~VChain(130,3181
+VChain::queryChildren(152,3486
+VChain::getChild(173,3817
+VChain::allocateDescription(197,4204
+VChain::queryIcon(230,4880
+VChain::setHostdrive(260,5410
+VChain::addChild(286,5873
+VChain::ioDeleteYourself(327,6809
+VChain::ioRemoveParent(365,7457
+VChain::ioChangeID(432,8728
+VChain::ioSync(486,9724
+VChain::querySize(557,11144
+VChain::read(583,11546
+VChain::write(629,12586
+
+container.cpp,354
+#define __IBMC__	39,1091
+#define INCL_DOS40,1110
+#define INCL_DOSDEVIOCTL41,1127
+#define INCL_ERRORS42,1152
+#define INCL_WIN43,1172
+#define INCL_GPI44,1189
+EmphSelect(83,2014
+SearchSource(113,2757
+EmphInuse2Source(147,3566
+EmphInuse(180,4379
+EmphSource(210,5124
+QueryInuse(241,5851
+QueryAny(274,6622
+LookupDisk(302,7226
+SearchCnr(335,8163
+
+crc.cpp,183
+#define __IBMC__	29,789
+#define INCL_DOS30,808
+#define INCL_DOSDEVIOCTL31,825
+#define INCL_DOSERRORS32,850
+CalcTable(48,1030
+UpdateCRC(89,1820
+CrcInit(126,2903
+Crc16(153,3281
+
+drverify.cpp,633
+#define INCL_DOS52,1729
+#define INCL_DOSDEVIOCTL53,1746
+#define INCL_ERRORS54,1771
+#define INCL_WIN55,1791
+#define INCL_WINSTDDRAG56,1808
+#define INCL_GPI57,1832
+#define VERIFY_SECTORS	73,2176
+class Work Work84,2431
+Work::Work(117,3045
+Work::~Work(133,3302
+void Work::setDlg(142,3430
+void Work::abortDlg(156,3767
+BOOL Work::isPaused(164,3958
+void Work::pause(169,4005
+void Work::resume(180,4189
+void Work::stop(190,4354
+void Work::waitOK(197,4449
+BOOL Work::update(214,4776
+ULONG Work::queryPercentDone(237,5213
+InitDlgItems(252,5521
+ProgressDlgProc(302,6639
+ProgressThread(414,9140
+DrvVerifyThread(466,10153
+
+drvif.cpp,594
+#define __IBMC__	67,2024
+#define INCL_DOSDEVICES68,2043
+#define INCL_DOSDEVIOCTL69,2067
+#define INCL_DOSERRORS70,2092
+#define INCL_WIN71,2115
+#define DEVICENAME	83,2256
+DriverOpen(107,2631
+DriverClose(140,3277
+DriverGetVersion(186,4389
+DriverReadMessages(225,5299
+DriverPhyslist(298,6825
+DriverPhysinfo(372,8313
+DriverPhyssize(405,8988
+DriverPhysIO(443,9738
+DriverArraylist(484,10609
+DriverArrayinfo(556,12119
+DriverArrayVerify(592,12851
+DriverArrayRebuild(627,13541
+DriverArrayChild(666,14303
+DriverStartSetup(698,14862
+DriverEndSetup(730,15404
+DriverSetBeeper(763,16022
+
+drvscan.cpp,687
+#define __IBMC__	192,7491
+#define INCL_DOS193,7510
+#define INCL_DOSDEVIOCTL194,7527
+#define INCL_ERRORS195,7552
+#define INCL_WIN196,7572
+#define INCL_GPI197,7589
+#define WC_DRVSCAN	223,8010
+#define MAXDRIVES	224,8045
+typedef struct _WORK _WORK230,8084
+} WORK, * PWORK;PWORK240,8414
+PRIVATE struct _OS2DEVID _OS2DEVID245,8462
+SetArrayInfo(283,9375
+QueryArrayInfo(322,10205
+IsProvidedByFlt(358,10927
+AllocateFltDevices(521,14494
+AllocateOs2Devices(578,15556
+AnalyseVRDev(706,18442
+ValidateVSec2(842,21388
+AnalyseVRDev2(950,23746
+FindVRaidPartition(1106,27136
+BuildDevTree(1160,28211
+CreatePhysdev(1274,30981
+DrvscanWindowProc(1373,33332
+DrvscanThread(1645,40314
+
+drvsetup.cpp,496
+#define INCL_DOS117,4001
+#define INCL_DOSDEVIOCTL118,4018
+#define INCL_ERRORS119,4043
+#define INCL_WIN120,4063
+#define INCL_WINSTDDRAG121,4080
+#define INCL_GPI122,4104
+#define WC_DRVSETUP	152,4617
+typedef struct _WORK _WORK156,4657
+} WORK, * PWORK;PWORK168,5020
+LoadPresParam(206,5936
+CreateCnr(247,6697
+DoPopup(338,9329
+DisplayDisk(532,14345
+DragInit(596,16175
+DragLeave(677,18654
+DragOver(713,19707
+DragDrop(845,23586
+DrvsetupWindowProc(945,26173
+DrvsetupThread(1754,47977
+
+drvtype.cpp,234
+#define __IBMC__	56,1625
+#define INCL_DOS57,1644
+#define INCL_DOSDEVIOCTL58,1661
+#define INCL_ERRORS59,1686
+#define INCL_WIN60,1706
+#define INCL_GPI61,1723
+InitDlgItems(103,2504
+QueryDlgItems(163,4092
+DrvtypeDlgProc(206,4993
+
+dskarea.cpp,196
+#define __IBMC__	69,2103
+#define INCL_DOSDEVIOCTL70,2122
+#define INCL_WIN71,2147
+#define INCL_GPI72,2164
+CalcArea(94,2497
+InitDlgItems(135,3645
+QueryDlgItems(211,5665
+AreaDlgProc(263,6897
+
+dump.cpp,207
+#define __IBMC__	36,1008
+#define INCL_DOS37,1027
+#define INCL_DOSDEVIOCTL38,1044
+#define INCL_ERRORS39,1069
+#define INCL_WIN40,1089
+DumpBuffer(64,1465
+DumpPartitions(107,2291
+DumpDialogProc(286,6342
+
+iniloc.cpp,75
+#define __IBMC__	27,675
+#define INCL_WIN28,694
+InilocDialogProc(55,1253
+
+mirror.cpp,765
+#define __IBMC__	92,3018
+#define INCL_WINPOINTERS93,3037
+#define INCL_DOS94,3062
+#define INCL_DOSDEVIOCTL95,3079
+#define INCL_ERRORS96,3104
+VMirror::VMirror(129,3623
+VMirror::~VMirror(160,4282
+VMirror::setBuild(184,4769
+VMirror::queryChildren(208,5098
+VMirror::getChild(230,5390
+VMirror::isValidChild(241,5504
+VMirror::isValidChild(251,5635
+VMirror::allocateDescription(277,6111
+VMirror::queryIcon(315,7066
+VMirror::setHostdrive(345,7591
+VMirror::addChild(371,8058
+VMirror::ioRemoveChild(421,9178
+VMirror::ioDeleteYourself(487,10312
+VMirror::ioRemoveParent(521,10882
+VMirror::ioChangeID(588,12137
+VMirror::ioInvalidChild(651,13532
+VMirror::ioStartRebuild(716,14837
+VMirror::ioSync(762,15843
+VMirror::read(891,18803
+VMirror::write(938,19876
+
+missing.cpp,441
+#define __IBMC__	33,860
+#define INCL_WINPOINTERS34,879
+#define INCL_DOS35,904
+#define INCL_DOSDEVIOCTL36,921
+#define INCL_ERRORS37,946
+VMissing::VMissing(69,1472
+VMissing::~VMissing(92,1916
+VMissing::allocateDescription(114,2241
+VMissing::queryIcon(141,2764
+VMissing::ioRemoveParent(164,3100
+VMissing::ioChangeID(187,3422
+VMissing::ioSync(211,3840
+VMissing::querySize(233,4092
+VMissing::read(261,4569
+VMissing::write(288,5051
+
+other.cpp,181
+#define __IBMC__	35,900
+#define INCL_WIN36,919
+#define INCL_DOSERRORS37,936
+ChangeWindowTitle(66,1421
+MyMessageBox(108,2265
+CheckValidDir(150,3310
+_LNK_CONV _assert(226,5213
+
+parttable.cpp,351
+#define INCL_DOS36,1063
+#define INCL_DOSDEVIOCTL37,1080
+PartTable::PartTable(67,1564
+PartTable::PartTable(103,2324
+PartTable::~PartTable(138,2897
+PartTable::clear(147,2947
+PartTable::readRecord(175,3379
+PartTable::flush(225,4401
+PartTable::delPE(267,5138
+PartTable::addPE(310,6032
+PartTable::addForeign(359,7080
+PartTable::addOwn(444,9027
+
+pcreate.cpp,323
+#define __IBMC__	39,1225
+#define INCL_DOS40,1244
+#define INCL_DOSDEVIOCTL41,1261
+#define INCL_ERRORS42,1286
+#define MIN_VRAID_PART	60,1521
+SayArea(84,1886
+PreviousPtsec(106,2438
+ScanExtAllocated(149,3474
+FindFreeExtSpace(224,5596
+FindFreeSpace(376,9775
+CreateLogPartition(526,13483
+CreatePriPartition(672,17109
+
+single.cpp,595
+#define __IBMC__	59,1665
+#define INCL_WINPOINTERS60,1684
+#define INCL_DOS61,1709
+#define INCL_DOSDEVIOCTL62,1726
+#define INCL_ERRORS63,1751
+VSingle::VSingle(96,2251
+VSingle::~VSingle(126,2875
+VSingle::queryChildren(150,3206
+VSingle::getChild(172,3507
+VSingle::allocateDescription(197,3883
+VSingle::queryIcon(230,4589
+VSingle::setHostdrive(260,5121
+VSingle::addChild(288,5673
+VSingle::ioDeleteYourself(327,6591
+VSingle::ioRemoveParent(361,7130
+VSingle::ioChangeID(428,8361
+VSingle::ioSync(482,9340
+VSingle::querySize(544,10592
+VSingle::read(571,11035
+VSingle::write(597,11503
+
+stripe.cpp,597
+#define __IBMC__	72,2137
+#define INCL_WINPOINTERS73,2156
+#define INCL_DOS74,2181
+#define INCL_DOSDEVIOCTL75,2198
+#define INCL_ERRORS76,2223
+VStripe::VStripe(109,2763
+VStripe::~VStripe(139,3399
+VStripe::queryChildren(161,3707
+VStripe::getChild(183,3999
+VStripe::allocateDescription(207,4370
+VStripe::queryIcon(240,5098
+VStripe::setHostdrive(270,5623
+VStripe::addChild(296,6088
+VStripe::ioDeleteYourself(345,7182
+VStripe::ioRemoveParent(383,7816
+VStripe::ioChangeID(449,9044
+VStripe::ioSync(503,10023
+VStripe::querySize(580,11535
+VStripe::read(608,12012
+VStripe::write(655,13077
+
+system.cpp,231
+#define __IBMC__	25,641
+#define INCL_DOS26,660
+#define INCL_DOSDEVIOCTL27,677
+#define INCL_DOSERRORS28,702
+typedef struct _TESTCFG_40PARAM _TESTCFG_40PARAM40,846
+} TESTCFG_40PARAM;TESTCFG_40PARAM44,937
+QueryHostId(54,1029
+
+vos2drive.cpp,496
+#define __IBMC__	39,1051
+#define INCL_WINPOINTERS40,1070
+#define INCL_DOS41,1095
+#define INCL_DOSDEVIOCTL42,1112
+#define INCL_ERRORS43,1137
+VOS2Drive::VOS2Drive(75,1812
+VOS2Drive::~VOS2Drive(94,2207
+VOS2Drive::allocateDescription(107,2403
+VOS2Drive::queryIcon(119,2607
+VOS2Drive::ioDeleteYourself(147,3280
+VOS2Drive::ioRemoveParent(157,3361
+VOS2Drive::ioChangeID(167,3483
+VOS2Drive::ioSync(177,3600
+VOS2Drive::querySize(187,3707
+VOS2Drive::read(196,3778
+VOS2Drive::write(205,3893
+
+vrdev.cpp,1065
+#define __IBMC__	73,2256
+#define INCL_WINPOINTERS74,2275
+#define INCL_DOS75,2300
+#define INCL_DOSDEVIOCTL76,2317
+#define INCL_ERRORS77,2342
+VORDev::VORDev(115,3144
+VORDev::~VORDev(193,4859
+VORDev::allocateDescription(218,5295
+VORDev::queryIcon(246,5844
+VORDev::ioChangeID(273,6264
+VORDev::ioRemoveParent(327,7264
+VORDev::ioDeleteYourself(394,8514
+VORDev::ioSync(477,10045
+VORDev::querySize(550,11348
+VORDev::read(576,11807
+VORDev::write(602,12311
+VFRDev::VFRDev(628,12905
+VFRDev::~VFRDev(702,14419
+VFRDev::allocateDescription(724,14769
+VFRDev::queryIcon(752,15325
+VFRDev::ioRemoveParent(779,15777
+VFRDev::ioChangeID(848,17011
+VFRDev::ioDeleteYourself(902,18001
+VFRDev::ioSync(939,18698
+VFRDev::querySize(1013,19979
+VFRDev::read(1039,20438
+VFRDev::write(1076,21149
+VOS2Disk::VOS2Disk(1114,21996
+VOS2Disk::VOS2Disk(1151,22632
+VOS2Disk::~VOS2Disk(1171,22952
+VOS2Disk::create(1199,23394
+VOS2Disk::queryDPB(1260,24692
+VOS2Disk::queryIndex(1282,25014
+VOS2Disk::querySize(1303,25284
+VOS2Disk::read(1333,25904
+VOS2Disk::write(1364,26560
+
+vsetup.cpp,409
+#define __IBMC__	87,2508
+#define INCL_DOSDEVIOCTL88,2527
+#define INCL_WIN89,2552
+#define VER	113,3187
+#define SUBVER	114,3202
+#define WC_MAIN	116,3222
+} MAIN_WINDOW_DATA, * PMAIN_WINDOW_DATA;PMAIN_WINDOW_DATA126,3377
+Verbose(184,4982
+SetLoglevel(225,5748
+SetLogfile(251,6135
+DisplayDriverVersion(268,6475
+DisplayDriverMessages(285,6782
+WindowProc(320,7508
+ExamineArgs(611,14421
+main(691,15960
+
+chain.hpp,262
+#define _CHAIN_HPP	36,1023
+class VChain VChain41,1101
+    void	forceUnwritable(VChain::forceUnwritable60,1434
+    UCHAR	isArray(VChain::isArray67,1588
+    Boolean	isHostdrive(VChain::isHostdrive68,1633
+    Boolean	isWritable(VChain::isWritable77,1917
+
+dskinfo.hpp,1989
+#define _DSKINFO_HPP	66,2237
+typedef enum { false = 0, False = 0, true  = 1, True  = 1 } Boolean;Boolean69,2318
+typedef enum { Ready = 0, Build, Rebuild, Fail, Error } ArrayState;ArrayState71,2388
+#define MAX_CHILDREN	74,2458
+#define VERROR_NO_CONTENTS	76,2522
+class VDisk VDisk95,2841
+class VOS2Disk VOS2Disk105,3075
+    Boolean		isWritable(VOS2Disk::isWritable122,3432
+class VRDev VRDev139,3866
+    VRDev(VRDev::VRDev146,4013
+    virtual	~VRDev(VRDev::~VRDev147,4043
+    void		setParent(VRDev::setParent149,4101
+    VRDrive *		getParent(VRDev::getParent150,4166
+    DEVID const *	queryID(VRDev::queryID152,4213
+    USHORT const	queryFltHd(VRDev::queryFltHd161,4484
+    virtual VOS2Disk *	queryWhere(VRDev::queryWhere162,4533
+class VFRDev VFRDev180,4971
+    UCHAR	isArray(VFRDev::isArray197,5366
+    Boolean	isHostdrive(VFRDev::isHostdrive198,5400
+    void	forceUnwritable(VFRDev::forceUnwritable202,5505
+    Boolean	isWritable(VFRDev::isWritable203,5554
+class VORDev VORDev212,5743
+    VOS2Disk *	queryWhere(VORDev::queryWhere230,6182
+    UCHAR	isArray(VORDev::isArray232,6231
+    Boolean	isHostdrive(VORDev::isHostdrive233,6265
+    void	forceUnwritable(VORDev::forceUnwritable237,6370
+    USHORT const queryFltHd(VORDev::queryFltHd238,6419
+    Boolean	isWritable(VORDev::isWritable239,6465
+class VOS2Drive VOS2Drive257,6964
+    VOS2Disk *  queryWhere(VOS2Drive::queryWhere268,7171
+    UCHAR	isArray(VOS2Drive::isArray274,7409
+    Boolean	isHostdrive(VOS2Drive::isHostdrive275,7443
+    void	forceUnwritable(VOS2Drive::forceUnwritable279,7547
+    USHORT const queryFltHd(VOS2Drive::queryFltHd280,7596
+    Boolean	isWritable(VOS2Drive::isWritable281,7642
+class VRDrive VRDrive296,7974
+    void		setFltHd(VRDrive::setFltHd298,8015
+    virtual Boolean	isValidChild(VRDrive::isValidChild305,8286
+    virtual Boolean	isValidChild(VRDrive::isValidChild306,8347
+class VDriveWithRedundancy VDriveWithRedundancy319,8579
+
+mirror.hpp,375
+#define _MIRROR_HPP	55,1671
+class VMirror VMirror61,1753
+    UCHAR	isArray(VMirror::isArray94,2479
+    Boolean	isHostdrive(VMirror::isHostdrive95,2525
+    ArrayState	queryState(VMirror::queryState98,2633
+    void	forceUnwritable(VMirror::forceUnwritable107,2933
+    Boolean	isWritable(VMirror::isWritable108,2982
+    ULONG	querySize(VMirror::querySize109,3028
+
+missing.hpp,817
+#define _MISSING_HPP	47,1451
+class VMissing VMissing52,1533
+    void	setBuild(VMissing::setBuild61,1698
+    int		ioRemoveChild(VMissing::ioRemoveChild62,1768
+    int		ioInvalidChild(VMissing::ioInvalidChild63,1831
+    int		ioStartRebuild(VMissing::ioStartRebuild65,1950
+    int		ioDeleteYourself(VMissing::ioDeleteYourself67,2020
+    UCHAR	isArray(VMissing::isArray72,2137
+    Boolean	isHostdrive(VMissing::isHostdrive73,2174
+    ArrayState	queryState(VMissing::queryState76,2278
+    int		queryChildren(VMissing::queryChildren77,2335
+    VRDev *	getChild(VMissing::getChild78,2374
+    void	setHostdrive(VMissing::setHostdrive80,2424
+    void	addChild(VMissing::addChild81,2471
+    void	forceUnwritable(VMissing::forceUnwritable84,2561
+    Boolean	isWritable(VMissing::isWritable85,2592
+
+parttable.hpp,127
+class PartTable PartTable25,796
+    BOOL	isValid(PartTable::isValid44,1193
+    ULONG	queryPos(PartTable::queryPos45,1230
+
+single.hpp,267
+#define _SINGLE_HPP	33,906
+class VSingle VSingle37,985
+    void	forceUnwritable(VSingle::forceUnwritable50,1232
+    UCHAR	isArray(VSingle::isArray57,1392
+    Boolean	isHostdrive(VSingle::isHostdrive58,1438
+    Boolean	isWritable(VSingle::isWritable67,1721
+
+stripe.hpp,269
+#define _STRIPE_HPP	36,1016
+class VStripe VStripe41,1096
+    void	forceUnwritable(VStripe::forceUnwritable60,1432
+    UCHAR	isArray(VStripe::isArray67,1586
+    Boolean	isHostdrive(VStripe::isHostdrive68,1632
+    Boolean	isWritable(VStripe::isWritable77,1916
+
+/source/Lib/defines.h,275
+#  define PRIVATE26,551
+#  define PUBLIC27,569
+#  define PRIVATE	29,593
+#  define PUBLIC30,618
+# define UNREFERENCED(UNREFERENCED36,674
+# define USE_OS2_TOOLKIT_HEADERS37,754
+# define UNREFERENCED(UNREFERENCED40,794
+# define MIN(MIN45,848
+# define MAX(MAX49,910
+
+/source/Lib/logdrv.h,0
+
+/source/Lib/physdsk.h,0
+
+/source/Lib/play.h,0
+
+/source/Lib/pphnd.h,0
+
+/source/Lib/profile.h,0
+
+/source/Lib/verbose.h,126
+# define LOGBUFSIZ	23,472
+#define VL_FATAL	27,505
+#define VL_ERROR	28,544
+#define VL_WARN	29,598
+#define VL_OTHER	30,638
+
+/source/Lib/logdrv.c,505
+#define INCL_DOS26,669
+#define INCL_DOSDEVIOCTL27,686
+#define INCL_ERRORS28,711
+#define FSC_SECTORIO	30,748
+#define SECTORSIZE	37,849
+#define MAX_DEVICES	38,872
+typedef struct _DEVTAB _DEVTAB41,897
+} DEVTAB, * PDEVTAB;PDEVTAB45,1019
+Allocate(54,1104
+Free(68,1286
+LDrvEnum(84,1614
+LDrvOpen(108,1996
+LDrvClose(170,3306
+LDrvQuerySize(201,3822
+LDrvLockIO(241,4807
+LDrvUnlockIO(275,5376
+LDrvRead(312,5990
+LDrvWrite(353,6533
+LDrvLockCD(408,7326
+LDrvUnlockCD(442,7897
+LDrvEjectCD(477,8445
+
+/source/Lib/physdsk.c,418
+#define INCL_DOS48,1389
+#define INCL_DOSDEVIOCTL49,1406
+#define INCL_ERRORS50,1431
+#define SECTORSIZE	57,1513
+#define MAX_DEVICES	58,1536
+typedef struct _DEVTAB _DEVTAB62,1562
+} DEVTAB, * PDEVTAB;PDEVTAB66,1705
+Allocate(75,1790
+Free(89,1969
+PDskEnum(113,2310
+PDskOpen(145,2794
+PDskClose(193,3695
+PDskQueryParam(225,4241
+PDskLockIO(252,4693
+PDskUnlockIO(286,5362
+PDskRead(325,6241
+PDskWrite(381,7691
+
+/source/Lib/play.c,588
+#define INCL_DOS34,773
+#define DEF_Length	42,922
+#define DEF_Speed	43,943
+#define DEF_Octave	44,965
+#define DEF_Mode	45,986
+#define MAX_Octave	47,1011
+typedef enum _MODUS _MODUS51,1068
+typedef enum _MODUS { NORMAL, STACCATO, LEGATO }		MODUS;MODUS51,1068
+typedef enum _TOKVAL _TOKVAL52,1125
+typedef enum _TOKVAL { INV, OCT, LEN, BEAT, MOD, NOTE, PAUSE }	TOKVAL;TOKVAL52,1125
+typedef struct _TOKEN _TOKEN55,1198
+} TOKEN;TOKEN61,1345
+static int GetNote(102,2271
+static ULONG CalcToneLength(228,4181
+static ULONG CalcBreakLength(255,4746
+void _System BasicPlay(287,5383
+
+/source/Lib/pphnd.c,298
+#define INCL_WIN29,760
+#define MAX_ATTR_SIZE	40,907
+#define MAX_SAVED_PRESP	41,962
+typedef struct _SUBCLASSINFO _SUBCLASSINFO45,995
+} SUBCLASSINFO, * PSUBCLASSINFO;PSUBCLASSINFO49,1080
+#define ADIFF(ADIFF55,1118
+AdjustPresParam(80,1685
+PPSubclassProc(188,4054
+PPSubclassWindow(225,4988
+
+/source/Lib/profile.c,329
+#define INCL_WIN55,1698
+#define INCL_DOS56,1715
+#define	MAX_VALUE	65,1816
+typedef struct _SETTING _SETTING68,1860
+} SETTING;SETTING75,2026
+YankSetting(111,2681
+NextWord(153,3550
+ProfileOpen(189,4283
+ProfileClose(274,6146
+ProfileWrite(334,7391
+ProfileRead(401,8919
+ProfileReadNext(469,10473
+ProfileDelete(530,11676
+
+/source/Lib/shutdown.c,43
+#define INCL_DOSFILEMGR9,104
+main(13,147
+
+/source/Lib/split.c,108
+void Verbose(37,673
+void help(54,944
+int examine_args(61,1005
+int SplitFile(122,2014
+int main(173,3033
+
+/source/Lib/tee.c,29
+main(11,105
+int tee(43,622
+
+/source/Lib/verbose.c,111
+#define INCL_DOS51,1305
+Verbose(66,1581
+SetLogfile(125,2679
+SetLoglevel(136,2780
+SetDisplaylevel(148,2891
+
+/source/Lib/willtell.c,69
+#define INCL_DOS20,399
+void PlayThread(135,4760
+int main(147,5108

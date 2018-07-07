@@ -1,0 +1,130 @@
+
+CheckValidDir - D:\system _is_ a directory
+VSETUP - created thread id 2
+DrvSetup - startup
+DrvScan - FLT drive capacity: 70135 MBytes
+DrvScan - FLT drive capacity: 117232 MBytes
+VOS2Disk - PDskLock(0) - rc 33, ignored
+VOS2Disk - PDskLock(1) - rc 33, ignored
+DrvScan - Array 0 accessed when reading OS/2 Drive 1
+PartTable - disk 0, psn 0
+PartTable - disk 0, psn 206848
+PartTable - disk 0, psn 923648
+DrvSetup - DragInit: record 0x59dca4
+DrvSetup - DragInit: record passed checks
+DrvSetup - DragOver, record 0x59dca4
+DrvSetup - DragOver, destination 0x183f90
+DrvSetup - DragOver, source == destination!
+DrvSetup - DragOver, record 0x59dca4
+DrvSetup - DragOver, destination 0x183f90
+DrvSetup - DragOver, source == destination!
+DrvSetup - DragOver, record 0x59dca4
+DrvSetup - DragOver, destination 0x183f90
+DrvSetup - DragOver, source == destination!
+DrvSetup - DragOver, record 0x59dca4
+DrvSetup - DragOver, destination 0x183f90
+DrvSetup - DragOver, source == destination!
+DrvSetup - DragOver, record 0x59dca4
+DrvSetup - DragOver, destination 0x183f90
+DrvSetup - DragOver, source == destination!
+DrvSetup - DragOver, record 0x59dca4
+DrvSetup - DragOver, destination 0x183f90
+DrvSetup - DragOver, source == destination!
+DrvSetup - DragOver, record 0x59dca4
+DrvSetup - DragOver, destination 0x183f90
+DrvSetup - DragOver, source == destination!
+DrvSetup - DragOver, record 0x59dca4
+DrvSetup - DragOver, destination 0x183f90
+DrvSetup - DragOver, source == destination!
+DrvSetup - DragOver, record 0x59dca4
+DrvSetup - DragOver, destination 0x183f90
+DrvSetup - DragOver, source == destination!
+DrvSetup - DragOver, record 0x59dca4
+DrvSetup - DragOver, destination 0x183f90
+DrvSetup - DragOver, source == destination!
+DrvSetup - DragOver, record 0x59dca4
+DrvSetup - DragOver, destination 0x183f90
+DrvSetup - DragOver, source == destination!
+DrvSetup - DragOver, record 0x59dca4
+DrvSetup - DragOver, destination 0x183f90
+DrvSetup - DragOver, source == destination!
+DrvSetup - DragOver, record 0x59dca4
+DrvSetup - DragOver, destination 0x183f90
+DrvSetup - DragOver, source == destination!
+DrvSetup - DragOver, record 0x59dca4
+DrvSetup - DragOver, destination 0x183f90
+DrvSetup - DragOver, source == destination!
+DrvSetup - DragOver, record 0x59dca4
+DrvSetup - DragOver, no destination
+DrvSetup - DragOver, record 0x59dca4
+DrvSetup - DragOver, no destination
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragOver, record 0x59dbfc
+DrvSetup - DragOver, destination 0x1842d0
+DrvSetup - DragOver, source too small (143637101 < 240091393)
+DrvSetup - DragLeave, record 0
+DrvSetup - 4 drives are available
+DrvSetup - DrvSetupThread: stopped
+DrvScan - DrvScanThread: stopped

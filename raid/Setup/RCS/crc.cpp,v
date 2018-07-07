@@ -1,0 +1,334 @@
+head	1.5;
+access;
+symbols
+	VSETUPv0_84:1.5
+	VSETUP_82:1.5
+	VSETUPv0_80:1.4
+	VSETUPv0_71:1.3
+	VSETUPv0_70:1.3
+	VSETUPv0_60:1.2
+	VSETUPv0_52:1.1
+	VSETUPv0_51:1.1
+	VSETUPv0_50:1.1
+	VSETUPv0_20:1.1;
+locks; strict;
+comment	@ * @;
+
+
+1.5
+date	2000.04.10.01.00.56;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	99.06.20.17.04.00;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	99.02.09.02.47.11;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.12.13.23.06.15;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.03.16.23.37.50;	author vitus;	state Stab;
+branches;
+next	;
+
+
+desc
+@Support routines to calculate CRC.
+@
+
+
+1.5
+log
+@- include VSetup.h instead of proto.h
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/crc.cpp,v $
+ * $Revision: 1.4 $
+ * $Date: 1999/06/20 17:04:00 $
+ * $Locker: vitus $
+ *
+ *	Support routines to calculate CRC.
+ *
+ * $Log: crc.cpp,v $
+ * Revision 1.4  1999/06/20 17:04:00  vitus
+ * - minor corrections to keep compiler happy
+ *
+ * Revision 1.3  1999/02/09 02:47:11  vitus
+ * - Umstellung auf C++
+ *
+ * Revision 1.2  1998/12/13 23:06:15  vitus
+ * - changed as global headers moved to /source/Lib
+ *
+ * Revision 1.1  1998/03/16 23:37:50  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-2000
+ */
+static char const vcid[]="$Id: crc.cpp,v 1.4 1999/06/20 17:04:00 vitus Exp vitus $";
+
+#define __IBMC__	0
+#define INCL_DOS
+#define INCL_DOSDEVIOCTL
+#define INCL_DOSERRORS
+#include <os2.h>
+
+#include "../../../Lib/defines.h"
+#include "VSetup.h"
+
+
+
+PRIVATE USHORT	CRCtable[256];
+
+
+
+
+/* calculate CRC table entry */
+
+PRIVATE USHORT
+CalcTable(USHORT data,USHORT genpoly,USHORT accum)
+{
+    int i;
+
+    for( i = 0; i < 8; ++i )
+    {
+	if( (accum^data) & 1 )
+	{
+	    accum >>=1;
+	    accum ^= genpoly;
+	}
+	else
+	    accum >>= 1;
+
+	data >>= 1;
+    }
+    return accum;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * UpdateCRC(crc,byte);
+ *
+ * PARAMETER
+ *	crc		bisherige CRC-Summe
+ *	byte		Datenbyte zur Aktualisierung der CRC-Summe
+ * RETURNS
+ *	aktualisierte CRC-Summe
+ * GLOBAL
+ * DESCRIPTION
+ *	CRC-Summe aktualisieren.
+ *
+ * REMARKS
+ *	Das Generatorpolynom kann in CRC.H geaendert werden. Die CRC-
+ *	Erzeugung benutzt Linksverschiebungen (LSB first) wie es bei
+ *	Einsatz einer SIO erforderlich ist.
+ *	InitCRC() muss zum Aufbau der Tabelle vorher aufgerufen sein.
+ */
+PRIVATE USHORT
+UpdateCRC(USHORT crc,UCHAR byte)
+{
+    /* bei MSB first: */
+    /* return( (crc << 8) ^ CRCtable[ (crc >> 8) ^ byte ] ); */
+
+    /* bei LSB first: */
+    return (USHORT)((crc >> 8) ^ CRCtable[ (crc ^ byte) & 0xFF ]);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CrcInit(uPOLYNOM)
+ *
+ * PARAMETER
+ *	uPOLYNOM		Generator-Polynom
+ *		SDLC:	0x8408 (entspricht x^16 + x^12 + x^5 + x^0)
+ *		CRC-16:	0xA001 (entspricht x^16 + x^15 + x^2 + x^0)
+ * RETURNS
+ * GLOBAL
+ * DESCRIPTION
+ *	CRC-Tabelle aufbauen.
+ *
+ * REMARKS
+ *	Muss vor UpdateCRC() aufgerufen werden.
+ *	Die Konstanten fr die Generator-Polynome erh„lt man, indem man
+ *	aus den Koeffizienten des Polynoms einen 16-Bit-Wert macht,
+ *	(x^16 dabei weglassen) und die Bitreihenfolge spiegelt (bei
+ *	einer Sio: LSB first).
+ *	Also z.B. fuer SDLC (x^16 + x^12 + x^5 + x^0):
+ *	a) Koeffizienten:	1 0001 0000 0010 0001
+ *	b) x^16 weglassen:	  0001 0000 0010 0001
+ *	c) MSB/LSB tauschen:	  1000 0100 0000 1000 -> 0x8408 
+ *	analog fuer CRC-16 (x^16 + x^15 + x^2 + x^0): -> 0xA001 
+ */
+PUBLIC void
+CrcInit(USHORT uPOLYNOM)
+{
+    USHORT i;
+
+    for( i = 0; i < 256u; ++i )
+	CRCtable[i] = CalcTable(i, uPOLYNOM, 0);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * Crc16(buffer,cb)
+ *
+ * PARAMETER
+ *	buffer
+ *	cb
+ *
+ * RETURNS
+ *	CRC 16
+ *
+ * DESCRIPTION
+ *	Calculates CRC16 over 'cb' bytes starting at 'buf'.
+ *
+ * REMARKS
+ */
+PUBLIC USHORT
+Crc16(PVOID buffer,USHORT cb)
+{
+    USHORT	crc = 0;
+    PUCHAR	p = (PUCHAR)buffer;
+
+    for(; cb != 0; --cb, ++p )
+	crc = UpdateCRC(crc, *p);
+    return crc;
+}
+@
+
+
+1.4
+log
+@- minor corrections to keep compiler happy
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1999/02/09 02:47:11 $
+d10 3
+d21 2
+a22 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+d24 1
+a24 1
+static char const vcid[]="$Id: crc.cpp,v 1.3 1999/02/09 02:47:11 vitus Exp vitus $";
+d33 1
+a33 1
+#include "proto.h"
+d68 2
+a69 2
+ * CALL
+ *	UpdateCRC(crc,byte);
+d99 2
+a100 2
+ * CALL
+ *	CrcInit(uPOLYNOM)
+d135 2
+a136 2
+ * CALL
+ *	Crc16(buffer,cb)
+@
+
+
+1.3
+log
+@- Umstellung auf C++
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1998/12/13 23:06:15 $
+d10 3
+d21 1
+a21 1
+static char const id[]="$Id: crc.cpp,v 1.2 1998/12/13 23:06:15 vitus Exp vitus $";
+d89 1
+a89 1
+    return ((crc >> 8) ^ CRCtable[ (crc ^ byte) & 0xFF ]);
+d122 1
+a122 1
+    int i;
+d124 1
+a124 1
+    for( i = 0; i < 256; ++i )
+a149 1
+    USHORT	i;
+@
+
+
+1.2
+log
+@- changed as global headers moved to /source/Lib
+@
+text
+@d2 3
+a4 3
+ * $Source: r:/source/driver/raid/setup/RCS/crc.c,v $
+ * $Revision: 1.1 $
+ * $Date: 1998/03/16 23:37:50 $
+d9 4
+a12 1
+ * $Log: crc.c,v $
+d15 2
+a16 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+d18 1
+a18 1
+static char const id[]="$Id: crc.c,v 1.1 1998/03/16 23:37:50 vitus Stab vitus $";
+d20 1
+d148 1
+a148 1
+    PUCHAR	p = buffer;
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d7 1
+a7 1
+ * Support routines to calculate CRC.
+d9 3
+a11 1
+ * $Log$
+d15 1
+a15 1
+static char const id[]="$Id$";
+d22 1
+a22 1
+#include "../../../tools/defines.h"
+d57 1
+a57 1
+/*#
+d88 1
+a88 1
+/*#
+d124 15
+@

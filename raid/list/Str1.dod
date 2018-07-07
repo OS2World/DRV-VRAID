@@ -1,0 +1,236 @@
+;	Static Name Aliases
+;
+;	$S2117_dszShutdownEnter	EQU	dszShutdownEnter
+;	$S2118_dszShutdownLeave	EQU	dszShutdownLeave
+;	$S170_id	EQU	id
+	TITLE   str1.c
+	.286p
+	.287
+_TEXT	SEGMENT  WORD PUBLIC 'CODE'
+_TEXT	ENDS
+_DATA	SEGMENT  WORD PUBLIC 'DATA'
+_DATA	ENDS
+CONST	SEGMENT  WORD PUBLIC 'CONST'
+CONST	ENDS
+_BSS	SEGMENT  WORD PUBLIC 'BSS'
+_BSS	ENDS
+$$SYMBOLS	SEGMENT  BYTE PUBLIC 'DEBSYM'
+$$SYMBOLS	ENDS
+$$TYPES	SEGMENT  BYTE PUBLIC 'DEBTYP'
+$$TYPES	ENDS
+INITDATA	SEGMENT  WORD PUBLIC 'FAR_DATA'
+INITDATA	ENDS
+DGROUP	GROUP	CONST, _BSS, _DATA
+	ASSUME DS: DGROUP
+	ASSUME  SS: NOTHING
+EXTRN	_GenIOCtl:NEAR
+EXTRN	_InitBase:NEAR
+EXTRN	_dprintf:NEAR
+EXTRN	_SaveArrayInfos:NEAR
+EXTRN	_uDebugLevel:WORD
+EXTRN	_fDriverFlags:WORD
+_DATA      SEGMENT
+$S170_id	DB	'$Id: str1.c,v 1.6 1999/10/01 00:54:18 vitus Exp $',  00H
+_DATA      ENDS
+CONST      SEGMENT
+$S2117_dszShutdownEnter	DB	0dH,  0aH, 'System enters SHUTDOWN state',  00H
+	ORG	$+1
+$S2118_dszShutdownLeave	DB	0dH,  0aH, 'System completed SHUTDOWN',  00H
+CONST      ENDS
+_TEXT      SEGMENT
+	ASSUME	CS: _TEXT
+	PUBLIC	_Shutdown
+_Shutdown	PROC NEAR
+; Line 84
+	*** 000000	c8 04 00 00 		enter	4,0
+;	parameter = -4
+;	rph = 4
+; Line 89
+	*** 000004	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rph
+	*** 000007	83 c3 0d 		add	bx,13	;000dH
+	*** 00000a	26 80 3f 00 		cmp	BYTE PTR es:[bx],0
+	*** 00000e	75 1c 			jne	$I2124
+; Line 90
+; Line 91
+	*** 000010	f6 06 00 00 01 		test	BYTE PTR _uDebugLevel,1
+	*** 000015	74 0a 			je	$L2155
+	*** 000017	1e 			push	ds
+	*** 000018	68 00 00 		push	OFFSET DGROUP:$S2117_dszShutdownEnter
+	*** 00001b	e8 00 00 		call	_dprintf
+	*** 00001e	83 c4 04 		add	sp,4
+					$L2155:
+; Line 92
+	*** 000021	80 0e 01 00 04 		or	BYTE PTR _fDriverFlags+1,4
+; Line 94
+	*** 000026	e8 00 00 		call	_SaveArrayInfos
+; Line 95
+; Line 96
+	*** 000029	eb 14 			jmp	SHORT $I2125
+	*** 00002b	90 			nop	
+					$I2124:
+; Line 97
+; Line 98
+	*** 00002c	f6 06 00 00 01 		test	BYTE PTR _uDebugLevel,1
+	*** 000031	74 07 			je	$L2157
+	*** 000033	1e 			push	ds
+	*** 000034	68 20 00 		push	OFFSET DGROUP:$S2118_dszShutdownLeave
+	*** 000037	e8 00 00 		call	_dprintf
+					$L2157:
+; Line 99
+	*** 00003a	80 0e 01 00 08 		or	BYTE PTR _fDriverFlags+1,8
+; Line 100
+					$I2125:
+; Line 102
+	*** 00003f	b8 00 01 		mov	ax,256	;0100H
+; Line 103
+	*** 000042	c9 			leave	
+	*** 000043	c3 			ret	
+
+_Shutdown	ENDP
+	PUBLIC	__fstrncpy
+__fstrncpy	PROC FAR
+; Line 121
+	*** 000044	c8 0e 00 00 		enter	14,0
+;	dst = -4
+;	src = -8
+;	size = 14
+;	s = 10
+;	d = 6
+; Line 122
+	*** 000048	8b 46 06 		mov	ax,WORD PTR [bp+6]	;d
+	*** 00004b	8b 56 08 		mov	dx,WORD PTR [bp+8]
+	*** 00004e	89 46 fc 		mov	WORD PTR [bp-4],ax	;dst
+	*** 000051	89 56 fe 		mov	WORD PTR [bp-2],dx
+; Line 123
+	*** 000054	8b 46 0a 		mov	ax,WORD PTR [bp+10]	;s
+	*** 000057	8b 56 0c 		mov	dx,WORD PTR [bp+12]
+	*** 00005a	89 46 f8 		mov	WORD PTR [bp-8],ax	;src
+	*** 00005d	89 56 fa 		mov	WORD PTR [bp-6],dx
+; Line 125
+					$FC2136:
+	*** 000060	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;src
+	*** 000063	ff 46 f8 		inc	WORD PTR [bp-8]	;src
+	*** 000066	26 8a 07 		mov	al,BYTE PTR es:[bx]
+	*** 000069	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;dst
+	*** 00006c	ff 46 fc 		inc	WORD PTR [bp-4]	;dst
+	*** 00006f	26 88 07 		mov	BYTE PTR es:[bx],al
+	*** 000072	0a c0 			or	al,al
+	*** 000074	74 0f 			je	$F2138
+	*** 000076	8b 46 0e 		mov	ax,WORD PTR [bp+14]	;size
+	*** 000079	ff 4e 0e 		dec	WORD PTR [bp+14]	;size
+	*** 00007c	0b c0 			or	ax,ax
+	*** 00007e	74 05 			je	$F2138
+; Line 126
+	*** 000080	eb de 			jmp	SHORT $FC2136
+					$FC2139:
+	*** 000082	ff 4e 0e 		dec	WORD PTR [bp+14]	;size
+					$F2138:
+	*** 000085	83 7e 0e 00 		cmp	WORD PTR [bp+14],0	;size
+	*** 000089	74 0d 			je	$FB2140
+; Line 128
+	*** 00008b	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;dst
+	*** 00008e	ff 46 fc 		inc	WORD PTR [bp-4]	;dst
+	*** 000091	26 c6 07 00 		mov	BYTE PTR es:[bx],0
+	*** 000095	eb eb 			jmp	SHORT $FC2139
+	*** 000097	90 			nop	
+					$FB2140:
+; Line 129
+	*** 000098	8b 46 06 		mov	ax,WORD PTR [bp+6]	;d
+	*** 00009b	8b 56 08 		mov	dx,WORD PTR [bp+8]
+; Line 130
+	*** 00009e	c9 			leave	
+	*** 00009f	cb 			ret	
+
+__fstrncpy	ENDP
+	PUBLIC	_Strategy
+_Strategy	PROC NEAR
+; Line 225
+	*** 0000a0	55 			push	bp
+	*** 0000a1	8b ec 			mov	bp,sp
+;	rph = 4
+; Line 226
+	*** 0000a3	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rph
+	*** 0000a6	26 8a 47 02 		mov	al,BYTE PTR es:[bx+2]
+	*** 0000aa	2a e4 			sub	ah,ah
+	*** 0000ac	eb 4c 			jmp	SHORT $S2144
+; Line 227
+; Line 228
+					$SC2148:
+; Line 229
+	*** 0000ae	f6 06 01 00 01 		test	BYTE PTR _fDriverFlags+1,1
+	*** 0000b3	74 0b 			je	$I2149
+					$SD2154:
+; Line 249
+	*** 0000b5	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rph
+	*** 0000b8	26 c7 47 03 03 81 	mov	WORD PTR es:[bx+3],-32509	;8103H
+; Line 250
+	*** 0000be	eb 6a 			jmp	SHORT $EX2143
+					$I2149:
+; Line 232
+	*** 0000c0	ff 76 06 		push	WORD PTR [bp+6]
+	*** 0000c3	ff 76 04 		push	WORD PTR [bp+4]	;rph
+	*** 0000c6	e8 00 00 		call	_InitBase
+	*** 0000c9	8b e5 			mov	sp,bp
+					$L2162:
+	*** 0000cb	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rph
+	*** 0000ce	26 89 47 03 		mov	WORD PTR es:[bx+3],ax
+; Line 233
+	*** 0000d2	eb 56 			jmp	SHORT $EX2143
+; Line 235
+					$SC2151:
+; Line 236
+	*** 0000d4	ff 76 06 		push	WORD PTR [bp+6]
+	*** 0000d7	ff 76 04 		push	WORD PTR [bp+4]	;rph
+	*** 0000da	e8 23 ff 		call	_Shutdown
+	*** 0000dd	eb 16 			jmp	SHORT $L2160
+	*** 0000df	90 			nop	
+; Line 239
+					$SC2152:
+; Line 241
+	*** 0000e0	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rph
+	*** 0000e3	26 c7 47 03 00 01 	mov	WORD PTR es:[bx+3],256	;0100H
+; Line 242
+	*** 0000e9	eb 3f 			jmp	SHORT $EX2143
+	*** 0000eb	90 			nop	
+; Line 244
+					$SC2153:
+; Line 245
+	*** 0000ec	ff 76 06 		push	WORD PTR [bp+6]
+	*** 0000ef	ff 76 04 		push	WORD PTR [bp+4]	;rph
+	*** 0000f2	e8 00 00 		call	_GenIOCtl
+					$L2160:
+	*** 0000f5	83 c4 04 		add	sp,4
+	*** 0000f8	eb d1 			jmp	SHORT $L2162
+; Line 248
+					$S2144:
+	*** 0000fa	2d 0d 00 		sub	ax,13	;000dH
+	*** 0000fd	3d 0f 00 		cmp	ax,15	;000fH
+	*** 000100	77 b3 			ja	$SD2154
+	*** 000102	d1 e0 			shl	ax,1
+	*** 000104	93 			xchg	ax,bx
+	*** 000105	2e ff a7 0a 01 		jmp	WORD PTR cs:$L2159[bx]
+					$L2159:
+	*** 00010a	e0 00 				DW	$SC2152
+	*** 00010c	e0 00 				DW	$SC2152
+	*** 00010e	b5 00 				DW	$SD2154
+	*** 000110	ec 00 				DW	$SC2153
+	*** 000112	b5 00 				DW	$SD2154
+	*** 000114	b5 00 				DW	$SD2154
+	*** 000116	b5 00 				DW	$SD2154
+	*** 000118	b5 00 				DW	$SD2154
+	*** 00011a	b5 00 				DW	$SD2154
+	*** 00011c	b5 00 				DW	$SD2154
+	*** 00011e	b5 00 				DW	$SD2154
+	*** 000120	b5 00 				DW	$SD2154
+	*** 000122	b5 00 				DW	$SD2154
+	*** 000124	b5 00 				DW	$SD2154
+	*** 000126	ae 00 				DW	$SC2148
+	*** 000128	d4 00 				DW	$SC2151
+; Line 253
+					$EX2143:
+	*** 00012a	c9 			leave	
+	*** 00012b	c3 			ret	
+
+_Strategy	ENDP
+_TEXT	ENDS
+END

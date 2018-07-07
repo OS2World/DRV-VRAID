@@ -1,0 +1,135 @@
+head	1.4;
+access;
+symbols
+	VRAID_REL23:1.4
+	REL22:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2001.02.05.00.15.00;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.10.02.18.04;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.04.20.23.26.26;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.10.25.08.59.53;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@IPF resource ID definitions
+@
+
+
+1.4
+log
+@- more header IDs
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/doc/RCS/vraid.def,v $
+ * $Revision: 1.3 $
+ * $Date: 2000/11/10 02:18:04 $
+ * $Locker: vitus $
+ *
+ *	IPF resource ID definitions.
+ *
+ * $Log: vraid.def,v $
+ * Revision 1.3  2000/11/10 02:18:04  vitus
+ * - plus ID_VERIFYARRAY
+ *
+ * Revision 1.2  2000/04/20 23:26:26  vitus
+ * - some more IDs
+ * - tabified
+ *
+ * Revision 1.1  1999/10/25 08:59:53  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1999-2001
+ */
+
+
+#define ID_GENERAL		1000
+#define ID_AUTHOR		1100
+#define ID_CONFIGURATION	3000
+#define ID_DRVDEF		3200
+#define ID_CREATEPDEV		3310
+#define ID_DESTROYPDEV		3320
+#define ID_DEFINEARRAY		3330
+#define ID_DESTROYARRAY		3340
+#define ID_VERIFYARRAY		3350
+#define ID_ADDPART		3360
+#define ID_REMOVEPART		3370
+#define ID_INVALIDATEPART	3380
+#define ID_REBUILDARRAY		3390
+#define ID_REGISTRATION		5000
+#define ID_DEMOKEY		5300
+@
+
+
+1.3
+log
+@- plus ID_VERIFYARRAY
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 2000/04/20 23:26:26 $
+d10 3
+d19 2
+a20 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1999
+d35 2
+@
+
+
+1.2
+log
+@- some more IDs
+- tabified
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1999/10/25 08:59:53 $
+d10 4
+d29 3
+a31 2
+#define ID_ADDPART		3350
+#define ID_REMOVEPART		3360
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 5
+ *
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 3
+a11 1
+ * $Log$
+d18 1
+d27 2
+@

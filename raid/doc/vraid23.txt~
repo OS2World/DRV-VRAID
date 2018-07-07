@@ -1,0 +1,30 @@
+
+        Archive Filename: vraid22.zip
+       Short Description: VRAID - a Software RAID package. Package
+                          version 2.2
+        Long Description: Software RAID for OS/2! Now implements RAID 1 (mirroring),
+                          RAID 0 (striping) and chaining. Define array drives from
+			  SCSI, IDE, MFM, ... disks using drag and drop.
+			  Supports any filesystem available for OS/2. Shares disks
+                          with OS/2 partitions.
+
+      Proposed directory
+           for placement: /pub/os2/system/drivers/storage
+
+               Your name: Vitus Jensen
+           Email address: Vitus_Jensen@gmx.de
+    Program contact name: (same)
+   Program contact email: vraid@gmx.de
+             Program URL: (none)
+
+      Would you like the
+   contact email address
+    included in listings? yes
+
+Operating System/Version: 
+ Additional requirements: OS/2 Warp 3 and above (setup), OS/2 2.0+ (driver)
+
+                Replaces: /pub/os2/system/drivers/storage/vraid21.zip
+
+
+

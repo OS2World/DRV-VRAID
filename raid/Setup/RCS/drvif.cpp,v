@@ -1,0 +1,1384 @@
+head	1.14;
+access;
+symbols
+	VSETUPv0_84:1.14
+	VSETUP_82:1.10
+	VSETUPv0_80:1.9
+	VSETUPv0_71:1.4
+	VSETUPv0_70:1.4
+	VSETUPv0_60:1.3
+	VSETUPv0_52:1.2
+	VSETUPv0_51:1.2
+	VSETUPv0_50:1.2;
+locks; strict;
+comment	@ * @;
+
+
+1.14
+date	2001.01.23.01.41.16;	author vitus;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2000.08.17.02.02.13;	author vitus;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2000.08.07.01.27.02;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2000.06.12.20.29.38;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.10.01.01.06.42;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.06.19.22.03.14;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.06.02.01.47.34;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.05.13.22.46.32;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.05.12.01.04.23;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	99.04.14.23.42.27;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	99.02.09.02.48.17;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.12.13.22.35.53;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.09.27.00.57.40;	author vitus;	state Stab;
+branches;
+next	1.1;
+
+1.1
+date	98.09.24.02.01.41;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Interface to vraid.flt and other drivers (OS2DASD.DMD comes to mind)
+@
+
+
+1.14
+log
+@- DriverArrayChild() korrigiert, Zeiger und Zeiger auf Zeiger...
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/drvif.cpp,v $
+ * $Revision: 1.13 $
+ * $Date: 2000/08/17 02:02:13 $
+ * $Locker: vitus $
+ *
+ *	Interface to vraid.flt and other drivers (OS2DASD.DMD comes to mind).
+ *
+ * $Log: drvif.cpp,v $
+ * Revision 1.13  2000/08/17 02:02:13  vitus
+ * - implemented DriverArrayChild()
+ *
+ * Revision 1.12  2000/08/07 01:27:02  vitus
+ * - implemented DriverArrayRebuild()
+ *
+ * Revision 1.11  2000/06/12 20:29:38  vitus
+ * - implemented DriverArrayVerify()
+ *
+ * Revision 1.10  1999/10/01 01:06:42  vitus
+ * - renamed DriverPhysinfo() to DriverPhyssize()
+ * - new DriverPhysinfo() returning the complete VRAID_PHYSINFO_DATA
+ *
+ * Revision 1.9  1999/06/19 22:03:14  vitus
+ * - implemented DriverSetBeeper()
+ * - changed DriverGetVersion() to return flags, too.
+ *
+ * Revision 1.8  1999/06/02 01:47:34  vitus
+ * - DriverClose: tells user that build processes have stopped for good, too.
+ *
+ * Revision 1.7  1999/05/13 22:46:32  vitus
+ * - DriverClose: message box telling user to reboot when configuration
+ *   was changed.
+ *
+ * Revision 1.6  1999/05/12 01:04:23  vitus
+ * - DriverOpen: calls DriverStartSetup()
+ * - DriverClose: calls DriverEndSetup()
+ *
+ * Revision 1.5  1999/04/14 23:42:27  vitus
+ * - implemented DriverStartSetup(), DriverEndSetup()
+ *
+ * Revision 1.4  1999/02/09 02:48:17  vitus
+ * - Umstellung auf C++
+ *
+ * Revision 1.3  1998/12/13 22:35:53  vitus
+ * - implemented DriverArraylist(), DriverArrayinfo()
+ *
+ * Revision 1.2  1998/09/27 00:57:40  vitus
+ * - commented
+ * - corrected DriverPhysIO: data address
+ *
+ * Revision 1.1  1998/09/24 02:01:41  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-2000
+ */
+static char const vcid[]="$Id: drvif.cpp,v 1.13 2000/08/17 02:02:13 vitus Exp vitus $";
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <process.h>
+
+#define __IBMC__	0
+#define INCL_DOSDEVICES
+#define INCL_DOSDEVIOCTL
+#define INCL_DOSERRORS
+#define INCL_WIN
+#include <os2.h>
+
+extern "C" {
+#include "../../../lib/defines.h"
+#include "../../../lib/verbose.h"
+}
+#include "drvif.h"
+
+
+
+
+#define DEVICENAME	"VUJRAID$"
+
+
+
+PRIVATE HFILE	hdDriver = -1ul;		/* handle of open VRaid.flt */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DriverOpen(VOID)
+ *
+ * PARAMETER
+ *	(none)
+ * RETURNS
+ *	APIRET
+ * GLOBAL
+ *	hdDriver
+ * DESCRIPTION
+ *	Opens vraid.flt driver and stores handle in global variable.
+ *
+ * REMARKS
+ */
+PUBLIC APIRET
+DriverOpen(VOID)
+{
+    ULONG	action_taken;
+    APIRET	rc;
+
+    rc = DosOpen(DEVICENAME, &hdDriver, &action_taken, 0, 0,
+		 OPEN_ACTION_FAIL_IF_NEW|OPEN_ACTION_OPEN_IF_EXISTS,
+		 OPEN_SHARE_DENYNONE|OPEN_ACCESS_READWRITE,
+		 NULL);
+    DriverStartSetup();
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DriverClose(VOID)
+ *
+ * PARAMETER
+ *	(none)
+ * RETURNS
+ *	APIRET
+ * GLOBAL
+ *	hdDriver
+ * DESCRIPTION
+ *	Ends driver access by closing 'hdDriver'.
+ *	If no writing occured to any physdevice DriverEndSetup() is
+ *	called restarting any suspended build process.
+ *
+ * REMARKS
+ */
+PUBLIC APIRET
+DriverClose(VOID)
+{
+    VRAID_VER_DATA	data;
+    ULONG		datasize = sizeof(data);
+    APIRET		rc;
+
+    if( hdDriver == -1ul )
+	return ERROR_INVALID_HANDLE;
+    rc = DosDevIOCtl(hdDriver, IOCTL_VRAID_CATEGORY, VRAID_QUERY_VERSION,
+		     NULL, 0, NULL, &data, datasize, &datasize);
+    if( rc == 0 )
+    {
+	if( (data.flags & 0x10) == 0 )
+	    DriverEndSetup();			// no writing -> restart builds
+	else
+	    WinMessageBox(HWND_DESKTOP, HWND_DESKTOP,
+			  "You have modified disk configuration, please reboot"
+			  " as soon as possible to let VRAID.FLT read any changes"
+			  " you did and reconfigure itself.\n"
+			  "Build processes will be paused until reboot.",
+			  "Reminder", -1ul, MB_ENTER|MB_INFORMATION|MB_MOVEABLE);
+    }
+
+    rc = DosClose(hdDriver);
+    hdDriver = -1ul;
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DriverGetVersion(*ver)
+ *
+ * PARAMETER
+ *	*ver			room to return version
+ * RETURNS
+ *	APIRET
+ * GLOBAL
+ *	hdDriver
+ * DESCRIPTION
+ *	Queries vraid.flt driver for it's version and returns it in '*ver'.
+ *
+ * REMARKS
+ */
+PUBLIC APIRET
+DriverGetVersion(PUSHORT ver,PUSHORT flags)
+{
+    VRAID_VER_DATA	data;
+    ULONG		datasize = sizeof(data);
+    APIRET		rc;
+
+    if( hdDriver == -1ul )
+	return ERROR_INVALID_HANDLE;
+    rc = DosDevIOCtl(hdDriver, IOCTL_VRAID_CATEGORY, VRAID_QUERY_VERSION,
+		     NULL, 0, NULL, &data, datasize, &datasize);
+    if( rc )
+	return rc;
+    *ver = data.version;
+    *flags = data.flags;
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DriverReadMessages(**retbuf)
+ *
+ * PARAMETER
+ *	**retbuf		returns pointer to buffer
+ * RETURNS
+ *	APIRET
+ * GLOBAL
+ *	hdDriver
+ * DESCRIPTION
+ *	Queries vraid.flt driver for stored messages, allocates
+ *	a buffer large enough to hold them all and lets vraid.flt
+ *	fill this buffer.  A pointer to the buffer is returned in
+ *	'**retbuf'.
+ *
+ * REMARKS
+ *	It's the responsibility of the caller to free the buffer.
+ */
+PUBLIC APIRET
+DriverReadMessages(PUCHAR * retbuf)
+{
+    APIRET		rc;
+    USHORT		cb = 0;			/* keep compiler happy */
+    ULONG		datasize;
+    char		* cp = NULL;
+    PVRAID_MSGS_DATA	data;
+
+    do
+    {
+	/* First: read size of stored messages */
+
+	datasize = sizeof(cb);
+	rc = DosDevIOCtl(hdDriver, IOCTL_VRAID_CATEGORY, VRAID_READ_MSGS,
+			 NULL, 0, NULL, &cb, datasize, &datasize);
+	if( rc )
+	    break;
+
+
+	/* Second: allocate buffer big enough to hold
+	   those messages (but no single byte more) */
+
+	datasize = FIELDOFFSET(VRAID_MSGS_DATA,msg) + (ULONG)cb;
+	cp = new char[datasize];
+	data = (PVRAID_MSGS_DATA)cp;
+	*retbuf = new UCHAR[cb];		/* only messages */
+
+
+	/* Third: read all messages and copy to caller
+	 * buffer (newly allocated) */
+
+	rc = DosDevIOCtl(hdDriver, IOCTL_VRAID_CATEGORY, VRAID_READ_MSGS,
+			 NULL, 0, NULL, data, datasize, &datasize);
+	if( rc )
+	{
+	    delete[] cp;
+	    delete[] *retbuf;
+	    *retbuf = NULL;
+	    break;
+	}
+
+	memcpy(*retbuf,
+	       data->msg,
+	       (size_t)(data->cb-FIELDOFFSET(VRAID_MSGS_DATA,msg)));
+	(*retbuf)[data->cb-FIELDOFFSET(VRAID_MSGS_DATA,msg)] = '\0'; /* drv err! */
+
+	delete[] cp;
+    }
+    while(0);
+
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DriverPhyslist(cnt,retbuf)
+ *
+ * PARAMETER
+ *	cnt		return count here
+ *	retbuf		returns pointer to allocated list
+ * RETURNS
+ *	APIRET
+ * GLOBAL
+ *	hdDriver
+ * DESCRIPTION
+ *	Queries vraid.flt for the list of physical devices hidden from
+ *	OS/2.
+ *
+ * REMARKS
+ */
+PUBLIC APIRET
+DriverPhyslist(PUSHORT count,PUSHORT * retbuf)
+{
+    APIRET	rc;
+    USHORT	cnt = 0;
+
+    do
+    {
+	USHORT			cb;
+	ULONG			datasize = sizeof(cb);
+	char			* cp = NULL;
+	PVRAID_PHYSLIST_DATA	data;
+
+	/* First: read size of stored data */
+
+	rc = DosDevIOCtl(hdDriver, IOCTL_VRAID_CATEGORY, VRAID_QUERY_PHYSLIST,
+			 NULL, 0, NULL, &cb, datasize, &datasize);
+	if( rc )
+	    break;
+
+
+	/* Second: allocate buffer big enough to hold
+	 * those handles (but no single byte more) */
+
+	datasize = cb;
+	cp = new char[datasize];
+	data = (PVRAID_PHYSLIST_DATA)cp;
+	*retbuf = new USHORT[(cb - sizeof(data->cb))/2]; /* only handles */
+
+
+	/* Third: read all handles and copy to caller
+	 * buffer (newly allocated) */
+
+	rc = DosDevIOCtl(hdDriver, IOCTL_VRAID_CATEGORY, VRAID_QUERY_PHYSLIST,
+			 NULL, 0, NULL, data, datasize, &datasize);
+	if( rc )
+	{
+	    delete[] cp;
+	    delete[] *retbuf;
+	    *retbuf = NULL;
+	    break;
+	}
+
+	cnt = (USHORT)((data->cb - FIELDOFFSET(VRAID_PHYSLIST_DATA,hd))
+		       / sizeof(data->hd[0]));
+	for( cb = 0; cb < cnt; ++cb )
+	    (*retbuf)[cb] = data->hd[cb];
+	delete[] cp;
+    }
+    while(0);
+
+    *count = cnt;
+    return rc;
+} /* end[DriverPhyslist] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DriverPhysinfo(hd,*info)
+ *
+ * PARAMETER
+ *	hd		handle of driver device
+ *	*info		room to return information
+ *	hdDriver
+ *
+ * RETURNS
+ *	APIRET
+
+ * DESCRIPTION
+ *	Queries vraid.flt for parameters of 'hd'.
+ *
+ * REMARKS
+ */
+PUBLIC APIRET
+DriverPhysinfo(USHORT hd, PVRAID_PHYSINFO_DATA info)
+{
+    APIRET		rc;
+    ULONG		parmsize;
+    ULONG		datasize;
+
+    datasize = sizeof(*info);
+    parmsize = sizeof(hd);
+    rc = DosDevIOCtl(hdDriver, IOCTL_VRAID_CATEGORY, VRAID_QUERY_PHYSINFO,
+		     &hd, parmsize, &parmsize, info, datasize, &datasize);
+    return rc;
+} /* end[DriverPhysinfo] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DriverPhyssize(hd,*partsize)
+ *
+ * PARAMETER
+ *	hd		handle of driver device
+ *	*partsize	room to write partition size
+ *	hdDriver
+ *
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Queries vraid.flt for size of 'hd'.
+ *
+ * REMARKS
+ */
+PUBLIC APIRET
+DriverPhyssize(USHORT hd,PULONG partsize)
+{
+    APIRET		rc;
+    VRAID_PHYSINFO_DATA	data;
+
+    rc = DriverPhysinfo(hd, &data);
+    if( rc )
+	*partsize = 0;
+    else
+	*partsize = data.partsize;
+
+    return rc;
+} /* end[DriverPhyssize] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DriverPhysIO(hd,write,offset,buffer)
+ *
+ * PARAMETER
+ *	hd		handle of driver device
+ *	write		write flag
+ *	offset		offset in administration space
+ *	buffer		place data here
+ * RETURNS
+ *	APIRET
+ * GLOBAL
+ *	hdDriver
+ * DESCRIPTION
+ *	Reads a single sector from a vraid.flt device and place
+ *	it's contents in 'buffer'.
+ *
+ * REMARKS
+ *	Should only be used to read sectors inside administrative
+ *	sector range.
+ */
+PUBLIC APIRET
+DriverPhysIO(USHORT hd,BOOL write,ULONG offset,PVOID buffer)
+{
+    APIRET		rc;
+    ULONG		parmsize;
+    ULONG		datasize;
+    VRAID_IO_PARM	parm;
+
+    parm.hd = hd;
+    parm.flags = 0;
+    if( write )
+	parm.flags |= VIOF_WRITE;
+    parm.reserved = 0;
+    parm.partsecno = offset;
+
+    datasize = 512;
+    parmsize = sizeof(parm);
+    rc = DosDevIOCtl(hdDriver, IOCTL_VRAID_CATEGORY, VRAID_ADMINSEC_IO,
+		     &parm, parmsize, &parmsize, buffer, datasize, &datasize);
+    return rc;
+
+} /* end[DriverPhysIO] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DriverArraylist(cnt,retbuf)
+ *
+ * PARAMETER
+ *	cnt		return count here
+ *	retbuf		returns pointer to allocated list
+ * RETURNS
+ *	APIRET
+ * DESCRIPTION
+ *	Queries vraid.flt for the list of array drives reported
+ *	to OS/2.
+ *
+ * REMARKS
+ *	Used global 'hdDriver'.
+ */
+PUBLIC APIRET
+DriverArraylist(PUSHORT count,PUSHORT * retbuf)
+{
+    APIRET	rc;
+    USHORT	cnt = 0;
+
+    do
+    {
+	USHORT			cb;
+	ULONG			datasize = sizeof(cb);
+	char			* cp = NULL;
+	PVRAID_ARRAYLIST_DATA	data;
+
+	/* First: read size of stored data */
+
+	rc = DosDevIOCtl(hdDriver, IOCTL_VRAID_CATEGORY, VRAID_QUERY_ARRAYLIST,
+			 NULL, 0, NULL, &cb, datasize, &datasize);
+	if( rc )
+	    break;
+
+
+	/* Second: allocate buffer big enough to hold
+	 * those handles (but not a single byte more) */
+
+	datasize = cb;
+	cp = new char[datasize];
+	data = (PVRAID_ARRAYLIST_DATA)cp;
+	*retbuf = new USHORT[(cb - sizeof(data->cb))/2]; /* only handles */
+
+
+	/* Third: read all handles and copy to caller
+	 * buffer (newly allocated) */
+
+	rc = DosDevIOCtl(hdDriver, IOCTL_VRAID_CATEGORY, VRAID_QUERY_ARRAYLIST,
+			 NULL, 0, NULL, data, datasize, &datasize);
+	if( rc )
+	{
+	    delete[] cp;
+	    delete[] *retbuf;
+	    *retbuf = NULL;
+	    break;
+	}
+
+	cnt = (USHORT)((data->cb - FIELDOFFSET(VRAID_ARRAYLIST_DATA,hd))
+		       / sizeof(data->hd[0]));
+	for( cb = 0; cb < cnt; ++cb )
+	    (*retbuf)[cb] = data->hd[cb];
+	delete[] cp;
+    }
+    while(0);
+
+    *count = cnt;
+    return rc;
+} /* end[DriverArraylist] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DriverArrayinfo(hd,*info)
+ *
+ * PARAMETER
+ *	hd		handle of driver device
+ *	*info		room to return information
+ * RETURNS
+ *	APIRET
+ * DESCRIPTION
+ *	Queries vraid.flt for parameters of 'hd'.
+ *
+ * REMARKS
+ *	Uses global 'hdDriver'.
+ */
+PUBLIC APIRET
+DriverArrayinfo(USHORT hd, PVRAID_ARRAYINFO_DATA info)
+{
+    APIRET	rc;
+    ULONG	parmsize;
+    ULONG	datasize;
+
+
+    parmsize = sizeof(hd);
+    datasize = sizeof(*info);
+    rc = DosDevIOCtl(hdDriver, IOCTL_VRAID_CATEGORY, VRAID_QUERY_ARRAYINFO,
+		     &hd, parmsize, &parmsize, info, datasize, &datasize);
+
+    return rc;
+} /* end[DriverArrayinfo] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DriverArrayVerify(p,buf,bufsiz)
+ *
+ * PARAMETER
+ *	p		handle of driver device
+ *	buf		room to return information
+ *	bufsiz		bytes available at '*buf'
+ *
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Forces vraid.flt to verify a sector range.
+ *
+ * REMARKS
+ *	Uses global 'hdDriver'.
+ */
+PUBLIC APIRET
+DriverArrayVerify(PVRAID_VERIFY_PARM p, PVOID buf, ULONG bufsiz)
+{
+    APIRET	rc;
+    ULONG	parmsize;
+    ULONG	datasize;
+
+
+    parmsize = sizeof(*p);
+    datasize = bufsiz;
+    rc = DosDevIOCtl(hdDriver, IOCTL_VRAID_CATEGORY, VRAID_VERIFY_ARRAY,
+		     p, parmsize, &parmsize, buf, datasize, &datasize);
+
+    return rc;
+} /* end[DriverArrayVerify] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DriverArrayRebuild(hd,start_sector)
+ *
+ * PARAMETER
+ *	hd		handle of driver device
+ *	start_sector	where to start
+ *
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Forces vraid.flt to rebuild an array.
+ *
+ * REMARKS
+ *	Uses global 'hdDriver'.
+ */
+PUBLIC APIRET
+DriverArrayRebuild(USHORT hd, ULONG start_sector)
+{
+    VRAID_REBUILD_PARM		param;
+    VRAID_ARRAYINFO_DATA	data;
+    ULONG	parmsize;
+    ULONG	datasize;
+    APIRET	rc;
+
+
+    param.handle = hd;
+    param.secno = start_sector;
+    parmsize = sizeof(param);
+
+    datasize = sizeof(data);;
+    rc = DosDevIOCtl(hdDriver, IOCTL_VRAID_CATEGORY, VRAID_START_REBUILD,
+		     &param, parmsize, &parmsize, &data, datasize, &datasize);
+
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DriverArrayChild(child_info)
+ *
+ * PARAMETER
+ *	child_info	new child info
+ *
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Forces vraid.flt to change it's view of an array's child.
+ *
+ * REMARKS
+ *	Uses global 'hdDriver'.
+ */
+PUBLIC APIRET
+DriverArrayChild(PVRAID_CHILD_PARAM child_info)
+{
+    ULONG	parmsize;
+    ULONG	datasize;
+    APIRET	rc;
+
+
+    parmsize = sizeof(child_info);
+    datasize = 0;
+    rc = DosDevIOCtl(hdDriver, IOCTL_VRAID_CATEGORY, VRAID_SET_CHILD_STATE,
+		     child_info, parmsize, &parmsize, NULL, datasize, &datasize);
+
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DriverStartSetup()
+ *
+ * PARAMETER
+ *	(none)
+ * RETURNS
+ *	APIRET
+ * DESCRIPTION
+ *	Tells VRAID
+ *
+ * REMARKS
+ *	Uses global 'hdDriver'.
+ */
+PUBLIC APIRET
+DriverStartSetup(void)
+{
+    APIRET		rc;
+    ULONG		parmsize;
+    ULONG		datasize;
+
+    datasize = 0;
+    parmsize = 0;
+    rc = DosDevIOCtl(hdDriver, IOCTL_VRAID_CATEGORY, VRAID_START_SETUP,
+		     NULL, parmsize, &parmsize, NULL, datasize, &datasize);
+
+    return rc;
+} /* end[DriverStartSetup] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DriverEndSetup(void)
+ *
+ * PARAMETER
+ *	(none)
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Tells VRAID
+ *
+ * REMARKS
+ *	Uses global 'hdDriver'.
+ */
+PUBLIC APIRET
+DriverEndSetup(void)
+{
+    APIRET		rc;
+    ULONG		parmsize;
+    ULONG		datasize;
+
+    datasize = 0;
+    parmsize = 0;
+    rc = DosDevIOCtl(hdDriver, IOCTL_VRAID_CATEGORY, VRAID_END_SETUP,
+		     NULL, parmsize, &parmsize, NULL, datasize, &datasize);
+
+    return rc;
+} /* end[DriverEndSetup] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DriverSetBeeper(onoff)
+ *
+ * PARAMETER
+ *	onoff		0 : switch beeper off
+ *			/0 : beeper on
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Tells VRAID to disable beeping in case of errors.
+ *
+ * REMARKS
+ *	Uses global 'hdDriver'.
+ */
+PUBLIC APIRET
+DriverSetBeeper(USHORT onoff)
+{
+    APIRET		rc;
+    ULONG		parmsize;
+    ULONG		datasize;
+
+    datasize = 0;
+    parmsize = sizeof(onoff);
+    rc = DosDevIOCtl(hdDriver, IOCTL_VRAID_CATEGORY, VRAID_SET_BEEPER,
+		     &onoff, parmsize, &parmsize, NULL, datasize, &datasize);
+
+    return rc;
+}
+@
+
+
+1.13
+log
+@- implemented DriverArrayChild()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.12 $
+ * $Date: 2000/08/07 01:27:02 $
+d10 3
+d56 1
+a56 1
+static char const vcid[]="$Id: drvif.cpp,v 1.12 2000/08/07 01:27:02 vitus Exp vitus $";
+d369 1
+a369 1
+DriverPhysinfo(USHORT hd,PVRAID_PHYSINFO_DATA info)
+d553 1
+a553 1
+DriverArrayinfo(USHORT hd,PVRAID_ARRAYINFO_DATA info)
+d673 1
+a673 1
+		     &child_info, parmsize, &parmsize, NULL, datasize, &datasize);
+@
+
+
+1.12
+log
+@- implemented DriverArrayRebuild()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.11 $
+ * $Date: 2000/06/12 20:29:38 $
+d10 3
+d53 1
+a53 1
+static char const vcid[]="$Id: drvif.cpp,v 1.11 2000/06/12 20:29:38 vitus Exp vitus $";
+d637 34
+@
+
+
+1.11
+log
+@- implemented DriverArrayVerify()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/10/01 01:06:42 $
+d10 3
+d47 2
+a48 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+d50 1
+a50 1
+static char const vcid[]="$Id: drvif.cpp,v 1.10 1999/10/01 01:06:42 vitus Exp vitus $";
+d597 40
+@
+
+
+1.10
+log
+@- renamed DriverPhysinfo() to DriverPhyssize()
+- new DriverPhysinfo() returning the complete VRAID_PHYSINFO_DATA
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/06/19 22:03:14 $
+d10 4
+d47 1
+a47 1
+static char const vcid[]="$Id: drvif.cpp,v 1.9 1999/06/19 22:03:14 vitus Exp vitus $";
+d546 4
+a549 3
+    APIRET		rc;
+    ULONG		parmsize;
+    ULONG		datasize;
+d551 1
+a552 1
+    parmsize = sizeof(hd);
+d558 36
+@
+
+
+1.9
+log
+@- implemented DriverSetBeeper()
+- changed DriverGetVersion() to return flags, too.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/06/02 01:47:34 $
+d10 4
+d43 1
+a43 1
+static char const vcid[]="$Id: drvif.cpp,v 1.8 1999/06/02 01:47:34 vitus Exp vitus $";
+d77 2
+a78 2
+ * CALL
+ *	DriverOpen(VOID)
+d108 2
+a109 2
+ * CALL
+ *	DriverClose(VOID)
+d156 2
+a157 2
+ * CALL
+ *	DriverGetVersion(*ver)
+d191 2
+a192 2
+ * CALL
+ *	DriverReadMessages(**retbuf)
+d266 2
+a267 2
+ * CALL
+ *	DriverPhyslist(cnt,retbuf)
+d340 2
+a341 2
+ * CALL
+ *	DriverPhysinfo(hd,*partsize)
+d344 3
+a346 1
+ *	*partsize	room to write partition size
+d349 1
+a349 2
+ * GLOBAL
+ *	hdDriver
+d356 1
+a356 1
+DriverPhysinfo(USHORT hd,PULONG partsize)
+a360 1
+    VRAID_PHYSINFO_DATA	data;
+d362 1
+a362 1
+    datasize = sizeof(data);
+d365 30
+a394 1
+		     &hd, parmsize, &parmsize, &data, datasize, &datasize);
+d401 1
+a401 1
+} /* end[DriverPhysinfo] */
+d407 2
+a408 2
+ * CALL
+ *	DriverPhysIO(hd,write,offset,buffer)
+d453 2
+a454 2
+ * CALL
+ *	DriverArraylist(cnt,retbuf)
+d526 2
+a527 2
+ * CALL
+ *	DriverArrayinfo(hd,*info)
+d558 2
+a559 2
+ * CALL
+ *	DriverStartSetup()
+d589 2
+a590 2
+ * CALL
+ *	DriverEndSetup(void)
+d621 2
+a622 2
+ * CALL
+ *	DriverSetBeeper(onoff)
+@
+
+
+1.8
+log
+@- DriverClose: tells user that build processes have stopped for good, too.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/05/13 22:46:32 $
+d10 3
+d39 1
+a39 1
+static char const vcid[]="$Id: drvif.cpp,v 1.7 1999/05/13 22:46:32 vitus Exp vitus $";
+d67 1
+a67 1
+PRIVATE HFILE	hdDriver = -1;			/* handle of open VRAid.flt */
+d126 1
+a126 1
+    if( hdDriver == -1 )
+d140 1
+a140 1
+			  "Reminder", -1, MB_ENTER|MB_INFORMATION|MB_MOVEABLE);
+d144 1
+a144 1
+    hdDriver = -1;
+d166 1
+a166 1
+DriverGetVersion(PUSHORT ver)
+d172 1
+a172 1
+    if( hdDriver == -1 )
+d179 1
+d246 3
+a248 1
+	memcpy(*retbuf, data->msg, data->cb-FIELDOFFSET(VRAID_MSGS_DATA,msg));
+d320 2
+a321 1
+	cnt = (data->cb - FIELDOFFSET(VRAID_PHYSLIST_DATA,hd)) /sizeof(data->hd[0]);
+d477 2
+a478 1
+	cnt = (data->cb - FIELDOFFSET(VRAID_ARRAYLIST_DATA,hd)) /sizeof(data->hd[0]);
+d557 1
+a557 1
+ *	DriverEndSetup()
+d562 1
+d583 33
+@
+
+
+1.7
+log
+@- DriverClose: message box telling user to reboot when configuration
+  was changed.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1999/05/12 01:04:23 $
+d10 4
+d36 1
+a36 1
+static char const vcid[]="$Id: drvif.cpp,v 1.6 1999/05/12 01:04:23 vitus Exp vitus $";
+d135 2
+a136 1
+			  " you did.",
+@
+
+
+1.6
+log
+@- DriverOpen: calls DriverStartSetup()
+- DriverClose: calls DriverEndSetup()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1999/04/14 23:42:27 $
+d10 4
+d32 1
+a32 1
+static char const vcid[]="$Id: drvif.cpp,v 1.5 1999/04/14 23:42:27 vitus Exp vitus $";
+d44 1
+d123 11
+a133 2
+    if( rc == 0   &&  (data.flags & 0x10) == 0 )
+	DriverEndSetup();			// no writing -> restart builds
+@
+
+
+1.5
+log
+@- implemented DriverStartSetup(), DriverEndSetup()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1999/02/09 02:48:17 $
+d10 3
+d28 1
+a28 1
+static char const vcid[]="$Id: drvif.cpp,v 1.4 1999/02/09 02:48:17 vitus Exp vitus $";
+d84 1
+d102 2
+d110 10
+a119 1
+    APIRET	rc;
+@
+
+
+1.4
+log
+@- Umstellung auf C++
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1998/12/13 22:35:53 $
+d10 3
+d25 1
+a25 1
+static char const vcid[]="$Id: drvif.cpp,v 1.3 1998/12/13 22:35:53 vitus Exp vitus $";
+d478 62
+@
+
+
+1.3
+log
+@- implemented DriverArraylist(), DriverArrayinfo()
+@
+text
+@d2 3
+a4 3
+ * $Source: r:/source/driver/raid/setup/RCS/drvif.c,v $
+ * $Revision: 1.2 $
+ * $Date: 1998/09/27 00:57:40 $
+d9 4
+a12 1
+ * $Log: drvif.c,v $
+d19 2
+a20 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+d22 1
+a22 1
+static char const vcid[]="$Id: drvif.c,v 1.2 1998/09/27 00:57:40 vitus Stab vitus $";
+d30 1
+d36 1
+d39 1
+d169 2
+a170 1
+    PVRAID_MSGS_DATA	data = NULL;
+d187 3
+a189 13
+	data = malloc(datasize);
+	if( data == NULL )
+	{
+	    rc = ERROR_NOT_ENOUGH_MEMORY;
+	    break;
+	}
+	*retbuf = malloc(cb);			/* only messages */
+	if( *retbuf == NULL )
+	{
+	    free(data);
+	    rc = ERROR_NOT_ENOUGH_MEMORY;
+	    break;
+	}
+d199 2
+a200 2
+	    free(data);
+	    free(*retbuf);
+d207 2
+a208 1
+	free(data);
+d235 1
+a235 1
+DriverPhyslist(PUSHORT const count,PUSHORT * retbuf)
+d244 2
+a245 1
+	PVRAID_PHYSLIST_DATA	data = NULL;
+d259 3
+a261 13
+	data = malloc(datasize);
+	if( data == NULL )
+	{
+	    rc = ERROR_NOT_ENOUGH_MEMORY;
+	    break;
+	}
+	*retbuf = malloc(cb - sizeof(data->cb));	/* only handles */
+	if( *retbuf == NULL )
+	{
+	    free(data);
+	    rc = ERROR_NOT_ENOUGH_MEMORY;
+	    break;
+	}
+d271 2
+a272 2
+	    free(data);
+	    free(*retbuf);
+d280 1
+a280 1
+	free(data);
+d307 1
+a307 1
+DriverPhysinfo(USHORT hd,PULONG const partsize)
+d391 1
+a391 1
+DriverArraylist(PUSHORT const count,PUSHORT * retbuf)
+d400 2
+a401 1
+	PVRAID_ARRAYLIST_DATA	data = NULL;
+d415 3
+a417 13
+	data = malloc(datasize);
+	if( data == NULL )
+	{
+	    rc = ERROR_NOT_ENOUGH_MEMORY;
+	    break;
+	}
+	*retbuf = malloc(cb - sizeof(data->cb));	/* only handles */
+	if( *retbuf == NULL )
+	{
+	    free(data);
+	    rc = ERROR_NOT_ENOUGH_MEMORY;
+	    break;
+	}
+d427 2
+a428 2
+	    free(data);
+	    free(*retbuf);
+d436 1
+a436 1
+	free(data);
+d462 1
+a462 1
+DriverArrayinfo(USHORT hd,PVRAID_ARRAYINFO_DATA const info)
+@
+
+
+1.2
+log
+@- commented
+- corrected DriverPhysIO: data address
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1998/09/24 02:01:41 $
+d10 4
+d19 1
+a19 1
+static char const vcid[]="$Id: drvif.c,v 1.1 1998/09/24 02:01:41 vitus Exp vitus $";
+d32 5
+a36 3
+#include "../../../tools/defines.h"
+#include "../../../tools/verbose.h"
+#include "../vraidpub.h"
+d48 1
+a48 1
+/*#
+d78 1
+a78 1
+/*#
+d105 1
+a105 1
+/*#
+d139 1
+a139 1
+/*#
+d220 1
+a220 1
+/*#
+d302 1
+a302 1
+/*#
+d340 1
+a340 1
+/*#
+d382 113
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 3
+a11 1
+ * $Log$
+d15 1
+a15 1
+static char const vcid[]="$Id$";
+d42 14
+d62 1
+a62 2
+    rc = DosOpen(DEVICENAME, &hdDriver, &action_taken,
+		 0, 0,
+d72 14
+d98 15
+d123 1
+a123 2
+		     NULL, 0, NULL,
+		     &data, datasize, &datasize);
+d133 18
+d165 1
+a165 2
+			 NULL, 0, NULL,
+			 &cb, datasize, &datasize);
+d193 1
+a193 2
+			 NULL, 0, NULL,
+			 data, datasize, &datasize);
+d221 1
+d223 1
+d225 3
+d296 15
+d322 1
+a322 2
+		     &hd, parmsize, &parmsize,
+		     &data, datasize, &datasize);
+d334 20
+d372 1
+a372 2
+		     &parm, parmsize, &parmsize,
+		     &buffer, datasize, &datasize);
+@

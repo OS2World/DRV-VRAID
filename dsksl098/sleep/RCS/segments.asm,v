@@ -1,0 +1,359 @@
+head	1.6;
+access;
+symbols
+	DSLEEPv0_98:1.6
+	DSLEEPv0_95:1.4
+	DSLEEPv0_93:1.4
+	DSLEEPv0_92:1.4
+	DSLEEPv0_91:1.4
+	DSLEEPv0_80:1.2
+	DSLEEPv0_70:1.1
+	DSLEEPv0_60:1.1;
+locks; strict;
+comment	@;; @;
+
+
+1.6
+date	98.06.28.23.58.07;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	97.12.05.01.50.02;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	97.05.07.23.45.53;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	97.03.03.01.27.22;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	97.02.05.01.52.44;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	96.09.27.03.26.56;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Assembler Helper to order segments and stubs
+@
+
+
+1.6
+log
+@- implemented _CallADD()
+@
+text
+@;*
+;* $Source: r:/source/driver/sleep/RCS/segments.asm,v $
+;* $Revision: 1.5 $
+;* $Date: 1997/12/05 01:50:02 $
+;* $Locker$
+;*
+;* Assembler Helper to order segments
+;*
+;* $Log: segments.asm,v $
+;* Revision 1.5  1997/12/05 01:50:02  vitus
+;* - moved segment declarations to include file segments.inc
+;*
+;* Revision 1.4  1997/05/07 23:45:53  vitus
+;* - moved CONST segment to front (behind DDHeader)
+;*
+;* Revision 1.3  1997/03/03 01:27:22  vitus
+;* Added SwapData
+;*
+;* Revision 1.2  1997/02/05 01:52:44  vitus
+;* Added more device header flags (not required)
+;*
+;* Revision 1.1  1996/09/27 03:26:56  vitus
+;* Initial revision
+;* ----------------------------------------
+;* This code is Copyright Vitus Jensen 1996
+;*
+.286c					; at least!
+
+INCLUDE devhdr.inc			; device header format
+INCLUDE segments.inc			; segment layout and order
+
+
+	PUBLIC	_AsmTimer		; so C-code can install it
+	PUBLIC	_CallADD		; passes IORB to ADD
+
+
+	;; The very first segment has to contain the
+	;; device driver header.  Use own segment for
+	;; this purpose (but in DGROUP).
+
+DDHeader	SEGMENT
+
+DiskDDHeader	DD	-1
+		DW	DEV_CHAR_DEV OR DEV_30 OR DEVLEV_3
+		DW	OFFSET AsmStrategy
+		DW	0
+		DB	"DSLEEPS$"
+		DW	0
+		DW	0
+		DW	0
+		DW	0
+		DD	DEV_INITCOMPLETE OR DEV_ADAPTER_DD OR DEV_16MB OR DEV_IOCTL2
+		DW	0
+
+DDHeader	ENDS
+
+
+
+	;; Start of code segments
+	;; There is really code contained: small stubs
+	;; to call C routines and save/restore registers.
+
+_TEXT		SEGMENT
+	ASSUME	CS:StaticGroup
+
+	EXTRN	_Strategy : NEAR	; C routines
+	EXTRN	_Timer : NEAR
+
+
+AsmStrategy	PROC	FAR
+		push	es
+		push	bx
+		call	_Strategy
+		add	sp, 4
+		retf
+AsmStrategy	ENDP
+
+
+_AsmTimer	PROC	FAR
+		pushf
+		pusha			; timer has to save ALL!
+		push	ds
+		push	es
+		sti			; run with interrupts enabled
+
+		mov	ax, DGROUP
+		mov	ds, ax
+		call	_Timer
+
+		pop	es
+		pop	ds
+		popa
+		popf
+		ret
+_AsmTimer	ENDP
+
+
+
+
+_CallADD	PROC	NEAR
+		enter	0,0
+		pusha
+		push	ds
+
+		les	bx,[bp+8]
+		push	es
+		push	bx
+		call	DWORD PTR [bp+4]
+		add	sp,4
+
+		pop	ds
+		popa
+		leave
+		ret
+_CallADD	ENDP
+
+
+_TEXT		ENDS
+
+
+	END
+@
+
+
+1.5
+log
+@- moved segment declarations to include file segments.inc
+@
+text
+@d2 4
+a5 4
+;* $Source: e:/source/driver/sleep/RCS/segments.asm,v $
+;* $Revision: 1.4 $
+;* $Date: 1997/05/07 23:45:53 $
+;* $Author: vitus $
+d10 3
+d34 1
+d64 1
+d96 21
+@
+
+
+1.4
+log
+@- moved CONST segment to front (behind DDHeader)
+@
+text
+@d3 2
+a4 2
+;* $Revision: 1.3 $
+;* $Date: 1997/03/03 01:27:22 $
+d10 3
+a20 1
+;*
+d24 1
+a24 1
+.286c						; at least!
+d26 2
+a27 1
+INCLUDE	devhdr.inc				; device header format
+d30 1
+a30 1
+	PUBLIC	_AsmTimer			; so C-code can install it
+d37 1
+a37 1
+DDHeader	SEGMENT DWORD PUBLIC 'CONST'
+a52 12
+CONST		SEGMENT DWORD PUBLIC 'CONST'
+CONST		ENDS
+
+LIBDATA		SEGMENT DWORD PUBLIC 'DATA'
+LIBDATA		ENDS
+
+_DATA		SEGMENT DWORD PUBLIC 'DATA'
+_DATA		ENDS
+
+_BSS		SEGMENT DWORD PUBLIC 'BSS'
+_BSS		ENDS
+
+d59 1
+a59 1
+_TEXT		SEGMENT DWORD PUBLIC 'CODE'
+d61 1
+a61 1
+	EXTRN	_Strategy : NEAR		; C routines
+d66 5
+a70 5
+	push	es
+	push	bx
+	call	_Strategy
+	add	sp, 4
+	retf
+d75 15
+a89 15
+	pushf
+	pusha					; timer has to save ALL!
+	push	ds
+	push	es
+	sti					; run with interrupts enabled
+
+	mov	ax, DGROUP
+	mov	ds, ax
+	call	_Timer
+
+	pop	es
+	pop	ds
+	popa
+	popf
+	ret
+a93 21
+CODE		SEGMENT DWORD PUBLIC 'CODE'
+CODE		ENDS
+
+LIBCODE		SEGMENT DWORD PUBLIC 'CODE'
+LIBCODE		ENDS
+
+
+SwapData	SEGMENT DWORD PUBLIC 'FAR_DATA'
+	DB	"SwapData"
+SwapData	ENDS
+
+IF 0
+SwapCode	SEGMENT DWORD PUBLIC 'SWAP_CODE'
+	DB	"SwapCode"
+SwapCode	ENDS
+ENDIF
+
+	;; Group segments together
+
+DGROUP		GROUP	CONST, _BSS, DDHeader, LIBDATA, _DATA
+StaticGroup	GROUP	CODE, LIBCODE, _TEXT
+@
+
+
+1.3
+log
+@Added SwapData
+@
+text
+@d3 2
+a4 2
+;* $Revision: 1.2 $
+;* $Date: 1997/02/05 01:52:44 $
+d10 3
+d34 1
+a34 1
+DDHeader	SEGMENT DWORD PUBLIC 'DATA'
+d50 3
+a57 3
+
+CONST		SEGMENT DWORD PUBLIC 'CONST'
+CONST		ENDS
+@
+
+
+1.2
+log
+@Added more device header flags (not required)
+@
+text
+@d3 2
+a4 2
+;* $Revision: 1.1 $
+;* $Date: 1996/09/27 03:26:56 $
+d10 3
+d100 2
+a101 2
+Code		SEGMENT DWORD PUBLIC 'CODE'
+Code		ENDS
+d106 8
+a113 1
+SwapCode	SEGMENT DWORD PUBLIC 'CODE'
+d115 1
+a115 1
+
+d120 1
+a120 2
+StaticGroup	GROUP	Code, LIBCODE, _TEXT
+SwapGroup	GROUP	SwapCode
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+;* $Source$
+;* $Revision$
+;* $Date$
+;* $Author$
+d9 4
+a12 1
+;* $Log$
+d31 1
+a31 1
+		DW	DEVLEV_3 + DEV_CHAR_DEV
+d39 1
+a39 1
+		DD	(DEV_ADAPTER_DD OR DEV_IOCTL2)
+@

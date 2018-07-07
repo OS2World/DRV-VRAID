@@ -1,0 +1,3687 @@
+
+Module: D:\source\driver\perf\Cmdparse.c
+Group: 'DGROUP' CONST,CONST2,_DATA,_BSS
+
+Segment: _TEXT  BYTE   00000ce1 bytes  
+
+/**************************************************************************
+ *
+ * SOURCE FILE NAME = CMDPARSE.C
+ *
+ * DESCRIPTIVE NAME = ADD Command Line Parser
+ *		      ADD CONFIG.SYS Command Line Parser Helper Routine
+ *
+ *
+ *
+ * COPYRIGHT	Copyright (C) 1992 IBM Corporation
+ *
+ * The following IBM OS/2 2.1 source code is provided to you solely for
+ * the purpose of assisting you in your development of OS/2 2.x device
+ * drivers. You may use this code in accordance with the IBM License
+ * Agreement provided in the IBM Device Driver Source Kit for OS/2. This
+ * Copyright statement may not be removed.
+ *
+ *
+ *
+ * VERSION = V2.0
+ *
+ * DATE
+ *
+ * DESCRIPTION :
+ *
+ * Purpose: This module consists of the Command_Parser Function and
+ *	    its associated local routines.  For detailed description
+ *	    of the Command_Parser interface refer to the CMDPARSE.H
+ *	    file.
+ *
+ * FUNCTIONS  :  Command_Parser
+ *		 Insert_End_Token
+ *		 Locate_First_Slash
+ *		 FarStrLen
+ *		 strncmp
+ *		 Parse_Option_Value
+ *		 Skip_over_Blanks
+ *		 char_parser
+ *		 d_parser
+ *		 dd_parser
+ *		 hh_parser
+ *		 H_Char_To_Byte
+ *		 hhhh_parser
+ *		 format_parser
+ *		 scsi_id_parser
+ *		 dev_id_parser
+ *		 geometry_parser
+ *		 chgline_parser
+ *		 Insert_Token
+ *		 Locate_Next_Slash
+ *		 Validate_State_Index
+ *
+ *
+ * NOTES
+ *
+ *
+ * STRUCTURES
+ *
+ * EXTERNAL REFERENCES
+ *
+ *
+ *
+ * EXTERNAL FUNCTIONS
+ *
+ ***************************************************************************/
+
+
+
+#if !defined(OS2_INCLUDED)
+# define  INCL_NOBASEAPI
+# define  INCL_NOPMAPI
+# include "OS2.H"
+#endif
+#include "CMDPHDR.H"
+#include "CMDPROTO.H"
+#define  TOKVBUF_LEN   255
+#define  UNDEFINED     -1
+
+
+PSZ	  pcmdline1, pcmdline_slash, pcmdline_start;
+INT	  tokv_index, state_index, length;
+CHARBYTE  tokvbuf[TOKVBUF_LEN];
+POPT	  pend_option, ptable_option;
+PBYTE	  poutbuf1, poutbuf_end;
+CC	  cc;
+
+
+
+/*
+**    Command_Parser -	external entry point into this module
+*/
+
+
+/***************************************************************************
+ *
+ * FUNCTION NAME = Command_Parser
+ *
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose:
+ *
+ *
+ *   Function Calls:
+ *
+ *
+ *
+ *
+ * INPUT	 = (pCmdLine,pOptTable,pOutBuf,OutBuf_Len)
+ *
+ *
+ *
+ *
+ * OUTPUT	 = NONE
+ *
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = NONE
+ *
+ ****************************************************************************/
+CC FAR
+Command_Parser(PSZ pCmdLine,
+	       POPTIONTABLE pOptTable,
+	       PBYTE pOutBuf,
+	       USHORT OutBuf_Len)
+{
+    USHORT j,end_index;
+
+ 0000  56                Command_Parser_ push    si
+ 0001  57                                push    di
+ 0002  c8 06 00 00                       enter   0006H,00H
+ 0006  50                                push    ax
+ 0007  89 de                             mov     si,bx
+ 0009  89 4e fe                          mov     [bp-2H],cx
+
+    if (OutBuf_Len < (TOKL_ID_END+TOK_MIN_LENGTH))
+    {
+ 000c  83 7e 0e 04                       cmp     word ptr [bp+0eH],0004H
+ 0010  73 14                             jae     L1
+
+	cc.ret_code = BUF_TOO_SMALL_ERR;
+ 0012  c7 06 00 00 02 00                 mov     word ptr _cc,0002H
+
+	cc.err_index = 0;
+ 0018  c7 06 02 00 00 00                 mov     word ptr _cc+2H,0000H
+
+	return cc;
+    }
+ 001e  b8 02 00                          mov     ax,0002H
+ 0021  31 d2                             xor     dx,dx
+ 0023  e9 6e 01                          jmp     L10
+
+    poutbuf_end = pOutBuf+OutBuf_Len;
+    poutbuf1 = pOutBuf;
+ 0026  8b 46 0c          L1              mov     ax,[bp+0cH]
+ 0029  a3 02 00                          mov     _poutbuf_end+2H,ax
+ 002c  8b 46 0a                          mov     ax,[bp+0aH]
+ 002f  03 46 0e                          add     ax,[bp+0eH]
+ 0032  a3 00 00                          mov     _poutbuf_end,ax
+
+    for( poutbuf1 = pOutBuf; poutbuf1 < poutbuf_end; ++poutbuf1 )
+ 0035  8b 46 0a                          mov     ax,[bp+0aH]
+ 0038  a3 00 00                          mov     _poutbuf1,ax
+ 003b  8b 46 0c                          mov     ax,[bp+0cH]
+ 003e  a3 02 00                          mov     _poutbuf1+2H,ax
+ 0041  eb 0a                             jmp     L3
+
+	*poutbuf1 = 0;
+ 0043  8e c0             L2              mov     es,ax
+ 0045  26 c6 07 00                       mov     byte ptr es:[bx],00H
+ 0049  ff 06 00 00                       inc     word ptr _poutbuf1
+ 004d  8b 1e 00 00       L3              mov     bx,_poutbuf1
+ 0051  a1 02 00                          mov     ax,_poutbuf1+2H
+ 0054  3b 1e 00 00                       cmp     bx,_poutbuf_end
+ 0058  72 e9                             jb      L2
+
+    poutbuf1 = pOutBuf;
+    Insert_End_Token();
+
+    /* Locate the last entry in the Option Table. This special entry
+     * defines whether or not an option is required based on the index
+     * in the state table. */
+
+ 005a  8b 46 0a                          mov     ax,[bp+0aH]
+ 005d  a3 00 00                          mov     _poutbuf1,ax
+ 0060  8b 46 0c                          mov     ax,[bp+0cH]
+
+    for( end_index = 0;
+	pOptTable->poption[end_index]->id != TOK_ID_END;
+	++end_index )
+ 0063  c7 46 fa 00 00                    mov     word ptr [bp-6H],0000H
+ 0068  a3 02 00                          mov     _poutbuf1+2H,ax
+ 006b  e8 00 00                          call    Insert_End_Token_
+ 006e  eb 03                             jmp     L5
+
+	;
+ 0070  ff 46 fa          L4              inc     word ptr [bp-6H]
+ 0073  8b 5e fa          L5              mov     bx,[bp-6H]
+ 0076  c1 e3 02                          shl     bx,02H
+ 0079  8e 46 fe                          mov     es,[bp-2H]
+ 007c  01 f3                             add     bx,si
+ 007e  26 c4 7f 04                       les     di,dword ptr es:[bx+4H]
+ 0082  26 80 3d ff                       cmp     byte ptr es:[di],0ffH
+ 0086  75 e8                             jne     L4
+
+    pend_option = pOptTable->poption[end_index];
+
+    /* Setup the initial index into the state table. */
+
+ 0088  89 3e 00 00                       mov     _pend_option,di
+ 008c  8c 06 02 00                       mov     _pend_option+2H,es
+
+    state_index = pOptTable->entry_state;
+ 0090  8e 46 fe                          mov     es,[bp-2H]
+ 0093  26 8b 04                          mov     ax,es:[si]
+ 0096  a3 00 00                          mov     _state_index,ax
+
+    if( !Validate_State_Index(pOptTable->max_states) )
+	return cc;
+
+    /* On return from Locate_First_Slash call pcmdline_slash
+     * contains the ptr to the slash in the command line. */
+
+ 0099  26 8b 44 02                       mov     ax,es:[si+2H]
+ 009d  e8 00 00                          call    Validate_State_Index_
+ 00a0  85 c0                             test    ax,ax
+ 00a2  0f 84 e7 00                       je      L9
+
+    pcmdline_start = pCmdLine;
+ 00a6  8b 46 f8                          mov     ax,[bp-8H]
+ 00a9  89 16 02 00                       mov     _pcmdline_start+2H,dx
+ 00ad  89 16 02 00                       mov     _pcmdline1+2H,dx
+ 00b1  a3 00 00                          mov     _pcmdline_start,ax
+
+    pcmdline1 = pCmdLine;
+ 00b4  a3 00 00                          mov     _pcmdline1,ax
+
+    if( !Locate_First_Slash() )
+	return cc;
+ 00b7  e8 00 00                          call    Locate_First_Slash_
+ 00ba  85 c0                             test    ax,ax
+ 00bc  0f 84 cd 00                       je      L9
+
+    for( j = 0; j < end_index; ++j )
+    {
+	/* Locate valid options in Option Table, based
+	 * on state table index. */
+
+ 00c0  c7 46 fc 00 00                    mov     word ptr [bp-4H],0000H
+ 00c5  e9 97 00                          jmp     L8
+
+	if( pOptTable->poption[j]->state[state_index] != E )
+	{
+	    /* Found a valid option. Check to see if this is the option
+	     * entered at this point in command line. */
+
+ 00c8  8b 7e fc          L6              mov     di,[bp-4H]
+ 00cb  c1 e7 02                          shl     di,02H
+ 00ce  8e 46 fe                          mov     es,[bp-2H]
+ 00d1  01 f7                             add     di,si
+ 00d3  26 c4 5d 04                       les     bx,dword ptr es:[di+4H]
+ 00d7  89 df                             mov     di,bx
+ 00d9  06                                push    es
+ 00da  0f a1                             pop     fs
+ 00dc  01 c7                             add     di,ax
+ 00de  64 83 7d 07 ff                    cmp     word ptr fs:[di+7H],0ffffH
+ 00e3  0f 84 75 00                       je      L7
+
+	    ptable_option = pOptTable->poption[j];
+ 00e7  89 1e 00 00                       mov     _ptable_option,bx
+ 00eb  8c 06 02 00                       mov     _ptable_option+2H,es
+
+	    length = FarStrLen(ptable_option->string);
+ 00ef  26 8b 47 02                       mov     ax,es:[bx+2H]
+ 00f3  26 8b 57 04                       mov     dx,es:[bx+4H]
+ 00f7  e8 00 00                          call    FarStrLen_
+ 00fa  8b 1e 00 00                       mov     bx,_ptable_option
+ 00fe  a3 00 00                          mov     _length,ax
+
+	    if( strncmp(pcmdline_slash, ptable_option->string, length) == TRUE )
+	    {
+		/* Found the command line option.  Now, syntax check its
+		 * associated value. */
+
+ 0101  50                                push    ax
+ 0102  8e 06 02 00                       mov     es,_ptable_option+2H
+ 0106  a1 00 00                          mov     ax,_pcmdline_slash
+ 0109  8b 3e 02 00                       mov     di,_pcmdline_slash+2H
+ 010d  26 8b 57 02                       mov     dx,es:[bx+2H]
+ 0111  26 8b 4f 04                       mov     cx,es:[bx+4H]
+ 0115  89 d3                             mov     bx,dx
+ 0117  89 fa                             mov     dx,di
+ 0119  e8 00 00                          call    strncmp_
+ 011c  3d 01 00                          cmp     ax,0001H
+ 011f  75 3b                             jne     L7
+
+		if ( !Parse_Option_Value() )
+		    return cc;
+
+		/* No syntax err detected.  Now, insert the option and its
+		 * associated value into the output buffer in token format. */
+
+ 0121  e8 00 00                          call    Parse_Option_Value_
+ 0124  85 c0                             test    ax,ax
+ 0126  74 65                             je      L9
+
+		if( !Insert_Token() )
+		    return cc;
+
+		/* Setup next index into the state table. */
+
+ 0128  e8 00 00                          call    Insert_Token_
+ 012b  85 c0                             test    ax,ax
+ 012d  74 5e                             je      L9
+
+		state_index = ptable_option->state[state_index];
+ 012f  c4 1e 00 00                       les     bx,dword ptr _ptable_option
+ 0133  8b 16 00 00                       mov     dx,_state_index
+ 0137  01 d2                             add     dx,dx
+ 0139  01 d3                             add     bx,dx
+ 013b  26 8b 47 07                       mov     ax,es:[bx+7H]
+ 013f  a3 00 00                          mov     _state_index,ax
+
+		if( !Validate_State_Index(pOptTable->max_states) )
+		    return cc;
+
+		/* Setup cmdline_slash to point the the next / (option) in
+		 * the command line.
+		 * Parsing stops once either an invalid character is
+		 * found on the command line or the end of the command line
+		 * is detected. */
+
+ 0142  8e 46 fe                          mov     es,[bp-2H]
+ 0145  26 8b 44 02                       mov     ax,es:[si+2H]
+ 0149  e8 00 00                          call    Validate_State_Index_
+ 014c  85 c0                             test    ax,ax
+ 014e  74 3d                             je      L9
+
+		if( !Locate_Next_Slash() )
+		    return cc;
+
+		/* Setup for option search. Point to the top
+		 * of the Option Table. */
+
+ 0150  e8 00 00                          call    Locate_Next_Slash_
+ 0153  85 c0                             test    ax,ax
+ 0155  74 36                             je      L9
+
+		j = (USHORT)-1;
+	    } /*endif*/
+	} /*endif*/
+ 0157  c7 46 fc ff ff                    mov     word ptr [bp-4H],0ffffH
+
+    } /*endfor*/
+
+ 015c  ff 46 fc          L7              inc     word ptr [bp-4H]
+ 015f  a1 00 00          L8              mov     ax,_state_index
+ 0162  8b 56 fc                          mov     dx,[bp-4H]
+ 0165  01 c0                             add     ax,ax
+ 0167  3b 56 fa                          cmp     dx,[bp-6H]
+ 016a  0f 82 5a ff                       jb      L6
+
+    if( pend_option->state[state_index] == R )
+    {
+	/* A required option was not found on the command line. */
+
+	cc.ret_code = REQ_OPT_ERR;
+    }
+    else
+    {
+	/* Characters on the command line are not defined in the Option Table
+	 * as a valid option.  All options must start with a / character. */
+
+	cc.ret_code = INVALID_OPT_ERR;
+    }
+ 016e  c4 1e 00 00                       les     bx,dword ptr _pend_option
+ 0172  01 c3                             add     bx,ax
+ 0174  26 83 7f 07 fd                    cmp     word ptr es:[bx+7H],0fffdH
+ 0179  0f 95 c0                          setne   al
+ 017c  30 e4                             xor     ah,ah
+ 017e  05 06 00                          add     ax,0006H
+ 0181  a3 00 00                          mov     _cc,ax
+
+    cc.err_index = pcmdline_slash-pCmdLine;
+ 0184  a1 00 00                          mov     ax,_pcmdline_slash
+ 0187  2b 46 f8                          sub     ax,[bp-8H]
+ 018a  a3 02 00                          mov     _cc+2H,ax
+
+    return cc;
+ 018d  a1 00 00          L9              mov     ax,_cc
+ 0190  8b 16 02 00                       mov     dx,_cc+2H
+
+}
+
+
+
+
+/***************************************************************************
+ *
+ * FUNCTION NAME = Insert_End_Token
+ *
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: Insert the end of token marker into the output buffer
+ *
+ *
+ *   Function Calls:
+ *
+ *
+ *
+ *
+ * INPUT	 = ()
+ *
+ *
+ *
+ *
+ * OUTPUT	 = NONE
+ *
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = NONE
+ *
+ ****************************************************************************/
+STATIC void NEAR
+ 0194  c9                L10             leave   
+ 0195  5f                                pop     di
+ 0196  5e                                pop     si
+ 0197  ca 06 00                          retf    0006H
+
+Insert_End_Token(void)
+{
+ 019a                    Insert_End_Token_:
+ 019a  53                                push    bx
+ 019b  55                                push    bp
+ 019c  89 e5                             mov     bp,sp
+
+    *poutbuf1 = TOKL_ID_END;
+ 019e  c4 1e 00 00                       les     bx,dword ptr _poutbuf1
+ 01a2  26 c6 07 02                       mov     byte ptr es:[bx],02H
+
+    *(poutbuf1+1) = (BYTE)TOK_ID_END;
+    return;
+ 01a6  c4 1e 00 00                       les     bx,dword ptr _poutbuf1
+ 01aa  26 c6 47 01 ff                    mov     byte ptr es:[bx+1H],0ffH
+
+}
+
+
+
+
+/***************************************************************************
+ *
+ * FUNCTION NAME = Locate_First_Slash
+ *
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose:  Locate the / on the command line.  All characters entered prior
+ *	       to the first / are ignored.  This allows the parser to bypass
+ *	       the BASEDEV = xxxxxxxx.xxx portion of the command line.
+ *
+ *   Function Calls:
+ *
+ *
+ *
+ *
+ * INPUT	 = ()
+ *
+ *
+ *
+ *
+ * OUTPUT	 = NONE
+ *
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = NONE
+ *
+ ****************************************************************************/
+ 01af  5d                                pop     bp
+ 01b0  5b                                pop     bx
+ 01b1  c3                                ret     
+
+STATIC BOOL NEAR Locate_First_Slash(VOID)
+{
+ 01b2                    Locate_First_Slash_:
+ 01b2  53                                push    bx
+ 01b3  52                                push    dx
+ 01b4  55                                push    bp
+ 01b5  89 e5                             mov     bp,sp
+
+    while( *pcmdline1 != '\0'  &&  *pcmdline1 != '\n'  &&  *pcmdline1 != '\r' )
+    {
+ 01b7  c4 1e 00 00       L11             les     bx,dword ptr _pcmdline1
+ 01bb  26 80 3f 00                       cmp     byte ptr es:[bx],00H
+ 01bf  74 26                             je      L13
+ 01c1  26 80 3f 0a                       cmp     byte ptr es:[bx],0aH
+ 01c5  74 20                             je      L13
+ 01c7  26 80 3f 0d                       cmp     byte ptr es:[bx],0dH
+ 01cb  74 1a                             je      L13
+
+	if( *pcmdline1 == '/' )
+	{
+	    pcmdline_slash = pcmdline1;
+ 01cd  26 80 3f 2f                       cmp     byte ptr es:[bx],2fH
+ 01d1  75 0d                             jne     L12
+
+ 01d3  b8 01 00                          mov     ax,0001H
+
+	    return TRUE;
+	}
+ 01d6  89 1e 00 00                       mov     _pcmdline_slash,bx
+ 01da  8c 06 02 00                       mov     _pcmdline_slash+2H,es
+ 01de  eb 2e                             jmp     L15
+
+	++pcmdline1;
+ 01e0  43                L12             inc     bx
+ 01e1  89 1e 00 00                       mov     _pcmdline1,bx
+
+    }
+ 01e5  eb d0                             jmp     L11
+
+    cc.err_index = 0;
+ 01e7  c7 06 02 00 00 00 L13             mov     word ptr _cc+2H,0000H
+
+    cc.ret_code = NO_OPTIONS_FND_ERR;
+ 01ed  c7 06 00 00 05 00                 mov     word ptr _cc,0005H
+
+    if( pend_option->state[state_index] == R )
+ 01f3  c4 16 00 00                       les     dx,dword ptr _pend_option
+ 01f7  8b 1e 00 00                       mov     bx,_state_index
+ 01fb  01 db                             add     bx,bx
+ 01fd  01 d3                             add     bx,dx
+ 01ff  26 83 7f 07 fd                    cmp     word ptr es:[bx+7H],0fffdH
+ 0204  75 06                             jne     L14
+
+	cc.ret_code = REQ_OPT_ERR;
+ 0206  c7 06 00 00 06 00                 mov     word ptr _cc,0006H
+
+    return FALSE;
+ 020c  31 c0             L14             xor     ax,ax
+
+}
+
+
+
+
+/***************************************************************************
+ *
+ * FUNCTION NAME = FarStrLen
+ *
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: Return the length of a string
+ *
+ *
+ *   Function Calls:
+ *
+ *
+ *
+ *
+ * INPUT	 = (s)
+ *
+ *
+ *
+ *
+ * OUTPUT	 = NONE
+ *
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ *
+ ****************************************************************************/
+ 020e  5d                L15             pop     bp
+ 020f  5a                                pop     dx
+ 0210  5b                                pop     bx
+ 0211  c3                                ret     
+
+STATIC INT NEAR FarStrLen(CHAR FAR *s)
+{
+    INT i;
+ 0212  53                FarStrLen_      push    bx
+ 0213  55                                push    bp
+ 0214  89 e5                             mov     bp,sp
+ 0216  89 c3                             mov     bx,ax
+ 0218  8e c2                             mov     es,dx
+
+    for ( i=0; *s != '\0'; ++s )
+ 021a  31 c0                             xor     ax,ax
+ 021c  eb 02                             jmp     L17
+
+	++i;
+    return i;
+ 021e  40                L16             inc     ax
+ 021f  43                                inc     bx
+ 0220  26 80 3f 00       L17             cmp     byte ptr es:[bx],00H
+ 0224  75 f8                             jne     L16
+
+}
+
+
+/***************************************************************************
+ *
+ * FUNCTION NAME = strncmp
+ *
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: Compare n number of characters in 2 strings, return TRUE if =
+ *	      If s1 is in lower case, convert to upper prior to comparing.
+ *
+ *   Function Calls:
+ *
+ *
+ *
+ *
+ * INPUT	 = (s1,s2,n)
+ *
+ *
+ *
+ *
+ * OUTPUT	 = NONE
+ *
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ *
+ ****************************************************************************/
+ 0226  5d                                pop     bp
+ 0227  5b                                pop     bx
+ 0228  c3                                ret     
+
+STATIC BOOL NEAR strncmp(CHAR FAR *s1,CHAR FAR *s2,INT n)
+{
+    INT i;
+    CHAR temp;
+
+ 0229  56                strncmp_        push    si
+ 022a  55                                push    bp
+ 022b  89 e5                             mov     bp,sp
+ 022d  89 c6                             mov     si,ax
+ 022f  8e c2                             mov     es,dx
+ 0231  8e e1                             mov     fs,cx
+
+    for( i = 0; i < n; ++i, ++s1, ++s2 )
+ 0233  31 c0                             xor     ax,ax
+ 0235  eb 21                             jmp     L21
+
+	if( *s1 != *s2 )
+	{
+ 0237  26 8a 14          L18             mov     dl,es:[si]
+ 023a  64 3a 17                          cmp     dl,fs:[bx]
+ 023d  74 16                             je      L20
+
+	    if( *s1 >= 'a'  &&  *s1 <= 'z' )
+	    {
+ 023f  80 fa 61                          cmp     dl,61H
+ 0242  72 0d                             jb      L19
+ 0244  80 fa 7a                          cmp     dl,7aH
+ 0247  77 08                             ja      L19
+
+		temp = *s1 - (CHAR)' ';
+ 0249  80 ea 20                          sub     dl,20H
+
+		if( temp == *s2 )
+		    continue;
+	    }
+ 024c  64 3a 17                          cmp     dl,fs:[bx]
+ 024f  74 04                             je      L20
+
+	    return FALSE;
+ 0251  31 c0             L19             xor     ax,ax
+ 0253  eb 0b                             jmp     L22
+
+	}
+ 0255  40                L20             inc     ax
+ 0256  46                                inc     si
+ 0257  43                                inc     bx
+ 0258  3b 46 06          L21             cmp     ax,[bp+6H]
+ 025b  7c da                             jl      L18
+
+    return TRUE;
+ 025d  b8 01 00                          mov     ax,0001H
+
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = Parse_Option_Value
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: Parse the command line for the value assigned to located option
+ *
+ *   Function Calls:
+ *
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC BOOL NEAR
+ 0260  5d                L22             pop     bp
+ 0261  5e                                pop     si
+ 0262  c2 02 00                          ret     0002H
+ 0265  15 03             L23             DW      L37
+ 0267  d3 02                             DW      L24
+ 0269  d8 02                             DW      L25
+ 026b  dd 02                             DW      L26
+ 026d  ec 02                             DW      L29
+ 026f  f1 02                             DW      L30
+ 0271  f6 02                             DW      L31
+ 0273  fb 02                             DW      L32
+ 0275  05 03                             DW      L34
+ 0277  0a 03                             DW      L35
+ 0279  00 03                             DW      L33
+ 027b  e2 02                             DW      L27
+ 027d  e7 02                             DW      L28
+
+Parse_Option_Value()
+{
+    pcmdline1 = pcmdline_slash+length;
+    Skip_Over_Blanks();
+ 027f                    Parse_Option_Value_:
+ 027f  53                                push    bx
+ 0280  51                                push    cx
+ 0281  52                                push    dx
+ 0282  57                                push    di
+ 0283  55                                push    bp
+ 0284  89 e5                             mov     bp,sp
+
+ 0286  b9 7f 00                          mov     cx,007fH
+ 0289  bf 00 00                          mov     di,offset _tokvbuf
+ 028c  a1 00 00                          mov     ax,_pcmdline_slash
+ 028f  8b 16 00 00                       mov     dx,_length
+ 0293  8b 1e 02 00                       mov     bx,_pcmdline_slash+2H
+ 0297  01 d0                             add     ax,dx
+ 0299  89 1e 02 00                       mov     _pcmdline1+2H,bx
+ 029d  a3 00 00                          mov     _pcmdline1,ax
+
+    for (tokv_index=0; tokv_index < TOKVBUF_LEN ; ++tokv_index)
+	tokvbuf[tokv_index].byte_value = 0;
+
+ 02a0  e8 00 00                          call    Skip_Over_Blanks_
+ 02a3  1e                                push    ds
+ 02a4  07                                pop     es
+ 02a5  31 c0                             xor     ax,ax
+ 02a7  f2 ab                             repne   stosw    
+ 02a9  aa                                stosb   
+
+    tokv_index = UNDEFINED;
+    cc.ret_code = NO_ERR;
+    cc.err_index = 0;
+
+ 02aa  c7 06 00 00 ff ff                 mov     word ptr _tokv_index,0ffffH
+
+    switch (ptable_option->type)
+    {
+      case TYPE_0:
+	break;
+
+      case TYPE_CHAR:
+ 02b0  8b 1e 00 00                       mov     bx,_ptable_option
+ 02b4  a3 00 00                          mov     _cc,ax
+ 02b7  a3 02 00                          mov     _cc+2H,ax
+ 02ba  8e 06 02 00                       mov     es,_ptable_option+2H
+ 02be  26 8a 47 06                       mov     al,es:[bx+6H]
+ 02c2  fe c8                             dec     al
+ 02c4  3c 0c                             cmp     al,0cH
+ 02c6  77 47                             ja      L36
+ 02c8  88 c3                             mov     bl,al
+ 02ca  30 ff                             xor     bh,bh
+ 02cc  01 db                             add     bx,bx
+ 02ce  2e ff a7 65 02                    jmp     word ptr cs:[bx+L23]
+
+	char_parser();
+ 02d3  e8 00 00          L24             call    char_parser_
+
+	break;
+
+      case TYPE_D:
+ 02d6  eb 3d                             jmp     L37
+
+	d_parser();
+ 02d8  e8 00 00          L25             call    d_parser_
+
+	break;
+
+      case TYPE_DD:
+ 02db  eb 38                             jmp     L37
+
+	dd_parser();
+ 02dd  e8 00 00          L26             call    dd_parser_
+
+	break;
+
+      case TYPE_DDDD:
+ 02e0  eb 33                             jmp     L37
+
+	dddd_parser();
+ 02e2  e8 00 00          L27             call    dddd_parser_
+
+	break;
+
+      case TYPE_ULIST:
+ 02e5  eb 2e                             jmp     L37
+
+	ulist_parser();
+ 02e7  e8 00 00          L28             call    ulist_parser_
+
+	break;
+
+      case TYPE_HH:
+ 02ea  eb 29                             jmp     L37
+
+	hh_parser();
+ 02ec  e8 00 00          L29             call    hh_parser_
+
+	break;
+
+      case TYPE_HHHH:
+ 02ef  eb 24                             jmp     L37
+
+	hhhh_parser();
+ 02f1  e8 00 00          L30             call    hhhh_parser_
+
+	break;
+
+      case TYPE_FORMAT:
+ 02f4  eb 1f                             jmp     L37
+
+	format_parser();
+ 02f6  e8 00 00          L31             call    format_parser_
+
+	break;
+
+      case TYPE_SCSI_ID:
+ 02f9  eb 1a                             jmp     L37
+
+	scsi_id_parser();
+ 02fb  e8 00 00          L32             call    scsi_id_parser_
+
+	break;
+
+      case TYPE_DEV_ID:
+ 02fe  eb 15                             jmp     L37
+
+	dev_id_parser();
+ 0300  e8 00 00          L33             call    dev_id_parser_
+
+	break;
+
+      case TYPE_GEOMETRY:
+ 0303  eb 10                             jmp     L37
+
+	geometry_parser();
+ 0305  e8 00 00          L34             call    geometry_parser_
+
+	break;
+
+      case TYPE_CHGLINE:
+ 0308  eb 0b                             jmp     L37
+
+	chgline_parser();
+ 030a  e8 00 00          L35             call    chgline_parser_
+
+	break;
+
+      default:
+ 030d  eb 06                             jmp     L37
+
+	cc.ret_code = UNDEFINED_TYPE_ERR;
+    } /* endswitch */
+
+ 030f  c7 06 00 00 03 00 L36             mov     word ptr _cc,0003H
+
+    if (cc.ret_code != NO_ERR)
+    {
+ 0315  83 3e 00 00 00    L37             cmp     word ptr _cc,0000H
+ 031a  74 10                             je      L38
+
+	cc.err_index = pcmdline1 - pcmdline_start;
+ 031c  a1 00 00                          mov     ax,_pcmdline1
+ 031f  8b 1e 00 00                       mov     bx,_pcmdline_start
+ 0323  29 d8                             sub     ax,bx
+ 0325  a3 02 00                          mov     _cc+2H,ax
+
+	return FALSE;
+    }
+ 0328  31 c0                             xor     ax,ax
+ 032a  eb 03                             jmp     L39
+
+    return TRUE;
+ 032c  b8 01 00          L38             mov     ax,0001H
+
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = Skip_Over_Blanks
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose:  Skip over all the blank and tab characters
+ *
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC void NEAR
+ 032f  5d                L39             pop     bp
+ 0330  5f                                pop     di
+ 0331  5a                                pop     dx
+ 0332  59                                pop     cx
+ 0333  5b                                pop     bx
+ 0334  c3                                ret     
+
+Skip_Over_Blanks()
+{
+ 0335                    Skip_Over_Blanks_:
+ 0335  53                                push    bx
+ 0336  55                                push    bp
+ 0337  89 e5                             mov     bp,sp
+
+    while( *pcmdline1 == ' '  ||  *pcmdline1 == '\t' )
+ 0339  c4 1e 00 00       L40             les     bx,dword ptr _pcmdline1
+ 033d  26 80 3f 20                       cmp     byte ptr es:[bx],20H
+ 0341  74 06                             je      L41
+ 0343  26 80 3f 09                       cmp     byte ptr es:[bx],09H
+ 0347  75 06                             jne     L42
+
+	++pcmdline1;
+    return;
+ 0349  ff 06 00 00       L41             inc     word ptr _pcmdline1
+ 034d  eb ea                             jmp     L40
+
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = char_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_CHAR option parser - scan till blank,tab,cr,new line or
+ *					end of string char
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC void NEAR
+ 034f  5d                L42             pop     bp
+ 0350  5b                                pop     bx
+ 0351  c3                                ret     
+
+char_parser()
+{
+ 0352  53                char_parser_    push    bx
+ 0353  56                                push    si
+ 0354  55                                push    bp
+ 0355  89 e5                             mov     bp,sp
+
+    while( *pcmdline1 != '\0'  &&  *pcmdline1 != '\n'
+	  &&  *pcmdline1 != '\r'  &&  *pcmdline1 != '/' )
+    {
+ 0357  c4 1e 00 00       L43             les     bx,dword ptr _pcmdline1
+ 035b  26 80 3f 00                       cmp     byte ptr es:[bx],00H
+ 035f  74 28                             je      L44
+ 0361  26 80 3f 0a                       cmp     byte ptr es:[bx],0aH
+ 0365  74 22                             je      L44
+ 0367  26 80 3f 0d                       cmp     byte ptr es:[bx],0dH
+ 036b  74 1c                             je      L44
+ 036d  26 80 3f 2f                       cmp     byte ptr es:[bx],2fH
+ 0371  74 16                             je      L44
+
+	tokvbuf[++tokv_index].char_value = *pcmdline1;
+ 0373  ff 06 00 00                       inc     word ptr _tokv_index
+ 0377  8b 36 00 00                       mov     si,_tokv_index
+ 037b  26 8a 07                          mov     al,es:[bx]
+
+	++pcmdline1;
+ 037e  43                                inc     bx
+ 037f  88 84 00 00                       mov     [si+_tokvbuf],al
+ 0383  89 1e 00 00                       mov     _pcmdline1,bx
+
+    }
+    return;
+ 0387  eb ce                             jmp     L43
+
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = d_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_D option parser - one digit decimal number (d)
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC void NEAR
+ 0389  5d                L44             pop     bp
+ 038a  5e                                pop     si
+ 038b  5b                                pop     bx
+ 038c  c3                                ret     
+
+d_parser()
+{
+ 038d  53                d_parser_       push    bx
+ 038e  56                                push    si
+ 038f  55                                push    bp
+ 0390  89 e5                             mov     bp,sp
+
+    if( (*pcmdline1 >= '0') && (*pcmdline1 <= '9') )
+    {
+ 0392  c4 1e 00 00                       les     bx,dword ptr _pcmdline1
+ 0396  26 80 3f 30                       cmp     byte ptr es:[bx],30H
+ 039a  72 1e                             jb      L45
+ 039c  26 80 3f 39                       cmp     byte ptr es:[bx],39H
+ 03a0  77 18                             ja      L45
+
+       tokvbuf[++tokv_index].byte_value = *pcmdline1 - (CHAR)'0';
+ 03a2  26 8a 07                          mov     al,es:[bx]
+ 03a5  ff 06 00 00                       inc     word ptr _tokv_index
+ 03a9  2c 30                             sub     al,30H
+
+       pcmdline1++;
+   }
+ 03ab  43                                inc     bx
+ 03ac  8b 36 00 00                       mov     si,_tokv_index
+ 03b0  89 1e 00 00                       mov     _pcmdline1,bx
+ 03b4  88 84 00 00                       mov     [si+_tokvbuf],al
+
+    else
+    {
+ 03b8  eb 06                             jmp     L46
+
+       cc.ret_code = SYNTAX_ERR;
+   }
+    return;
+ 03ba  c7 06 00 00 01 00 L45             mov     word ptr _cc,0001H
+
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = dd_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_DD option parser - two digit decimal number (dd)
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC void NEAR
+ 03c0  5d                L46             pop     bp
+ 03c1  5e                                pop     si
+ 03c2  5b                                pop     bx
+ 03c3  c3                                ret     
+
+dd_parser()
+{
+    INT i;
+    BYTE n;
+    BOOL flag;
+
+ 03c4  53                dd_parser_      push    bx
+ 03c5  51                                push    cx
+ 03c6  52                                push    dx
+ 03c7  55                                push    bp
+ 03c8  89 e5                             mov     bp,sp
+
+    n = 0;
+ 03ca  30 c0                             xor     al,al
+
+    flag = FALSE;
+ 03cc  31 c9                             xor     cx,cx
+
+    for ( i=0; i < 2; i++ )
+    {
+ 03ce  31 d2                             xor     dx,dx
+
+	if( (*pcmdline1 >= '0') && (*pcmdline1 <= '9') )
+	{
+ 03d0  c4 1e 00 00       L47             les     bx,dword ptr _pcmdline1
+ 03d4  26 80 3f 30                       cmp     byte ptr es:[bx],30H
+ 03d8  72 1a                             jb      L48
+ 03da  26 80 3f 39                       cmp     byte ptr es:[bx],39H
+ 03de  77 14                             ja      L48
+
+	    n = (BYTE)(10 * n + *pcmdline1 - '0');
+	    ++pcmdline1;
+ 03e0  b1 0a                             mov     cl,0aH
+ 03e2  f6 e1                             mul     cl
+
+ 03e4  b9 01 00                          mov     cx,0001H
+ 03e7  26 02 07                          add     al,es:[bx]
+
+	    flag = TRUE;
+	}
+ 03ea  01 cb                             add     bx,cx
+ 03ec  2c 30                             sub     al,30H
+ 03ee  89 1e 00 00                       mov     _pcmdline1,bx
+
+	else
+	{
+	    /* Was at least 1 digit found on the command line? */
+
+ 03f2  eb 0c                             jmp     L49
+
+	    if( flag )
+		break;
+ 03f4  85 c9             L48             test    cx,cx
+ 03f6  75 0f                             jne     L50
+
+	    cc.ret_code = SYNTAX_ERR;
+ 03f8  c7 06 00 00 01 00                 mov     word ptr _cc,0001H
+
+	    return;
+	}
+ 03fe  eb 13                             jmp     L51
+
+    }
+ 0400  01 ca             L49             add     dx,cx
+ 0402  83 fa 02                          cmp     dx,0002H
+ 0405  7c c9                             jl      L47
+
+    tokvbuf[++tokv_index].byte_value = n;
+    return;
+ 0407  ff 06 00 00       L50             inc     word ptr _tokv_index
+ 040b  8b 1e 00 00                       mov     bx,_tokv_index
+ 040f  88 87 00 00                       mov     [bx+_tokvbuf],al
+
+}
+
+
+
+
+/*
+ * NAME
+ *	dddd_parser
+ * CALL
+ *	dddd_parser(void)
+ * PARAMETER
+ *	none
+ * RETURNS
+ *	nothing
+ * GLOBAL
+ *	cc
+ * DESPRIPTION
+ *	TYPE_DDDD option parser - four digit decimal number (dddd)
+ * REMARKS
+ */
+STATIC void NEAR
+ 0413  5d                L51             pop     bp
+ 0414  5a                                pop     dx
+ 0415  59                                pop     cx
+ 0416  5b                                pop     bx
+ 0417  c3                                ret     
+
+dddd_parser()
+{
+    int		i;
+    NUMBER	un;
+    BYTE	c;
+    BOOL	flag = FALSE;
+
+ 0418  53                dddd_parser_    push    bx
+ 0419  51                                push    cx
+ 041a  52                                push    dx
+ 041b  c8 02 00 00                       enter   0002H,00H
+
+    un.n = 0;
+ 041f  c7 46 fe 00 00                    mov     word ptr [bp-2H],0000H
+
+    flag = FALSE;
+ 0424  31 c9                             xor     cx,cx
+
+    for( i = 0; i < 4; ++i )
+    {
+ 0426  31 c0                             xor     ax,ax
+
+	c = *pcmdline1;
+ 0428  c4 1e 00 00       L52             les     bx,dword ptr _pcmdline1
+ 042c  26 8a 17                          mov     dl,es:[bx]
+
+	if( c >= '0'  &&  c <= '9' )
+	{
+ 042f  80 fa 30                          cmp     dl,30H
+ 0432  72 1e                             jb      L53
+ 0434  80 fa 39                          cmp     dl,39H
+ 0437  77 19                             ja      L53
+
+	    un.n = 10 * un.n + c - '0';
+	    ++pcmdline1;
+ 0439  6b 4e fe 0a                       imul    cx,[bp-2H],0aH
+ 043d  30 f6                             xor     dh,dh
+ 043f  01 ca                             add     dx,cx
+ 0441  83 ea 30                          sub     dx,0030H
+ 0444  89 56 fe                          mov     [bp-2H],dx
+
+ 0447  b9 01 00                          mov     cx,0001H
+
+	    flag = TRUE;
+	}
+ 044a  01 cb                             add     bx,cx
+ 044c  89 1e 00 00                       mov     _pcmdline1,bx
+
+	else
+	{
+	    /* Was at least 1 digit found on the command line? */
+
+ 0450  eb 0d                             jmp     L54
+
+	    if( flag == TRUE )
+		break;
+ 0452  83 f9 01          L53             cmp     cx,0001H
+ 0455  74 0f                             je      L55
+
+	    cc.ret_code = SYNTAX_ERR;
+ 0457  c7 06 00 00 01 00                 mov     word ptr _cc,0001H
+
+	    return;
+	}
+ 045d  eb 22                             jmp     L56
+
+    }
+
+ 045f  01 c8             L54             add     ax,cx
+ 0461  3d 04 00                          cmp     ax,0004H
+ 0464  7c c2                             jl      L52
+
+    tokvbuf[++tokv_index].byte_value = un.two_bytes.byte1;
+ 0466  ff 06 00 00       L55             inc     word ptr _tokv_index
+ 046a  8b 1e 00 00                       mov     bx,_tokv_index
+ 046e  8a 46 fe                          mov     al,[bp-2H]
+
+    tokvbuf[++tokv_index].byte_value = un.two_bytes.byte2;
+    return;
+ 0471  43                                inc     bx
+ 0472  88 87 ff ff                       mov     [bx+_tokvbuf+0ffffH],al
+ 0476  89 1e 00 00                       mov     _tokv_index,bx
+ 047a  8a 46 ff                          mov     al,[bp-1H]
+ 047d  88 87 00 00                       mov     [bx+_tokvbuf],al
+
+}
+
+
+
+
+/*
+ * NAME
+ * CALL
+ * PARAMETER
+ * RETURNS
+ * GLOBAL
+ * DESPRIPTION
+ *	TYPE_ULIST option parser - two or three decimal
+ * 	number (d,d[,d]) list (!)
+ *	If only two decimal are supplied the third is
+ *	set to '0'.
+ * REMARKS
+ */
+/*STATIC*/ void NEAR
+ 0481  c9                L56             leave   
+ 0482  5a                                pop     dx
+ 0483  59                                pop     cx
+ 0484  5b                                pop     bx
+ 0485  c3                                ret     
+
+ulist_parser()
+{
+    int		i;
+ 0486  53                ulist_parser_   push    bx
+ 0487  51                                push    cx
+ 0488  52                                push    dx
+ 0489  56                                push    si
+ 048a  57                                push    di
+ 048b  c8 06 00 00                       enter   0006H,00H
+
+    int		counter = 0;
+    NUMBER	un_number;
+    BOOL	flag, inside;
+
+    while( TRUE )
+    {
+ 048f  31 d2                             xor     dx,dx
+
+	if( counter == 0 )			/* first number in coordinate? */
+	{
+ 0491  75 1e             L57             jne     L60
+
+	    if( *pcmdline1 != '(' )
+	    {
+ 0493  c4 1e 00 00                       les     bx,dword ptr _pcmdline1
+ 0497  26 80 3f 28                       cmp     byte ptr es:[bx],28H
+ 049b  74 09                             je      L59
+
+		cc.ret_code = SYNTAX_ERR;	/* no allowed */
+ 049d  c7 06 00 00 01 00 L58             mov     word ptr _cc,0001H
+
+		return;
+	    }
+ 04a3  e9 dc 00                          jmp     L70
+
+	    ++pcmdline1;
+	    Skip_Over_Blanks();
+ 04a6  43                L59             inc     bx
+
+ 04a7  be 01 00                          mov     si,0001H
+ 04aa  89 1e 00 00                       mov     _pcmdline1,bx
+
+	    inside = TRUE;			/* (inside) */
+	}
+
+ 04ae  e8 00 00                          call    Skip_Over_Blanks_
+
+	un_number.n = 0;
+ 04b1  c7 46 fa 00 00    L60             mov     word ptr [bp-6H],0000H
+
+	flag = FALSE;
+ 04b6  31 ff                             xor     di,di
+
+	for( i = 0; i < 4; ++i )
+	{
+ 04b8  31 c0                             xor     ax,ax
+
+	    if( *pcmdline1 >= '0'  &&  *pcmdline1 <= '9' )
+	    {
+ 04ba  c4 1e 00 00       L61             les     bx,dword ptr _pcmdline1
+ 04be  26 80 3f 30                       cmp     byte ptr es:[bx],30H
+ 04c2  72 30                             jb      L62
+ 04c4  26 80 3f 39                       cmp     byte ptr es:[bx],39H
+ 04c8  77 2a                             ja      L62
+
+		un_number.n = 10 * un_number.n + (*pcmdline1 - '0');
+		++pcmdline1;
+ 04ca  26 8a 0f                          mov     cl,es:[bx]
+ 04cd  c6 46 fd 00                       mov     byte ptr [bp-3H],00H
+ 04d1  88 4e fc                          mov     [bp-4H],cl
+ 04d4  6b 7e fa 0a                       imul    di,[bp-6H],0aH
+ 04d8  89 7e fe                          mov     [bp-2H],di
+ 04db  8b 7e fc                          mov     di,[bp-4H]
+ 04de  8b 4e fe                          mov     cx,[bp-2H]
+ 04e1  83 ef 30                          sub     di,0030H
+ 04e4  01 f9                             add     cx,di
+ 04e6  89 4e fa                          mov     [bp-6H],cx
+
+ 04e9  bf 01 00                          mov     di,0001H
+
+		flag = TRUE;
+	    }
+ 04ec  01 fb                             add     bx,di
+ 04ee  89 1e 00 00                       mov     _pcmdline1,bx
+
+	    else
+	    {
+		/* Was at least 1 digit found on the command line? */
+ 04f2  eb 06                             jmp     L63
+
+		if( flag )
+		    break;
+		cc.ret_code = SYNTAX_ERR;
+		return;
+	    }
+ 04f4  85 ff             L62             test    di,di
+ 04f6  75 09                             jne     L64
+ 04f8  eb a3                             jmp     L58
+
+	}
+ 04fa  01 f8             L63             add     ax,di
+ 04fc  3d 04 00                          cmp     ax,0004H
+ 04ff  7c b9                             jl      L61
+
+	tokvbuf[++tokv_index].byte_value = un_number.two_bytes.byte1;
+ 0501  ff 06 00 00       L64             inc     word ptr _tokv_index
+ 0505  8b 1e 00 00                       mov     bx,_tokv_index
+ 0509  8a 46 fa                          mov     al,[bp-6H]
+
+	tokvbuf[++tokv_index].byte_value = un_number.two_bytes.byte2;
+ 050c  43                                inc     bx
+ 050d  88 87 ff ff                       mov     [bx+_tokvbuf+0ffffH],al
+ 0511  89 1e 00 00                       mov     _tokv_index,bx
+ 0515  8a 46 fb                          mov     al,[bp-5H]
+ 0518  88 87 00 00                       mov     [bx+_tokvbuf],al
+
+	Skip_Over_Blanks();
+
+ 051c  e8 00 00                          call    Skip_Over_Blanks_
+
+	if( *pcmdline1 == ')'  &&  (counter == 1  ||  counter == 2) )
+	{
+ 051f  c4 1e 00 00                       les     bx,dword ptr _pcmdline1
+ 0523  26 80 3f 29                       cmp     byte ptr es:[bx],29H
+ 0527  75 35                             jne     L67
+ 0529  83 fa 01                          cmp     dx,0001H
+ 052c  74 05                             je      L65
+ 052e  83 fa 02                          cmp     dx,0002H
+ 0531  75 2b                             jne     L67
+
+	    if( counter == 1 )			/* only 2? Third = 0! */
+	    {
+ 0533  83 fa 01          L65             cmp     dx,0001H
+ 0536  75 18                             jne     L66
+
+		tokvbuf[++tokv_index].byte_value = 0;
+ 0538  01 16 00 00                       add     _tokv_index,dx
+ 053c  8b 1e 00 00                       mov     bx,_tokv_index
+ 0540  c6 87 00 00 00                    mov     byte ptr [bx+_tokvbuf],00H
+
+		tokvbuf[++tokv_index].byte_value = 0;
+	    }
+ 0545  01 d3                             add     bx,dx
+ 0547  89 1e 00 00                       mov     _tokv_index,bx
+ 054b  c6 87 00 00 00                    mov     byte ptr [bx+_tokvbuf],00H
+
+	    counter = -1;			/* new coordinate */
+ 0550  ba ff ff          L66             mov     dx,0ffffH
+
+	    ++pcmdline1;			/* skip ')' */
+ 0553  ff 06 00 00                       inc     word ptr _pcmdline1
+
+	    Skip_Over_Blanks();
+ 0557  e8 00 00                          call    Skip_Over_Blanks_
+
+	    inside = FALSE;			/* not (inside) */
+	}
+ 055a  31 f6                             xor     si,si
+
+	else if( counter == 2 )
+	{
+	    cc.ret_code = SYNTAX_ERR;
+	    return;
+	}
+ 055c  eb 07                             jmp     L68
+ 055e  83 fa 02          L67             cmp     dx,0002H
+ 0561  0f 84 38 ff                       je      L58
+
+	if( *pcmdline1 != ',' )
+	{
+ 0565  c4 1e 00 00       L68             les     bx,dword ptr _pcmdline1
+ 0569  26 80 3f 2c                       cmp     byte ptr es:[bx],2cH
+ 056d  74 07                             je      L69
+
+	    if( inside )
+		cc.ret_code = SYNTAX_ERR;	/* missing ')' */
+	    return;
+	}
+ 056f  85 f6                             test    si,si
+ 0571  74 0f                             je      L70
+ 0573  e9 27 ff                          jmp     L58
+
+	++pcmdline1;				/* skip ',' */
+ 0576  43                L69             inc     bx
+ 0577  89 1e 00 00                       mov     _pcmdline1,bx
+
+	Skip_Over_Blanks();
+ 057b  e8 00 00                          call    Skip_Over_Blanks_
+
+	++counter;
+ 057e  42                                inc     dx
+
+    }
+
+    return;
+ 057f  e9 0f ff                          jmp     L57
+
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = hh_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_HH option parser	   hh,hh format (h = hex char)
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC void NEAR
+ 0582  c9                L70             leave   
+ 0583  5f                                pop     di
+ 0584  5e                                pop     si
+ 0585  5a                                pop     dx
+ 0586  59                                pop     cx
+ 0587  5b                                pop     bx
+ 0588  c3                                ret     
+
+hh_parser()
+{
+    /* Convert command line HH char and setup token value buffer */
+
+ 0589  53                hh_parser_      push    bx
+ 058a  55                                push    bp
+ 058b  89 e5                             mov     bp,sp
+
+    if( !HH_Char_To_Byte() )
+	return;
+ 058d  e8 00 00                          call    HH_Char_To_Byte_
+ 0590  85 c0                             test    ax,ax
+ 0592  74 21                             je      L72
+
+    Skip_Over_Blanks();
+
+ 0594  e8 00 00                          call    Skip_Over_Blanks_
+
+    if( *pcmdline1 != ',' )
+    {
+ 0597  c4 1e 00 00                       les     bx,dword ptr _pcmdline1
+ 059b  26 80 3f 2c                       cmp     byte ptr es:[bx],2cH
+ 059f  74 09                             je      L71
+
+	cc.ret_code = SYNTAX_ERR;
+ 05a1  c7 06 00 00 01 00                 mov     word ptr _cc,0001H
+
+	return;
+    }
+ 05a7  5d                                pop     bp
+ 05a8  5b                                pop     bx
+ 05a9  c3                                ret     
+
+    ++pcmdline1;
+ 05aa  43                L71             inc     bx
+ 05ab  89 1e 00 00                       mov     _pcmdline1,bx
+
+    Skip_Over_Blanks();
+
+    /* Convert command line HH char and setup token value buffer */
+
+ 05af  e8 00 00                          call    Skip_Over_Blanks_
+
+    HH_Char_To_Byte();
+    return;
+ 05b2  e8 00 00                          call    HH_Char_To_Byte_
+
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = HH_Char_To_Byte
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: Convert HH char to byte value
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC BOOL NEAR
+ 05b5  5d                L72             pop     bp
+ 05b6  5b                                pop     bx
+ 05b7  c3                                ret     
+
+HH_Char_To_Byte()
+{
+    BYTE  n;
+    INT   i;
+ 05b8                    HH_Char_To_Byte_:
+ 05b8  53                                push    bx
+ 05b9  52                                push    dx
+ 05ba  56                                push    si
+ 05bb  55                                push    bp
+ 05bc  89 e5                             mov     bp,sp
+
+    BOOL  flag = FALSE;
+    BYTE  c;
+
+ 05be  31 f6                             xor     si,si
+
+    n = 0;
+ 05c0  30 e4                             xor     ah,ah
+
+    for( i = 0; i < 2; ++i )
+    {
+ 05c2  31 d2                             xor     dx,dx
+
+	c = *pcmdline1;
+ 05c4  c4 1e 00 00       L73             les     bx,dword ptr _pcmdline1
+ 05c8  26 8a 07                          mov     al,es:[bx]
+
+	if( c >= '0'  &&  c <= '9' )
+	{
+ 05cb  3c 30                             cmp     al,30H
+ 05cd  72 17                             jb      L74
+ 05cf  3c 39                             cmp     al,39H
+ 05d1  77 13                             ja      L74
+
+	    n = (BYTE)(16 * n + c - '0');
+	    ++pcmdline1;
+ 05d3  c0 e4 04                          shl     ah,04H
+
+ 05d6  be 01 00                          mov     si,0001H
+ 05d9  00 c4                             add     ah,al
+
+	    flag = TRUE;
+ 05db  01 f3                             add     bx,si
+ 05dd  80 ec 30                          sub     ah,30H
+ 05e0  89 1e 00 00                       mov     _pcmdline1,bx
+
+	    continue;
+	}
+ 05e4  eb 29                             jmp     L76
+
+	c |= 0x20;				/* convert to lower case */
+ 05e6  0c 20             L74             or      al,20H
+
+	if( c >= 'a'  &&  c <= 'f' )
+	{
+ 05e8  3c 61                             cmp     al,61H
+ 05ea  72 15                             jb      L75
+ 05ec  3c 66                             cmp     al,66H
+ 05ee  77 11                             ja      L75
+
+	    n = (BYTE)(16 * n + c - 'W');
+	    ++pcmdline1;
+ 05f0  c0 e4 04                          shl     ah,04H
+
+ 05f3  be 01 00                          mov     si,0001H
+ 05f6  00 c4                             add     ah,al
+
+	    flag = TRUE;
+ 05f8  01 36 00 00                       add     _pcmdline1,si
+ 05fc  80 ec 57                          sub     ah,57H
+
+	    continue;
+	}
+
+	/* Was at least 1 hex digit found on the command line? */
+
+ 05ff  eb 0e                             jmp     L76
+
+	if( flag )
+	    break;
+ 0601  85 f6             L75             test    si,si
+ 0603  75 10                             jne     L77
+
+	cc.ret_code = SYNTAX_ERR;
+ 0605  c7 06 00 00 01 00                 mov     word ptr _cc,0001H
+
+	return FALSE;
+ 060b  31 c0                             xor     ax,ax
+ 060d  eb 15                             jmp     L78
+
+    }
+
+ 060f  42                L76             inc     dx
+ 0610  83 fa 02                          cmp     dx,0002H
+ 0613  7c af                             jl      L73
+
+    tokvbuf[++tokv_index].byte_value = n;
+ 0615  ff 06 00 00       L77             inc     word ptr _tokv_index
+ 0619  8b 1e 00 00                       mov     bx,_tokv_index
+ 061d  88 a7 00 00                       mov     [bx+_tokvbuf],ah
+
+    return TRUE;
+ 0621  b8 01 00                          mov     ax,0001H
+
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = hhhh_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_HHHH option parser	    hhhh format (h = hex char)
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC void NEAR
+ 0624  5d                L78             pop     bp
+ 0625  5e                                pop     si
+ 0626  5a                                pop     dx
+ 0627  5b                                pop     bx
+ 0628  c3                                ret     
+
+hhhh_parser()
+{
+    INT    i;
+    BOOL   flag;
+    NUMBER un_number;
+    BYTE   c;
+
+ 0629  53                hhhh_parser_    push    bx
+ 062a  51                                push    cx
+ 062b  52                                push    dx
+ 062c  56                                push    si
+ 062d  c8 02 00 00                       enter   0002H,00H
+
+    un_number.n = 0;
+ 0631  c7 46 fe 00 00                    mov     word ptr [bp-2H],0000H
+
+    flag = FALSE;
+ 0636  31 c9                             xor     cx,cx
+
+    for( i = 0; i < 4; ++i )
+    {
+ 0638  31 d2                             xor     dx,dx
+
+	c = *pcmdline1;
+ 063a  c4 1e 00 00       L79             les     bx,dword ptr _pcmdline1
+ 063e  26 8a 07                          mov     al,es:[bx]
+
+	if( c >= '0'  &&  c <= '9' )
+	{
+ 0641  3c 30                             cmp     al,30H
+ 0643  72 21                             jb      L80
+ 0645  3c 39                             cmp     al,39H
+ 0647  77 1d                             ja      L80
+
+	    un_number.n = 16 * un_number.n + c - '0';
+	    ++pcmdline1;
+ 0649  8b 76 fe                          mov     si,[bp-2H]
+ 064c  88 c1                             mov     cl,al
+ 064e  c1 e6 04                          shl     si,04H
+ 0651  30 ed                             xor     ch,ch
+ 0653  01 f1                             add     cx,si
+ 0655  83 e9 30                          sub     cx,0030H
+ 0658  89 4e fe                          mov     [bp-2H],cx
+
+ 065b  b9 01 00                          mov     cx,0001H
+
+	    flag = TRUE;
+ 065e  01 cb                             add     bx,cx
+ 0660  89 1e 00 00                       mov     _pcmdline1,bx
+
+	    continue;
+	}
+ 0664  eb 31                             jmp     L82
+
+	c |= 0x20;
+ 0666  0c 20             L80             or      al,20H
+
+	if( c >= 'a'  &&  c <= 'f' )
+	{
+ 0668  3c 61                             cmp     al,61H
+ 066a  72 1f                             jb      L81
+ 066c  3c 66                             cmp     al,66H
+ 066e  77 1b                             ja      L81
+
+	    un_number.n = 16*un_number.n + c - 'W';
+	    ++pcmdline1;
+ 0670  8b 4e fe                          mov     cx,[bp-2H]
+ 0673  88 c3                             mov     bl,al
+ 0675  c1 e1 04                          shl     cx,04H
+ 0678  30 ff                             xor     bh,bh
+ 067a  01 cb                             add     bx,cx
+ 067c  83 eb 57                          sub     bx,0057H
+ 067f  89 5e fe                          mov     [bp-2H],bx
+
+ 0682  b9 01 00                          mov     cx,0001H
+
+	    flag = TRUE;
+ 0685  01 0e 00 00                       add     _pcmdline1,cx
+
+	    continue;
+	}
+
+	/* Was at least 1 hex digit found on the command line? */
+
+ 0689  eb 0c                             jmp     L82
+
+	if( flag )
+	    break;
+ 068b  85 c9             L81             test    cx,cx
+ 068d  75 0e                             jne     L83
+
+	cc.ret_code = SYNTAX_ERR;
+ 068f  c7 06 00 00 01 00                 mov     word ptr _cc,0001H
+
+	return;
+ 0695  eb 21                             jmp     L84
+
+    }
+
+ 0697  42                L82             inc     dx
+ 0698  83 fa 04                          cmp     dx,0004H
+ 069b  7c 9d                             jl      L79
+
+    tokvbuf[++tokv_index].byte_value = un_number.two_bytes.byte1;
+ 069d  ff 06 00 00       L83             inc     word ptr _tokv_index
+ 06a1  8b 1e 00 00                       mov     bx,_tokv_index
+ 06a5  8a 46 fe                          mov     al,[bp-2H]
+
+    tokvbuf[++tokv_index].byte_value = un_number.two_bytes.byte2;
+    return;
+ 06a8  43                                inc     bx
+ 06a9  88 87 ff ff                       mov     [bx+_tokvbuf+0ffffH],al
+ 06ad  89 1e 00 00                       mov     _tokv_index,bx
+ 06b1  8a 46 ff                          mov     al,[bp-1H]
+ 06b4  88 87 00 00                       mov     [bx+_tokvbuf],al
+
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = format_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_FORMAT option parser -  format_table chars accepted
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = NONE
+ ****************************************************************************/
+STATIC void NEAR
+ 06b8  c9                L84             leave   
+ 06b9  5e                                pop     si
+ 06ba  5a                                pop     dx
+ 06bb  59                                pop     cx
+ 06bc  5b                                pop     bx
+ 06bd  c3                                ret     
+
+format_parser()
+{
+    typedef struct _formattable {
+	PSZ string;
+	USHORT type;
+	NUMBER MegBytes;
+    } FORMATTABLE;
+
+    /*
+     * FORMATTABLE type definitions
+     * accepts # string followed by:
+     */
+
+#define  M_BYTES       1	       /* accepts MB,mb,Mb,mB, or nothing */
+#define  K_BYTES       2	       /* accepts KB,kb,Kb,kB, or nothing */
+
+    INT str_len,k;
+    static FORMATTABLE format_table[] = {
+	{ "360",K_BYTES,360 } ,
+	{ "720",K_BYTES,720 } ,
+	{ "1200",K_BYTES,1200 } ,
+	{ "1.2",M_BYTES,1200 } ,
+	{ "1440",K_BYTES,1440 } ,
+	{ "1.44",M_BYTES,1440 } ,
+	{ "2880",K_BYTES,2880 } ,
+	{ "2	.88",M_BYTES,2880 } ,
+	{ "-1" } ,                          /* , ???? */
+    };
+
+ 06be  53                format_parser_  push    bx
+ 06bf  51                                push    cx
+ 06c0  52                                push    dx
+ 06c1  56                                push    si
+ 06c2  57                                push    di
+ 06c3  c8 02 00 00                       enter   0002H,00H
+
+    cc.ret_code = SYNTAX_ERR;
+ 06c7  c7 06 00 00 01 00                 mov     word ptr _cc,0001H
+
+    for( k = 0; (format_table[k].string != "-1"); ++k )
+    {
+ 06cd  31 ff                             xor     di,di
+ 06cf  e9 a9 00                          jmp     L92
+
+	str_len = FarStrLen(format_table[k].string);
+ 06d2  89 da             L85             mov     dx,bx
+ 06d4  e8 00 00                          call    FarStrLen_
+ 06d7  8b 16 02 00                       mov     dx,_pcmdline1+2H
+ 06db  89 46 fe                          mov     [bp-2H],ax
+
+	if( strncmp(pcmdline1, format_table[k].string, str_len) == TRUE )
+	{
+ 06de  50                                push    ax
+ 06df  8b 9c 00 00                       mov     bx,[si+L151]
+ 06e3  8b 8c 02 00                       mov     cx,[si+L152]
+ 06e7  a1 00 00                          mov     ax,_pcmdline1
+ 06ea  e8 00 00                          call    strncmp_
+ 06ed  3d 01 00                          cmp     ax,0001H
+ 06f0  0f 85 86 00                       jne     L91
+
+	    pcmdline1 += str_len;
+ 06f4  8b 46 fe                          mov     ax,[bp-2H]
+ 06f7  01 06 00 00                       add     _pcmdline1,ax
+
+	    if( format_table[k].type == K_BYTES )
+	    {
+ 06fb  83 bc 04 00 02                    cmp     word ptr [si+L153],0002H
+ 0700  75 26                             jne     L87
+
+		if( *pcmdline1 == 'K'  || *pcmdline1 == 'k' )
+		{
+ 0702  c4 36 00 00                       les     si,dword ptr _pcmdline1
+ 0706  26 80 3c 4b                       cmp     byte ptr es:[si],4bH
+ 070a  74 06                             je      L86
+ 070c  26 80 3c 6b                       cmp     byte ptr es:[si],6bH
+ 0710  75 3e                             jne     L90
+
+		    ++pcmdline1;
+ 0712  ff 06 00 00       L86             inc     word ptr _pcmdline1
+
+		    if( *(pcmdline1) == 'B'  ||  *(pcmdline1) == 'b' )
+			++pcmdline1;
+		}
+	    }
+ 0716  c4 36 00 00                       les     si,dword ptr _pcmdline1
+ 071a  26 80 3c 42                       cmp     byte ptr es:[si],42H
+ 071e  74 2c                             je      L89
+ 0720  26 80 3c 62                       cmp     byte ptr es:[si],62H
+ 0724  75 2a                             jne     L90
+
+	    else
+	    {
+ 0726  eb 24                             jmp     L89
+
+		if( *pcmdline1 == 'M'  ||  *pcmdline1 == 'm' )
+		{
+ 0728  c4 36 00 00       L87             les     si,dword ptr _pcmdline1
+ 072c  26 80 3c 4d                       cmp     byte ptr es:[si],4dH
+ 0730  74 06                             je      L88
+ 0732  26 80 3c 6d                       cmp     byte ptr es:[si],6dH
+ 0736  75 18                             jne     L90
+
+		    ++pcmdline1;
+ 0738  ff 06 00 00       L88             inc     word ptr _pcmdline1
+
+		    if( *(pcmdline1) == 'B'  ||  *(pcmdline1) == 'b' )
+ 073c  c4 36 00 00                       les     si,dword ptr _pcmdline1
+ 0740  26 80 3c 42                       cmp     byte ptr es:[si],42H
+ 0744  74 06                             je      L89
+ 0746  26 80 3c 62                       cmp     byte ptr es:[si],62H
+ 074a  75 04                             jne     L90
+
+			++pcmdline1;
+		}
+	    }
+ 074c  ff 06 00 00       L89             inc     word ptr _pcmdline1
+
+	    ++tokv_index;
+ 0750  ff 06 00 00       L90             inc     word ptr _tokv_index
+
+	    tokvbuf[tokv_index].byte_value
+		= format_table[k].MegBytes.two_bytes.byte1;
+ 0754  89 fe                             mov     si,di
+ 0756  8b 1e 00 00                       mov     bx,_tokv_index
+ 075a  c1 e6 03                          shl     si,03H
+
+	    ++tokv_index;
+	    tokvbuf[tokv_index].byte_value
+		= format_table[k].MegBytes.two_bytes.byte2;
+ 075d  43                                inc     bx
+ 075e  8a 84 06 00                       mov     al,[si+L154]
+
+	    cc.ret_code = NO_ERR;
+ 0762  c7 06 00 00 00 00                 mov     word ptr _cc,0000H
+ 0768  88 87 ff ff                       mov     [bx+_tokvbuf+0ffffH],al
+ 076c  8a 84 07 00                       mov     al,[si+L155]
+ 0770  89 1e 00 00                       mov     _tokv_index,bx
+ 0774  88 87 00 00                       mov     [bx+_tokvbuf],al
+
+	    break;
+	}
+ 0778  eb 1d                             jmp     L93
+
+    }
+
+    return;
+ 077a  47                L91             inc     di
+ 077b  89 fe             L92             mov     si,di
+ 077d  c1 e6 03                          shl     si,03H
+ 0780  8c da                             mov     dx,ds
+ 0782  8b 9c 02 00                       mov     bx,[si+L152]
+ 0786  8b 84 00 00                       mov     ax,[si+L151]
+ 078a  39 d3                             cmp     bx,dx
+ 078c  0f 85 42 ff                       jne     L85
+ 0790  3d 0e 00                          cmp     ax,offset L150
+ 0793  0f 85 3b ff                       jne     L85
+
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = scsi_id_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_SCSI_ID option parser - format d and (d,d) accepted
+ *					   where d = 0 - 7
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC void NEAR
+ 0797  c9                L93             leave   
+ 0798  5f                                pop     di
+ 0799  5e                                pop     si
+ 079a  5a                                pop     dx
+ 079b  59                                pop     cx
+ 079c  5b                                pop     bx
+ 079d  c3                                ret     
+
+scsi_id_parser()
+{
+    BOOL found_bracket, found_one;
+
+    found_bracket = FALSE;
+    found_one = FALSE;
+ 079e  53                scsi_id_parser_ push    bx
+ 079f  51                                push    cx
+ 07a0  52                                push    dx
+ 07a1  56                                push    si
+ 07a2  55                                push    bp
+ 07a3  89 e5                             mov     bp,sp
+
+ 07a5  8b 1e 00 00                       mov     bx,_pcmdline1
+ 07a9  31 d2                             xor     dx,dx
+ 07ab  8e 06 02 00                       mov     es,_pcmdline1+2H
+
+    if( *pcmdline1 == '(' )
+    {
+ 07af  31 c9                             xor     cx,cx
+ 07b1  26 80 3f 28       L94             cmp     byte ptr es:[bx],28H
+ 07b5  75 0c                             jne     L95
+
+	found_bracket = TRUE;
+ 07b7  ba 01 00                          mov     dx,0001H
+
+	++pcmdline1;
+ 07ba  01 d3                             add     bx,dx
+ 07bc  89 1e 00 00                       mov     _pcmdline1,bx
+
+	Skip_Over_Blanks();
+    }
+ 07c0  e8 00 00                          call    Skip_Over_Blanks_
+
+    while( *pcmdline1 >= '0'  &&  *pcmdline1 <= '7' )
+    {
+ 07c3  c4 1e 00 00       L95             les     bx,dword ptr _pcmdline1
+ 07c7  26 80 3f 30                       cmp     byte ptr es:[bx],30H
+ 07cb  0f 82 a9 00                       jb      L99
+ 07cf  26 80 3f 37                       cmp     byte ptr es:[bx],37H
+ 07d3  0f 87 a1 00                       ja      L99
+
+	found_one = TRUE;
+ 07d7  b9 01 00                          mov     cx,0001H
+
+	tokv_index++;
+	tokvbuf[tokv_index].byte_value = (BYTE)(*pcmdline1 - '0');
+ 07da  01 0e 00 00                       add     _tokv_index,cx
+ 07de  8b 36 00 00                       mov     si,_tokv_index
+ 07e2  26 8a 07                          mov     al,es:[bx]
+
+	++pcmdline1;
+ 07e5  01 cb                             add     bx,cx
+ 07e7  2c 30                             sub     al,30H
+ 07e9  89 1e 00 00                       mov     _pcmdline1,bx
+ 07ed  88 84 00 00                       mov     [si+_tokvbuf],al
+
+	if( !found_bracket )
+	{
+ 07f1  85 d2                             test    dx,dx
+ 07f3  75 0b                             jne     L96
+
+	    ++tokv_index;
+ 07f5  01 ce                             add     si,cx
+ 07f7  89 36 00 00                       mov     _tokv_index,si
+
+	    tokvbuf[tokv_index].byte_value = 0;
+	}
+ 07fb  c6 84 00 00 00                    mov     byte ptr [si+_tokvbuf],00H
+
+	Skip_Over_Blanks();
+ 0800  e8 00 00          L96             call    Skip_Over_Blanks_
+
+	if( *pcmdline1 != ',' )
+	{
+ 0803  c4 1e 00 00                       les     bx,dword ptr _pcmdline1
+ 0807  26 80 3f 2c                       cmp     byte ptr es:[bx],2cH
+ 080b  74 09                             je      L97
+
+	    if( found_bracket )
+		cc.ret_code = SYNTAX_ERR;
+ 080d  85 d2                             test    dx,dx
+ 080f  0f 84 79 00                       je      L102
+
+	    return;
+	}
+ 0813  e9 70 00                          jmp     L101
+
+	++pcmdline1;
+ 0816  43                L97             inc     bx
+ 0817  89 1e 00 00                       mov     _pcmdline1,bx
+
+	Skip_Over_Blanks();
+ 081b  e8 00 00                          call    Skip_Over_Blanks_
+
+	if( found_bracket )
+	{
+ 081e  85 d2                             test    dx,dx
+ 0820  74 4f                             je      L98
+
+	    if( *pcmdline1 >= '0'  && *pcmdline1 <= '7' )
+	    {
+ 0822  c4 1e 00 00                       les     bx,dword ptr _pcmdline1
+ 0826  26 80 3f 30                       cmp     byte ptr es:[bx],30H
+ 082a  72 45                             jb      L98
+ 082c  26 80 3f 37                       cmp     byte ptr es:[bx],37H
+ 0830  77 3f                             ja      L98
+
+		++tokv_index;
+		tokvbuf[tokv_index].byte_value = (BYTE)(*pcmdline1 - '0');
+ 0832  ff 06 00 00                       inc     word ptr _tokv_index
+ 0836  8b 36 00 00                       mov     si,_tokv_index
+ 083a  26 8a 07                          mov     al,es:[bx]
+
+		++pcmdline1;
+ 083d  43                                inc     bx
+ 083e  2c 30                             sub     al,30H
+ 0840  89 1e 00 00                       mov     _pcmdline1,bx
+ 0844  88 84 00 00                       mov     [si+_tokvbuf],al
+
+		Skip_Over_Blanks();
+ 0848  e8 00 00                          call    Skip_Over_Blanks_
+
+		if( *pcmdline1 != ')' )
+		{
+		    cc.ret_code = SYNTAX_ERR;
+		    return;
+		}
+ 084b  c4 1e 00 00                       les     bx,dword ptr _pcmdline1
+ 084f  26 80 3f 29                       cmp     byte ptr es:[bx],29H
+ 0853  75 31                             jne     L101
+
+		++pcmdline1;
+ 0855  43                                inc     bx
+ 0856  89 1e 00 00                       mov     _pcmdline1,bx
+
+		Skip_Over_Blanks();
+		found_bracket = FALSE;
+ 085a  e8 00 00                          call    Skip_Over_Blanks_
+
+ 085d  c4 1e 00 00                       les     bx,dword ptr _pcmdline1
+
+		if( *pcmdline1 != ',' )
+		    return;
+ 0861  31 d2                             xor     dx,dx
+ 0863  26 80 3f 2c                       cmp     byte ptr es:[bx],2cH
+ 0867  75 23                             jne     L102
+
+		++pcmdline1;
+ 0869  43                                inc     bx
+ 086a  89 1e 00 00                       mov     _pcmdline1,bx
+
+		Skip_Over_Blanks();
+	    }
+	}
+ 086e  e8 00 00                          call    Skip_Over_Blanks_
+
+	if( *pcmdline1 == '(' )
+	{
+	    found_bracket = TRUE;
+	    pcmdline1++;
+	    Skip_Over_Blanks();
+	}
+ 0871  c4 1e 00 00       L98             les     bx,dword ptr _pcmdline1
+
+    }
+
+ 0875  e9 39 ff                          jmp     L94
+
+    if( found_bracket )
+ 0878  85 d2             L99             test    dx,dx
+ 087a  74 06                             je      L100
+
+	cc.ret_code = SYNTAX_ERR;
+ 087c  c7 06 00 00 01 00                 mov     word ptr _cc,0001H
+
+    if( !found_one )
+ 0882  85 c9             L100            test    cx,cx
+ 0884  75 06                             jne     L102
+
+	cc.ret_code = SYNTAX_ERR;
+    return;
+ 0886  c7 06 00 00 01 00 L101            mov     word ptr _cc,0001H
+
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = dev_id_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_DEV_ID option parser - format c, (c,d) and (c,d,d) accepted
+ *					   where d = 0 - 7
+ *					   and	 c = 0 - 9
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ *
+ * 940215/VJ: Generated from scsi_id_parser() see CMDPDEFS.H for description
+ *	      of token
+ ****************************************************************************/
+ 088c  5d                L102            pop     bp
+ 088d  5e                                pop     si
+ 088e  5a                                pop     dx
+ 088f  59                                pop     cx
+ 0890  5b                                pop     bx
+ 0891  c3                                ret     
+
+VOID NEAR dev_id_parser()
+{
+    BOOL found_bracket=FALSE;
+    BOOL found_one=FALSE;
+
+    /* A SCSI coordinate may be contained in brackets */
+ 0892  53                dev_id_parser_  push    bx
+ 0893  51                                push    cx
+ 0894  52                                push    dx
+ 0895  56                                push    si
+ 0896  55                                push    bp
+ 0897  89 e5                             mov     bp,sp
+
+    if( *pcmdline1 == '(' )
+    {
+ 0899  8b 1e 00 00                       mov     bx,_pcmdline1
+ 089d  31 d2                             xor     dx,dx
+ 089f  8e 06 02 00                       mov     es,_pcmdline1+2H
+ 08a3  31 c9                             xor     cx,cx
+ 08a5  26 80 3f 28       L103            cmp     byte ptr es:[bx],28H
+ 08a9  75 0c                             jne     L104
+
+	found_bracket = TRUE;
+ 08ab  ba 01 00                          mov     dx,0001H
+
+	++pcmdline1;
+ 08ae  01 d3                             add     bx,dx
+ 08b0  89 1e 00 00                       mov     _pcmdline1,bx
+
+	Skip_Over_Blanks();
+    }
+
+    /* Scan coordinates, first is cache device or scsi channel
+     * and may evaluate to any value (currently supported 0-9). */
+
+ 08b4  e8 00 00                          call    Skip_Over_Blanks_
+
+    while( *pcmdline1 >= '0'  &&  *pcmdline1 <= '9' )
+    {
+	found_one = TRUE;
+ 08b7  c4 1e 00 00       L104            les     bx,dword ptr _pcmdline1
+ 08bb  26 80 3f 30                       cmp     byte ptr es:[bx],30H
+ 08bf  0f 82 25 01                       jb      L111
+ 08c3  26 80 3f 39                       cmp     byte ptr es:[bx],39H
+ 08c7  0f 87 1d 01                       ja      L111
+
+ 08cb  26 8a 07                          mov     al,es:[bx]
+
+	tokvbuf[++tokv_index].byte_value = *pcmdline1 - (CHAR)'0';
+ 08ce  b9 01 00                          mov     cx,0001H
+ 08d1  2c 30                             sub     al,30H
+ 08d3  01 0e 00 00                       add     _tokv_index,cx
+
+	++pcmdline1;
+ 08d7  01 cb                             add     bx,cx
+ 08d9  8b 36 00 00                       mov     si,_tokv_index
+ 08dd  89 1e 00 00                       mov     _pcmdline1,bx
+ 08e1  88 84 00 00                       mov     [si+_tokvbuf],al
+
+	Skip_Over_Blanks();
+
+ 08e5  e8 00 00                          call    Skip_Over_Blanks_
+
+	if( *pcmdline1 != ',' )			/* more coordinates? */
+	{					/*  NO */
+ 08e8  c4 1e 00 00                       les     bx,dword ptr _pcmdline1
+ 08ec  26 80 3f 2c                       cmp     byte ptr es:[bx],2cH
+ 08f0  74 22                             je      L106
+
+	    if( found_bracket )			/* started w/ bracket? */
+ 08f2  85 d2                             test    dx,dx
+ 08f4  74 04                             je      L105
+
+		cc.ret_code = SYNTAX_ERR;	/*  have to stop w/ bracket! */
+ 08f6  89 0e 00 00                       mov     _cc,cx
+
+	    tokvbuf[++tokv_index].byte_value = (CHAR)-1;
+ 08fa  ff 06 00 00       L105            inc     word ptr _tokv_index
+ 08fe  8b 1e 00 00                       mov     bx,_tokv_index
+
+	    tokvbuf[++tokv_index].byte_value = (CHAR)-1; /* fill w/ -1 */
+ 0902  43                                inc     bx
+ 0903  c6 87 ff ff ff                    mov     byte ptr [bx+_tokvbuf+0ffffH],0ffH
+ 0908  89 1e 00 00                       mov     _tokv_index,bx
+ 090c  c6 87 00 00 ff                    mov     byte ptr [bx+_tokvbuf],0ffH
+
+	    return;
+	}
+ 0911  e9 e8 00                          jmp     L114
+
+	++pcmdline1;
+ 0914  01 cb             L106            add     bx,cx
+ 0916  89 1e 00 00                       mov     _pcmdline1,bx
+
+	Skip_Over_Blanks();
+
+ 091a  e8 00 00                          call    Skip_Over_Blanks_
+
+	if( found_bracket )			/* started w/ brackets? */
+	{					/*  YES, more may come */
+ 091d  85 d2                             test    dx,dx
+ 091f  0f 84 a6 00                       je      L109
+
+	    if ( *pcmdline1 >= '0'  &&  *pcmdline1 <= '7' )
+	    {
+ 0923  c4 1e 00 00                       les     bx,dword ptr _pcmdline1
+ 0927  26 80 3f 30                       cmp     byte ptr es:[bx],30H
+ 092b  0f 82 b2 00                       jb      L110
+ 092f  26 80 3f 37                       cmp     byte ptr es:[bx],37H
+ 0933  0f 87 aa 00                       ja      L110
+
+		tokvbuf[++tokv_index].byte_value = *pcmdline1 - (CHAR)'0';
+ 0937  26 8a 07                          mov     al,es:[bx]
+ 093a  2c 30                             sub     al,30H
+ 093c  01 0e 00 00                       add     _tokv_index,cx
+
+		++pcmdline1;
+ 0940  01 cb                             add     bx,cx
+ 0942  8b 36 00 00                       mov     si,_tokv_index
+ 0946  89 1e 00 00                       mov     _pcmdline1,bx
+ 094a  88 84 00 00                       mov     [si+_tokvbuf],al
+
+		Skip_Over_Blanks();
+
+ 094e  e8 00 00                          call    Skip_Over_Blanks_
+
+		if( *pcmdline1 == ',' )		/* ',' behind 2nd coord. ? */
+		{				/*  YES, 3rd coord. follows */
+ 0951  c4 1e 00 00                       les     bx,dword ptr _pcmdline1
+ 0955  26 80 3f 2c                       cmp     byte ptr es:[bx],2cH
+ 0959  75 39                             jne     L107
+
+		    ++pcmdline1;
+ 095b  01 cb                             add     bx,cx
+ 095d  89 1e 00 00                       mov     _pcmdline1,bx
+
+		    Skip_Over_Blanks();
+ 0961  e8 00 00                          call    Skip_Over_Blanks_
+
+		    if( *pcmdline1 >= '0'  &&  *pcmdline1 <= '7' )
+		    {
+ 0964  c4 1e 00 00                       les     bx,dword ptr _pcmdline1
+ 0968  26 80 3f 30                       cmp     byte ptr es:[bx],30H
+ 096c  0f 82 86 00                       jb      L113
+ 0970  26 80 3f 37                       cmp     byte ptr es:[bx],37H
+ 0974  0f 87 7e 00                       ja      L113
+
+			tokvbuf[++tokv_index].byte_value = *pcmdline1 - (CHAR)'0';
+ 0978  26 8a 07                          mov     al,es:[bx]
+ 097b  2c 30                             sub     al,30H
+ 097d  01 0e 00 00                       add     _tokv_index,cx
+
+			++pcmdline1;
+ 0981  01 cb                             add     bx,cx
+ 0983  8b 36 00 00                       mov     si,_tokv_index
+ 0987  89 1e 00 00                       mov     _pcmdline1,bx
+ 098b  88 84 00 00                       mov     [si+_tokvbuf],al
+
+			Skip_Over_Blanks();
+		    }
+ 098f  e8 00 00                          call    Skip_Over_Blanks_
+
+		    else
+		    {
+			cc.ret_code = SYNTAX_ERR;
+			return;
+		    }
+		}
+		else
+		{
+ 0992  eb 0d                             jmp     L108
+
+		    tokvbuf[++tokv_index].byte_value = (CHAR)-1; /* 3rd coord. not supplied */
+		}
+
+ 0994  01 0e 00 00       L107            add     _tokv_index,cx
+ 0998  8b 1e 00 00                       mov     bx,_tokv_index
+ 099c  c6 87 00 00 ff                    mov     byte ptr [bx+_tokvbuf],0ffH
+
+		if( *pcmdline1 != ')' )
+		{
+		    cc.ret_code = SYNTAX_ERR;
+		    return;
+		}
+ 09a1  c4 1e 00 00       L108            les     bx,dword ptr _pcmdline1
+ 09a5  26 80 3f 29                       cmp     byte ptr es:[bx],29H
+ 09a9  75 4b                             jne     L113
+
+		++pcmdline1;
+ 09ab  43                                inc     bx
+ 09ac  89 1e 00 00                       mov     _pcmdline1,bx
+
+		Skip_Over_Blanks();
+
+		found_bracket = FALSE;
+ 09b0  e8 00 00                          call    Skip_Over_Blanks_
+
+ 09b3  c4 1e 00 00                       les     bx,dword ptr _pcmdline1
+
+		if( *pcmdline1 != ',' )
+		    return ;
+ 09b7  31 d2                             xor     dx,dx
+ 09b9  26 80 3f 2c                       cmp     byte ptr es:[bx],2cH
+ 09bd  75 3d                             jne     L114
+
+		++pcmdline1;
+ 09bf  43                                inc     bx
+ 09c0  89 1e 00 00                       mov     _pcmdline1,bx
+
+		Skip_Over_Blanks();
+	    }
+	}
+ 09c4  e8 00 00                          call    Skip_Over_Blanks_
+
+	else
+	{
+ 09c7  eb 18                             jmp     L110
+
+	    tokvbuf[++tokv_index].byte_value = (CHAR)-1;
+ 09c9  01 0e 00 00       L109            add     _tokv_index,cx
+ 09cd  8b 1e 00 00                       mov     bx,_tokv_index
+ 09d1  c6 87 00 00 ff                    mov     byte ptr [bx+_tokvbuf],0ffH
+
+	    tokvbuf[++tokv_index].byte_value = (CHAR)-1; /* fill w/ -1 */
+	}
+
+ 09d6  01 cb                             add     bx,cx
+ 09d8  89 1e 00 00                       mov     _tokv_index,bx
+ 09dc  c6 87 00 00 ff                    mov     byte ptr [bx+_tokvbuf],0ffH
+
+	if( *pcmdline1 == '(' )
+	{
+	    found_bracket = TRUE;
+	    ++pcmdline1;
+	    Skip_Over_Blanks();
+	}
+ 09e1  c4 1e 00 00       L110            les     bx,dword ptr _pcmdline1
+
+    }
+
+ 09e5  e9 bd fe                          jmp     L103
+
+    if( found_bracket )				/* missing closing bracket */
+ 09e8  85 d2             L111            test    dx,dx
+ 09ea  74 06                             je      L112
+
+	cc.ret_code = SYNTAX_ERR;
+ 09ec  c7 06 00 00 01 00                 mov     word ptr _cc,0001H
+
+    if( !found_one )				/* no numbers */
+ 09f2  85 c9             L112            test    cx,cx
+ 09f4  75 06                             jne     L114
+
+	cc.ret_code = SYNTAX_ERR;
+    return;
+ 09f6  c7 06 00 00 01 00 L113            mov     word ptr _cc,0001H
+
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = geometry_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_GEOMETRY option parser - dd or (dddd,dddd,dddd) accepted
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC void NEAR
+ 09fc  5d                L114            pop     bp
+ 09fd  5e                                pop     si
+ 09fe  5a                                pop     dx
+ 09ff  59                                pop     cx
+ 0a00  5b                                pop     bx
+ 0a01  c3                                ret     
+
+geometry_parser()
+{
+    INT		i, counter;
+    USHORT	base;
+    NUMBER	un_number;
+    BOOL	flag;
+
+ 0a02                    geometry_parser_:
+ 0a02  53                                push    bx
+ 0a03  51                                push    cx
+ 0a04  52                                push    dx
+ 0a05  56                                push    si
+ 0a06  57                                push    di
+ 0a07  c8 04 00 00                       enter   0004H,00H
+
+    if( *pcmdline1 != '(' )
+    {
+ 0a0b  c4 1e 00 00                       les     bx,dword ptr _pcmdline1
+ 0a0f  26 80 3f 28                       cmp     byte ptr es:[bx],28H
+ 0a13  74 06                             je      L115
+
+	dd_parser();
+ 0a15  e8 00 00                          call    dd_parser_
+
+	return;
+    }
+ 0a18  e9 2c 01                          jmp     L129
+
+    ++pcmdline1;
+    Skip_Over_Blanks();
+ 0a1b  43                L115            inc     bx
+
+ 0a1c  31 c9                             xor     cx,cx
+ 0a1e  89 1e 00 00                       mov     _pcmdline1,bx
+
+    counter = 0;
+    while( TRUE )
+    {
+ 0a22  e8 00 00          L116            call    Skip_Over_Blanks_
+
+	un_number.n = 0;
+ 0a25  c7 46 fc 00 00                    mov     word ptr [bp-4H],0000H
+
+	base = 10;
+ 0a2a  b8 0a 00                          mov     ax,000aH
+
+	flag = FALSE;
+
+ 0a2d  31 d2             L117            xor     dx,dx
+
+	for( i = 0; i < 4; ++i )		/* max. 4 digits */
+	{
+	  REDO_NO:
+ 0a2f  31 f6                             xor     si,si
+
+	    if( *pcmdline1 >= '0'  &&  *pcmdline1 <= '9' )
+	    {
+ 0a31  c4 1e 00 00       L118            les     bx,dword ptr _pcmdline1
+ 0a35  26 80 3f 30                       cmp     byte ptr es:[bx],30H
+ 0a39  72 2b                             jb      L120
+ 0a3b  26 80 3f 39                       cmp     byte ptr es:[bx],39H
+ 0a3f  77 25                             ja      L120
+
+		un_number.n = base * un_number.n + *pcmdline1 - '0';
+		++pcmdline1;
+ 0a41  8b 7e fc                          mov     di,[bp-4H]
+ 0a44  0f af f8                          imul    di,ax
+ 0a47  26 8a 17                          mov     dl,es:[bx]
+ 0a4a  c6 46 ff 00                       mov     byte ptr [bp-1H],00H
+ 0a4e  88 56 fe                          mov     [bp-2H],dl
+ 0a51  03 7e fe                          add     di,[bp-2H]
+ 0a54  83 ef 30                          sub     di,0030H
+ 0a57  89 7e fc          L119            mov     [bp-4H],di
+
+ 0a5a  ba 01 00                          mov     dx,0001H
+
+		flag = TRUE;
+	    }
+ 0a5d  01 d3                             add     bx,dx
+ 0a5f  89 1e 00 00                       mov     _pcmdline1,bx
+
+	    else if( base == 16  &&  *pcmdline1 >= 'A'  &&  *pcmdline1 <= 'F' )
+	    {
+ 0a63  e9 80 00                          jmp     L125
+ 0a66  3d 10 00          L120            cmp     ax,0010H
+ 0a69  75 28                             jne     L121
+ 0a6b  c4 1e 00 00                       les     bx,dword ptr _pcmdline1
+ 0a6f  26 80 3f 41                       cmp     byte ptr es:[bx],41H
+ 0a73  72 1e                             jb      L121
+ 0a75  26 80 3f 46                       cmp     byte ptr es:[bx],46H
+ 0a79  77 18                             ja      L121
+
+		un_number.n = base * un_number.n + *pcmdline1 - 'A' + 10;
+		++pcmdline1;
+		flag = TRUE;
+	    }
+ 0a7b  8b 7e fc                          mov     di,[bp-4H]
+ 0a7e  0f af f8                          imul    di,ax
+ 0a81  26 8a 17                          mov     dl,es:[bx]
+ 0a84  c6 46 ff 00                       mov     byte ptr [bp-1H],00H
+ 0a88  88 56 fe                          mov     [bp-2H],dl
+ 0a8b  03 7e fe                          add     di,[bp-2H]
+ 0a8e  83 c7 c9                          add     di,0ffc9H
+ 0a91  eb c4                             jmp     L119
+
+	    else if( base == 16  &&  *pcmdline1 >= 'a'  &&  *pcmdline1 <= 'f' )
+	    {
+ 0a93  3d 10 00          L121            cmp     ax,0010H
+ 0a96  75 28                             jne     L122
+ 0a98  c4 1e 00 00                       les     bx,dword ptr _pcmdline1
+ 0a9c  26 80 3f 61                       cmp     byte ptr es:[bx],61H
+ 0aa0  72 1e                             jb      L122
+ 0aa2  26 80 3f 66                       cmp     byte ptr es:[bx],66H
+ 0aa6  77 18                             ja      L122
+
+		un_number.n = base * un_number.n + *pcmdline1 - 'a' + 10;
+		++pcmdline1;
+		flag = TRUE;
+	    }
+ 0aa8  8b 7e fc                          mov     di,[bp-4H]
+ 0aab  0f af f8                          imul    di,ax
+ 0aae  26 8a 17                          mov     dl,es:[bx]
+ 0ab1  c6 46 ff 00                       mov     byte ptr [bp-1H],00H
+ 0ab5  88 56 fe                          mov     [bp-2H],dl
+ 0ab8  03 7e fe                          add     di,[bp-2H]
+ 0abb  83 c7 a9                          add     di,0ffa9H
+ 0abe  eb 97                             jmp     L119
+
+	    else if( *pcmdline1 == 'x' )
+	    {
+ 0ac0  c4 1e 00 00       L122            les     bx,dword ptr _pcmdline1
+ 0ac4  26 80 3f 78                       cmp     byte ptr es:[bx],78H
+ 0ac8  75 10                             jne     L123
+
+		++pcmdline1;
+ 0aca  43                                inc     bx
+ 0acb  89 1e 00 00                       mov     _pcmdline1,bx
+
+		un_number.n = 0;
+ 0acf  c7 46 fc 00 00                    mov     word ptr [bp-4H],0000H
+
+		base = 16;
+		flag = FALSE;
+		i = 0;
+ 0ad4  b8 10 00                          mov     ax,0010H
+
+		goto REDO_NO;			/* switch to hex */
+	    }
+	    else
+	    {
+		/* Was at least 1 digit found on the command line? */
+
+ 0ad7  e9 53 ff                          jmp     L117
+
+		if( flag )
+		    break;
+ 0ada  85 d2             L123            test    dx,dx
+ 0adc  75 10                             jne     L126
+
+		cc.ret_code = SYNTAX_ERR;
+ 0ade  c7 06 00 00 01 00 L124            mov     word ptr _cc,0001H
+
+		return;
+	    }
+ 0ae4  eb 61                             jmp     L129
+
+	} /* max. 4 digits */
+
+ 0ae6  46                L125            inc     si
+ 0ae7  83 fe 04                          cmp     si,0004H
+ 0aea  0f 8c 43 ff                       jl      L118
+
+	++tokv_index;
+ 0aee  ff 06 00 00       L126            inc     word ptr _tokv_index
+
+	tokvbuf[tokv_index].byte_value = un_number.two_bytes.byte1;
+ 0af2  8b 1e 00 00                       mov     bx,_tokv_index
+ 0af6  8a 46 fc                          mov     al,[bp-4H]
+
+	++tokv_index;
+ 0af9  43                                inc     bx
+ 0afa  88 87 ff ff                       mov     [bx+_tokvbuf+0ffffH],al
+ 0afe  89 1e 00 00                       mov     _tokv_index,bx
+
+	tokvbuf[tokv_index].byte_value = un_number.two_bytes.byte2;
+ 0b02  8a 46 fd                          mov     al,[bp-3H]
+ 0b05  88 87 00 00                       mov     [bx+_tokvbuf],al
+
+	Skip_Over_Blanks();
+ 0b09  e8 00 00                          call    Skip_Over_Blanks_
+
+	if( counter == 2 )			/* got a complete triple */
+	{
+ 0b0c  83 f9 02                          cmp     cx,0002H
+ 0b0f  75 24                             jne     L127
+
+	    if( *pcmdline1 != ')' )
+	    {
+		cc.ret_code = SYNTAX_ERR;
+		return;
+	    }
+ 0b11  c4 1e 00 00                       les     bx,dword ptr _pcmdline1
+ 0b15  26 80 3f 29                       cmp     byte ptr es:[bx],29H
+ 0b19  75 c3                             jne     L124
+
+	    ++pcmdline1;			/* skip ')' */
+ 0b1b  43                                inc     bx
+ 0b1c  89 1e 00 00                       mov     _pcmdline1,bx
+
+	    if( *pcmdline1 != ',' )
+		return;				/* end of option, OK */
+
+ 0b20  26 80 3f 2c                       cmp     byte ptr es:[bx],2cH
+ 0b24  75 21                             jne     L129
+
+	    ++pcmdline1;			/* skip ',' */
+ 0b26  43                                inc     bx
+ 0b27  89 1e 00 00                       mov     _pcmdline1,bx
+
+	    if( *pcmdline1 != '(')		/* start of next triple? */
+	    {
+		cc.ret_code = SYNTAX_ERR;
+		return;
+	    }
+ 0b2b  26 80 3f 28                       cmp     byte ptr es:[bx],28H
+ 0b2f  75 ad                             jne     L124
+
+	    counter = 0;			/* reset counter */
+	}
+ 0b31  31 c9                             xor     cx,cx
+
+	else
+	{
+ 0b33  eb 0b                             jmp     L128
+
+	    if( *pcmdline1 != ',' )
+	    {
+		cc.ret_code = SYNTAX_ERR;
+		return;
+	    }
+ 0b35  c4 1e 00 00       L127            les     bx,dword ptr _pcmdline1
+ 0b39  26 80 3f 2c                       cmp     byte ptr es:[bx],2cH
+ 0b3d  75 9f                             jne     L124
+
+	    ++counter;				/* another part of a triple */
+	}
+ 0b3f  41                                inc     cx
+
+	++pcmdline1;				/* skip ',' or '(' */
+	Skip_Over_Blanks();
+ 0b40  ff 06 00 00       L128            inc     word ptr _pcmdline1
+
+    } /* end[while(TRUE)] */
+
+    return;
+ 0b44  e9 db fe                          jmp     L116
+
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = chgline_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_CHGLINE option parser - Valid options: PS2
+ *							  AT
+ *							  NONE
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = NONE
+ ****************************************************************************/
+STATIC void NEAR
+ 0b47  c9                L129            leave   
+ 0b48  5f                                pop     di
+ 0b49  5e                                pop     si
+ 0b4a  5a                                pop     dx
+ 0b4b  59                                pop     cx
+ 0b4c  5b                                pop     bx
+ 0b4d  c3                                ret     
+
+chgline_parser()
+{
+    USHORT k, str_len;
+ 0b4e  53                chgline_parser_ push    bx
+ 0b4f  51                                push    cx
+ 0b50  52                                push    dx
+ 0b51  56                                push    si
+ 0b52  57                                push    di
+ 0b53  c8 0a 00 00                       enter   000aH,00H
+ 0b57  8d 7e f6                          lea     di,[bp-0aH]
+
+    NPBYTE chgline_opts[] = { "\0","NONE","AT","PS2" };
+
+ 0b5a  16                                push    ss
+ 0b5b  07                                pop     es
+ 0b5c  be 48 00                          mov     si,offset L156
+
+    for( k = 1; k < sizeof(chgline_opts)/sizeof(chgline_opts[0]); ++k )
+    {
+ 0b5f  c7 46 fe 01 00                    mov     word ptr [bp-2H],0001H
+ 0b64  a5                                movsw   
+ 0b65  a5                                movsw   
+ 0b66  a5                                movsw   
+ 0b67  a5                                movsw   
+ 0b68  eb 3b                             jmp     L132
+
+	str_len = FarStrLen( chgline_opts[k] );
+ 0b6a  8b 76 fe          L130            mov     si,[bp-2H]
+ 0b6d  01 f6                             add     si,si
+ 0b6f  8c da                             mov     dx,ds
+ 0b71  8b 42 f6                          mov     ax,[bp+si-0aH]
+ 0b74  e8 00 00                          call    FarStrLen_
+ 0b77  89 c7                             mov     di,ax
+ 0b79  8c d9                             mov     cx,ds
+
+	if( strncmp(pcmdline1, chgline_opts[k], str_len) )
+	{
+	    pcmdline1 += str_len;
+ 0b7b  50                                push    ax
+ 0b7c  8b 5a f6                          mov     bx,[bp+si-0aH]
+ 0b7f  a1 00 00                          mov     ax,_pcmdline1
+ 0b82  8b 16 02 00                       mov     dx,_pcmdline1+2H
+ 0b86  e8 00 00                          call    strncmp_
+ 0b89  85 c0                             test    ax,ax
+ 0b8b  74 15                             je      L131
+
+	    ++tokv_index;
+ 0b8d  ff 06 00 00                       inc     word ptr _tokv_index
+ 0b91  8a 46 fe                          mov     al,[bp-2H]
+
+	    tokvbuf[tokv_index].byte_value = (BYTE)k;
+ 0b94  8b 36 00 00                       mov     si,_tokv_index
+ 0b98  01 3e 00 00                       add     _pcmdline1,di
+ 0b9c  88 84 00 00                       mov     [si+_tokvbuf],al
+
+	    return;
+	}
+ 0ba0  eb 0f                             jmp     L133
+
+    }
+ 0ba2  ff 46 fe          L131            inc     word ptr [bp-2H]
+ 0ba5  83 7e fe 04       L132            cmp     word ptr [bp-2H],0004H
+ 0ba9  72 bf                             jb      L130
+
+    cc.ret_code = SYNTAX_ERR;
+    return;
+ 0bab  c7 06 00 00 01 00                 mov     word ptr _cc,0001H
+
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = Insert_Token
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: Insert the parsed option (token) into the output buffer.
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC BOOL NEAR
+ 0bb1  c9                L133            leave   
+ 0bb2  5f                                pop     di
+ 0bb3  5e                                pop     si
+ 0bb4  5a                                pop     dx
+ 0bb5  59                                pop     cx
+ 0bb6  5b                                pop     bx
+ 0bb7  c3                                ret     
+
+Insert_Token()
+{
+    USHORT	tok_size;
+    INT		t;
+
+ 0bb8  53                Insert_Token_   push    bx
+ 0bb9  56                                push    si
+ 0bba  55                                push    bp
+ 0bbb  89 e5                             mov     bp,sp
+
+    tok_size = TOK_MIN_LENGTH + tokv_index;
+ 0bbd  a1 00 00                          mov     ax,_tokv_index
+
+    if( (poutbuf1+tok_size+TOKL_ID_END) >= poutbuf_end )
+    {
+ 0bc0  8b 1e 00 00                       mov     bx,_poutbuf1
+ 0bc4  40                                inc     ax
+ 0bc5  40                                inc     ax
+ 0bc6  89 de                             mov     si,bx
+ 0bc8  01 c6                             add     si,ax
+ 0bca  46                                inc     si
+ 0bcb  46                                inc     si
+ 0bcc  8e 06 02 00                       mov     es,_poutbuf1+2H
+ 0bd0  3b 36 00 00                       cmp     si,_poutbuf_end
+ 0bd4  72 16                             jb      L134
+
+	cc.err_index = pcmdline_slash - pcmdline_start;
+ 0bd6  a1 00 00                          mov     ax,_pcmdline_slash
+ 0bd9  8b 1e 00 00                       mov     bx,_pcmdline_start
+ 0bdd  29 d8                             sub     ax,bx
+
+	cc.ret_code = BUF_TOO_SMALL_ERR;
+ 0bdf  c7 06 00 00 02 00                 mov     word ptr _cc,0002H
+ 0be5  a3 02 00                          mov     _cc+2H,ax
+
+	return FALSE;
+    }
+ 0be8  31 db                             xor     bx,bx
+ 0bea  eb 43                             jmp     L138
+
+    *poutbuf1 = (BYTE)(tok_size + 1);
+    ++poutbuf1;
+ 0bec  fe c0             L134            inc     al
+ 0bee  26 88 07                          mov     es:[bx],al
+
+ 0bf1  c4 1e 00 00                       les     bx,dword ptr _ptable_option
+
+    *poutbuf1 = (BYTE)ptable_option->id;
+ 0bf5  ff 06 00 00                       inc     word ptr _poutbuf1
+ 0bf9  0f b4 36 00 00                    lfs     si,dword ptr _poutbuf1
+ 0bfe  26 8a 07                          mov     al,es:[bx]
+ 0c01  64 88 04                          mov     fs:[si],al
+
+    ++poutbuf1;
+ 0c04  ff 06 00 00                       inc     word ptr _poutbuf1
+
+    if( tokv_index != UNDEFINED )
+    {
+ 0c08  83 3e 00 00 ff                    cmp     word ptr _tokv_index,0ffffH
+ 0c0d  74 1a                             je      L137
+
+	for( t = 0; t <= tokv_index; ++t )
+	{
+ 0c0f  31 db                             xor     bx,bx
+ 0c11  eb 10                             jmp     L136
+
+	    *poutbuf1 = tokvbuf[t].byte_value;
+	    ++poutbuf1;
+ 0c13  c4 36 00 00       L135            les     si,dword ptr _poutbuf1
+ 0c17  8a 87 00 00                       mov     al,[bx+_tokvbuf]
+ 0c1b  26 88 04                          mov     es:[si],al
+
+ 0c1e  43                                inc     bx
+
+	}
+    }
+ 0c1f  ff 06 00 00                       inc     word ptr _poutbuf1
+ 0c23  3b 1e 00 00       L136            cmp     bx,_tokv_index
+ 0c27  7e ea                             jle     L135
+
+    Insert_End_Token();
+ 0c29  e8 00 00          L137            call    Insert_End_Token_
+
+    return TRUE;
+ 0c2c  bb 01 00                          mov     bx,0001H
+
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = Locate_Next_Slash
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: Locate the next / char.
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = NONE
+ ****************************************************************************/
+STATIC BOOL NEAR
+ 0c2f  89 d8             L138            mov     ax,bx
+ 0c31  5d                                pop     bp
+ 0c32  5e                                pop     si
+ 0c33  5b                                pop     bx
+ 0c34  c3                                ret     
+
+Locate_Next_Slash()
+{
+ 0c35                    Locate_Next_Slash_:
+ 0c35  53                                push    bx
+ 0c36  52                                push    dx
+ 0c37  55                                push    bp
+ 0c38  89 e5                             mov     bp,sp
+
+    while( *pcmdline1 != '\0'  &&  *pcmdline1 != '\n'  &&  *pcmdline1 != '\r' )
+    {
+ 0c3a  c4 1e 00 00       L139            les     bx,dword ptr _pcmdline1
+ 0c3e  26 80 3f 00                       cmp     byte ptr es:[bx],00H
+ 0c42  74 3e                             je      L143
+ 0c44  26 80 3f 0a                       cmp     byte ptr es:[bx],0aH
+ 0c48  74 38                             je      L143
+ 0c4a  26 80 3f 0d                       cmp     byte ptr es:[bx],0dH
+ 0c4e  74 32                             je      L143
+
+	if( *pcmdline1 == ' '  ||  *pcmdline1 == '\t' )
+	{
+ 0c50  26 80 3f 20                       cmp     byte ptr es:[bx],20H
+ 0c54  74 06                             je      L140
+ 0c56  26 80 3f 09                       cmp     byte ptr es:[bx],09H
+ 0c5a  75 06                             jne     L141
+
+	    ++pcmdline1;
+	}
+ 0c5c  ff 06 00 00       L140            inc     word ptr _pcmdline1
+
+	else
+	{
+ 0c60  eb d8                             jmp     L139
+
+	    if( *pcmdline1 == '/' )
+	    {
+		pcmdline_slash = pcmdline1;
+ 0c62  26 80 3f 2f       L141            cmp     byte ptr es:[bx],2fH
+ 0c66  75 0d                             jne     L142
+
+ 0c68  b8 01 00                          mov     ax,0001H
+
+		return TRUE;
+	    }
+	    else
+	    {
+		cc.ret_code = INVALID_OPT_ERR;
+ 0c6b  89 1e 00 00                       mov     _pcmdline_slash,bx
+ 0c6f  8c 06 02 00                       mov     _pcmdline_slash+2H,es
+ 0c73  eb 43                             jmp     L147
+
+ 0c75  a1 00 00          L142            mov     ax,_pcmdline_start
+ 0c78  29 c3                             sub     bx,ax
+
+		cc.err_index = pcmdline1 - pcmdline_start;
+		return FALSE;
+	    }
+	}
+    } /* endwhile */
+ 0c7a  c7 06 00 00 07 00                 mov     word ptr _cc,0007H
+ 0c80  eb 22                             jmp     L144
+
+    if( pend_option->state[state_index] == R )
+    {
+	cc.ret_code = REQ_OPT_ERR;
+ 0c82  c4 16 00 00       L143            les     dx,dword ptr _pend_option
+ 0c86  8b 1e 00 00                       mov     bx,_state_index
+ 0c8a  01 db                             add     bx,bx
+ 0c8c  01 d3                             add     bx,dx
+ 0c8e  26 83 7f 07 fd                    cmp     word ptr es:[bx+7H],0fffdH
+ 0c93  75 15                             jne     L145
+
+ 0c95  8b 1e 00 00                       mov     bx,_pcmdline1
+ 0c99  a1 00 00                          mov     ax,_pcmdline_start
+ 0c9c  29 c3                             sub     bx,ax
+
+	cc.err_index = pcmdline1 - pcmdline_start;
+    }
+ 0c9e  c7 06 00 00 06 00                 mov     word ptr _cc,0006H
+ 0ca4  89 1e 02 00       L144            mov     _cc+2H,bx
+
+    else
+    {
+ 0ca8  eb 0c                             jmp     L146
+
+	cc.ret_code = NO_ERR;
+ 0caa  c7 06 00 00 00 00 L145            mov     word ptr _cc,0000H
+
+	cc.err_index = 0;
+    }
+
+ 0cb0  c7 06 02 00 00 00                 mov     word ptr _cc+2H,0000H
+
+    return FALSE;
+ 0cb6  31 c0             L146            xor     ax,ax
+
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = Validate_State_Index
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: Validate the State Index
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = (maxstate)
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC BOOL NEAR
+ 0cb8  5d                L147            pop     bp
+ 0cb9  5a                                pop     dx
+ 0cba  5b                                pop     bx
+ 0cbb  c3                                ret     
+
+Validate_State_Index(USHORT maxstate)
+{
+ 0cbc                    Validate_State_Index_:
+ 0cbc  55                                push    bp
+ 0cbd  89 e5                             mov     bp,sp
+
+    if( state_index > maxstate  ||  state_index < 0 )
+    {
+ 0cbf  3b 06 00 00                       cmp     ax,_state_index
+ 0cc3  72 07                             jb      L148
+ 0cc5  83 3e 00 00 00                    cmp     word ptr _state_index,0000H
+ 0cca  7d 10                             jge     L149
+
+	cc.ret_code = UNDEFINED_STATE_ERR;
+ 0ccc  c7 06 00 00 04 00 L148            mov     word ptr _cc,0004H
+
+	cc.err_index = 0;
+ 0cd2  c7 06 02 00 00 00                 mov     word ptr _cc+2H,0000H
+
+	return FALSE;
+    }
+ 0cd8  31 c0                             xor     ax,ax
+ 0cda  5d                                pop     bp
+ 0cdb  c3                                ret     
+
+    return TRUE;
+ 0cdc  b8 01 00          L149            mov     ax,0001H
+
+}
+
+
+/* History:
+ *
+ * $Log: cmdparse.c,v $
+ * Revision 1.4  1997/12/08 22:57:06  vitus
+ * - did overwrite memory in Parse_Option_Value, fixed
+ *
+ * Revision 1.3  1997/12/06 01:00:30  vitus
+ * - geometry_parser: expanded to accept several triples
+ *
+ * Revision 1.2  1997/10/28 01:53:33  vitus
+ * - geometry_parser accepts hex values
+ *
+ * Imported from DSKSleep code (original IBM DDK for OS/2)
+ */
+ 0cdf  5d                                pop     bp
+ 0ce0  c3                                ret     
+
+No disassembly errors
+
+------------------------------------------------------------
+
+Segment: CONST  WORD   00000011 bytes  
+ 0000  00 00 4e 4f 4e 45 00 41                 - ..NONE.A
+ 0008  54 00 50 53 32 00                       - T.PS2.
+ 000e  2d 31 00                L150            - -1.
+
+No disassembly errors
+
+------------------------------------------------------------
+
+Segment: _DATA  WORD   00000050 bytes  
+ 0000  00 00 00 00             L151            DD      L157
+ 0004  02 00 68 01 04 00 00 00                 - ..h.....
+ 000c  02 00 d0 02 08 00 00 00                 - ........
+ 0014  02 00 b0 04 0d 00 00 00                 - ........
+ 001c  01 00 b0 04 11 00 00 00                 - ........
+ 0024  02 00 a0 05 16 00 00 00                 - ........
+ 002c  01 00 a0 05 1b 00 00 00                 - ........
+ 0034  02 00 40 0b 20 00 00 00                 - ..@. ...
+ 003c  01 00 40 0b 26 00 00 00                 - ..@.&...
+ 0044  00 00 00 00 00 00 02 00                 - ........
+ 004c  07 00 0a 00                             - ....
+
+No disassembly errors
+
+------------------------------------------------------------
+
+Segment: _BSS  WORD   00000125 bytes  
+
+No disassembly errors
+
+------------------------------------------------------------
+
+Segment: Cmdparse11_DATA  PARA   00000029 bytes  
+ 0000  33 36 30 00 37 32 30 00 L157            - 360.720.
+ 0008  31 32 30 30 00 31 2e 32                 - 1200.1.2
+ 0010  00 31 34 34 30 00 31 2e                 - .1440.1.
+ 0018  34 34 00 32 38 38 30 00                 - 44.2880.
+ 0020  32 09 2e 38 38 00 2d 31                 - 2..88.-1
+ 0028  00                                      - .
+
+No disassembly errors
+
+------------------------------------------------------------
+
+Segment: $$SYMBOLS  BYTE   000003dc bytes  
+ 0000  0f 10                                   - ..
+ 0002  00 00 00 00                             DD      _poutbuf1
+ 0006  20 70 6f 75 74 62 75 66                 -  poutbuf
+ 000e  31 14 10                                - 1..
+ 0011  00 00 00 00                             DD      _ptable_option
+ 0015  7f 70 74 61 62 6c 65 5f                 - .ptable_
+ 001d  6f 70 74 69 6f 6e 12 10                 - option..
+ 0025  00 00 00 00                             DD      _pend_option
+ 0029  7f 70 65 6e 64 5f 6f 70                 - .pend_op
+ 0031  74 69 6f 6e 12 10                       - tion..
+ 0037  00 00 00 00                             DD      _poutbuf_end
+ 003b  20 70 6f 75 74 62 75 66                 -  poutbuf
+ 0043  5f 65 6e 64 10 10                       - _end..
+ 0049  00 00 00 00                             DD      _pcmdline1
+ 004d  15 70 63 6d 64 6c 69 6e                 - .pcmdlin
+ 0055  65 31 15 10                             - e1..
+ 0059  00 00 00 00                             DD      _pcmdline_slash
+ 005d  15 70 63 6d 64 6c 69 6e                 - .pcmdlin
+ 0065  65 5f 73 6c 61 73 68 15                 - e_slash.
+ 006d  10                                      - .
+ 006e  00 00 00 00                             DD      _pcmdline_start
+ 0072  15 70 63 6d 64 6c 69 6e                 - .pcmdlin
+ 007a  65 5f 73 74 61 72 74 0a                 - e_start.
+ 0082  10                                      - .
+ 0083  00 00 00 00                             DD      _cc
+ 0087  80 82 63 63 12 10                       - ..cc..
+ 008d  00 00 00 00                             DD      _state_index
+ 0091  08 73 74 61 74 65 5f 69                 - .state_i
+ 0099  6e 64 65 78 0d 10                       - ndex..
+ 009f  00 00 00 00                             DD      _length
+ 00a3  08 6c 65 6e 67 74 68 11                 - .length.
+ 00ab  10                                      - .
+ 00ac  00 00 00 00                             DD      _tokv_index
+ 00b0  08 74 6f 6b 76 5f 69 6e                 - .tokv_in
+ 00b8  64 65 78 0f 10                          - dex..
+ 00bd  00 00 00 00                             DD      _tokvbuf
+ 00c1  80 86 74 6f 6b 76 62 75                 - ..tokvbu
+ 00c9  66 06 31                                - f.1
+ 00cc  00 00 00 00                             DD      Command_Parser_
+ 00d0  26 22 00 00 9a 01 00 00                 - &"......
+ 00d8  07 06 06 00 80 8c 31 08                 - ......1.
+ 00e0  0b 02 31 08 0b 31 09 0a                 - ..1..1..
+ 00e8  43 6f 6d 6d 61 6e 64 5f                 - Command_
+ 00f0  50 61 72 73 65 72 20 21                 - Parser !
+ 00f8  9a 01 18 00 00 00 04 03                 - ........
+ 0100  04 00 80 8d 00 00 49 6e                 - ......In
+ 0108  73 65 72 74 5f 45 6e 64                 - sert_End
+ 0110  5f 54 6f 6b 65 6e 22 21                 - _Token"!
+ 0118  b2 01 60 00 00 00 05 04                 - ..`.....
+ 0120  06 00 80 8e 48 00 4c 6f                 - ....H.Lo
+ 0128  63 61 74 65 5f 46 69 72                 - cate_Fir
+ 0130  73 74 5f 53 6c 61 73 68                 - st_Slash
+ 0138  1c 21 12 02 17 00 00 00                 - .!......
+ 0140  04 03 04 00 80 8f 48 01                 - ......H.
+ 0148  31 08 0b 46 61 72 53 74                 - 1..FarSt
+ 0150  72 4c 65 6e 1d 21 29 02                 - rLen.!).
+ 0158  3c 00 00 00 04 05 04 00                 - <.......
+ 0160  80 90 48 02 31 08 0b 31                 - ..H.1..1
+ 0168  09 0a 73 74 72 6e 63 6d                 - ..strncm
+ 0170  70 22 21 7f 02 b6 00 00                 - p"!.....
+ 0178  00 07 06 0a 00 80 91 48                 - .......H
+ 0180  00 50 61 72 73 65 5f 4f                 - .Parse_O
+ 0188  70 74 69 6f 6e 5f 56 61                 - ption_Va
+ 0190  6c 75 65 20 21 35 03 1d                 - lue !5..
+ 0198  00 00 00 04 03 04 00 80                 - ........
+ 01a0  92 00 00 53 6b 69 70 5f                 - ...Skip_
+ 01a8  4f 76 65 72 5f 42 6c 61                 - Over_Bla
+ 01b0  6e 6b 73 1b 21 52 03 3b                 - nks.!R.;
+ 01b8  00 00 00 05 04 06 00 80                 - ........
+ 01c0  92 00 00 63 68 61 72 5f                 - ...char_
+ 01c8  70 61 72 73 65 72 18 21                 - parser.!
+ 01d0  8d 03 37 00 00 00 05 04                 - ..7.....
+ 01d8  06 00 80 92 00 00 64 5f                 - ......d_
+ 01e0  70 61 72 73 65 72 19 21                 - parser.!
+ 01e8  c4 03 54 00 00 00 06 05                 - ..T.....
+ 01f0  08 00 80 92 00 00 64 64                 - ......dd
+ 01f8  5f 70 61 72 73 65 72 1b                 - _parser.
+ 0200  21 18 04 6e 00 00 00 07                 - !..n....
+ 0208  05 08 00 80 92 00 00 64                 - .......d
+ 0210  64 64 64 5f 70 61 72 73                 - ddd_pars
+ 0218  65 72 08 11 10 fe 80 98                 - er......
+ 0220  75 6e 1c 21 86 04 03 01                 - un.!....
+ 0228  00 00 09 07 0c 00 80 92                 - ........
+ 0230  00 00 75 6c 69 73 74 5f                 - ..ulist_
+ 0238  70 61 72 73 65 72 0f 11                 - parser..
+ 0240  10 fa 80 98 75 6e 5f 6e                 - ....un_n
+ 0248  75 6d 62 65 72 19 21 89                 - umber.!.
+ 0250  05 2f 00 00 00 04 03 04                 - ./......
+ 0258  00 80 92 00 00 68 68 5f                 - .....hh_
+ 0260  70 61 72 73 65 72 1f 21                 - parser.!
+ 0268  b8 05 71 00 00 00 06 05                 - ..q.....
+ 0270  08 00 80 91 48 00 48 48                 - ....H.HH
+ 0278  5f 43 68 61 72 5f 54 6f                 - _Char_To
+ 0280  5f 42 79 74 65 1b 21 29                 - _Byte.!)
+ 0288  06 95 00 00 00 08 06 0a                 - ........
+ 0290  00 80 92 00 00 68 68 68                 - .....hhh
+ 0298  68 5f 70 61 72 73 65 72                 - h_parser
+ 02a0  0f 11 10 fe 80 98 75 6e                 - ......un
+ 02a8  5f 6e 75 6d 62 65 72 1d                 - _number.
+ 02b0  21 be 06 e0 00 00 00 09                 - !.......
+ 02b8  07 0c 00 80 92 00 00 66                 - .......f
+ 02c0  6f 72 6d 61 74 5f 70 61                 - ormat_pa
+ 02c8  72 73 65 72 15 11 20                    - rser.. 
+ 02cf  00 00 00 00                             DD      DGROUP:L151
+ 02d3  80 9c 66 6f 72 6d 61 74                 - ..format
+ 02db  5f 74 61 62 6c 65 1e 21                 - _table.!
+ 02e3  9e 07 f4 00 00 00 07 06                 - ........
+ 02eb  0a 00 80 92 00 00 73 63                 - ......sc
+ 02f3  73 69 5f 69 64 5f 70 61                 - si_id_pa
+ 02fb  72 73 65 72 1d 21 92 08                 - rser.!..
+ 0303  70 01 00 00 07 06 0a 00                 - p.......
+ 030b  80 92 00 00 64 65 76 5f                 - ....dev_
+ 0313  69 64 5f 70 61 72 73 65                 - id_parse
+ 031b  72 1f 21 02 0a 4c 01 00                 - r.!..L..
+ 0323  00 09 07 0c 00 80 92 00                 - ........
+ 032b  00 67 65 6f 6d 65 74 72                 - .geometr
+ 0333  79 5f 70 61 72 73 65 72                 - y_parser
+ 033b  0f 11 10 fc 80 98 75 6e                 - ......un
+ 0343  5f 6e 75 6d 62 65 72 1e                 - _number.
+ 034b  21 4e 0b 6a 00 00 00 09                 - !N.j....
+ 0353  07 0c 00 80 92 00 00 63                 - .......c
+ 035b  68 67 6c 69 6e 65 5f 70                 - hgline_p
+ 0363  61 72 73 65 72 12 11 10                 - arser...
+ 036b  f6 80 9d 63 68 67 6c 69                 - ...chgli
+ 0373  6e 65 5f 6f 70 74 73 1c                 - ne_opts.
+ 037b  21 b8 0b 7d 00 00 00 05                 - !..}....
+ 0383  04 06 00 80 91 48 00 49                 - .....H.I
+ 038b  6e 73 65 72 74 5f 54 6f                 - nsert_To
+ 0393  6b 65 6e 21 21 35 0c 87                 - ken!!5..
+ 039b  00 00 00 05 04 06 00 80                 - ........
+ 03a3  91 48 00 4c 6f 63 61 74                 - .H.Locat
+ 03ab  65 5f 4e 65 78 74 5f 53                 - e_Next_S
+ 03b3  6c 61 73 68 25 21 bc 0c                 - lash%!..
+ 03bb  25 00 00 00 03 02 02 00                 - %.......
+ 03c3  80 9e 48 01 48 56 61 6c                 - ..H.HVal
+ 03cb  69 64 61 74 65 5f 53 74                 - idate_St
+ 03d3  61 74 65 5f 49 6e 64 65                 - ate_Inde
+ 03db  78                                      - x
+
+No disassembly errors
+
+------------------------------------------------------------
+
+Segment: $$TYPES  BYTE   00000578 bytes  
+ 0000  06 13 78 05 00 00 08 11                 - ..x.....
+ 0008  73 74 72 75 63 74 07 11                 - struct..
+ 0010  75 6e 69 6f 6e 06 11 65                 - union..e
+ 0018  6e 75 6d 0e 10 00 73 69                 - num...si
+ 0020  67 6e 65 64 20 63 68 61                 - gned cha
+ 0028  72 10 10 10 75 6e 73 69                 - r...unsi
+ 0030  67 6e 65 64 20 63 68 61                 - gned cha
+ 0038  72 08 10 01 73 68 6f 72                 - r...shor
+ 0040  74 11 10 11 75 6e 73 69                 - t...unsi
+ 0048  67 6e 65 64 20 73 68 6f                 - gned sho
+ 0050  72 74 06 10 01 69 6e 74                 - rt...int
+ 0058  0f 10 11 75 6e 73 69 67                 - ...unsig
+ 0060  6e 65 64 20 69 6e 74 0b                 - ned int.
+ 0068  12 00 07 53 48 41 4e 44                 - ...SHAND
+ 0070  4c 45 07 10 30 76 6f 69                 - LE..0voi
+ 0078  64 03 41 0b 0b 12 00 0c                 - d.A.....
+ 0080  4c 48 41 4e 44 4c 45 09                 - LHANDLE.
+ 0088  12 00 05 55 43 48 41 52                 - ...UCHAR
+ 0090  0a 12 00 07 55 53 48 4f                 - ....USHO
+ 0098  52 54 10 10 13 75 6e 73                 - RT...uns
+ 00a0  69 67 6e 65 64 20 6c 6f                 - igned lo
+ 00a8  6e 67 09 12 00 10 55 4c                 - ng....UL
+ 00b0  4f 4e 47 08 12 00 09 55                 - ONG....U
+ 00b8  49 4e 54 08 12 00 05 42                 - INT....B
+ 00c0  59 54 45 03 41 05 07 12                 - YTE.A...
+ 00c8  00 14 50 53 5a 03 40 05                 - ..PSZ.@.
+ 00d0  08 12 00 16 4e 50 53 5a                 - ....NPSZ
+ 00d8  07 12 00 14 50 43 48 08                 - ....PCH.
+ 00e0  12 00 16 4e 50 43 48 04                 - ...NPCH.
+ 00e8  70 08 00 03 41 1a 07 12                 - p...A...
+ 00f0  00 1b 50 46 4e 03 40 1a                 - ..PFN.@.
+ 00f8  08 12 00 1d 4e 50 46 4e                 - ....NPFN
+ 0100  03 41 13 09 12 00 1f 50                 - .A.....P
+ 0108  42 59 54 45 03 40 13 0a                 - BYTE.@..
+ 0110  12 00 21 4e 50 42 59 54                 - ..!NPBYT
+ 0118  45 03 41 05 09 12 00 23                 - E.A....#
+ 0120  50 43 48 41 52 03 41 06                 - PCHAR.A.
+ 0128  0a 12 00 25 50 53 48 4f                 - ...%PSHO
+ 0130  52 54 07 10 03 6c 6f 6e                 - RT...lon
+ 0138  67 03 41 27 09 12 00 28                 - g.A'...(
+ 0140  50 4c 4f 4e 47 03 41 08                 - PLONG.A.
+ 0148  08 12 00 2a 50 49 4e 54                 - ...*PINT
+ 0150  03 41 0e 0a 12 00 2c 50                 - .A....,P
+ 0158  55 43 48 41 52 03 41 0f                 - UCHAR.A.
+ 0160  0b 12 00 2e 50 55 53 48                 - ....PUSH
+ 0168  4f 52 54 03 41 11 0a 12                 - ORT.A...
+ 0170  00 30 50 55 4c 4f 4e 47                 - .0PULONG
+ 0178  03 41 12 09 12 00 32 50                 - .A....2P
+ 0180  55 49 4e 54 09 12 00 0c                 - UINT....
+ 0188  50 56 4f 49 44 03 41 34                 - PVOID.A4
+ 0190  0a 12 00 35 50 50 56 4f                 - ...5PPVO
+ 0198  49 44 08 12 00 07 42 4f                 - ID....BO
+ 01a0  4f 4c 03 41 37 09 12 00                 - OL.A7...
+ 01a8  38 50 42 4f 4f 4c 07 12                 - 8PBOOL..
+ 01b0  00 07 53 45 4c 03 41 3a                 - ..SEL.A:
+ 01b8  08 12 00 3b 50 53 45 4c                 - ...;PSEL
+ 01c0  0b 12 00 11 45 52 52 4f                 - ....ERRO
+ 01c8  52 49 44 03 41 3d 0c 12                 - RID.A=..
+ 01d0  00 3e 50 45 52 52 4f 52                 - .>PERROR
+ 01d8  49 44 0b 12 00 0a 48 4d                 - ID....HM
+ 01e0  4f 44 55 4c 45 07 12 00                 - ODULE...
+ 01e8  0a 50 49 44 07 12 00 0a                 - .PID....
+ 01f0  54 49 44 08 12 00 0f 53                 - TID....S
+ 01f8  47 49 44 03 41 40 0c 12                 - GID.A@..
+ 0200  00 44 50 48 4d 4f 44 55                 - .DPHMODU
+ 0208  4c 45 03 41 41 08 12 00                 - LE.AA...
+ 0210  46 50 50 49 44 03 41 42                 - FPPID.AB
+ 0218  08 12 00 48 50 54 49 44                 - ...HPTID
+ 0220  08 12 00 0c 48 53 45 4d                 - ....HSEM
+ 0228  03 41 4a 09 12 00 4b 50                 - .AJ...KP
+ 0230  48 53 45 4d 07 12 00 0d                 - HSEM....
+ 0238  48 41 42 03 41 4d 08 12                 - HAB.AM..
+ 0240  00 4e 50 48 41 42 07 12                 - .NPHAB..
+ 0248  00 0d 48 50 53 03 41 50                 - ..HPS.AP
+ 0250  08 12 00 51 50 48 50 53                 - ...QPHPS
+ 0258  07 12 00 0d 48 44 43 03                 - ....HDC.
+ 0260  41 53 08 12 00 54 50 48                 - AS...TPH
+ 0268  44 43 08 12 00 0d 48 52                 - DC....HR
+ 0270  47 4e 03 41 56 09 12 00                 - GN.AV...
+ 0278  57 50 48 52 47 4e 0b 12                 - WPHRGN..
+ 0280  00 0d 48 42 49 54 4d 41                 - ..HBITMA
+ 0288  50 03 41 59 0c 12 00 5a                 - P.AY...Z
+ 0290  50 48 42 49 54 4d 41 50                 - PHBITMAP
+ 0298  07 12 00 0d 48 4d 46 03                 - ....HMF.
+ 02a0  41 5c 08 12 00 5d 50 48                 - A\...]PH
+ 02a8  4d 46 08 12 00 0d 48 50                 - MF....HP
+ 02b0  41 4c 03 41 5f 09 12 00                 - AL.A_...
+ 02b8  60 50 48 50 41 4c 09 12                 - `PHPAL..
+ 02c0  00 27 43 4f 4c 4f 52 03                 - .'COLOR.
+ 02c8  41 62 0a 12 00 63 50 43                 - Ab...cPC
+ 02d0  4f 4c 4f 52 04 20 07 05                 - OLOR. ..
+ 02d8  08 12 00 65 53 54 52 38                 - ...eSTR8
+ 02e0  03 41 66 09 12 00 67 50                 - .Af...gP
+ 02e8  53 54 52 38 09 12 00 27                 - STR8...'
+ 02f0  46 49 58 45 44 03 41 69                 - FIXED.Ai
+ 02f8  0a 12 00 6a 50 46 49 58                 - ...jPFIX
+ 0300  45 44 03 41 15 10 12 00                 - ED.A....
+ 0308  6c 50 44 45 56 4f 50 45                 - lPDEVOPE
+ 0310  4e 44 41 54 41 0a 12 00                 - NDATA...
+ 0318  0c 4d 50 41 52 41 4d 03                 - .MPARAM.
+ 0320  41 6e 0b 12 00 6f 50 4d                 - An...oPM
+ 0328  50 41 52 41 4d 0b 12 00                 - PARAM...
+ 0330  0c 4d 52 45 53 55 4c 54                 - .MRESULT
+ 0338  03 41 71 0c 12 00 72 50                 - .Aq...rP
+ 0340  4d 52 45 53 55 4c 54 08                 - MRESULT.
+ 0348  12 00 0d 48 57 4e 44 03                 - ...HWND.
+ 0350  41 74 09 12 00 75 50 48                 - At...uPH
+ 0358  57 4e 44 07 12 00 0d 48                 - WND....H
+ 0360  4d 51 03 41 0d 08 12 00                 - MQ.A....
+ 0368  78 50 48 4d 51 0c 12 00                 - xPHMQ...
+ 0370  0d 48 50 4f 49 4e 54 45                 - .HPOINTE
+ 0378  52 04 20 00 06 08 60 05                 - R. ...`.
+ 0380  00 07 00 00 00 09 61 07                 - ......a.
+ 0388  7b 73 74 61 74 65 08 61                 - {state.a
+ 0390  06 13 74 79 70 65 0a 61                 - ..type.a
+ 0398  02 15 73 74 72 69 6e 67                 - ..string
+ 03a0  0c 61 01 0e 72 65 73 65                 - .a..rese
+ 03a8  72 76 65 64 06 61 00 0e                 - rved.a..
+ 03b0  69 64 08 12 01 7c 5f 6f                 - id...|_o
+ 03b8  70 74 03 41 7d 08 12 00                 - pt.A}...
+ 03c0  7e 50 4f 50 54 08 60 02                 - ~POPT.`.
+ 03c8  00 04 00 00 00 0d 61 02                 - ......a.
+ 03d0  0f 65 72 72 5f 69 6e 64                 - .err_ind
+ 03d8  65 78 0c 61 00 0f 72 65                 - ex.a..re
+ 03e0  74 5f 63 6f 64 65 08 12                 - t_code..
+ 03e8  01 80 80 5f 63 63 07 12                 - ..._cc..
+ 03f0  00 80 81 43 43 08 60 02                 - ...CC.`.
+ 03f8  00 01 00 00 00 0e 61 00                 - ......a.
+ 0400  05 63 68 61 72 5f 76 61                 - .char_va
+ 0408  6c 75 65 0e 61 00 13 62                 - lue.a..b
+ 0410  79 74 65 5f 76 61 6c 75                 - yte_valu
+ 0418  65 0e 12 02 80 83 5f 63                 - e....._c
+ 0420  68 61 72 62 79 74 65 0d                 - harbyte.
+ 0428  12 00 80 84 43 48 41 52                 - ....CHAR
+ 0430  42 59 54 45 06 21 fe 00                 - BYTE.!..
+ 0438  80 85 04 20 00 7f 08 60                 - ... ...`
+ 0440  03 00 04 00 00 00 0c 61                 - .......a
+ 0448  04 80 87 70 6f 70 74 69                 - ...popti
+ 0450  6f 6e 0e 61 02 0f 6d 61                 - on.a..ma
+ 0458  78 5f 73 74 61 74 65 73                 - x_states
+ 0460  0f 61 00 0f 65 6e 74 72                 - .a..entr
+ 0468  79 5f 73 74 61 74 65 11                 - y_state.
+ 0470  12 01 80 88 5f 6f 70 74                 - ...._opt
+ 0478  69 6f 6e 74 61 62 6c 65                 - iontable
+ 0480  04 41 80 89 11 12 00 80                 - .A......
+ 0488  8a 50 4f 50 54 49 4f 4e                 - .POPTION
+ 0490  54 41 42 4c 45 0a 71 80                 - TABLE.q.
+ 0498  82 04 15 80 8b 20 0f 05                 - ..... ..
+ 04a0  70 0b 01 0b 05 70 37 01                 - p....p7.
+ 04a8  0b 05 70 08 01 23 07 70                 - ..p..#.p
+ 04b0  37 03 23 23 08 04 70 37                 - 7.##..p7
+ 04b8  00 04 70 0b 00 08 60 02                 - ..p...`.
+ 04c0  00 02 00 00 00 09 61 01                 - ......a.
+ 04c8  13 62 79 74 65 32 09 61                 - .byte2.a
+ 04d0  00 13 62 79 74 65 31 0c                 - ..byte1.
+ 04d8  12 01 80 93 5f 74 62 79                 - ...._tby
+ 04e0  74 65 73 0b 12 00 80 94                 - tes.....
+ 04e8  54 42 59 54 45 53 08 60                 - TBYTES.`
+ 04f0  02 00 02 00 00 00 0e 61                 - .......a
+ 04f8  00 80 95 74 77 6f 5f 62                 - ...two_b
+ 0500  79 74 65 73 05 61 00 0f                 - ytes.a..
+ 0508  6e 0c 12 02 80 96 5f 6e                 - n....._n
+ 0510  75 6d 62 65 72 0b 12 00                 - umber...
+ 0518  80 97 4e 55 4d 42 45 52                 - ..NUMBER
+ 0520  08 60 03 00 08 00 00 00                 - .`......
+ 0528  0d 61 06 80 98 4d 65 67                 - .a...Meg
+ 0530  42 79 74 65 73 08 61 04                 - Bytes.a.
+ 0538  0f 74 79 70 65 0a 61 00                 - .type.a.
+ 0540  15 73 74 72 69 6e 67 11                 - .string.
+ 0548  12 01 80 99 5f 66 6f 72                 - ...._for
+ 0550  6d 61 74 74 61 62 6c 65                 - mattable
+ 0558  10 12 00 80 9a 46 4f 52                 - .....FOR
+ 0560  4d 41 54 54 41 42 4c 45                 - MATTABLE
+ 0568  05 20 08 80 9b 04 20 03                 - . .... .
+ 0570  22 05 70 37 01 0f 02 14                 - ".p7....
+
+No disassembly errors
+
+------------------------------------------------------------
+
+Segment: $$TYPES  BYTE   000000fc bytes  
+ 0000  00 00 08 00 00 00 21 00                 - ......!.
+ 0008  35 00 4c 00 65 00 85 00                 - 5.L.e...
+ 0010  a6 00 c7 00 44 3a 5c 73                 - ....D:\s
+ 0018  6f 75 72 63 65 5c 64 72                 - ource\dr
+ 0020  69 76 65 72 5c 70 65 72                 - iver\per
+ 0028  66 5c 43 6d 64 70 61 72                 - f\Cmdpar
+ 0030  73 65 2e 63 00 44 3a 5c                 - se.c.D:\
+ 0038  44 64 6b 5c 42 61 73 65                 - Ddk\Base
+ 0040  5c 48 5c 4f 53 32 2e 48                 - \H\OS2.H
+ 0048  00 44 3a 5c 44 64 6b 5c                 - .D:\Ddk\
+ 0050  42 61 73 65 5c 48 5c 6f                 - Base\H\o
+ 0058  73 32 64 65 66 2e 68 00                 - s2def.h.
+ 0060  44 3a 5c 44 64 6b 5c 42                 - D:\Ddk\B
+ 0068  61 73 65 5c 48 5c 6f 73                 - ase\H\os
+ 0070  32 64 65 66 31 36 2e 68                 - 2def16.h
+ 0078  00 44 3a 5c 73 6f 75 72                 - .D:\sour
+ 0080  63 65 5c 64 72 69 76 65                 - ce\drive
+ 0088  72 5c 70 65 72 66 5c 43                 - r\perf\C
+ 0090  4d 44 50 48 44 52 2e 48                 - MDPHDR.H
+ 0098  00 44 3a 5c 73 6f 75 72                 - .D:\sour
+ 00a0  63 65 5c 64 72 69 76 65                 - ce\drive
+ 00a8  72 5c 70 65 72 66 5c 63                 - r\perf\c
+ 00b0  6d 64 70 61 72 73 65 2e                 - mdparse.
+ 00b8  68 00 44 3a 5c 73 6f 75                 - h.D:\sou
+ 00c0  72 63 65 5c 64 72 69 76                 - rce\driv
+ 00c8  65 72 5c 70 65 72 66 5c                 - er\perf\
+ 00d0  63 6d 64 70 64 65 66 73                 - cmdpdefs
+ 00d8  2e 68 00 44 3a 5c 73 6f                 - .h.D:\so
+ 00e0  75 72 63 65 5c 64 72 69                 - urce\dri
+ 00e8  76 65 72 5c 70 65 72 66                 - ver\perf
+ 00f0  5c 43 4d 44 50 52 4f 54                 - \CMDPROT
+ 00f8  4f 2e 48 00                             - O.H.
+
+No disassembly errors
+
+------------------------------------------------------------

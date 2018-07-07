@@ -1,0 +1,1876 @@
+head	2.4;
+access;
+symbols
+	vrflt031113:2.4
+	vrflt010903:2.4
+	PREV010803:2.4
+	VRAIDv0_85:2.2
+	VRAIDv0_84:2.2
+	VRAIDv0_82:1.12
+	VRAIDv0_70:1.10
+	VRAIDv0_60:1.5
+	VRAIDv0_51:1.5
+	VRAIDv0_50:1.5
+	VRAIDv0_40:1.5
+	VRAIDv0_30:1.4
+	ALPHA1:1.3;
+locks; strict;
+comment	@ * @;
+
+
+2.4
+date	2001.07.10.01.00.34;	author vitus;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.07.03.07.53.46;	author vitus;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.02.11.01.16.22;	author vitus;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.06.13.01.44.11;	author vitus;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	99.09.26.00.21.42;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	99.08.09.23.19.49;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.06.21.02.28.26;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.05.26.00.46.24;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.05.12.01.48.49;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.04.28.01.47.40;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.02.07.17.52.01;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	98.09.20.14.24.06;	author vitus;	state Stab;
+branches;
+next	1.4;
+
+1.4
+date	98.06.26.23.03.53;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.05.29.01.56.42;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.04.08.00.56.38;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.03.10.02.09.48;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@How to do non-RAID I/O to spanning set
+@
+
+
+2.4
+log
+@- implemented NextValidChild() to select next device to read.
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/RCS/span.c,v $
+ * $Revision: 2.3 $
+ * $Date: 2001/07/03 07:53:46 $
+ * $Locker: vitus $
+ *
+ *
+ *	How to do I/O to spanning set.
+ *
+ *
+ * $Log: span.c,v $
+ * Revision 2.3  2001/07/03 07:53:46  vitus
+ * - VRDSPAN now contains sizes of all children.  Otherwise it is not possible
+ *   to use the array when a child is missing!
+ *
+ * Revision 2.2  2001/02/11 01:16:22  vitus
+ * - changed SpanCtrl() to return DRVSTATUS
+ *
+ * Revision 2.1  2000/06/13 01:44:11  vitus
+ * - implemented ioctl method (VRDIOCTL_QUERY_CHILDREN, VRDIOCTL_INFO)
+ *
+ * Revision 1.12  1999/09/26 00:21:42  vitus
+ * - defined all DBGMSG() strings as located in CONST segment
+ *
+ * Revision 1.11  1999/08/09 23:19:49  vitus
+ * - SpanCreate: initialize new VRDSPAN structure with 0
+ *
+ * Revision 1.10  1999/06/21 02:28:26  vitus
+ * - corrected english spelling
+ * - handle missing children (NULL pointer)
+ *
+ * Revision 1.9  1999/05/26 00:46:24  vitus
+ * - SpanCreate: return value now 'int', but as it is always 0...
+ *
+ * Revision 1.8  1999/05/12 01:48:49  vitus
+ * - dummy SpanUpdate() implemented
+ *
+ * Revision 1.7  1999/04/28 01:47:40  vitus
+ * - merged SpanAdmin() code with Worker/Notify, IOCMD_A* commands
+ * - SpanNotify() uses CompleteVrio()
+ *
+ * Revision 1.6  1999/02/07 17:52:01  vitus
+ * - implemented StripeAdmin() method
+ * - changed for iorb -> vrio transition
+ *
+ * Revision 1.5  1998/09/20 14:24:06  vitus
+ * - modified for AllocateVrio(working_dev,mother)
+ *
+ * Revision 1.4  1998/06/26 23:03:53  vitus
+ * - switched to DDK macros (cli, sti, pushf)
+ * - worker,notify get const pointers and become _Cdecl
+ *
+ * Revision 1.3  1998/05/29 01:56:42  vitus
+ * - fine tuning of DEBMSG macro calls
+ *
+ * Revision 1.2  1998/04/08 00:56:38  vitus
+ * - corrected VRIO handling
+ * - test successfull
+ *
+ * Revision 1.1  1998/03/10 02:09:48  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-2001
+ */
+#if defined(__WATCOMC__)
+# pragma off (unreferenced)
+#endif
+static char const id[]="$Id: span.c,v 2.3 2001/07/03 07:53:46 vitus Exp vitus $";
+#if defined(__WATCOMC__)
+# pragma on (unreferenced)
+#endif
+
+#include <string.h>
+
+#define INCL_NOBASEAPI
+#define INCL_INITRP_ONLY
+#include "os2intf.h"
+
+#include "vraid.h"
+#include "proto.h"
+#include "extern.h"
+#include "vraidpub.h"
+
+
+
+
+/*
+ * Our object: the spanning drive.
+ */
+typedef struct _VRDSPAN {
+
+    VRDEVHDR	header;				/* ALWAYS FIRST! */
+
+    USHORT	readchild;			/* for configuration sectors */
+
+    USHORT	children;
+    struct {
+	ULONG		size;			/* size of child */
+	PVRDEVHDR	dev;			/* pointer to device */
+    } child[];
+
+} VRDSPAN, FAR * PVRDSPAN;
+
+
+
+
+PRIVATE USHORT NEAR _Cdecl	SpanWorker(PVRDEVHDR const self,PVRIO const myio);
+PRIVATE USHORT NEAR _Cdecl	SpanUpdate(PVRDEVHDR const self,PVOID const sec);
+PRIVATE DRVSTATUS NEAR _Cdecl	SpanCtrl(PVRDEVHDR const self, USHORT const cmd,
+					 PVOID const param, PVOID const data);
+
+
+
+
+#if defined(DEBUG)
+CONSTMSG dszSpanNotify[]=	"\r\n[SpanNotify] io %p, myio %p, error %w";
+CONSTMSG dszSNotifyAll[]=	"\r\n[SpanNotify] completed all of myio %p";
+CONSTMSG dszSpanWorker[]=	"\r\n[SpanWorker] %p";
+CONSTMSG dszSWorkerRange[]=	"\r\n[SpanWorker] first blk %lx, last blk %lx";
+CONSTMSG dszSWorkerChild[]=	"\r\n[SpanWorker] child %w: start %lx length %lx";
+CONSTMSG dszSWorkerNochild[]=	"\r\n[SpanWorker] uneffected child %w";
+CONSTMSG dszSWorkerComplete[]=	"\r\n[SpanWorker] completed (last %lx, %w. start %lx)";
+CONSTMSG dszSWorkerVrio[]=	"\r\n[SpanWorker] creating VRIO for device %w";
+CONSTMSG dszSWorkerAlloc[]=	"\r\n[SpanWorker] couldn't allocate VRIO";
+CONSTMSG dszSWorkerRelease[]=	"\r\n[SpanWorker] releasing VRIOs";
+CONSTMSG dszSWorkerMissing[]=	"\r\n[SpanWorker] child missing, cmd %w";
+CONSTMSG dszSWorkerBusy[]=	"\r\n[SpanWorker] child busy, queuing VRIO";
+CONSTMSG dszSCreateAdminData[]=	"\r\n[SpanCreate] admin data\r\n%z";
+CONSTMSG dszSCreateFound[]=	"\r\n[SpanCreate] found child %w in %p";
+CONSTMSG dszSCreateOnly[]=	"\r\n[SpanCreate] only found %w out of %w";
+CONSTMSG dszSpanCreate[]=	"\r\n[SpanCreate] at %p"
+				"\r\n             ID %z"
+				"\r\n             Size 0x%lx";
+#endif
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Private Routines ************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * NextValidChild(span, previous)
+ *
+ * PARAMETER
+ *	span		a VRD which forms a spanning device
+ *	previous	the previously used child
+ *
+ * RETURNS
+ *	child index or (USHORT)-1
+ *
+ * DESCRIPTION
+ *	Selects another valid child.
+ *
+ * REMARKS
+ */
+static USHORT
+NextValidChild(PVRDSPAN const span, USHORT const previous)
+{
+    USHORT	next = previous;
+    USHORT	tries = span->children;
+    BOOL	found = FALSE;
+
+    do
+    {
+	next = (next + 1 == span->children ? 0 : next + 1);
+	if( span->child[next].dev != NULL )
+	{
+	    found = TRUE;
+	    break;
+	}
+    }
+    while( tries-- );
+    return (found ? next : (USHORT)-1);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * SpanNotify(child,io)
+ *
+ * PARAMETER
+ *	io		VRIO which completed
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Used by a child to report that it's I/O has completed.
+ *	Updates own I/O (which was passed to this spanning set) and
+ *	ends it if all I/Os to children ended.
+ *
+ * REMARKS
+ */
+PRIVATE VOID NEAR _Cdecl
+SpanNotify(PVRIO const io)
+{
+    PVRIO const		myio = io->mother;
+    PVRDSPAN const	span = (PVRDSPAN)myio->vrd;
+
+    DEBMSG3(DBG_PATH,dszSpanNotify,io,myio,io->oserr);
+
+    ASSERT( io->bcnt != 0 );
+    ASSERT( io->link == NULL );
+    ASSERT( myio->link == NULL );
+    ASSERT( myio->bcnt != 0 );
+    ASSERT( myio->vrd->size != 0 );
+    ASSERT( myio->vrd->notify == SpanNotify );
+    ASSERT( myio->vrd->worker == SpanWorker );
+
+    pushf();
+    cli();
+
+    /* Error handling (different for each RAID level). */
+
+    if( myio->oserr == 0xFFFF )			/* still not set? */
+	myio->oserr = io->oserr;		/* propagate error */
+    else if( myio->oserr == 0 )			/* this I/O still OK? */
+	myio->oserr = io->oserr;		/* keep any error */
+
+
+    switch( myio->iocmd )
+    {
+      case IOCMD_READ:
+      case IOCMD_WRITE:
+      case IOCMD_AWRITE:
+	/* Reduce child I/O count.  If all completed, call parent's notification. */
+
+	--myio->children;
+	break;
+
+      case IOCMD_AREAD:
+	/* **** AREAD ****
+	 * Try next device if error.  Else call parent notification. */
+
+	if( io->oserr == 0 )
+	{
+	    myio->children = 0;			/* no more I/Os, see below */
+	}
+	else
+	{
+	    PVRDEVHDR	child = io->vrd;	/* child which completed */
+
+	    --myio->children;
+	    if( myio->children != 0 )
+	    {
+		USHORT	rc;
+		USHORT	i, found = 0;
+
+		/* Select next child. */
+
+		for( i = 0; i < span->children; ++i )
+		    if( child == span->child[i].dev )
+		    {
+			USHORT j = i;
+
+			j = (j + 1 == span->children ? 0 : j+1);
+			if( span->child[j].dev == NULL )
+			{
+			    /* missing child */
+
+			    --myio->children;
+			    continue;		/* search again */
+			}
+			child = span->child[j].dev;
+			found = 1;
+			break;
+		    }
+		ASSERT( found == 1 );
+
+		/* Patch new child into VRIO and start it. */
+
+		io->vrd = child;
+		rc = io->vrd->worker(io->vrd, io);
+		if( rc )
+		    QueueVrio(io);
+	    }
+	}
+	break;
+    }
+
+
+    if( myio->children == 0 )			/* my I/O ready? */
+    {
+	DEBMSG1(DBG_LEVEL2,dszSNotifyAll,myio);
+
+	if( myio->oserr != 0 )
+	    span->header.flags |= RDFLAG_ERROR;
+
+	CompleteVrio(myio);
+    }
+
+    popf();
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * SpanWorker(stripe,myio)
+ *
+ * PARAMETER
+ *	span		set building a spanning set
+ *	myio		I/O to spanning set (to myself)
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		I/O not processed, please retry
+ *
+ * DESCRIPTION
+ *	Pass VRIO to underlying I/O routine of affected children.
+ *
+ * REMARKS
+ */
+PRIVATE USHORT NEAR _Cdecl
+SpanWorker(PVRDEVHDR const self,PVRIO const myio)
+{
+    PVRDSPAN const	span = (PVRDSPAN)self;
+    PVRIO	io;
+    PVRIO	newio;
+    PVRIO	firstio = NULL;
+
+    ULONG const	firstblk = myio->blk;		/* first blk */
+    ULONG const	lastblk = firstblk + myio->bcnt - 1;
+    ULONG	devstart = 0;
+    USHORT	i;
+
+
+    DEBMSG1(DBG_PATH,dszSpanWorker,(PVOID)myio);
+    DEBMSG2(DBG_LEVEL3,dszSWorkerRange,(PVOID)&firstblk,(PVOID)&lastblk);
+
+    ASSERT( myio->vrd == self );
+    ASSERT( myio->link == NULL );
+    ASSERT( myio->bcnt != 0 );
+    ASSERT( span->header.size != 0 );
+    ASSERT( span->header.notify == SpanNotify );
+    ASSERT( span->header.worker == SpanWorker );
+    ASSERT( span->header.update == SpanUpdate );
+    ASSERT( span->header.ioctl == SpanCtrl );
+
+    ++self->iocnt;
+
+    switch( myio->iocmd )
+    {
+      case IOCMD_READ:
+      case IOCMD_WRITE:
+	/* Create VRIO to all affected children. */
+
+	myio->children = 0;
+	for( i = 0; i < span->children; devstart += span->child[i].size, ++i )
+	{
+	    DEBMSG3(DBG_LEVEL3,dszSWorkerChild,i,(PVOID)&devstart,(PVOID)&span->child[i].size);
+	    if( firstblk >= devstart + span->child[i].size )
+	    {
+		DEBMSG1(DBG_LEVEL4,dszSWorkerNochild,i);
+		continue;			/* not affected */
+	    }
+	    if( lastblk < devstart )
+	    {
+		DEBMSG3(DBG_LEVEL3,dszSWorkerComplete,(PVOID)&lastblk,i,(PVOID)&devstart);
+		break;				/* did complete distribution */
+	    }
+
+	    DEBMSG1(DBG_LEVEL4,dszSWorkerVrio,i);
+
+	    /* Build linked list of VRIOs.  */
+
+	    newio = AllocateVrio(span->child[i].dev, myio);
+	    if( newio == NULL )			/* memory exhausted? */
+	    {
+		DEBMSG(DBG_LEVEL1,dszSWorkerAlloc);
+		break;
+	    }
+
+	    if( firstio == NULL )
+		firstio = newio;		/* save this as first */
+	    else
+		io->link = newio;
+	    io = newio;
+	    io->link = NULL;
+	    ++myio->children;
+
+	    /* Pass range to this child. */
+
+	    io->iorb = myio->iorb;
+	    io->iocmd = myio->iocmd;
+	    io->cSGList = myio->cSGList;
+	    io->pSGList = myio->pSGList;
+	    io->ppSGList = myio->ppSGList;
+
+	    if( firstblk < devstart )
+	    {
+		io->blk = 0;
+		io->offset = (USHORT)(devstart - firstblk);
+	    }
+	    else
+	    {
+		io->blk = firstblk - devstart;
+		io->offset = 0;
+	    }
+	    if( lastblk > devstart + span->child[i].size )
+		io->bcnt = (USHORT)(span->child[i].size - io->blk);
+	    else if( firstblk < devstart )
+		io->bcnt = (USHORT)((lastblk - devstart) + 1);
+	    else
+		io->bcnt = (USHORT)((lastblk - firstblk) + 1);
+
+	    io->oserr = 0xFFFF;			/* invalidate error code */
+	}
+	break;
+
+
+      case IOCMD_AWRITE:
+	/* Write: create VRIO to all children. */
+
+	myio->children = 0;
+
+	for( i = 0; i < span->children; ++i )
+	{
+	    if( span->child[i].dev == NULL )
+		continue;			/* skip non-existing child */
+
+	    /* Allocate VRIOs and update links. */
+
+	    newio = AllocateVrio(span->child[i].dev, myio);
+	    if( newio == NULL )			/* memory exhausted? */
+		break;
+
+	    if( firstio == NULL )
+		firstio = newio;		/* save this as first */
+	    else
+		io->link = newio;
+	    io = newio;
+	    io->link = NULL;
+	    ++myio->children;
+
+	    /* Children will receive exactly the same parameters as the
+	     * configuration sectors are identical on all parts of a
+	     * VRAID device. */
+
+	    io->iorb = myio->iorb;
+	    io->iocmd = myio->iocmd;
+	    io->cSGList = myio->cSGList;
+	    io->pSGList = myio->pSGList;
+	    io->ppSGList = myio->ppSGList;
+
+	    io->offset = myio->offset;
+	    io->blk = myio->blk + 1;		/* as usual */
+	    io->bcnt = myio->bcnt;
+	    io->oserr = 0xFFFF;			/* invalid error code */
+	}
+	break;
+
+      case IOCMD_AREAD:
+	/* Read: create for 'readchild' child and do another in Notify()
+	 * if this first failed!
+	 * Don't forget to increment 'readchild'. */
+
+	myio->children = span->children;
+
+	/* Allocate VRIOs and update links. */
+
+	do
+	{
+	    ASSERT( span->readchild != (USHORT)-1 );
+	    newio = AllocateVrio(span->child[span->readchild].dev, myio);
+	    if( newio == NULL )			/* memory exhausted? */
+		break;
+
+	    if( firstio == NULL )
+		firstio = newio;		/* save this as first */
+	    else
+		io->link = newio;
+	    io = newio;
+	    io->link = NULL;
+
+	    /* Child will receive the same parameters
+	     * as parent (configuration secotrs!). */
+
+	    io->iorb = myio->iorb;
+	    io->iocmd = myio->iocmd;
+	    io->cSGList = myio->cSGList;
+	    io->pSGList = myio->pSGList;
+	    io->ppSGList = myio->ppSGList;
+
+	    io->offset = myio->offset;
+	    io->blk = myio->blk + 1;		/* as usual */
+	    io->bcnt = myio->bcnt;
+	    io->oserr = 0xFFFF;			/* invalid error code */
+
+
+	    pushf();
+	    cli();
+	    span->readchild = NextValidChild(span, span->readchild);
+	    popf();
+	}
+	while(0);
+	break;
+    } /* end[switch] */
+
+
+
+    if( newio == NULL )
+    {
+	/* Not enough memory.  Free all allocated VRIOs
+	 * and return error code to parent. */
+
+	DEBMSG(DBG_ALL,dszSWorkerRelease);
+	for( io = firstio; io != NULL; io = newio )
+	{
+	    newio = io->link;
+	    FreeVrio(io);
+	    DO( io = NULL );
+	}
+	++self->busycnt;
+	return 1;
+    }
+
+
+    /* Now pass all allocated VRIOs to children. */
+
+    for( io = firstio; io != NULL; io = newio )
+    {
+	USHORT	rc;
+
+	newio = io->link;
+	io->link = NULL;
+	if( io->vrd == NULL )
+	{
+	    /* There is a child missing and somebody wants to read/write
+	     * from/to it's share of data.  Return error! */
+
+	    DEBMSG1(DBG_ALL,dszSWorkerMissing,io->iocmd);
+	    io->oserr = IOERR_ADAPTER_DEVICE_TIMEOUT;
+	    CompleteVrio(io);
+	}
+	else
+	{
+	    rc = io->vrd->worker(io->vrd, io);
+	    if( rc )
+	    {
+		DEBMSG(DBG_ALL,dszSWorkerBusy);
+		QueueVrio(io);
+	    }
+	}
+    }
+
+    return 0;
+} /* end[SpanWorker] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * SpanUpdate(self,sec)
+ *
+ * PARAMETER
+ *	self		a VRD which forms an array
+ *	sec		sector contains configuration
+ *
+ * RETURNS
+ *	0		don't write back, nothing changed
+ *
+ * DESCRIPTION
+ *	Do nothing.
+ *
+ * REMARKS
+ */
+PRIVATE USHORT NEAR _Cdecl
+SpanUpdate(PVRDEVHDR const self,PVOID const sec)
+{
+    PVRDSPAN const	span = (PVRDSPAN)self;
+
+    ASSERT( span->header.size != 0 );
+    ASSERT( span->header.notify == SpanNotify );
+    ASSERT( span->header.worker == SpanWorker );
+    ASSERT( span->header.update == SpanUpdate );
+    ASSERT( span->header.ioctl == SpanCtrl );
+
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * SpanCtrl(self,cmd,param,data)
+ *
+ * PARAMETER
+ *	mirror		a VRD which forms a spanning device
+ *	cmd		I/O Control Code
+ *	data		data buffer
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		error (driver status code)
+ *
+ * DESCRIPTION
+ *	Special function interface
+ *
+ * REMARKS
+ */
+PRIVATE DRVSTATUS NEAR _Cdecl
+SpanCtrl(PVRDEVHDR const self, USHORT const cmd,
+	 PVOID const param, PVOID const data)
+{
+    PVRDSPAN const	span = (PVRDSPAN)self;
+    DRVSTATUS		result = STATUS_ERR_UNKCMD;
+
+
+    ASSERT( span->header.size != 0 );
+    ASSERT( span->header.notify == SpanNotify );
+    ASSERT( span->header.worker == SpanWorker );
+    ASSERT( span->header.update == SpanUpdate );
+    ASSERT( span->header.ioctl == SpanCtrl );
+
+    switch( cmd )
+    {
+      case VRDIOCTL_QUERY_CHILDREN:
+	*(PUSHORT)data = span->children;
+	result = 0;
+	break;
+
+
+      case VRDIOCTL_INFO:
+	DEBMSG(DBG_PATH, "VRDIOCTL_INFO");
+	{
+	    PVRAID_ARRAYINFO_DATA	d = data;
+
+	    _fmemcpy(d->id, span->header.id, sizeof(d->id));
+	    d->reqcnt = span->header.iocnt;
+	    d->size = span->header.size;
+
+	    d->children = span->children;
+	    d->flags = span->header.flags;
+	    d->reserved = 0;
+	}
+	result = 0;
+	break;
+
+
+      default:
+	break;
+    }
+
+    return result;
+} /* end[SpanCtrl] */
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Public Entries **************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * SpanCreate(pVrh,pPhys,sec,pSize)
+ *
+ * PARAMETER
+ *	pVrh		room to create device structure
+ *	tab		table of device to build from
+ *	sec		contents of configuration sector
+ *	pSize		return: size used at '*pVrh'
+ *
+ * RETURNS
+ *	0		OK
+ *
+ * DESCRIPTION
+ * REMARKS
+ */
+PUBLIC int NEAR _Cdecl
+SpanCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,PSEC_VRDEV sec,PUSHORT pSize)
+{
+    PVRDSPAN const	span = (PVRDSPAN)pVrh;
+    USHORT	i, found;
+
+
+    DEBMSG2(DBG_INIT3,dszSCreateAdminData,(PVOID)sec,SECTOR_SIZE);
+    _fmemset(span, 0, sizeof(*span));
+
+
+    /* Initialize header elements */
+
+    span->header.worker = SpanWorker;
+    span->header.notify = SpanNotify;
+    span->header.update = SpanUpdate;
+    span->header.ioctl = SpanCtrl;
+    span->header.size = 0;			/* initialize, will be added to */
+    span->header.flags = 0;
+    _fmemcpy(span->header.id, sec->u.s.id, sizeof(span->header.id));
+
+
+    /* Build linking by looking up all parts in 'tab'. */
+
+    span->children = sec->u.s.children;
+    _fmemset(span->child, 0, span->children * sizeof(span->child[0]));
+    found = 0;
+    for( i = 0; i < span->children; ++i )
+    {
+	PDEVID const	id1 = &sec->u.s.child[i].id;
+	USHORT		j;
+
+	span->child[i].size = sec->u.s.child[i].size;
+	span->header.size += span->child[i].size;
+	for( j = 0; j < MAX_PDEV; ++j )
+	{
+	    if( tab[j] != NULL )		/* ignore empty entries */
+	    {
+		PDEVID const	id2 = &tab[j]->id;
+
+		if( _fmemcmp(id1, id2, sizeof(DEVID)) == 0 )
+		{
+		    DEBMSG2(DBG_INIT1,dszSCreateFound,i,tab[j]);
+		    span->child[i].dev = tab[j];
+		    tab[j] = NULL;
+		    ++found;
+		    break;			/* stop scan, next child */
+		}
+	    }
+	}
+    }
+    if( found != span->children )
+    {
+	DEBMSG2(DBG_ALL,dszSCreateOnly,found,span->children);
+	span->header.flags = RDFLAG_ERROR;
+    }
+
+
+    span->readchild = NextValidChild(span, span->readchild);
+
+
+    /* Size of administrative data depends on count of children. */
+
+    *pSize = sizeof(*span) + span->children * sizeof(span->child[0]);
+
+    DEBMSG4(DBG_INIT1,dszSpanCreate,(PVOID)pVrh,(PVOID)sec->u.s.id,6,(PVOID)&span->header.size);
+    return 0;
+} /* end[SpanCreate] */
+@
+
+
+2.3
+log
+@- VRDSPAN now contains sizes of all children.  Otherwise it is not possible
+  to use the array when a child is missing!
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.2 $
+ * $Date: 2001/02/11 01:16:22 $
+d12 4
+d68 1
+a68 1
+static char const id[]="$Id: span.c,v 2.2 2001/02/11 01:16:22 vitus Exp vitus $";
+d128 1
+a128 1
+CONSTMSG dszSpanCreate[]=	"\r\n[SpanCreate] at %p, %w children";
+d131 3
+d141 42
+d470 1
+a495 1
+	    /* Move 'readchild'. */
+d499 1
+a499 6
+	    do
+	    {
+		span->readchild = (span->readchild + 1 == span->children
+				   ? 0 : span->readchild + 1);
+	    }
+	    while( span->child[span->readchild].dev == NULL );
+d685 1
+a685 1
+    DEBMSG2(DBG_INIT1,dszSpanCreate,(PVOID)pVrh,sec->u.s.children);
+d735 2
+a736 5
+    while( span->child[span->readchild].dev == NULL )
+    {
+	span->readchild = (span->readchild + 1 == span->children
+			   ? 0 : span->readchild + 1);
+    }
+d742 2
+@
+
+
+2.2
+log
+@- changed SpanCtrl() to return DRVSTATUS
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.1 $
+ * $Date: 2000/06/13 01:44:11 $
+d12 3
+d58 2
+a59 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+d64 1
+a64 1
+static char const id[]="$Id: span.c,v 2.1 2000/06/13 01:44:11 vitus Exp vitus $";
+d93 4
+a96 1
+    PVRDEVHDR	child[];
+d208 1
+a208 1
+		    if( child == span->child[i] )
+d210 11
+a220 2
+			i = (i + 1 == span->children ? 0 : i+1);
+			child = span->child[i];
+d306 1
+a306 1
+	for( i = 0; i < span->children; devstart += span->child[i]->size, ++i )
+d308 2
+a309 2
+	    DEBMSG3(DBG_LEVEL3,dszSWorkerChild,i,(PVOID)&devstart,(PVOID)&span->child[i]->size);
+	    if( firstblk >= devstart + span->child[i]->size )
+d324 1
+a324 1
+	    newio = AllocateVrio(span->child[i], myio);
+d357 2
+a358 2
+	    if( lastblk > devstart + span->child[i]->size )
+		io->bcnt = (USHORT)(span->child[i]->size - io->blk);
+d376 1
+a376 1
+	    if( span->child[i] == NULL )
+d381 1
+a381 1
+	    newio = AllocateVrio(span->child[i], myio);
+d421 1
+a421 1
+	    newio = AllocateVrio(span->child[span->readchild], myio);
+d455 1
+a455 1
+	    while( span->child[span->readchild] == NULL );
+d666 2
+a667 1
+	span->header.size += sec->u.s.child[i].size;
+d677 1
+a677 1
+		    span->child[i] = tab[j];
+d691 1
+a691 1
+    while( span->child[span->readchild] == NULL )
+@
+
+
+2.1
+log
+@- implemented ioctl method (VRDIOCTL_QUERY_CHILDREN, VRDIOCTL_INFO)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.12 $
+ * $Date: 1999/09/26 00:21:42 $
+d7 1
+d10 1
+d12 3
+d61 1
+a61 1
+static char const id[]="$Id: span.c,v 1.12 1999/09/26 00:21:42 vitus Exp vitus $";
+d99 1
+a99 1
+PRIVATE USHORT NEAR _Cdecl	SpanCtrl(PVRDEVHDR const self, USHORT const cmd,
+d549 1
+a549 1
+PRIVATE USHORT NEAR _Cdecl
+d554 2
+a555 1
+    USHORT		result = STATUS_ERR_UNKCMD;
+d593 1
+a593 1
+} /* end[SpansiCtrl] */
+@
+
+
+1.12
+log
+@- defined all DBGMSG() strings as located in CONST segment
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.11 $
+ * $Date: 1999/08/09 23:19:49 $
+d10 3
+d56 1
+a56 1
+static char const id[]="$Id: span.c,v 1.11 1999/08/09 23:19:49 vitus Exp vitus $";
+d70 1
+d94 2
+d275 1
+d513 8
+d527 65
+d629 1
+@
+
+
+1.11
+log
+@- SpanCreate: initialize new VRDSPAN structure with 0
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/06/21 02:28:26 $
+d10 3
+d53 1
+a53 1
+static char const id[]="$Id: span.c,v 1.10 1999/06/21 02:28:26 vitus Exp vitus $";
+d94 22
+d139 1
+a139 1
+    DEBMSG3(DBG_PATH,"\r\n[SpanNotify] io %p, myio %p, error %w",io,myio,io->oserr);
+d214 1
+a214 1
+	DEBMSG1(DBG_LEVEL2,"\r\n[SpanNotify] completed all of myio %p",myio);
+d258 3
+a260 2
+    DEBMSG1(DBG_PATH,"\r\n[SpanWorker] %p",(PVOID)myio);
+    DEBMSG2(DBG_LEVEL3,"\r\n[SpanWorker] first blk %lx, last blk %lx",(PVOID)&firstblk,(PVOID)&lastblk);
+d270 1
+d281 1
+a281 1
+	    DEBMSG3(DBG_LEVEL3,"\r\n[SpanWorker] child %w: start %lx length %lx",i,(PVOID)&devstart,(PVOID)&span->child[i]->size);
+d284 1
+a284 1
+		DEBMSG1(DBG_LEVEL4,"\r\n[SpanWorker] uneffected child %w",i);
+d289 1
+a289 1
+		DEBMSG3(DBG_LEVEL3,"\r\n[SpanWorker] completed (last %lx, %w. start %lx)",(PVOID)&lastblk,i,(PVOID)&devstart);
+d293 1
+a293 1
+	    DEBMSG1(DBG_LEVEL4,"\r\n[SpanWorker] creating VRIO for device %w",i);
+d300 1
+a300 1
+		DEBMSG(DBG_LEVEL1,"\r\n[SpanWorker] couldn't allocate VRIO");
+d442 1
+a442 1
+	DEBMSG(DBG_ALL,"\r\n[SpanWorker] releasing VRIOs");
+d449 1
+d467 1
+a467 1
+	    DEBMSG1(DBG_ALL,"\r\n[SpanWorker] child missing, cmd %w",io->iocmd);
+d476 1
+a476 1
+		DEBMSG(DBG_ALL,"\r\n[SpanWorker] child busy, queuing VRIO");
+d540 1
+a540 1
+    DEBMSG2(DBG_INIT1,"\r\n[SpanCreate] at %p, %w children",(PVOID)pVrh,sec->u.s.children);
+d573 1
+a573 1
+		    DEBMSG2(DBG_INIT1,"\r\n[SpanCreate] found child %w in %p",i,tab[j]);
+d584 1
+a584 1
+	DEBMSG2(DBG_ALL,"\r\n[SpanCreate] only found %w out of %w",found,span->children);
+@
+
+
+1.10
+log
+@- corrected english spelling
+- handle missing children (NULL pointer)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/05/26 00:46:24 $
+d10 4
+d50 1
+a50 1
+static char const id[]="$Id: span.c,v 1.9 1999/05/26 00:46:24 vitus Exp vitus $";
+d513 4
+d525 1
+d571 1
+a571 1
+}
+@
+
+
+1.9
+log
+@- SpanCreate: return value now 'int', but as it is always 0...
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/05/12 01:48:49 $
+d10 3
+d46 1
+a46 1
+static char const id[]="$Id: span.c,v 1.8 1999/05/12 01:48:49 vitus Exp vitus $";
+d73 1
+a73 1
+    USHORT	childs;
+d100 1
+a100 1
+ *	ends it if all I/Os to childs ended.
+d138 1
+a138 1
+	--myio->childs;
+d147 1
+a147 1
+	    myio->childs = 0;			/* no more I/Os, see below */
+d153 2
+a154 2
+	    --myio->childs;
+	    if( myio->childs != 0 )
+d161 1
+a161 1
+		for( i = 0; i < span->childs; ++i )
+d164 1
+a164 1
+			i = (i + 1 == span->childs ? 0 : i+1);
+d174 1
+a174 1
+		rc = io->vrd->worker(child, io);
+d183 1
+a183 1
+    if( myio->childs == 0 )			/* my I/O ready? */
+d212 1
+a212 1
+ *	Pass VRIO to underlying I/O routine of affected childs.
+d245 1
+a245 1
+	/* Create VRIO to all affected childs. */
+d247 2
+a248 2
+	myio->childs = 0;
+	for( i = 0; i < span->childs; devstart += span->child[i]->size, ++i )
+d279 1
+a279 1
+	    ++myio->childs;
+d310 1
+d312 1
+a312 1
+	/* Write: create VRIO to all childs. */
+d314 1
+a314 1
+	myio->childs = 0;
+d316 1
+a316 1
+	for( i = 0; i < span->childs; ++i )
+d318 3
+d333 1
+a333 1
+	    ++myio->childs;
+d335 1
+a335 1
+	    /* Childs will receive exactly the same parameters as the
+d357 1
+a357 1
+	myio->childs = span->childs;
+d392 6
+a397 2
+	    span->readchild = (span->readchild + 1 == span->childs
+			       ? 0 : span->readchild + 1);
+d421 2
+a422 1
+    /* Now pass all allocated VRIOs to childs. */
+d430 1
+a430 2
+	rc = io->vrd->worker(io->vrd, io);
+	if( rc )
+d432 15
+a446 2
+	    DEBMSG(DBG_ALL,"\r\n[SpanWorker] child busy, queuing VRIO");
+	    QueueVrio(io);
+d508 1
+a508 1
+    DEBMSG2(DBG_INIT1,"\r\n[SpanCreate] at %p, %w childs",(PVOID)pVrh,sec->u.s.childs);
+d519 2
+a520 2
+    span->childs = sec->u.s.childs;
+    _fmemset(span->child, 0, span->childs * sizeof(span->child[0]));
+d522 1
+a522 1
+    for( i = 0; i < span->childs; ++i )
+d545 1
+a545 1
+    if( found != span->childs )
+d547 1
+a547 1
+	DEBMSG2(DBG_ALL,"\r\n[SpanCreate] only found %w out of %w",found,span->childs);
+d551 10
+a560 1
+    *pSize = sizeof(*span) + span->childs * sizeof(span->child[0]);
+@
+
+
+1.8
+log
+@- dummy SpanUpdate() implemented
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/04/28 01:47:40 $
+d10 3
+d43 1
+a43 1
+static char const id[]="$Id: span.c,v 1.7 1999/04/28 01:47:40 vitus Exp vitus $";
+d86 1
+a86 2
+ * CALL
+ *	SpanNotify(child,io)
+d198 1
+a198 2
+ * CALL
+ *	SpanWorker(stripe,myio)
+d433 1
+a433 2
+ * CALL
+ *	SpanUpdate(self,sec)
+d463 1
+a463 2
+ * CALL
+ *	SpanCreate(pVrh,pPhys,sec,pSize)
+a472 1
+ *	/0		couldn't create
+d477 1
+a477 1
+PUBLIC USHORT NEAR _Cdecl
+d484 1
+a484 1
+    DEBMSG2(DBG_LEVEL1,"\r\n[SpanCreate] at %p, %w childs",(PVOID)pVrh,sec->u.s.childs);
+d512 1
+a512 1
+		    DEBMSG2(DBG_LEVEL1,"\r\n[SpanCreate] found child %w in %p",i,tab[j]);
+@
+
+
+1.7
+log
+@- merged SpanAdmin() code with Worker/Notify, IOCMD_A* commands
+- SpanNotify() uses CompleteVrio()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1999/02/07 17:52:01 $
+d10 4
+d40 1
+a40 1
+static char const id[]="$Id: span.c,v 1.6 1999/02/07 17:52:01 vitus Exp vitus $";
+d76 1
+d183 1
+a183 1
+	    span->header.flags |= RDFLAGS_ERROR;
+d234 1
+d431 25
+d490 1
+d526 1
+a526 1
+	span->header.flags = RDFLAGS_ERROR;
+@
+
+
+1.6
+log
+@- implemented StripeAdmin() method
+- changed for iorb -> vrio transition
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1998/09/20 14:24:06 $
+d10 4
+d36 1
+a36 1
+static char const id[]="$Id: span.c,v 1.5 1998/09/20 14:24:06 vitus Stab vitus $";
+d72 1
+a72 1
+PRIVATE USHORT NEAR _Cdecl	SpanAdmin(PVRDEVHDR const self,PVRIO const myio);
+d98 1
+a107 1
+    ASSERT( myio->vrd->admin == SpanAdmin );
+a119 1
+    /* Reduce child I/O count.  If all completed, call parent's notification. */
+d121 1
+a121 2
+    --myio->childs;
+    if( myio->childs == 0 )			/* my I/O ready? */
+d123 4
+a126 3
+	PVRDSPAN const	span = (PVRDSPAN)myio->vrd;
+
+	DEBMSG1(DBG_LEVEL2,"\r\n[SpanNotify] completed all of myio %p",myio);
+d128 2
+a129 2
+	if( myio->oserr != 0 )
+	    span->header.flags |= RDFLAGS_ERROR;
+d131 3
+a133 3
+	if( myio->mother != NULL )
+	{
+	    PVRDEVHDR const	parent = myio->mother->vrd;
+d135 1
+a135 5
+	    DEBMSG2(DBG_LEVEL2,"\r\n[SpanNotify] calling parent %p, mother I/O %p",parent,myio->mother);
+	    parent->notify(myio);
+	    FreeVrio(myio);			/* don't need anymore */
+	}
+	else if( myio->iorb != NULL )
+d137 1
+a137 3
+	    DEBMSG(DBG_LEVEL2,"\r\n[SpanNotify] iorb -> Host Drive");
+	    HostdriveNotify(myio);
+	    FreeVrio(myio);			/* don't need anymore */
+d141 1
+a141 1
+	    USHORT	awoken;
+d143 25
+a167 2
+	    DEBMSG(DBG_LEVEL2,"\r\n[SpanNotify] nothing -> IOCtl");
+	    DevHelp_ProcRun((ULONG)myio, &awoken);	/* *nicht* freigeben! */
+d169 12
+d192 1
+a192 1
+ *	SpanAdmin(stripe,myio)
+d203 1
+a203 2
+ *	Pass VRIO to underlying administrative I/O routines
+ *	of all childs.
+d208 1
+a208 1
+SpanAdmin(PVRDEVHDR const self,PVRIO const myio)
+d218 1
+d220 2
+a221 3
+
+    DEBMSG1(DBG_PATH,"\r\n[SpanAdmin] %p",(PVOID)myio);
+    DEBMSG2(DBG_LEVEL3,"\r\n[SpanAdmin] first blk %lx, last blk %lx",(PVOID)&firstblk,(PVOID)&lastblk);
+a227 1
+    ASSERT( span->header.admin == SpanAdmin );
+d231 64
+d296 3
+a298 3
+    if( myio->iocmd == IOCMD_WRITE )
+    {
+	USHORT	i;
+d300 1
+d336 3
+a338 3
+    }
+    else
+    {
+d343 1
+a343 1
+	myio->childs = span->childs;		/* to detect 'all childs tried' */
+d383 2
+a384 23
+    }
+
+    if( newio == NULL )
+    {
+	/* Not enough memory.  Free all allocated VRIOs
+	 * and return error code to parent. */
+
+	DEBMSG(DBG_ALL,"\r\n[SpanAdmin] releasing VRIOs");
+	for( io = firstio; io != NULL; io = newio )
+	{
+	    newio = io->link;
+	    io->link = NULL;
+	    FreeVrio(io);
+	    DO( io = NULL );
+	}
+	return 1;
+    }
+
+    /* All VRIOs were allocated, now pass them to childs. */
+
+    for( io = firstio; io != NULL; io = newio )
+    {
+	USHORT	rc;
+a385 120
+	newio = io->link;
+	io->link = NULL;
+	rc = io->vrd->admin(io->vrd, io);
+	if( rc )
+	{
+	    DEBMSG(DBG_ALL,"\r\n[SpanAdmin] child busy, queuing VRIO");
+	    QueueVrio(io);
+	}
+    }
+
+    return 0;
+} /* end[SpanAdmin] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	SpanWorker(stripe,myio)
+ *
+ * PARAMETER
+ *	span		set building a spanning set
+ *	myio		I/O to spanning set (to myself)
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		I/O not processed, please retry
+ *
+ * DESCRIPTION
+ *	Pass VRIO to underlying I/O routine of affected childs.
+ *
+ * REMARKS
+ */
+PRIVATE USHORT NEAR _Cdecl
+SpanWorker(PVRDEVHDR const self,PVRIO const myio)
+{
+    PVRDSPAN const	span = (PVRDSPAN)self;
+    PVRIO	io;
+    PVRIO	newio;
+    PVRIO	firstio = NULL;
+
+    ULONG const	firstblk = myio->blk;		/* first blk */
+    ULONG const	lastblk = firstblk + myio->bcnt - 1;
+    ULONG	devstart = 0;
+    USHORT	i;
+
+    DEBMSG1(DBG_PATH,"\r\n[SpanWorker] %p",(PVOID)myio);
+    DEBMSG2(DBG_LEVEL3,"\r\n[SpanWorker] first blk %lx, last blk %lx",(PVOID)&firstblk,(PVOID)&lastblk);
+
+    ASSERT( myio->vrd == self );
+    ASSERT( myio->link == NULL );
+    ASSERT( myio->bcnt != 0 );
+    ASSERT( span->header.size != 0 );
+    ASSERT( span->header.notify == SpanNotify );
+    ASSERT( span->header.worker == SpanWorker );
+
+
+    /* Create VRIO to all affected childs. */
+
+    myio->childs = 0;
+    for( i = 0; i < span->childs; devstart += span->child[i]->size, ++i )
+    {
+	DEBMSG3(DBG_LEVEL3,"\r\n[SpanWorker] child %w: start %lx length %lx",i,(PVOID)&devstart,(PVOID)&span->child[i]->size);
+	if( firstblk >= devstart + span->child[i]->size )
+	{
+	    DEBMSG1(DBG_LEVEL4,"\r\n[SpanWorker] uneffected child %w",i);
+	    continue;				/* not affected */
+	}
+	if( lastblk < devstart )
+	{
+	    DEBMSG3(DBG_LEVEL3,"\r\n[SpanWorker] completed (last %lx, %w. start %lx)",(PVOID)&lastblk,i,(PVOID)&devstart);
+	    break;				/* did complete distribution */
+	}
+
+	DEBMSG1(DBG_LEVEL4,"\r\n[SpanWorker] creating VRIO for device %w",i);
+
+	/* Build linked list of VRIOs.  */
+
+	newio = AllocateVrio(span->child[i], myio);
+	if( newio == NULL )			/* memory exhausted? */
+	{
+	    DEBMSG(DBG_LEVEL1,"\r\n[SpanWorker] couldn't allocate VRIO");
+	    break;
+	}
+
+	if( firstio == NULL )
+	    firstio = newio;			/* save this as first */
+	else
+	    io->link = newio;
+	io = newio;
+	io->link = NULL;
+	++myio->childs;
+
+	/* Pass range to this child. */
+
+	io->iorb = myio->iorb;
+	io->iocmd = myio->iocmd;
+	io->cSGList = myio->cSGList;
+	io->pSGList = myio->pSGList;
+	io->ppSGList = myio->ppSGList;
+
+	if( firstblk < devstart )
+	{
+	    io->blk = 0;
+	    io->offset = (USHORT)(devstart - firstblk);
+	}
+	else
+	{
+	    io->blk = firstblk - devstart;
+	    io->offset = 0;
+	}
+	if( lastblk > devstart + span->child[i]->size )
+	    io->bcnt = (USHORT)(span->child[i]->size - io->blk);
+	else if( firstblk < devstart )
+	    io->bcnt = (USHORT)((lastblk - devstart) + 1);
+	else
+	    io->bcnt = (USHORT)((lastblk - firstblk) + 1);
+
+	io->oserr = 0xFFFF;			/* invalidate error code */
+    }
+a456 1
+    span->header.admin = SpanAdmin;		/* required */
+@
+
+
+1.5
+log
+@- modified for AllocateVrio(working_dev,mother)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1998/06/26 23:03:53 $
+d7 1
+a7 1
+ * How to do I/O to spanning set.
+d10 3
+d26 2
+a27 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+d32 1
+a32 1
+static char const id[]="$Id: span.c,v 1.4 1998/06/26 23:03:53 vitus Exp vitus $";
+d57 2
+d68 1
+d73 1
+a73 1
+/*#
+d76 1
+d79 1
+d82 1
+a82 2
+ * GLOBAL
+ *	(none)
+a99 1
+    ASSERT( myio->request != NULL );
+d103 1
+d127 1
+d134 7
+d144 4
+a147 2
+	    DEBMSG(DBG_LEVEL2,"\r\n[SpanNotify] no mother I/O -> Host Drive");
+	    HostdriveNotify(myio);
+a148 1
+	FreeVrio(myio);				/* don't need anymore */
+d158 171
+a328 1
+/*#
+d331 1
+d335 1
+d339 1
+a339 2
+ * GLOBAL
+ *	(nothing)
+a362 1
+    ASSERT( myio->request != NULL );
+d368 1
+d377 1
+a377 1
+	    DEBMSG1(DBG_LEVEL3,"\r\n[SpanWorker] uneffected child %w",i);
+d386 1
+a386 1
+	DEBMSG1(DBG_LEVEL3,"\r\n[SpanWorker] creating VRIO for device %w",i);
+d407 5
+a411 1
+	io->request = myio->request;
+d466 1
+a466 1
+}
+d477 1
+a477 1
+/*#
+d480 1
+d486 1
+d490 1
+a490 1
+ * GLOBAL
+d500 1
+d503 2
+a504 1
+    span->header.worker = SpanWorker;		/* required */
+@
+
+
+1.4
+log
+@- switched to DDK macros (cli, sti, pushf)
+- worker,notify get const pointers and become _Cdecl
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1998/05/29 01:56:42 $
+d10 4
+d26 7
+a32 3
+#pragma off (unreferenced)
+static char const id[]="$Id: span.c,v 1.3 1998/05/29 01:56:42 vitus Exp vitus $";
+#pragma on (unreferenced)
+d62 5
+a86 1
+    PVRDSPAN const	span = (PVRDSPAN)myio->vrd;
+d88 10
+a97 1
+    DEBMSG3(DBG_LEVEL3,"\r\n[SpanNotify] io %p, myio %p, error %w",io,myio,io->oserr);
+d114 2
+d171 10
+a180 1
+    DEBMSG2(DBG_LEVEL3,"\r\n[SpanWorker] entry (first blk %lx, last blk %lx)",(PVOID)&firstblk,(PVOID)&lastblk);
+d203 1
+a203 1
+	newio = AllocateVrio(myio);
+a220 1
+	io->vrd = span->child[i];
+d253 1
+@
+
+
+1.3
+log
+@- fine tuning of DEBMSG macro calls
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/raid/RCS/span.c,v $
+ * $Revision: 1.2 $
+ * $Date: 1998/04/08 00:56:38 $
+d10 3
+d23 1
+a23 1
+static char const id[]="$Id: span.c,v 1.2 1998/04/08 00:56:38 vitus Exp vitus $";
+d62 1
+a62 1
+ *	(nothing)
+d70 2
+a71 2
+PRIVATE VOID NEAR
+SpanNotify(PVRIO io)
+d76 1
+a76 1
+    DEBMSG3(DBG_LEVEL1,"\r\n[SpanNotify] io %p, my io %p, error %w",(PVOID)io,(PVOID)myio,io->oserr);
+d78 2
+a79 2
+    SAVE_IF();
+    DISABLE();
+d93 1
+a93 1
+	DEBMSG1(DBG_LEVEL2,"\r\n[SpanNotify] completed all of my io %p",(PVOID)myio);
+d101 1
+a101 1
+	    DEBMSG2(DBG_LEVEL1,"\r\n[SpanNotify] mother %p, parent %p",(PVOID)myio->mother,(PVOID)parent);
+d106 1
+a106 3
+	    extern void	HostdriveNotify(PVRIO io);
+
+	    DEBMSG(DBG_LEVEL1,"\r\n[SpanNotify] no mother -> Host Drive");
+d112 1
+a112 1
+    RESTORE_IF();
+d135 2
+a136 2
+PRIVATE USHORT NEAR
+SpanWorker(PVRDEVHDR self,PVRIO myio)
+d148 1
+a148 1
+    DEBMSG2(DBG_LEVEL1,"\r\n[SpanWorker] entry (first blk %lx, last blk %lx)",(PVOID)&firstblk,(PVOID)&lastblk);
+d155 1
+a155 1
+	DEBMSG3(DBG_LEVEL1,"\r\n[SpanWorker] child %w: start %lx length %lx",i,(PVOID)&devstart,(PVOID)&span->child[i]->size);
+d158 1
+a158 1
+	    DEBMSG1(DBG_LEVEL1,"\r\n[SpanWorker] uneffected child %w",i);
+d163 1
+a163 1
+	    DEBMSG3(DBG_LEVEL1,"\r\n[SpanWorker] completed (last %lx, %w. start %lx)",(PVOID)&lastblk,i,(PVOID)&devstart);
+d167 1
+a167 1
+	DEBMSG1(DBG_LEVEL2,"\r\n[SpanWorker] creating VRIO for device %w",i);
+d194 1
+a194 1
+	    io->offset = devstart - firstblk;
+d202 1
+a202 1
+	    io->bcnt = span->child[i]->size - io->blk;
+d204 1
+a204 1
+	    io->bcnt = (lastblk - devstart) + 1;
+d206 1
+a206 1
+	    io->bcnt = (lastblk - firstblk) + 1;
+d217 1
+d236 2
+d239 1
+d280 2
+d290 1
+a290 1
+	PDEVID const	id1 = sec->u.s.child[i].id;
+a292 1
+
+d298 1
+a298 1
+		PDEVID const	id2 = tab[j]->id;
+d311 1
+a311 3
+    if( found == span->childs )
+	span->header.flags = 0;
+    else
+d316 1
+@
+
+
+1.2
+log
+@- corrected VRIO handling
+- test successfull
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1998/03/10 02:09:48 $
+d10 4
+d20 1
+a20 1
+static char const id[]="$Id: span.c,v 1.1 1998/03/10 02:09:48 vitus Exp vitus $";
+d90 1
+a90 1
+	DEBMSG1(DBG_LEVEL1,"\r\n[SpanNotify] completed all of my io %p",(PVOID)myio);
+d166 1
+a166 1
+	DEBMSG1(DBG_LEVEL1,"\r\n[SpanWorker] creating VRIO for device %w",i);
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 3
+a11 1
+ * $Log$
+d16 1
+a16 1
+static char const id[]="$Id$";
+d57 2
+a58 2
+ *	Used by a child to report that an I/O has completed.
+ *	Updates father I/O (which was passed to this spanning set) and
+d66 4
+a69 3
+    /*PVRDEVHDR		child = io->vrd;*/
+    PVRIO const		father_io = io->father;
+    PVRDSPAN const	span = (PVRDSPAN)father_io->vrd;
+d76 9
+a84 10
+    if( father_io->oserr == 0xFFFF )		/* still not set? */
+	father_io->oserr = io->oserr;		/* propagate error */
+    else if( io->oserr == 0 )			/* this I/O still OK? */
+	father_io->oserr = io->oserr;		/* keep any error */
+
+    /* Remove VRIO.  If last, call parent notification. */
+
+    --father_io->childs;
+    FreeVrio(io);				/* don't need anymore */
+    if( father_io->childs == 0 )		/* father I/O ready? */
+d86 3
+a88 1
+	if( father_io->oserr != 0 )
+d90 15
+a104 1
+	father_io->vrd->notify(father_io);
+d116 1
+a116 1
+ *	SpanWorker(stripe,father_io)
+d119 1
+a119 1
+ *	father_io	I/O to spanning set
+d126 1
+a126 1
+ *	Pass VRIO to underlying I/O routine of affected childs..
+d131 1
+a131 1
+SpanWorker(PVRDEVHDR self,PVRIO father_io)
+d138 2
+a139 2
+    ULONG const	firstblk = father_io->blk;		/* first blk */
+    ULONG const	lastblk = firstblk + father_io->bcnt - 1;
+d143 2
+d147 2
+a148 2
+    father_io->childs = 0;
+    for( i  = 0; i < span->childs; devstart += span->child[i]->size, ++i )
+d150 1
+d152 2
+d155 1
+d157 2
+d160 3
+d166 1
+a166 1
+	newio = AllocateVrio();
+d168 2
+d171 1
+d179 1
+a179 1
+	++father_io->childs;
+d183 1
+a183 1
+	io->request = father_io->request;
+d198 2
+d201 1
+a201 1
+	    io->bcnt = (lastblk - firstblk) - io->blk;
+d260 2
+a261 2
+PUBLIC USHORT NEAR
+SpanCreate(PVRDEVHDR pVrh,PVRDEVHDR tab[MAX_PDEV],PSEC_VRDEV sec,PUSHORT pSize)
+d266 2
+d270 1
+d274 1
+a274 1
+    span->childs = sec->childs;
+d279 2
+a280 1
+	USHORT	j;
+d282 2
+d286 3
+a288 2
+	    if( tab[j] == NULL )
+		continue;			/* ignore empty entries */
+d290 8
+a297 5
+	    if( tab[j]->id == sec->child[i].id )
+	    {
+		span->child[i] = tab[j];
+		tab[j] = NULL;
+		++found;
+d304 2
+d307 1
+a307 1
+
+@

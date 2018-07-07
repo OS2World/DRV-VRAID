@@ -1,0 +1,328 @@
+컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴
+[NETMAIL]
+Fr냣:      Juergen Schneider, 2:244/1172
+Till:        Vitus Jensen, 2:2474/400.8
+럐ne:   Dsksleep 0.70
+Datum:      11.46.01 46:97
+컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴
+Hallo Vitus!
+
+19 Dec 96 01:43, Vitus Jensen wrote to Juergen Schneider:
+
+ VJ> Moin Juergen,
+
+ VJ> 15.12.96 23:28, you wrote a message to Vitus Jensen:
+
+ VJ> "laeuft nicht" ist ein wenig wage.
+ VJ> Am besten waere die ganze Maschine ;-), aber zumindest solltest Du den
+ VJ> Controller plus .ADD erwaehnen.
+ VJ> Die Aussagen ueber IBM- und die Micropolis-Platte betreffen die gleiche
+ VJ>  Maschine? Wann treten Probleme auf, gleich nach dem Booten oder wenn
+ VJ> die Platten einmal gestoppt wurden? Was genau passiert?  Kein Zugriff
+ VJ> mehr moeglich, SCSI-Lampe dauernd an, kein Flush mehr bei CAD?  Platte
+ VJ> faehrt beim ersten Zugriff nach dem Stoppen wieder hoch: ja/nein, ...
+
+Also, ich hab da ein bisschen getestet:
+Nachdem ich die Platten-ID's von 1. Scsi-Platte ID=1, 2. Platte ID=2 in ID=0 und 
+ID=1 geaendert habe, funktioniert die zweite Platte jetzt auch, bis... ja bis 
+sie abegeschaltet wurde.
+Ich hatte gewartet, bis beide Platten abgeschaltet wurden und dann den Test 
+wiederholt. Dann zeigte die zweite Platte das gleiche Erscheinungsbild wie 
+vorher. Das heisst: z.B. Dateien, die geloescht wurden, erscheinen wieder im 
+Directory, sind aber nicht mehr da, ein chkdsk zeigt ein fuerchterliches 
+Durcheinander :-((
+Das Premaster-Proggy von IBM, habe ich nochmal getestet, nachdem ich die zweite 
+Platte wieder abgehaengt habe: nachdem die Platte runtergefahren war bringt es 
+gleich einen Lesefehler auf einer Datei, die es auf einem FAT-Filesystem 
+erstellt hat. Die Datei ist in Ordnung. Nach Booten, also vor abschalten der 
+Platte, laeuft das Programm weiter, haengt jedoch etwas spaeter das ganze 
+Betriebssystem auf. :-(
+Die meisten Test sind mit einem HPFS-Filesystem gemacht worden.
+
+ VJ> Froehliche Weihnachten
+ VJ>     Vitus [Team OS/2 Germany #835]
+
+Bye,
+
+Juergen
+
+--- GoldED/2 2.50.A0715+
+
+컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴
+
+컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴
+[NETMAIL]
+Fr냣:      Juergen Schneider, 2:244/1172
+Till:        Vitus Jensen, 2:2474/400.8
+럐ne:   Dsksleep 0.70
+Datum:      25.46.01 46:97
+컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴
+Hallo Vitus!
+
+15 Jan 97 23:24, Vitus Jensen wrote to Juergen Schneider:
+
+ VJ> Moin Juergen,
+
+ VJ> 11.01.97 16:08, you wrote a message to Vitus Jensen:
+
+ VJ> Lass mal sehen...
+
+ VJ> ID 0  IBM Platte
+ VJ> ID 1  Micropolis Platte
+ VJ> ID x  SCSI CD-ROM (oder Brenner?)
+ VJ> ID 6  Streamer
+ VJ> ID 7  NCR
+
+
+=== Cut ===
+... SHOWSCSI V1.0
+
++================================================================+
+| Host Adapter #0                                                |
+|----------------------------------------------------------------|
+| Host Adapter SCSI_ID: #7                                       |
+| ASPI-Manager        : SYMBIOS LOGIC | Host Adapter ID     : SYM53C8XX 
++================================================================+
+
++----------------------------------------------------------------+
+| Host Adapter #0 - SCSI ID 0 - LUN 0: Disk Device               |
+|----------------------------------------------------------------|
+| Device Information             | Miscellaneous                 |
+|   Vendor ID  :                 |   Device Type : SCSI-2        |
+|   Product ID : DFRSS4F         |   Capacity    :  207 MByte    | 4,5 Gb!
+|   Revision   : 4B4B            |   Bytes/Sector:  512 Byte     |
+|----------------------------------------------------------------|
+|  SCSI-Features                                                 |
+|    [?] Synchronous Mode          [ ] WIDE SCSI (16-bit)        |
+|    [?] SCSI Linking              [ ] WIDE SCSI (32-bit)        |
+|    [?] Command Queuing                                         |
++----------------------------------------------------------------+
+
++----------------------------------------------------------------+
+| Host Adapter #0 - SCSI ID 1 - LUN 0: Disk Device               |
+|----------------------------------------------------------------|
+| Device Information             | Miscellaneous                 |
+|   Vendor ID  : MICROP          |   Device Type : SCSI-2        |
+|   Product ID : 2217-15MQ1001901|   Capacity    : 1685 MByte    |
+|   Revision   : HQ30            |   Bytes/Sector:  512 Byte     |
+|----------------------------------------------------------------|
+|  SCSI-Features                                                 |
+|    [?] Synchronous Mode          [ ] WIDE SCSI (16-bit)        |
+|    [?] SCSI Linking              [ ] WIDE SCSI (32-bit)        |
+|    [?] Command Queuing                                         |
++----------------------------------------------------------------+
+
++----------------------------------------------------------------+
+| Host Adapter #0 - SCSI ID 3 - LUN 0: CD-ROM Device             |
+|----------------------------------------------------------------|
+| Device Information             | Miscellaneous                 |
+|   Vendor ID  : PIONEER         |   Device Type : SCSI-2        |
+|   Product ID : CD-ROM DR-U10X  |   Capacity    : not mounted   |
+|   Revision   : 1.07            |   Bytes/Sector: not mounted   |
+|----------------------------------------------------------------|
+|  SCSI-Features                                                 |
+|    [?] Synchronous Mode          [ ] WIDE SCSI (16-bit)        |
+|    [ ] SCSI Linking              [ ] WIDE SCSI (32-bit)        |
+|    [ ] Command Queuing                                         |
++----------------------------------------------------------------+
+
++----------------------------------------------------------------+
+| Host Adapter #0 - SCSI ID 4 - LUN 0: CD-ROM Device             |
+|----------------------------------------------------------------|
+| Device Information             | Miscellaneous                 |
+|   Vendor ID  : TOSHIBA         |   Device Type : SCSI-2        |
+|   Product ID : CD-ROM XM-5201TA|   Capacity    : not mounted   |
+|   Revision   : 0255            |   Bytes/Sector: not mounted   |
+|----------------------------------------------------------------|
+|  SCSI-Features                                                 |
+|    [?] Synchronous Mode          [ ] WIDE SCSI (16-bit)        |
+|    [?] SCSI Linking              [ ] WIDE SCSI (32-bit)        |
+|    [ ] Command Queuing                                         |
++----------------------------------------------------------------+
+
++----------------------------------------------------------------+
+| Host Adapter #0 - SCSI ID 5 - LUN 0: Tape Device               |
+|----------------------------------------------------------------|
+| Device Information             | Miscellaneous                 |
+|   Vendor ID  : HP              |   Device Type : SCSI-2        |
+|   Product ID : C1533A          |   Capacity    : n/a           |
+|   Revision   : 9608            |   Bytes/Sector: n/a           |
+|----------------------------------------------------------------|
+|  SCSI-Features                                                 |
+|    [?] Synchronous Mode          [ ] WIDE SCSI (16-bit)        |
+|    [?] SCSI Linking              [ ] WIDE SCSI (32-bit)        |
+|    [ ] Command Queuing                                         |
++----------------------------------------------------------------+
+
++----------------------------------------------------------------+
+| Host Adapter #0 - SCSI ID 6 - LUN 0: CD-ROM Device             |
+|----------------------------------------------------------------|
+| Device Information             | Miscellaneous                 |
+|   Vendor ID  : IMS             |   Device Type : SCSI-2        |
+|   Product ID : CDD2000/00      |   Capacity    : not mounted   |
+|   Revision   : 1.26            |   Bytes/Sector: not mounted   |
+|----------------------------------------------------------------|
+|  SCSI-Features                                                 |
+|    [ ] Synchronous Mode          [ ] WIDE SCSI (16-bit)        |
+|    [ ] SCSI Linking              [ ] WIDE SCSI (32-bit)        |
+|    [ ] Command Queuing                                         |
++----------------------------------------------------------------+
+
+
+... program terminated
+=== Cut ===
+
+ VJ> Ein Bekannter hat bei sich DSKSleep mit zwei NCR 810 und dem
+ VJ> CAM-Treiber 4.02 laufen.  Gleicher Controller/Treiber?
+
+ VJ> Deine Config.Sys ist ein wenig umfangreich.  Eine kleinere konnte es
+ VJ> nicht sein? ;-) Stacker, Backmaster kenne ich nur vom
+ VJ> Namen. SYSIOS2.SYS und SVDisk.sys kenne ich auch nicht. NovaBack ist
+ VJ> bekannt.
+
+Stacker ist ein Plattenkomprimierer...
+Backmaster ist ein Backup-Proggi.
+SYSIOS2.SYS kenne ich selber nicht, koennte ich mal rausnehmen unf sehn, was   
+passiert.
+SVDisk.sys  ist eine virtuelles Diskettenlaufwerk.
+
+ VJ> Warum muss es OS2ASPI.DMD */ALL* sein?
+
+Hat was mit Gear und CD-Brenner zu tun, koennte ich rausnehmen.
+
+ VJ> Hast Du einmal den /DEBUG:1 Schalter ausprobiert?  Bootet die
+ VJ> Maschine
+ VJ> dann?
+
+Nee, was bewirkt der Schalter?
+
+ VJ> Nachdem die Platten runtergefahren sind, hoerst Du sie wieder starten,
+ VJ> richtig?  Hast Du Dich vergewissert, dass OS/2 zugreifen kann?  Am
+ VJ> einfachsten mit einem 'dir /s x:\' und sehen, ob die LED flackert.
+
+Kann er.
+
+ VJ> Vielleicht waeren die genauen Bezeichnungen der Platten hilfreich.
+ VJ> Zumindest wenn ich einen Bekannten finde, der sie ebenfalls einsetzt.
+
+siehe oben.
+
+ JS>> Das Premaster-Proggy von IBM, habe ich nochmal getestet, nachdem
+ JS>> ich die zweite Platte wieder abgehaengt habe: nachdem die Platte
+ JS>> runtergefahren war bringt es gleich einen Lesefehler auf einer
+ JS>> Datei, die es auf einem FAT-Filesystem erstellt hat. Die Datei
+ JS>> ist in Ordnung. Nach Booten, also vor abschalten der Platte,
+ JS>> laeuft das Programm weiter, haengt jedoch etwas spaeter das ganze
+ JS>> Betriebssystem auf. :-( Die meisten Test sind mit einem
+ JS>> HPFS-Filesystem gemacht worden.
+
+ VJ> Lass uns mal dieses Premaster draussen vor lassen.  Geht ja schon mit
+ VJ> den Platten nicht richtig.
+
+ VJ> C-x C-s
+ VJ>     Vitus [Team OS/2 Germany #835]
+
+ VJ> -+-
+
+Bye,
+
+Juergen
+
+--- GoldED/2 2.50.A0715+
+
+컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴
+
+컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴
+[NETMAIL]
+Fr냣:      Juergen Schneider, 2:244/1172
+Till:        Vitus Jensen, 2:2474/400.8
+럐ne:   Dsksleep 0.70
+Datum:      26.46.01 46:97
+컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴
+Hallo Vitus!
+
+15 Jan 97 23:24, Vitus Jensen wrote to Juergen Schneider:
+
+ VJ> Moin Juergen,
+
+Das Problem scheint in erster Linie bei FAT aufzutreten, auf HPFS laeuft z.B. 
+der Premaster auch nach wiederhochfahren der Platte einwandfrei!
+
+ VJ> C-x C-s
+ VJ>     Vitus [Team OS/2 Germany #835]
+
+ VJ> -+-
+
+Bye,
+
+Juergen
+
+--- GoldED/2 2.50.A0715+
+
+컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴
+컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴
+[NETMAIL]
+Fr냣:      Juergen Schneider, 2:244/1172
+Till:        Vitus Jensen, 2:2474/424
+럐ne:   Dsksleep 0.70
+Datum:      22.46.02 46:97
+컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴
+Hallo Vitus!
+
+05 Feb 97 01:49, Vitus Jensen wrote to Juergen Schneider:
+
+ VJ> Moin Juergen,
+
+ VJ> 25.01.97 19:27, you wrote a message to Vitus Jensen:
+
+ VJ> So langsam sollte ich mich fuer die Verspaetung entschuldigen, oder?
+ VJ> Aber dafuer habe ich jetzt auch eine neue Adresse!
+
+Nun, ich muss mich auch erstmal fuer das spaete Antworten entschuldigen.
+
+ VJ> ...
+ VJ>>> Ein Bekannter hat bei sich DSKSleep mit zwei NCR 810 und dem
+ VJ>>> CAM-Treiber 4.02 laufen.  Gleicher Controller/Treiber?
+
+ VJ> ? Ist es ?
+
+Bei mir ist es nur ein Controller, aber auf jeden Fall der neueste Treiber, der 
+auf der Homepage von Symbios zu finden ist (ist wohl 4.02).
+
+ VJ> ...
+ VJ>>> Hast Du einmal den /DEBUG:1 Schalter ausprobiert?  Bootet die
+ VJ>>> Maschine dann?
+
+Tut sie, es kommt eine Meldung:
+
+adapter 0 doesn't support HW scatter/gather
+
+was auch immer das heisst...
+
+
+ VJ> ...
+
+ VJ> C-x C-s
+ VJ>     Vitus [Team OS/2 Germany #835]
+
+ VJ>  + Origin: Want some Tea? (2:2474/424)
+
+Why not...
+
+Ansonsten lief auf HPFS eigentlich so ziemlich alles normal, der Test war etwas 
+beschraenkt, da ich von Diskette gebootet hatte, um die Meldung lesen zu 
+koennen. Von Platte ist sie zu schnell weg.
+
+Aber auf FAT das reinste Chaos, es kommt irgendwann die Meldung:
+kann auf Laufwerk x: nicht zugreifen.
+Danach kann ich nur noch mit CHKDSK reparieren und alles was ich mit Deinem 
+Filter geschrieben habe ist wech...
+
+Bye,
+
+Juergen
+
+--- GoldED/2 2.50.A0715+
+
+컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴
+

@@ -1,0 +1,58 @@
+head	1.1;
+access;
+symbols
+	DSLEEPv0_98:1.1
+	DSLEEPv0_95:1.1
+	DSLEEPv0_93:1.1
+	DSLEEPv0_92:1.1
+	DSLEEPv0_91:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	97.04.05.01.52.17;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Compile DSKSleep utilities
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@# -*- makefile -*-
+# $Source$
+# $Revision$
+# $Date$
+# $Author$
+#
+# Compile DSKSleep utilities
+#
+# $Log$
+# ----------------------------------------
+# This code is Copyright Vitus Jensen 1997
+#
+COMPILER *= IBMC
+DEBUG *= 0
+
+.INCLUDE: ../../compiler.mkf
+
+CFLAGS = $(_CFLAGS) -W2all
+
+all: dsl.exe regme.exe genkey.exe
+
+dsl.exe : dsl.c dskslpub.h
+	$(CL2VIO) $(CFLAGS) dsl.c
+
+regme.exe : regme.c
+	$(CL2VIO) $(CFLAGS) regme.c
+
+genkey.exe : genkey.c
+	$(CL2VIO) $(CFLAGS) genkey.c
+@

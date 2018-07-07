@@ -1,0 +1,11 @@
+* $Id: dsksleep.ddp,v 1.1 1997/02/06 00:37:17 vitus Exp $
+:TITLE
+SCSI Disk Sleeper
+
+:CONFIG
+BASEDEV=DSKSLEEP.FLT
+
+:FILES
+DSKSLEEP.FLT \DSKSLEEP.FLT
+
+* END

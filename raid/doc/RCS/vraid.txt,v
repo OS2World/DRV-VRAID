@@ -1,0 +1,384 @@
+head	1.2;
+access;
+symbols
+	VRAID_REL23:1.2
+	REL22:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	99.10.23.20.20.04;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.10.23.19.15.57;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@HyperMake 3.65, VRAID.INF
+@
+
+
+1.2
+log
+@- umformatiert, aber nicht besser
+@
+text
+@..
+.. $Source: r:/source/driver/raid/doc/RCS/vraid.txt,v $
+.. $Revision: 1.1 $
+.. $Date: 1999/10/23 19:15:57 $
+.. $Locker: vitus $
+..
+..      Written with EMACS 19.33, compile with HyperMake 3.65
+..
+..
+.. $Log: vraid.txt,v $
+.. Revision 1.1  1999/10/23 19:15:57  vitus
+.. Initial revision
+..
+.. ----------------------------------------
+.. This code is Copyright Vitus Jensen 1999
+
+.TI
+VRAID Documentation
+.FU{}
+
+
+.. ======================================================================
+.1
+General
+
+Welcome to VRAID, the first (to my knowledge) shareware RAID solution
+for OS/2.  Instead of buying an expensive RAID controller you add this
+driver to your system, connect some drives (the more the better) and
+are ready for operation!
+
+This software features{As this is work in process only some RAID
+levels are implemented. However, the intention is to supply all major
+RAID levels to the average OS/2 user.}:
+
+þ Single (an array containing a single disk or array)
+þ Chaining (two or more disks or arrays combined by adding one behind the other)
+þ Striping (RAID 0)
+þ Mirroring (RAID 1)
+þ You can combine any combination of RAID levels to create the array
+OS/2 should use for file storage.  There are no limits{Well, there is
+a memory limitation in VRAID.FLT but I don't expect you to reach
+this.} on how complicated your array structure becomes.
+þ Build{Build is the first time creation of an disk array.} and
+Rebuild{Rebuild is the automatic recreation of a disk array once a
+failure has been detected and corrected.} Processes are done in the
+background.
+
+
+How is it done?
+
+Well, VRAID.FLT is a small filter driver which intercepts OS2DASD.DMD
+operation and combines non-removable disks of any kind to RAID arrays.
+This process is transparent to anything installed after VRAID.FLT.
+For FAT, hpfs.ifs, ext2fs.ifs and any other software you use a RAID
+array looks just as an ordinary disk {This is very much like a
+hardware RAID solution except that you can't boot from VRAID.  Sorry,
+this is a limitation by design}.
+
+This means you have to do the following steps:
+
+.SL
+þ Connect disks to any [SCSI or IDE or MFM or RLL or ESDI or ...]
+controller supported by OS/2.
+þ Install VRAID.FLT
+þ Let VSetup.exe create VRAID partitions on all disks you want to use
+for arrays.
+þ Define arrays (using disk space inside VRAID partitions) via VSetup.exe.
+þ Restart OS/2
+þ VRAID.FLT will report your defined arrays to OS/2.
+þ Use your larger, faster or safer array and enjoy!
+.UL
+
+See RAID.DOC for details how each RAID level works.
+
+
+
+
+.. ======================================================================
+.2
+Author
+
+Vitus Jensen, Dipl.-Ing. techn. inf.
+Tischlerstr. 8, D-30916 Isernhagen, Germany
+
+Electronic mail: 2:2474/424@@fidonet (preferred), 81:491/3035@@os2net,
+Vitus__Jensen@@gmx.de
+
+FAX: +49-5136-893003 (thanks to Harald Pollack's FRec)
+.:br.BBS: +49-5136-893003 (V34, V90S, X75)
+
+Music: Louis Armstrong's Greatest Hits, Big T and Mighty Max, Billie
+Holiday Collection
+
+Written for VRAID.FLT Version: 0.80
+
+BTW, if ever wondered about the name (Visual RAID Filter) of this
+thing: it's as visual as many products which use this attribute in
+their names.  Frankly, I couldn't make sense to it, either.
+
+
+
+
+.. ======================================================================
+.2
+Legal Stuff
+
+The author disclaims all warranties as to this software, whether
+express or implied, including without limitation any implied
+warranties of merchantability, fitness for a particular purpose,
+functionality, data integrity or protection, in so far as permitted by
+applicable legislation.
+
+
+All trademarks are property of their respective owners and appear for
+identification purposes only.
+
+
+
+
+.. ======================================================================
+.2
+Archive Contents
+
+.:parml tsize=20 break=none compact.
+.:pt.VRAID.inf
+.:pd.this documentation
+.:pt.VRAID.FLT
+.:pd.the filter itself
+.:pt.VRAID.ddp
+.:pd.installation script
+.:pt.VSetup.exe
+.:pd.setup program
+.:pt.raid.doc
+.:pd.short explaination of RAID and RAID levels
+.:pt.regme.exe
+.:pd.inserts your registration code into VRAID.FLT
+.:pt.vraidpub.h
+.:pd.public interface to VRAID.FLT (for programmers)
+.:pt.dsklayout.h
+.:pd.describes how configuration data is saved to disk.
+.:pt.VRAID.sym
+.:pd.symbol file, to help debugging
+.:pt.file_id.diz
+.:pd.short description for BBS
+.:eparml.
+
+
+
+
+
+.. ======================================================================
+.1
+Driver Installation
+
+Make a backup of your system.  You should not need it but better safe
+than sorry...
+
+It is recommended that you have an OS/2 boot disk ready, just in case
+the system locks up during the boot process and you want to remove the
+driver.  On Warp you may use use the ALT-F1 menue for the same purpose
+(to boot to command line-only) with your original Config.Sys{this
+"original" Config.sys is located in C:\os2\boot\Config.x, make sure
+it's bootable!}.
+
+Execute DDINSTAL from an OS/2 command prompt or double-click the
+Device Driver Install object (located in the System Setup folder) if
+your system is Warp.  Change the source directory if neccessary and a
+selection list will open asking you to install the 'VRAID Filter'.
+Mark that line and click on OK.
+
+This automatic install will place VRAID.FLT and VSetup.exe in the root
+directory of your OS/2 boot drive.
+
+Installation by hand is easy:
+þ Copy VRAID.FLT to C:\ or C:\os2\boot, assuming C: is your boot drive.
+þ Copy VSetup.exe to a directory of your choice.  You may wish to
+create program object for this file and place it on your desktop.
+þ Edit your C:\Config.Sys file (i.e. using the OS/2 "System Editor")
+and add the following line to your Config.Sys:
+  - BASEDEV=VRAID.FLT /V		(no subdirectory name!)
+
+
+The position of 'BASEDEV=VRAID.FLT' in Config.Sys doesn't matter for VRAID operation.  But it may affect other filters (i.e. load DSKSLEEP.FLT before VRAID.FLT!).  If, however, you encounter problems try putting BASEDEV=VRAID.FLT to either end of Config.Sys (if this solves your problems please report with a listing of your Config.Sys).
+
+Changes to Config.sys require you to reboot your machine.  But before doing this you may want to look at chapter "Configuration" as defining RAID arrays doesn't require you to have VRAID.FLT loaded.
+
+
+
+.. ======================================================================
+.2
+Driver Options
+
+~/V~
+
+Verbose, display some usefull and unusefull information (this switch is always enabled in the unregistered version).
+
+~/DEBUG~
+
+Displays even more messages.  Not generally usefull.
+
+
+
+.. ======================================================================
+.1
+Configuration
+
+This chapter describes VSetup.exe, a program to define RAID drives build by VRAID.FLT on the next system startup.  Additional some settings/statistics of VRAID.FLT may be changed/retrieved at runtime.
+
+As it is difficult to discuss the whole matter (drives made out of drives which are known by OS/2 as drives) I deciced to put up a nomenclature.  Fairly simple:
+
+þ OS/2 devices / OS/2 drives
+  Those spinning things as you have known them ever.  Every device contains one or more partitions and every partition may contain a filesystem supported by OS/2.  A supported filesystem (FAT, HPFS, EXT2FS, ...) is assigned a drive letter.
+
+þ PHYSDEVICE
+  Whenever a OS/2 device contains a VRAID partition (partition type 0x7C if you wonder) that partition is called a PHYSDEVICE.  PHYSDEVICEs may become part of...
+
+þ Array Drive (Single, Striping, Chaining, Mirror, ...)
+  Array Drives are build from PHYSDEVICEs and may be part of other Array Drives, building a freely definable disk structure.  The topmost Array Drive is reported by VRAID.FLT to OS/2 and accessible by FDISK as a whole.
+
+
+
+
+.. ======================================================================
+.2
+Main Window
+
+That's the window you see when you start VSetup.exe.  It contains an action log and a menu bar to select tasks.
+
+The amount of messages which appear inside the action log is controlled by an parameter to VSetup.exe.  Use ~-v:<number>~ to specify the amount of messages.  <number> defaults to 1, higher numbers specify more messages.  Increasing this value is usefull if you recognize an odd behaviour of VSetup.exe and want to report this to the author.  Specify ~-v:2~ or ~-v:3~ and add the output to your error report.
+
+
+
+.. ----------------------------------------------------------------------
+.3
+File Menu
+
+This menu let you save or print the contents of the action log.
+
+--- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+
+None of the choices in the file menu are currently implemented.
+
+--- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+
+
+
+.. ----------------------------------------------------------------------
+.3
+Edit Menu
+
+Entries "Cut", "Copy" and "Paste" interact with the action log and the clipboard (same actions as the usual CUA keys which work, too), "Clear log" clears the action log.
+
+
+
+.. ----------------------------------------------------------------------
+.3
+Driver Menu
+
+This menu is only enabled if an installed VRAID.FLT is detected. Choices are to add the driver version or it's startup messages to the action log.  :link refid=Beep reftype=fn.Beeps:elink. generated internally in the VRAID.FLT may be disabled here, too.
+
+
+
+
+.. ----------------------------------------------------------------------
+.3
+Drives Menu
+
+This menu contains the entry "Setup" which opens the Drive Definition Window (see below) and a "Dump..." choice.
+
+Selecting "Dump..." opens a dialog where you can select which drive to dump.  Possible selections are the physical disks as known by OS/2 (index 0 - n-1) and the value "-1", meaning to dump all physical disks.
+
+
+
+
+.. ----------------------------------------------------------------------
+.3
+Help
+
+The only choice here is to display version information about VSetup.exe itself.
+
+
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+.. $Source$
+.. $Revision$
+.. $Date$
+.. $Locker$
+d10 4
+a13 1
+.. $Log$
+d19 1
+d26 8
+a33 4
+Welcome to VRAID, the first (to my knowledge) shareware RAID solution for OS/2.  Instead of buying an expensive RAID controller you add this driver to your system, connect some drives (the more the better) and are ready for operation!
+
+.FU{}
+This software features{As this is work in process only some RAID levels are implemented. However, the intention is to supply all major RAID levels to the average OS/2 user.}:
+d39 8
+a46 2
+þ You can combine any combination of RAID levels to create the array OS/2 should use for file storage.  There are no limits{Well, there is a memory limitation in VRAID.FLT but I don't expect you to reach this.} on how complicated your array structure becomes.
+þ Build{Build is the first time creation of an disk array.} and Rebuild{Rebuild is the automatic recreation of a disk array once a failure has been detected and corrected.} Processes are done in the background.
+d51 7
+a57 1
+Well, VRAID.FLT is a small filter driver which intercepts OS2DASD.DMD operation and combines non-removable disks of any kind to RAID arrays.  This process is transparent to anything installed after VRAID.FLT.  For FAT, hpfs.ifs, ext2fs.ifs and any other software you use a RAID array looks just as an ordinary disk.
+d62 2
+a63 1
+þ Connect disks to any [SCSI or IDE or MFM or RLL or ESDI or ...] controller supported by OS/2.
+d65 2
+a66 1
+þ Let VSetup.exe create VRAID partitions on all disks you want to use for arrays.
+d77 1
+d85 2
+a86 1
+Electronic mail: 2:2474/424@@fidonet (preferred), 81:491/3035@@os2net, Vitus__Jensen@@gmx.de
+d89 1
+a89 2
+BBS: +49-5136-893003 (V34, V90S, X75)
+
+d91 2
+a92 1
+Music: Louis Armstrong's Greatest Hits, Big T and Mighty Max, Billie Holiday Collection
+d96 3
+a98 1
+BTW, if ever wondered about the name (Visual RAID Filter) of this thing: it's as visual as many products which use this attribute in their names.  Frankly, I couldn't make sense to it, either.
+d107 5
+a111 1
+The author disclaims all warranties as to this software, whether express or implied, including without limitation any implied warranties of merchantability, fitness for a particular purpose, functionality, data integrity or protection, in so far as permitted by applicable legislation.
+d113 3
+a115 1
+All trademarks are property of their respective owners and appear for identification purposes only.
+d155 2
+a156 3
+Make a backup of your system.  You should not need it but better safe than sorry...
+
+It is recommended that you have an OS/2 boot disk ready, just in case the system locks up during the boot process and you want to remove the driver.  On Warp you may use use the ALT-F1 menue for the same purpose (to boot to command line-only) with your original Config.Sys (this "original" Config.sys is located in C:\os2\boot\Config.x, make sure it's bootable!).
+d158 12
+a169 1
+Execute DDINSTAL from an OS/2 command prompt or double-click the Device Driver Install object (located in the System Setup folder) if your system is Warp.  Change the source directory if neccessary and a selection list will open asking you to install the 'VRAID Filter'.  Mark that line and click on OK.
+d171 2
+a172 1
+This automatic install will place VRAID.FLT and VSetup.exe in the root directory of your OS/2 boot drive.
+d176 4
+a179 2
+þ Copy VSetup.exe to a directory of your choice.  You may wish to create program object for this file and place it on your desktop.
+þ Edit your C:\Config.Sys file (i.e. using the OS/2 "System Editor") and add the following line to your Config.Sys:
+@

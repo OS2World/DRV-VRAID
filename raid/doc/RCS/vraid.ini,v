@@ -1,0 +1,234 @@
+head	1.2;
+access;
+symbols
+	VRAID_REL23:1.2
+	REL22:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	99.10.23.20.20.42;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.10.23.19.15.36;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Settings of HyperMake, VRAID.INF
+@
+
+
+1.2
+log
+@- ASISOFTRETURN
+@
+text
+@Settings of HyperMake (earlier version MakeIPF)
+
+
+//--------------------------------------------------------
+//General settings
+
+//possible settings: ENGLISH, GERMAN, PASCAL, C
+Language = GERMAN C
+
+Registration Code = 0
+
+//beep when finishing compiling - possible settings: YES, NO
+beep = YES
+
+
+//--------------------------------------------------------
+//Format settings
+
+//possible settings: IPF, HTML, WINHELP3, WINHELP4, HTMLHELP
+Target = IPF
+
+//possible settings: ASCIIHARDRET, ASCIISOFTRET, WORDSTAR4
+source format = ASCIISOFTRET
+
+//possible Settings: ISO, IBM
+source codepage = IBM
+
+
+//--------------------------------------------------------
+//specific characters
+
+List chars = ˛-Õƒ
+
+Index char = #
+
+//highlighted char toggles
+//all formats:    1 alternate  2 italic 3 bold 4 underlined
+//IPF:            5 red 6 cyan 7 blue
+//HTML:           8 strike 9 big 10 small
+//HTML, Winhelp:  11 sub 12 sup
+//        123456789012
+toggles = ~&*_‡„‰
+//possible ISO setting:  toggles = ~&*_Æ§˛¯•Ωø™
+
+//characters not shown in index and duplicated heading
+index filter = ().
+
+//language specific letters besides A...Z, a...z, 0...9
+//english only '
+//german ÑîÅ·éôö 
+extended letters = '-/2
+
+
+//--------------------------------------------------------
+//Font characters
+
+//Font chars from A to Z and from a to z (case-sensitive!)
+//both HTML and IPF: size Linestandard OmitLinks PRE center
+//only IPF: Fontname codepage foregroundcolor BACKGROUNDCOLOR
+//only HTML: PHRASEELEMENT Color font1,font2,font3
+//Winhelp: Color family:fontname
+Font A = fmodern:Courier 15 Courier CODE
+Font B = fmodern:Courier Courier 12 PRE black Maroon Linestandard OmitLinks
+Font C = fmodern:Courier Courier 12 CODE black Maroon OmitLinks
+Font D = black Maroon
+Font E = fswiss:Helvetica 15 Helv neutral Green OmitLinks
+Font H = fswiss:Helvetica 22 Navy
+Font I = fswiss:Helvetica 18 Navy
+Font K = fswiss:Helvetica 14 Navy
+Font O = OmitLinks
+Font P = fmodern:Modern 15 System_VIO yellow BLACK OmitLinks Maroon CODE
+Font Y = neutral Maroon
+
+
+//--------------------------------------------------------
+//link specific settings
+
+//endings in german words: e s es n en
+ending of words = s es ies 's ion ions ing ings
+
+Text for link to subchapters = &subchapters:& (Font Y)
+Text for link to next chapter = &next chapter:& (Font Y)
+text for link to main chapter = to main chapter
+
+//possible Settings: PARAGRAPH, WINDOW
+no more links in = PARAGRAPH
+
+//graphics file for marking external URL links or NO for no graphics file
+URL graphics file = World
+
+
+//--------------------------------------------------------
+//HTML specific settings
+
+//first and last line in file
+title in every file = NO
+
+function for first line = BACK FORWARD CONTENT INDEX
+text for first line =     back forward contents index
+function for last line =  FORWARD CONTENT INDEX
+text for last line =      forward contents index
+
+//you can use buttons BACK.GIF FORWARD.GIF CONTENT.GIF INDEX.GIF
+//instead of simple text or use Javascript buttons
+//possible settings: TEXT GIF JAVASCRIPT
+buttons = GIF
+
+//enter tags or NO
+body tags = NO
+
+entries for extended index = 30
+
+//HTML text file is divided in several files.
+//Enter heading level where new file begins (0 means only one HTML text file)
+new file level = 3
+
+//Enter heading level up to which has to be divided by horizontal rules
+//  (0 means no rules)
+horizontal rule level = 4
+
+//Enter heading level up to which has to be shown in the HTML content file
+//  (6 means all levels, 0 means no content)
+content level = 6
+
+//pre filename = XYZ* let all HTML files begin with XYZ
+pre filename = *
+
+//possible settings: sample.html SAMPLE.HTML Sample.html SAMPLE.HTM Sample.htm sample.htm
+filename appearance = sample.html
+
+//choose DOS or LONG - DOS means 8.3 filenames, LONG no limit
+filenames = LONG
+
+default frame = _top
+contents frame = _top
+
+//here you can define the text appearing in the browser titlebar
+//enter DOCTITLE, HEADING, FILENAME and fixed text, e.g. a slash
+//NO means no text
+file title = DOCTITLE - HEADING
+meta content = DOCTITLE - HEADING
+statusbar mouseover = to chapter: HEADING (file FILENAME)
+statusbar default = HEADING (file FILENAME)
+
+notes text = notes
+
+//choose between ActiveX popup footnotes (ActiveX),
+//frame footnotes (FRAMES) or no frames (NOFRAMES)
+footnotes = FRAMES
+
+//enter NO for non-Javascript or AlternateLinkText;OpenText;CloseText
+contents tree = Link to normal contents view;open tree;close tree
+
+
+//--------------------------------------------------------
+//Winhelp specific settings
+
+//influences the left margin command and the indention of lists
+list indention = 4
+
+//default value is 10
+default font size = 10
+
+//heading level 123456
+heading fonts = HIKKKK
+
+//omit scrolling of the heading, YES or NO
+keep heading = YES
+
+//enter CNTFILE, INTERNAL, BOTH or NO
+contents creation = BOTH
+
+//heading text for the subchapter containing the text
+//of the main chapter in CNT files
+contents general text = General
+
+//character which is the left fat dot in lists, in different list levels
+printed listchars = oooo
+
+
+//--------------------------------------------------------
+//Help file specific settings
+
+Help Subtable Start ID = 7000
+
+//files will be overwritten without warning
+Helptable filename = HLPTABLE.RC
+Panel ID filename  = *.PAN
+
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d23 1
+a23 1
+source format = ASCIIHARDRET
+d74 1
+d91 1
+d153 1
+@

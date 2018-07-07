@@ -1,0 +1,70 @@
+
+ Mini
+
+ Start     Length     Name                   Class
+ 0001:0000 00020H     DDHeader               CONST
+ 0001:0020 00000H     CONST                  CONST
+ 0001:0020 00000H     CONST                  DATA
+ 0001:0020 00000H     CONST2                 DATA
+ 0001:0020 00000H     LIBDATA                DATA
+ 0001:0020 07D05H     _DATA                  DATA
+ 0001:7D28 00000H     _BSS                   BSS
+ 0002:0000 00000H     LIBCODE                CODE
+ 0002:0000 00000H     CODE                   CODE
+ 0002:0000 00910H     _TEXT                  CODE
+ 0003:0000 00000H     SwapData               FAR_DATA
+ 0003:0000 0001BH     INITDATA               FAR_DATA
+
+ Origin   Group
+ 0001:0   DGROUP
+ 0002:0   StaticGroup
+
+  Address         Publics by Name
+
+ 0002:0016       _Close
+ 0002:0412       _Code_End
+ 0001:0054       _Device_Help
+ 0001:0000       _DiskDDHeader
+ 0002:00B4       _dprintf
+ 0001:0058       _fDriverFlags
+ 0002:000A       _GenIOCtl
+ 0002:0414       _Init
+ 0001:005A       _MemPool
+ 0001:785A       _npInitData
+ 0002:0012       _Open
+ 0002:001A       _Read
+ 0002:000E       _Shutdown
+ 0002:05A0       _sprintk
+ 0002:0022       _Strategy
+ 0001:000A       _szDriverName
+ 0001:785C       _szMsgBuffer
+ 0001:0052       _uDebugLevel
+ 0002:001E       _Write
+ 0002:038E       __aNFauldiv
+ 0002:03B0       __aNuldiv
+ 0002:0322       __aNulrem
+
+  Address         Publics by Value
+
+ 0001:0000       _DiskDDHeader
+ 0001:000A       _szDriverName
+ 0001:0052       _uDebugLevel
+ 0001:0054       _Device_Help
+ 0001:0058       _fDriverFlags
+ 0001:005A       _MemPool
+ 0001:785A       _npInitData
+ 0001:785C       _szMsgBuffer
+ 0002:000A       _GenIOCtl
+ 0002:000E       _Shutdown
+ 0002:0012       _Open
+ 0002:0016       _Close
+ 0002:001A       _Read
+ 0002:001E       _Write
+ 0002:0022       _Strategy
+ 0002:00B4       _dprintf
+ 0002:0322       __aNulrem
+ 0002:038E       __aNFauldiv
+ 0002:03B0       __aNuldiv
+ 0002:0412       _Code_End
+ 0002:0414       _Init
+ 0002:05A0       _sprintk

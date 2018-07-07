@@ -1,0 +1,197 @@
+;	Static Name Aliases
+;
+;	$S170_vcid	EQU	vcid
+	TITLE   Str1.c
+	.286p
+	.287
+_TEXT	SEGMENT  WORD PUBLIC 'CODE'
+_TEXT	ENDS
+_DATA	SEGMENT  WORD PUBLIC 'DATA'
+_DATA	ENDS
+CONST	SEGMENT  WORD PUBLIC 'CONST'
+CONST	ENDS
+_BSS	SEGMENT  WORD PUBLIC 'BSS'
+_BSS	ENDS
+$$SYMBOLS	SEGMENT  BYTE PUBLIC 'DEBSYM'
+$$SYMBOLS	ENDS
+$$TYPES	SEGMENT  BYTE PUBLIC 'DEBTYP'
+$$TYPES	ENDS
+DGROUP	GROUP	CONST, _BSS, _DATA
+	ASSUME DS: DGROUP
+	ASSUME  SS: NOTHING
+EXTRN	_Init:NEAR
+EXTRN	_fDriverFlags:WORD
+_DATA      SEGMENT
+$S170_vcid	DB	'$Id: str1.c,v 1.2 2001/06/26 02:02:05 vitus Exp $',  00H
+_DATA      ENDS
+_TEXT      SEGMENT
+	ASSUME	CS: _TEXT
+	PUBLIC	_GenIOCtl
+_GenIOCtl	PROC NEAR
+; Line 62
+;	rp = 4
+; Line 63
+	*** 000000	b8 03 81 		mov	ax,-32509	;8103H
+; Line 64
+	*** 000003	c3 			ret	
+
+_GenIOCtl	ENDP
+	PUBLIC	_Shutdown
+_Shutdown	PROC NEAR
+; Line 87
+;	rph = 4
+; Line 88
+	*** 000004	b8 00 01 		mov	ax,256	;0100H
+; Line 89
+	*** 000007	c3 			ret	
+
+_Shutdown	ENDP
+	PUBLIC	_Open
+_Open	PROC NEAR
+; Line 109
+;	rp = 4
+; Line 110
+	*** 000008	b8 00 01 		mov	ax,256	;0100H
+; Line 111
+	*** 00000b	c3 			ret	
+
+_Open	ENDP
+	PUBLIC	_Close
+_Close	PROC NEAR
+; Line 131
+;	rp = 4
+; Line 132
+	*** 00000c	b8 00 01 		mov	ax,256	;0100H
+; Line 133
+	*** 00000f	c3 			ret	
+
+_Close	ENDP
+	PUBLIC	_Read
+_Read	PROC NEAR
+; Line 153
+;	rp = 4
+; Line 154
+	*** 000010	b8 02 81 		mov	ax,-32510	;8102H
+; Line 155
+	*** 000013	c3 			ret	
+
+_Read	ENDP
+	PUBLIC	_Write
+_Write	PROC NEAR
+; Line 175
+;	rp = 4
+; Line 176
+	*** 000014	b8 02 81 		mov	ax,-32510	;8102H
+; Line 177
+	*** 000017	c3 			ret	
+
+_Write	ENDP
+	PUBLIC	_Strategy
+_Strategy	PROC NEAR
+; Line 207
+	*** 000018	55 			push	bp
+	*** 000019	8b ec 			mov	bp,sp
+;	rph = 4
+; Line 208
+	*** 00001b	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rph
+	*** 00001e	26 8a 47 02 		mov	al,BYTE PTR es:[bx+2]
+	*** 000022	2a e4 			sub	ah,ah
+	*** 000024	3d 1c 00 		cmp	ax,28	;001cH
+	*** 000027	74 2b 			je	$SC1740
+	*** 000029	77 73 			ja	$SD1746
+	*** 00002b	3c 08 			cmp	al,8
+	*** 00002d	74 4d 			je	$SC1744
+	*** 00002f	7f 61 			jg	$L1747
+	*** 000031	0a c0 			or	al,al
+	*** 000033	74 07 			je	$SC1737
+	*** 000035	2c 04 			sub	al,4
+	*** 000037	74 3b 			je	$SC1743
+	*** 000039	eb 63 			jmp	SHORT $SD1746
+; Line 209
+	*** 00003b	90 			nop	
+; Line 210
+					$SC1737:
+; Line 211
+	*** 00003c	f6 06 01 00 01 		test	BYTE PTR _fDriverFlags+1,1
+	*** 000041	75 5b 			jne	$SD1746
+; Line 214
+	*** 000043	06 			push	es
+	*** 000044	53 			push	bx
+	*** 000045	e8 00 00 		call	_Init
+	*** 000048	8b e5 			mov	sp,bp
+					$L1754:
+	*** 00004a	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rph
+	*** 00004d	26 89 47 03 		mov	WORD PTR es:[bx+3],ax
+; Line 215
+	*** 000051	eb 54 			jmp	SHORT $EX1732
+	*** 000053	90 			nop	
+; Line 217
+					$SC1740:
+; Line 218
+	*** 000054	06 			push	es
+	*** 000055	53 			push	bx
+	*** 000056	e8 ab ff 		call	_Shutdown
+	*** 000059	eb 32 			jmp	SHORT $L1752
+	*** 00005b	90 			nop	
+; Line 221
+					$SC1741:
+; Line 222
+	*** 00005c	ff 76 06 		push	WORD PTR [bp+6]
+	*** 00005f	ff 76 04 		push	WORD PTR [bp+4]	;rph
+	*** 000062	e8 a3 ff 		call	_Open
+	*** 000065	eb 26 			jmp	SHORT $L1752
+	*** 000067	90 			nop	
+; Line 225
+					$SC1742:
+; Line 226
+	*** 000068	ff 76 06 		push	WORD PTR [bp+6]
+	*** 00006b	ff 76 04 		push	WORD PTR [bp+4]	;rph
+	*** 00006e	e8 9b ff 		call	_Close
+	*** 000071	eb 1a 			jmp	SHORT $L1752
+	*** 000073	90 			nop	
+; Line 229
+					$SC1743:
+; Line 230
+	*** 000074	06 			push	es
+	*** 000075	53 			push	bx
+	*** 000076	e8 97 ff 		call	_Read
+	*** 000079	eb 12 			jmp	SHORT $L1752
+	*** 00007b	90 			nop	
+; Line 233
+					$SC1744:
+; Line 234
+	*** 00007c	06 			push	es
+	*** 00007d	53 			push	bx
+	*** 00007e	e8 93 ff 		call	_Write
+	*** 000081	eb 0a 			jmp	SHORT $L1752
+	*** 000083	90 			nop	
+; Line 237
+					$SC1745:
+; Line 238
+	*** 000084	ff 76 06 		push	WORD PTR [bp+6]
+	*** 000087	ff 76 04 		push	WORD PTR [bp+4]	;rph
+	*** 00008a	e8 73 ff 		call	_GenIOCtl
+					$L1752:
+	*** 00008d	83 c4 04 		add	sp,4
+	*** 000090	eb b8 			jmp	SHORT $L1754
+; Line 241
+					$L1747:
+	*** 000092	2c 0d 			sub	al,13	;000dH
+	*** 000094	74 c6 			je	$SC1741
+	*** 000096	fe c8 			dec	al
+	*** 000098	74 ce 			je	$SC1742
+	*** 00009a	2c 02 			sub	al,2
+	*** 00009c	74 e6 			je	$SC1745
+					$SD1746:
+; Line 242
+	*** 00009e	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rph
+	*** 0000a1	26 c7 47 03 03 81 	mov	WORD PTR es:[bx+3],-32509	;8103H
+; Line 246
+					$EX1732:
+	*** 0000a7	c9 			leave	
+	*** 0000a8	c3 			ret	
+	*** 0000a9	90 			nop	
+
+_Strategy	ENDP
+_TEXT	ENDS
+END

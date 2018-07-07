@@ -1,0 +1,64 @@
+
+ Mini
+
+ Start     Length     Name                   Class
+ 0001:0000 00020H     DDHeader               CONST
+ 0001:0020 00000H     CONST                  CONST
+ 0001:0020 00000H     CONST                  DATA
+ 0001:0020 00000H     CONST2                 DATA
+ 0001:0020 00000H     LIBDATA                DATA
+ 0001:0020 07CE5H     _DATA                  DATA
+ 0001:7D08 00000H     _BSS                   BSS
+ 0002:0000 00000H     LIBCODE                CODE
+ 0002:0000 00000H     CODE                   CODE
+ 0002:0000 00670H     _TEXT                  CODE
+ 0003:0000 00000H     SwapData               FAR_DATA
+ 0003:0000 0001BH     INITDATA               FAR_DATA
+
+ Origin   Group
+ 0001:0   DGROUP
+ 0002:0   StaticGroup
+
+  Address         Publics by Name
+
+ 0002:0000       AsmStrategy
+ 0000:0000  Imp  DOS16CLOSE           (DOSCALLS.59)
+ 0000:0000  Imp  DOS16DEVIOCTL        (DOSCALLS.53)
+ 0000:0000  Imp  DOS16OPEN            (DOSCALLS.70)
+ 0000:0000  Imp  DOS16WRITE           (DOSCALLS.138)
+ 0001:0052       _Device_Help
+ 0001:0000       _DiskDDHeader
+ 0001:0056       _fDriverFlags
+ 0002:000A       _GenIOCtl
+ 0002:01AA       _Init
+ 0001:0058       _MemPool
+ 0001:7858       _npInitData
+ 0002:02DC       _sprintk
+ 0002:0022       _Strategy
+ 0001:000A       _szDriverName
+ 0001:785A       _szMsgBuffer
+ 0002:0124       __aNFauldiv
+ 0002:0146       __aNuldiv
+ 0002:00B8       __aNulrem
+
+  Address         Publics by Value
+
+ 0000:0000  Imp  DOS16WRITE           (DOSCALLS.138)
+ 0000:0000  Imp  DOS16CLOSE           (DOSCALLS.59)
+ 0000:0000  Imp  DOS16DEVIOCTL        (DOSCALLS.53)
+ 0000:0000  Imp  DOS16OPEN            (DOSCALLS.70)
+ 0001:0000       _DiskDDHeader
+ 0001:000A       _szDriverName
+ 0001:0052       _Device_Help
+ 0001:0056       _fDriverFlags
+ 0001:0058       _MemPool
+ 0001:7858       _npInitData
+ 0001:785A       _szMsgBuffer
+ 0002:0000       AsmStrategy
+ 0002:000A       _GenIOCtl
+ 0002:0022       _Strategy
+ 0002:00B8       __aNulrem
+ 0002:0124       __aNFauldiv
+ 0002:0146       __aNuldiv
+ 0002:01AA       _Init
+ 0002:02DC       _sprintk

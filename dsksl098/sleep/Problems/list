@@ -1,0 +1,22 @@
+-*- mode: indented-text -*-
+
+/DEBUG:1 h„ngt mit SYM8XX.ADD
+
+    Das ist tats„chlich hier auch so.  Debuggen ergibt, daá
+    IssueStop() aufgerufen wird (StopCompiler() wird vom ADD
+    aufgerufen) und nach einer Wartezeit IssueStart().  Auch hier wird
+    StartComplete() aufgerufen, allerdings kommt der Aufruf von
+    IssueStart() niemal zurck.  Der Rechner l„át sich mit
+    Kerneldebugger nicht mehr unterbrechen, dementsprechend
+    funktioniert C-A-D auch nicht.
+
+    Ideen:
+	- evtl zerst”rt StartComplete() wichtige Daten/Register?
+	- SYM8XX.ADD st”rt sich daran, daá StartComplete gleich ein
+	  n„chstes Kdo startet?
+
+    -> gefixt durch SYM8XX v4.09. Laut Entwickler ist es sehr
+    ungew”hnlich, daá man Posting verwendet, bevor COMPLETE_INIT
+    gelaufen ist.  Es sollte daher vermieden werden.
+
+

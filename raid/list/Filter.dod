@@ -1,0 +1,347 @@
+;	Static Name Aliases
+;
+;	$S1321_dszFilterHandler	EQU	dszFilterHandler
+;	$S170_id	EQU	id
+;	$S1322_dszFilterIo	EQU	dszFilterIo
+;	$S1323_dszAllocUnit	EQU	dszAllocUnit
+;	$S1324_dszAllocUnitAlloc	EQU	dszAllocUnitAlloc
+;	$S1325_dszDeallocUnit	EQU	dszDeallocUnit
+;	$S1326_dszDeallocUnitAlloc	EQU	dszDeallocUnitAlloc
+;	$S1327_dszChangeUnit	EQU	dszChangeUnit
+;	$S1328_dszIorbUnknown	EQU	dszIorbUnknown
+;	$S1329_dszIorbPass	EQU	dszIorbPass
+	TITLE   Filter.c
+	.286p
+	.287
+_TEXT	SEGMENT  WORD PUBLIC 'CODE'
+_TEXT	ENDS
+_DATA	SEGMENT  WORD PUBLIC 'DATA'
+_DATA	ENDS
+CONST	SEGMENT  WORD PUBLIC 'CONST'
+CONST	ENDS
+_BSS	SEGMENT  WORD PUBLIC 'BSS'
+_BSS	ENDS
+$$SYMBOLS	SEGMENT  BYTE PUBLIC 'DEBSYM'
+$$SYMBOLS	ENDS
+$$TYPES	SEGMENT  BYTE PUBLIC 'DEBTYP'
+$$TYPES	ENDS
+INITDATA	SEGMENT  WORD PUBLIC 'FAR_DATA'
+INITDATA	ENDS
+DGROUP	GROUP	CONST, _BSS, _DATA
+	ASSUME DS: DGROUP
+	ASSUME  SS: NOTHING
+EXTRN	_dprintf:NEAR
+EXTRN	_CallADD:NEAR
+EXTRN	_NotifyIorb:NEAR
+EXTRN	_uDebugLevel:WORD
+EXTRN	_fDriverFlags:WORD
+_DATA      SEGMENT
+	ORG	$+52
+$SG1339	DB	'(fDriverFlags & DF_NOROUTER) == 0',  00H
+$SG1340	DB	'Assertion failed: %s',  00H
+$SG1358	DB	'disk != NULL',  00H
+$SG1359	DB	'Assertion failed: %s',  00H
+$SG1361	DB	'disk->phys != NULL',  00H
+$SG1362	DB	'Assertion failed: %s',  00H
+	ORG	$-181
+$S170_id	DB	'$Id: filter.c,v 1.4 2000/04/15 22:22:32 vitus Exp $',  00H
+_DATA      ENDS
+CONST      SEGMENT
+$S1321_dszFilterHandler	DB	0dH,  0aH, '[FilterHandler] disk %p, iorb %p',  00H
+	ORG	$+1
+$S1322_dszFilterIo	DB	0dH,  0aH, '[FilterHandler] Command Code %w, Modifier %w',  00H
+	ORG	$+1
+$S1323_dszAllocUnit	DB	0dH,  0aH, '[FilterHandler] IOCM_ALLOCATE_UNIT',  00H
+	ORG	$+1
+$S1324_dszAllocUnitAlloc	DB	0dH,  0aH, '[FilterHandler] HD already allocated',  00H
+	ORG	$+1
+$S1325_dszDeallocUnit	DB	0dH,  0aH, '[FilterHandler] IOCM_DEALLOCATE_UNIT',  00H
+	ORG	$+1
+$S1326_dszDeallocUnitAlloc	DB	0dH,  0aH, '[FilterHandler] HD not allocated',  00H
+	ORG	$+1
+$S1327_dszChangeUnit	DB	0dH,  0aH, '[FilterHandler] IOCM_CHANGE_UNITINFO',  00H
+	ORG	$+1
+$S1328_dszIorbUnknown	DB	0dH,  0aH, '[FilterHandler] Command %w, Modifier %w not supp'
+	DB	'orted',  00H
+$S1329_dszIorbPass	DB	0dH,  0aH, '[FilterHandler] pass IORB to ADD (%p)',  00H
+CONST      ENDS
+_TEXT      SEGMENT
+	ASSUME	CS: _TEXT
+	PUBLIC	_FilterHandler
+_FilterHandler	PROC NEAR
+; Line 81
+	*** 000000	c8 08 00 00 		enter	8,0
+	*** 000004	57 			push	di
+	*** 000005	56 			push	si
+;	CommandCode = -2
+;	CommandModifier = -4
+;	p = -8
+;	pIorb = 8
+;	disk = 4
+; Line 82
+	*** 000006	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;pIorb
+	*** 000009	26 8b 47 04 		mov	ax,WORD PTR es:[bx+4]
+	*** 00000d	89 46 fe 		mov	WORD PTR [bp-2],ax	;CommandCode
+; Line 83
+	*** 000010	26 8b 47 06 		mov	ax,WORD PTR es:[bx+6]
+	*** 000014	89 46 fc 		mov	WORD PTR [bp-4],ax	;CommandModifier
+; Line 87
+	*** 000017	f6 06 01 00 04 		test	BYTE PTR _uDebugLevel+1,4
+	*** 00001c	74 12 			je	$L1367
+	*** 00001e	06 			push	es
+	*** 00001f	53 			push	bx
+	*** 000020	ff 76 06 		push	WORD PTR [bp+6]
+	*** 000023	ff 76 04 		push	WORD PTR [bp+4]	;disk
+	*** 000026	1e 			push	ds
+	*** 000027	68 00 00 		push	OFFSET DGROUP:$S1321_dszFilterHandler
+	*** 00002a	e8 00 00 		call	_dprintf
+	*** 00002d	83 c4 0c 		add	sp,12	;000cH
+					$L1367:
+; Line 88
+	*** 000030	f6 06 00 00 04 		test	BYTE PTR _uDebugLevel,4
+	*** 000035	74 10 			je	$L1369
+	*** 000037	ff 76 fc 		push	WORD PTR [bp-4]	;CommandModifier
+	*** 00003a	ff 76 fe 		push	WORD PTR [bp-2]	;CommandCode
+	*** 00003d	1e 			push	ds
+	*** 00003e	68 24 00 		push	OFFSET DGROUP:$S1322_dszFilterIo
+	*** 000041	e8 00 00 		call	_dprintf
+	*** 000044	83 c4 08 		add	sp,8
+					$L1369:
+; Line 89
+	*** 000047	f6 06 00 00 04 		test	BYTE PTR _fDriverFlags,4
+	*** 00004c	74 0f 			je	$I1338
+	*** 00004e	1e 			push	ds
+	*** 00004f	68 34 00 		push	OFFSET DGROUP:$SG1339
+	*** 000052	1e 			push	ds
+	*** 000053	68 56 00 		push	OFFSET DGROUP:$SG1340
+	*** 000056	e8 00 00 		call	_dprintf
+	*** 000059	83 c4 08 		add	sp,8
+	*** 00005c	cc 			int	3
+					$I1338:
+; Line 91
+	*** 00005d	8b 46 fe 		mov	ax,WORD PTR [bp-2]	;CommandCode
+	*** 000060	48 			dec	ax
+	*** 000061	48 			dec	ax
+	*** 000062	74 03 			je	$JCC98
+	*** 000064	e9 d5 00 		jmp	$SD1356
+					$JCC98:
+; Line 92
+; Line 94
+	*** 000067	8b 46 fc 		mov	ax,WORD PTR [bp-4]	;CommandModifier
+	*** 00006a	48 			dec	ax
+	*** 00006b	74 0b 			je	$SC1350
+	*** 00006d	48 			dec	ax
+	*** 00006e	74 4e 			je	$SC1352
+	*** 000070	48 			dec	ax
+	*** 000071	74 7b 			je	$SC1354
+	*** 000073	e9 a8 00 		jmp	$SD1355
+; Line 95
+	*** 000076	90 			nop	
+	*** 000077	90 			nop	
+; Line 103
+					$SC1350:
+; Line 104
+	*** 000078	f6 06 00 00 02 		test	BYTE PTR _uDebugLevel,2
+	*** 00007d	74 0a 			je	$L1371
+	*** 00007f	1e 			push	ds
+	*** 000080	68 54 00 		push	OFFSET DGROUP:$S1323_dszAllocUnit
+	*** 000083	e8 00 00 		call	_dprintf
+	*** 000086	83 c4 04 		add	sp,4
+					$L1371:
+; Line 105
+	*** 000089	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;disk
+	*** 00008c	26 f6 07 01 		test	BYTE PTR es:[bx],1
+	*** 000090	74 24 			je	$I1351
+; Line 106
+; Line 107
+	*** 000092	83 3e 00 00 00 		cmp	WORD PTR _uDebugLevel,0
+	*** 000097	74 0a 			je	$L1373
+	*** 000099	1e 			push	ds
+	*** 00009a	68 7a 00 		push	OFFSET DGROUP:$S1324_dszAllocUnitAlloc
+	*** 00009d	e8 00 00 		call	_dprintf
+	*** 0000a0	83 c4 04 		add	sp,4
+					$L1373:
+; Line 108
+	*** 0000a3	68 02 02 		push	514	;0202H
+					$L1391:
+	*** 0000a6	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 0000a9	ff 76 08 		push	WORD PTR [bp+8]	;pIorb
+	*** 0000ac	e8 00 00 		call	_NotifyIorb
+	*** 0000af	83 c4 06 		add	sp,6
+; Line 153
+	*** 0000b2	e9 50 01 		jmp	$SB1342
+; Line 110
+	*** 0000b5	90 			nop	
+; Line 111
+					$I1351:
+	*** 0000b6	26 80 0f 01 		or	BYTE PTR es:[bx],1
+; Line 112
+					$L1393:
+	*** 0000ba	6a 00 			push	0
+	*** 0000bc	eb e8 			jmp	SHORT $L1391
+; Line 122
+					$SC1352:
+; Line 123
+	*** 0000be	f6 06 00 00 02 		test	BYTE PTR _uDebugLevel,2
+	*** 0000c3	74 0a 			je	$L1375
+	*** 0000c5	1e 			push	ds
+	*** 0000c6	68 a2 00 		push	OFFSET DGROUP:$S1325_dszDeallocUnit
+	*** 0000c9	e8 00 00 		call	_dprintf
+	*** 0000cc	83 c4 04 		add	sp,4
+					$L1375:
+; Line 124
+	*** 0000cf	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;disk
+	*** 0000d2	26 f6 07 01 		test	BYTE PTR es:[bx],1
+	*** 0000d6	75 e2 			jne	$L1393
+; Line 125
+; Line 126
+	*** 0000d8	83 3e 00 00 00 		cmp	WORD PTR _uDebugLevel,0
+	*** 0000dd	74 0a 			je	$L1377
+	*** 0000df	1e 			push	ds
+	*** 0000e0	68 ca 00 		push	OFFSET DGROUP:$S1326_dszDeallocUnitAlloc
+	*** 0000e3	e8 00 00 		call	_dprintf
+	*** 0000e6	83 c4 04 		add	sp,4
+					$L1377:
+; Line 127
+	*** 0000e9	68 01 02 		push	513	;0201H
+	*** 0000ec	eb b8 			jmp	SHORT $L1391
+					$SC1354:
+; Line 142
+	*** 0000ee	f6 06 00 00 02 		test	BYTE PTR _uDebugLevel,2
+	*** 0000f3	74 0a 			je	$L1379
+	*** 0000f5	1e 			push	ds
+	*** 0000f6	68 ee 00 		push	OFFSET DGROUP:$S1327_dszChangeUnit
+	*** 0000f9	e8 00 00 		call	_dprintf
+	*** 0000fc	83 c4 04 		add	sp,4
+					$L1379:
+; Line 143
+	*** 0000ff	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;pIorb
+	*** 000102	26 8b 47 46 		mov	ax,WORD PTR es:[bx+70]
+	*** 000106	26 8b 57 48 		mov	dx,WORD PTR es:[bx+72]
+	*** 00010a	c4 76 04 		les	si,DWORD PTR [bp+4]	;disk
+	*** 00010d	1e 			push	ds
+	*** 00010e	8d 7c 02 		lea	di,WORD PTR [si+2]
+	*** 000111	8b f0 			mov	si,ax
+	*** 000113	8e da 			mov	ds,dx
+	ASSUME DS: NOTHING
+	*** 000115	b9 09 00 		mov	cx,9
+	*** 000118	f3 			rep
+	*** 000119	a5 			movsw
+	*** 00011a	1f 			pop	ds
+	ASSUME DS: DGROUP
+	*** 00011b	eb 9d 			jmp	SHORT $L1393
+	*** 00011d	90 			nop	
+; Line 147
+					$SD1355:
+; Line 148
+	*** 00011e	83 3e 00 00 00 		cmp	WORD PTR _uDebugLevel,0
+	*** 000123	74 10 			je	$L1381
+	*** 000125	ff 76 fc 		push	WORD PTR [bp-4]	;CommandModifier
+	*** 000128	ff 76 fe 		push	WORD PTR [bp-2]	;CommandCode
+	*** 00012b	1e 			push	ds
+	*** 00012c	68 16 01 		push	OFFSET DGROUP:$S1328_dszIorbUnknown
+	*** 00012f	e8 00 00 		call	_dprintf
+	*** 000132	83 c4 08 		add	sp,8
+					$L1381:
+; Line 149
+	*** 000135	cc 			int	3
+; Line 150
+	*** 000136	68 01 01 		push	257	;0101H
+	*** 000139	e9 6a ff 		jmp	$L1391
+					$SD1356:
+; Line 157
+	*** 00013c	8b 46 06 		mov	ax,WORD PTR [bp+6]
+	*** 00013f	0b 46 04 		or	ax,WORD PTR [bp+4]	;disk
+	*** 000142	75 0f 			jne	$I1357
+	*** 000144	1e 			push	ds
+	*** 000145	68 6b 00 		push	OFFSET DGROUP:$SG1358
+	*** 000148	1e 			push	ds
+	*** 000149	68 78 00 		push	OFFSET DGROUP:$SG1359
+	*** 00014c	e8 00 00 		call	_dprintf
+	*** 00014f	83 c4 08 		add	sp,8
+	*** 000152	cc 			int	3
+					$I1357:
+; Line 158
+	*** 000153	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;disk
+	*** 000156	26 8b 47 16 		mov	ax,WORD PTR es:[bx+22]
+	*** 00015a	26 0b 47 14 		or	ax,WORD PTR es:[bx+20]
+	*** 00015e	75 0f 			jne	$I1360
+	*** 000160	1e 			push	ds
+	*** 000161	68 8d 00 		push	OFFSET DGROUP:$SG1361
+	*** 000164	1e 			push	ds
+	*** 000165	68 a0 00 		push	OFFSET DGROUP:$SG1362
+	*** 000168	e8 00 00 		call	_dprintf
+	*** 00016b	83 c4 08 		add	sp,8
+	*** 00016e	cc 			int	3
+					$I1360:
+; Line 159
+	*** 00016f	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;disk
+	*** 000172	26 c4 5f 14 		les	bx,DWORD PTR es:[bx+20]
+	*** 000176	26 8b 47 02 		mov	ax,WORD PTR es:[bx+2]
+	*** 00017a	26 0b 07 		or	ax,WORD PTR es:[bx]
+	*** 00017d	74 07 			je	$I1363
+; Line 160
+	*** 00017f	26 c4 1f 		les	bx,DWORD PTR es:[bx]
+	*** 000182	26 ff 47 07 		inc	WORD PTR es:[bx+7]
+; Line 161
+					$I1363:
+	*** 000186	f6 06 00 00 02 		test	BYTE PTR _uDebugLevel,2
+	*** 00018b	74 19 			je	$L1383
+	*** 00018d	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;disk
+	*** 000190	26 c4 5f 14 		les	bx,DWORD PTR es:[bx+20]
+	*** 000194	26 ff 77 06 		push	WORD PTR es:[bx+6]
+	*** 000198	26 ff 77 04 		push	WORD PTR es:[bx+4]
+	*** 00019c	1e 			push	ds
+	*** 00019d	68 4e 01 		push	OFFSET DGROUP:$S1329_dszIorbPass
+	*** 0001a0	e8 00 00 		call	_dprintf
+	*** 0001a3	83 c4 08 		add	sp,8
+					$L1383:
+; Line 163
+	*** 0001a6	8b 46 08 		mov	ax,WORD PTR [bp+8]	;pIorb
+	*** 0001a9	8b 56 0a 		mov	dx,WORD PTR [bp+10]
+					$L1392:
+	*** 0001ac	89 46 f8 		mov	WORD PTR [bp-8],ax	;p
+	*** 0001af	89 56 fa 		mov	WORD PTR [bp-6],dx
+	*** 0001b2	eb 08 			jmp	SHORT $L1386
+					$L1385:
+	*** 0001b4	2b c0 			sub	ax,ax
+	*** 0001b6	89 46 fa 		mov	WORD PTR [bp-6],ax
+	*** 0001b9	89 46 f8 		mov	WORD PTR [bp-8],ax	;p
+					$L1386:
+	*** 0001bc	8b 46 fa 		mov	ax,WORD PTR [bp-6]
+	*** 0001bf	0b 46 f8 		or	ax,WORD PTR [bp-8]	;p
+	*** 0001c2	74 26 			je	$FB1366
+; Line 164
+	*** 0001c4	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;disk
+	*** 0001c7	26 c4 5f 14 		les	bx,DWORD PTR es:[bx+20]
+	*** 0001cb	26 8b 47 08 		mov	ax,WORD PTR es:[bx+8]
+	*** 0001cf	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;p
+	*** 0001d2	26 89 47 02 		mov	WORD PTR es:[bx+2],ax
+	*** 0001d6	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;p
+	*** 0001d9	26 f6 47 08 02 		test	BYTE PTR es:[bx+8],2
+	*** 0001de	74 d4 			je	$L1385
+	*** 0001e0	26 8b 47 18 		mov	ax,WORD PTR es:[bx+24]
+	*** 0001e4	26 8b 57 1a 		mov	dx,WORD PTR es:[bx+26]
+	*** 0001e8	eb c2 			jmp	SHORT $L1392
+					$FB1366:
+; Line 165
+	*** 0001ea	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 0001ed	ff 76 08 		push	WORD PTR [bp+8]	;pIorb
+	*** 0001f0	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;disk
+	*** 0001f3	26 c4 5f 14 		les	bx,DWORD PTR es:[bx+20]
+	*** 0001f7	26 ff 77 06 		push	WORD PTR es:[bx+6]
+	*** 0001fb	26 ff 77 04 		push	WORD PTR es:[bx+4]
+	*** 0001ff	e8 00 00 		call	_CallADD
+	*** 000202	83 c4 08 		add	sp,8
+; Line 166
+					$SB1342:
+; Line 170
+	*** 000205	5e 			pop	si
+	*** 000206	5f 			pop	di
+	*** 000207	c9 			leave	
+	*** 000208	c3 			ret	
+	*** 000209	90 			nop	
+
+_FilterHandler	ENDP
+_TEXT	ENDS
+END

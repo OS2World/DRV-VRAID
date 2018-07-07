@@ -1,0 +1,503 @@
+Microsoft (R) Macro Assembler Version 6.00B 		    11/14/03 01:12:19
+startup.asm						     Page 1 - 1
+
+
+				;*
+				;* $Source: R:/source/driver/raid/RCS\\startup.asm,v $
+				;* $Revision: 1.8 $
+				;* $Date: 2001/07/22 00:33:50 $
+				;* $Locker:  $
+				;*
+				;*	Assembler startup code.
+				;*
+				;* $Log: startup.asm,v $
+				;* Revision 1.8  2001/07/22 00:33:50  vitus
+				;* - BUILDHOOK: calls UpdateBuilds()
+				;*
+				;* Revision 1.7  2001/06/25 00:25:11  vitus
+				;* - MEMORYHOOK: calls FreeFixed() with EAX
+				;*
+				;* Revision 1.6  2000/03/14 02:00:03  vitus
+				;* - _lock/_unlock: changed to use BX.  Saves push,pop opcodes.
+				;*
+				;* Revision 1.5  2000/02/13 12:59:19  vitus
+				;* - _unlock: there was a window where it restored the wrong interrupt state
+				;* - _unlock: Warp Server SMB compatible
+				;*
+				;* Revision 1.4  1998/11/05 00:51:40  vitus
+				;* - szDriverName real ASCIIZ
+				;*
+				;* Revision 1.3  1998/06/26 23:04:20  vitus
+				;* - added _CallADD
+				;*
+				;* Revision 1.2  1998/02/17 23:41:51  vitus
+				;* - added AsmTimer()
+				;* - added _lock/_unlock
+				;*
+				;* Revision 1.1  1998/02/12 01:32:42  vitus
+				;* Initial revision
+				;* ---------------------------------------------
+				;* This code is Copyright Vitus Jensen 1997-2001
+				;*
+				.386p
+				.SEQ
+
+					PUBLIC	_DiskDDHeader
+					PUBLIC	_szDriverName
+					PUBLIC	_AsmTimer
+					PUBLIC	MEMORYHOOK,	BUILDHOOK
+					PUBLIC	_CallADD			; passes IORB to ADD
+					PUBLIC	__lock, __unlock
+
+				INCLUDE	devhdr.inc				; device header format
+ = 0008			      C DEV_CBNAME	EQU	8 
+			      C 
+ 001A			      C SysDev	STRUC
+ 0000  00000000		      C SDevNext	DD	?
+ 0004  0000		      C SDevAtt	DW	?
+ 0006  0000		      C SDevStrat	DW	?
+ 0008  0000		      C SDevInt	DW	?
+ 000A	   0001 [	      C SDevName        DB      "        "
+	    20 20 20 20
+	    20 20 20 20
+	   ]
+			      C 
+ 0012  0000		      C SDevProtCS	DW	?
+ 0014  0000		      C SDevProtDS	DW	?
+ 0016  0000		      C SDevRealCS	DW	?
+ 0018  0000		      C SDevRealDS	DW	?
+			      C SysDev	ENDS
+			      C 
+			      C 
+ 001E			      C SysDev3	STRUC
+ 0000	   001A [	      C SysDevBef3	DB	SIZE SysDev DUP (?)
+	    00
+	   ]
+ 001A  00000000		      C SDevCaps	DD	?
+			      C SysDev3	ENDS
+			      C 
+ = 0001			      C DEV_IOCTL2	EQU	0001H  
+ = 0002			      C DEV_16MB	EQU	0002H  
+ = 0004			      C DEV_PARALLEL	EQU	0004H  
+ = 0008			      C DEV_ADAPTER_DD	EQU	0008H  
+ = 0010			      C DEV_INITCOMPLETE	EQU	0010H  
+ = 0020			      C DEV_SAVERESTORE	EQU	0020H 
+ = 0001			      C DEV_CIN	EQU	0001H   
+ = 0002			      C DEV_COUT	EQU	0002H   
+ = 0004			      C DEV_NULL	EQU	0004H   
+ = 0008			      C DEV_CLOCK	EQU	0008H   
+ = 0010			      C DEV_SPEC	EQU	0010H   
+ = 0020			      C DEV_ADD_ON	EQU	0020H   
+ = 0040			      C DEV_GIOCTL	EQU	0040H   
+ = 0380			      C DEV_FCNLEV	EQU	0380H   
+ = 0800			      C DEV_30	EQU	0800H   
+ = 1000			      C DEV_SHARE	EQU	1000H   
+ = 2000			      C DEV_NON_IBM	EQU	2000H   
+ = 4000			      C DEV_IOCTL	EQU	4000H   
+ = 8000			      C DEV_CHAR_DEV	EQU	8000H   
+ = 0000			      C DEVLEV_0	EQU	0000H       
+ = 0080			      C DEVLEV_1	EQU	0080H       
+ = 0100			      C DEVLEV_2	EQU	0100H       
+ = 0180			      C DEVLEV_3	EQU	0180H       
+			      C Dev_FuncLev     macro   ReqLev, DevAttr
+			      C         and     DevAttr,DEV_FCNLEV          
+			      C         cmp     DevAttr,ReqLev              
+			      C                                             
+			      C endm
+			      C 
+			      C 
+				INCLUDE segments.inc				; segment order
+			      C ; -*- mode: asm -*-
+			      C ; $Source: R:/source/driver/raid/RCS\\segments.inc,v $
+			      C ; $Revision: 1.4 $
+			      C ; $Date: 1999/07/06 02:00:34 $
+			      C ; $Locker:  $
+			      C ;
+			      C ;	Order segments
+			      C ; 
+			      C ; $Log: segments.inc,v $
+			      C ; Revision 1.4  1999/07/06 02:00:34  vitus
+			      C ; - WORKMEM is classless in WatCom C
+			      C ;
+			      C ; Revision 1.3  1998/06/26 23:02:48  vitus
+			      C ; - corrected WORKMEM (FAR_DATA)
+			      C ; - added CONST2 to MS-C version (unused)
+			      C ;
+			      C ; Revision 1.2  1998/02/18 00:04:36  vitus
+			      C ; - ALP needs USE16
+			      C ; - segment WORKMEM, seperate group, contains locked down working set
+			      C ;
+			      C ; Revision 1.1  1998/02/12 01:32:14  vitus
+			      C ; Initial revision
+			      C ; ---------------------------------------------
+			      C ; This code is Copyright Vitus Jensen 1997-1999
+			      C 
+			      C 
+ 0000			      C DDHeader	SEGMENT WORD USE16 PUBLIC 'CONST'
+ 0000			      C DDHeader	ENDS
+			      C 
+			      C IFNDEF WATCOMC
+ 0000			      C CONST		SEGMENT DWORD USE16 PUBLIC 'CONST'
+ 0000			      C CONST		ENDS
+ 0000			      C CONST2		SEGMENT DWORD USE16 PUBLIC 'CONST'
+ 0000			      C CONST2		ENDS
+			      C ENDIF
+			      C 
+			      C IFDEF WATCOMC
+			      C ENDIF
+			      C 
+ 0000			      C LIBDATA		SEGMENT DWORD USE16 PUBLIC 'DATA'
+ 0000			      C LIBDATA		ENDS
+			      C 
+ 0000			      C _DATA		SEGMENT WORD USE16 PUBLIC 'DATA'
+ 0000			      C _DATA		ENDS
+			      C 
+ 0000			      C _BSS		SEGMENT WORD USE16 PUBLIC 'BSS'
+ 0000			      C _BSS		ENDS
+			      C 
+			      C 
+ 0000			      C _TEXT		SEGMENT DWORD USE16 PUBLIC 'CODE'
+ 0000			      C _TEXT		ENDS
+			      C 
+ 0000			      C CODE		SEGMENT DWORD USE16 PUBLIC 'CODE'
+ 0000			      C CODE		ENDS
+			      C 
+ 0000			      C LIBCODE		SEGMENT DWORD USE16 PUBLIC 'CODE'
+ 0000			      C LIBCODE		ENDS
+			      C 
+			      C IFDEF WATCOMC
+			      C ELSE
+ 0000			      C WORKMEM		SEGMENT WORD USE16 PUBLIC 'FAR_DATA'
+ 0000			      C WORKMEM		ENDS
+			      C ENDIF
+			      C 
+ 0000			      C SwapData	SEGMENT DWORD USE16 PUBLIC 'FAR_DATA'
+ 0000			      C SwapData	ENDS
+			      C 
+ 0000			      C SwapCode	SEGMENT DWORD USE16 PUBLIC 'SWAP_CODE'
+ 0000			      C SwapCode	ENDS
+			      C 
+			      C 	;; Group segments together
+			      C 
+			      C DGROUP		GROUP	CONST, CONST2, _BSS, DDHeader, LIBDATA, _DATA
+			      C CGROUP		GROUP	CODE, LIBCODE, _TEXT
+			      C 
+			      C TGROUP		GROUP	WORKMEM
+			      C SGROUP		GROUP	SwapData
+			      C 
+
+
+					;; The very first segment has to contain the
+					;; device driver header.  Use own segment for
+					;; this purpose (but in DGROUP).
+
+ 0000				DDHeader	SEGMENT
+
+ 0000 FFFFFFFF			_DiskDDHeader	DD	-1
+ 0004  8980					DW	DEV_CHAR_DEV OR DEV_30 OR DEVLEV_3
+ 0006  0000 R					DW	OFFSET AsmStrategy
+ 0008  0000					DW	0
+ 000A  56 55 4A 52 41 49			DB	"VUJRAID$"
+       44 24
+ 0012  0000					DW	0
+ 0014  0000					DW	0
+ 0016  0000					DW	0
+ 0018  0000					DW	0
+ 001A  0000001B					DD	DEV_INITCOMPLETE OR DEV_ADAPTER_DD OR DEV_16MB OR DEV_IOCTL2
+ 001E  0000					DW	0
+
+ 0020 56 55 4A 52 41 49		_szDriverName	DB	"VUJRAID$",0
+       44 24 00
+
+ 0029				DDHeader	ENDS
+
+
+
+
+					;; Start of code segments
+					;; There is really code contained: small stubs
+					;; to call C routines and save/restore registers.
+
+ 0000				_TEXT		SEGMENT
+					ASSUME	CS:CGROUP
+					EXTRN	_Strategy : NEAR	; C routines
+					EXTRN	_Timer : NEAR
+					EXTRN	_FreeFixed : NEAR
+					EXTRN	_UpdateBuilds : NEAR
+
+
+ 0000				AsmStrategy	PROC	FAR
+ 0000  06					push	es
+ 0001  53					push	bx
+ 0002  E8 0000 E				call	_Strategy
+ 0005  83 C4 04					add	sp, 4
+ 0008  CB					retf
+ 0009				AsmStrategy	ENDP
+
+
+
+
+					;; Called every NTICKS to check all used commands for TIMEOUT_TICKS.
+					;; Save all register!!
+
+ 0009				_AsmTimer	PROC	FAR
+ 0009  9C					pushf
+ 000A  60					pusha
+ 000B  1E					push	ds
+ 000C  06					push	es
+ 000D  FB					sti				; run with interrupts enabled
+
+ 000E  B8 ---- R				mov	ax, DGROUP
+ 0011  8E D8					mov	ds, ax
+ 0013  E8 0000 E				call	_Timer
+
+ 0016  07					pop	es
+ 0017  1F					pop	ds
+ 0018  61					popa
+ 0019  9D					popf
+ 001A  CB					ret
+ 001B				_AsmTimer	ENDP
+
+
+
+
+				;*# ----------------------------------------------------------------------
+				;* MEMORYHOOK
+				;*
+				;* PARAMETER
+				;*	EAX		parameter passed to ArmCtxHook
+				;*
+				;* RETURNS
+				;*	(nothing, no register changed!)
+				;*
+				;* DESCRIPTION
+				;*	Delayed execution if someone want to call FreeFixed()
+				;*	from interrupt context where this is not possible.
+				;*
+				;* REMARKS
+				;*
+ 001B				MEMORYHOOK	PROC	FAR
+ 001B  66				db	66h
+ 001C  60				pusha
+
+ 001D  66| 50				push	eax
+ 001F  E8 0000 E			call	_FreeFixed
+ 0022  83 C4 04				add	sp,4
+
+ 0025  66				db	66h
+ 0026  61				popa
+ 0027  CB				ret
+ 0028				MEMORYHOOK	ENDP
+
+
+
+
+				;*# ----------------------------------------------------------------------
+				;* BUILDHOOK
+				;*
+				;* PARAMETER
+				;*	EAX		parameter passed to ArmCtxHook
+				;*
+				;* RETURNS
+				;*	(nothing, no register changed!)
+				;*
+				;* DESCRIPTION
+				;*	Delayed execution if someone want to call UpdateBuilds()
+				;*
+				;* REMARKS
+				;*
+ 0028				BUILDHOOK	PROC	FAR
+ 0028  66				db	66h
+ 0029  60				pusha
+
+ 002A  66| 50				push	eax
+ 002C  E8 0000 E			call	_UpdateBuilds			; Parameter ignored
+ 002F  83 C4 04				add	sp,4
+
+ 0032  66				db	66h
+ 0033  61				popa
+ 0034  CB				ret
+ 0035				BUILDHOOK	ENDP
+
+
+
+
+ 0035				_CallADD	PROC	NEAR
+ 0035  C8 0000 00				enter	0,0
+ 0039  60					pusha
+ 003A  1E					push	ds
+
+ 003B  C4 5E 08					les	bx,[bp+8]
+ 003E  06					push	es
+ 003F  53					push	bx
+ 0040  FF 5E 04					call	DWORD PTR [bp+4]
+ 0043  83 C4 04					add	sp,4
+
+ 0046  1F					pop	ds
+ 0047  61					popa
+ 0048  C9					leave
+ 0049  C3					ret
+ 004A				_CallADD	ENDP
+
+
+
+
+ 004A				__lock		PROC	NEAR
+ 004A  C8 0000 00			enter	0,0
+					
+ 004E  C4 5E 04				les	bx,[bp+4]		; pointer to lock handle (ULONG)
+ 0051  9C				pushf				; save flags (to be restored)
+					
+					;; Try to set bit 0 of lock handle. Do that in a way
+					;; which inhibits interactions from all other processes
+					;; (whether they run on this or any other processor).
+ 0052				lock_busy:	
+ 0052  FA				cli				; this processor
+ 0053  F0/ 26: 0F BA 2F		   lock bts	WORD PTR es:[bx],0	; all processors
+       00
+ 0059  72 F7				jc	lock_busy		; lock is busy, retry
+
+ 005B  26: 8F 47 02			pop	WORD PTR es:[bx+2]	; save old flags
+									; in highword of lock handle
+
+					;; - least significant bit in lock handle is set to indicate
+					;;   locked handle
+					;; - interrupts are disabled (DO NOT ENABLE!!!)
+					;; - previous state of [interrupt] flag is saved in
+					;;   the lock handle
+
+ 005F  C9				leave
+ 0060  C3				ret
+ 0061				__lock		ENDP	
+
+ 0061				__unlock	PROC	NEAR
+ 0061  C8 0000 00			enter	0,0
+ 0065  C4 5E 04				les	bx,[bp+4]		; lock handle
+
+ 0068  26: 8B 47 02			mov	ax,WORD PTR es:[bx+2]	; retrieve old flags
+ 006C  F0/ 26: 0F BA 37		   lock btr	WORD PTR es:[bx],0	; clear lock bit
+       00
+					;jnc	fatal			; fatal error: not locked!!!!!
+
+ 0072  A9 0200				test	ax,0200h		; were interrupts enabled?
+ 0075  74 01				jz	@@Z			; No -> keep disabled
+ 0077  FB				sti				; Yes -> enable
+ 0078				@@Z:
+ 0078  C9				leave
+ 0079  C3				ret
+ 007A				__unlock	ENDP
+
+
+
+
+ 007A				_TEXT		ENDS
+
+
+					END
+Microsoft (R) Macro Assembler Version 6.00B 		    11/14/03 01:12:19
+startup.asm						     Symbols 2 - 1
+
+
+
+
+Macros:
+
+                N a m e                 Type
+
+Dev_FuncLev  . . . . . . . . . .	Proc
+
+
+Structures and Unions:
+
+                N a m e                  Size
+                                         Offset      Type
+
+SysDev3  . . . . . . . . . . . .	 001E
+  SysDevBef3 . . . . . . . . . .	 0000	     Byte
+  SDevCaps . . . . . . . . . . .	 001A	     DWord
+SysDev . . . . . . . . . . . . .	 001A
+  SDevNext . . . . . . . . . . .	 0000	     DWord
+  SDevAtt  . . . . . . . . . . .	 0004	     Word
+  SDevStrat  . . . . . . . . . .	 0006	     Word
+  SDevInt  . . . . . . . . . . .	 0008	     Word
+  SDevName . . . . . . . . . . .	 000A	     Byte
+  SDevProtCS . . . . . . . . . .	 0012	     Word
+  SDevProtDS . . . . . . . . . .	 0014	     Word
+  SDevRealCS . . . . . . . . . .	 0016	     Word
+  SDevRealDS . . . . . . . . . .	 0018	     Word
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+CGROUP . . . . . . . . . . . . .	GROUP
+_TEXT  . . . . . . . . . . . . .	16 Bit	 007A	  DWord	  Public  'CODE'	
+CODE . . . . . . . . . . . . . .	16 Bit	 0000	  DWord	  Public  'CODE'	
+LIBCODE  . . . . . . . . . . . .	16 Bit	 0000	  DWord	  Public  'CODE'	
+DGROUP . . . . . . . . . . . . .	GROUP
+DDHeader . . . . . . . . . . . .	16 Bit	 0029	  Word	  Public  'CONST'	 
+CONST  . . . . . . . . . . . . .	16 Bit	 0000	  DWord	  Public  'CONST'	 
+CONST2 . . . . . . . . . . . . .	16 Bit	 0000	  DWord	  Public  'CONST'	 
+LIBDATA  . . . . . . . . . . . .	16 Bit	 0000	  DWord	  Public  'DATA'	
+_DATA  . . . . . . . . . . . . .	16 Bit	 0000	  Word	  Public  'DATA'	
+_BSS . . . . . . . . . . . . . .	16 Bit	 0000	  Word	  Public  'BSS'  
+SGROUP . . . . . . . . . . . . .	GROUP
+SwapData . . . . . . . . . . . .	16 Bit	 0000	  DWord	  Public  'FAR_DATA'  
+SwapCode . . . . . . . . . . . .	16 Bit	 0000	  DWord	  Public  'SWAP_CODE'  
+TGROUP . . . . . . . . . . . . .	GROUP
+WORKMEM  . . . . . . . . . . . .	16 Bit	 0000	  Word	  Public  'FAR_DATA'  
+
+
+Procedures,  parameters and locals:
+
+                N a m e                 Type     Value    Attr
+
+AsmStrategy  . . . . . . . . . .	P Far	 0000	  _TEXT	Length= 0009 Public
+BUILDHOOK  . . . . . . . . . . .	P Far	 0028	  _TEXT	Length= 000D Public
+MEMORYHOOK . . . . . . . . . . .	P Far	 001B	  _TEXT	Length= 000D Public
+_AsmTimer  . . . . . . . . . . .	P Far	 0009	  _TEXT	Length= 0012 Public
+_CallADD . . . . . . . . . . . .	P Near	 0035	  _TEXT	Length= 0015 Public
+__lock . . . . . . . . . . . . .	P Near	 004A	  _TEXT	Length= 0017 Public
+  lock_busy  . . . . . . . . . .	L Near	 0052	  _TEXT	
+__unlock . . . . . . . . . . . .	P Near	 0061	  _TEXT	Length= 0019 Public
+  @@Z  . . . . . . . . . . . . .	L Near	 0078	  _TEXT	
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+DEVLEV_0 . . . . . . . . . . . .	Number	 0000h	 
+DEVLEV_1 . . . . . . . . . . . .	Number	 0080h	 
+DEVLEV_2 . . . . . . . . . . . .	Number	 0100h	 
+DEVLEV_3 . . . . . . . . . . . .	Number	 0180h	 
+DEV_16MB . . . . . . . . . . . .	Number	 0002h	 
+DEV_30 . . . . . . . . . . . . .	Number	 0800h	 
+DEV_ADAPTER_DD . . . . . . . . .	Number	 0008h	 
+DEV_ADD_ON . . . . . . . . . . .	Number	 0020h	 
+DEV_CBNAME . . . . . . . . . . .	Number	 0008h	 
+DEV_CHAR_DEV . . . . . . . . . .	Number	 8000h	 
+DEV_CIN  . . . . . . . . . . . .	Number	 0001h	 
+DEV_CLOCK  . . . . . . . . . . .	Number	 0008h	 
+DEV_COUT . . . . . . . . . . . .	Number	 0002h	 
+DEV_FCNLEV . . . . . . . . . . .	Number	 0380h	 
+DEV_GIOCTL . . . . . . . . . . .	Number	 0040h	 
+DEV_INITCOMPLETE . . . . . . . .	Number	 0010h	 
+DEV_IOCTL2 . . . . . . . . . . .	Number	 0001h	 
+DEV_IOCTL  . . . . . . . . . . .	Number	 4000h	 
+DEV_NON_IBM  . . . . . . . . . .	Number	 2000h	 
+DEV_NULL . . . . . . . . . . . .	Number	 0004h	 
+DEV_PARALLEL . . . . . . . . . .	Number	 0004h	 
+DEV_SAVERESTORE  . . . . . . . .	Number	 0020h	 
+DEV_SHARE  . . . . . . . . . . .	Number	 1000h	 
+DEV_SPEC . . . . . . . . . . . .	Number	 0010h	 
+_DiskDDHeader  . . . . . . . . .	DWord	 0000	  DDHeader	Public
+_FreeFixed . . . . . . . . . . .	L Near	 0000	  _TEXT	External
+_Strategy  . . . . . . . . . . .	L Near	 0000	  _TEXT	External
+_Timer . . . . . . . . . . . . .	L Near	 0000	  _TEXT	External
+_UpdateBuilds  . . . . . . . . .	L Near	 0000	  _TEXT	External
+_szDriverName  . . . . . . . . .	Byte	 0020	  DDHeader	Public
+
+	   0 Warnings
+	   0 Errors

@@ -1,0 +1,245 @@
+head	1.7;
+access;
+symbols
+	VSETUPv0_84:1.7
+	VSETUP_82:1.6
+	VSETUPv0_80:1.5
+	VSETUPv0_71:1.2
+	VSETUPv0_70:1.2;
+locks; strict;
+comment	@// @;
+
+
+1.7
+date	2000.08.15.00.15.40;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.07.05.00.49.32;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	99.06.21.01.38.32;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	99.06.19.18.28.27;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	99.06.02.01.44.54;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	99.03.08.05.07.30;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.03.04.00.22.17;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Declaration of class VSingle.
+@
+
+
+1.7
+log
+@- changed addChild() prototype
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/single.hpp,v $
+ * $Revision: 1.6 $
+ * $Date: 1999/07/05 00:49:32 $
+ * $Locker: vitus $
+ *
+ *	Declaration of class VSingle.
+ *
+ * $Log: single.hpp,v $
+ * Revision 1.6  1999/07/05 00:49:32  vitus
+ * - addChild() gets additional flag "config sector valid"
+ *
+ * Revision 1.5  1999/06/21 01:38:32  vitus
+ * - corrected english spelling
+ *
+ * Revision 1.4  1999/06/19 18:28:27  vitus
+ * - minor corrections to keep compiler happy
+ *
+ * Revision 1.3  1999/06/02 01:44:54  vitus
+ * - added inv_icon member (icon if child is invalid in respect to parent)
+ *
+ * Revision 1.2  1999/03/08 05:07:30  vitus
+ * - added queryIcon() method
+ *
+ * Revision 1.1  1999/03/04 00:22:17  vitus
+ * Initial revision
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1999
+ */
+#define _SINGLE_HPP	"$Id: single.hpp,v 1.6 1999/07/05 00:49:32 vitus Exp vitus $"
+
+
+
+class VSingle : public VRDrive {
+  private:
+    Boolean	hostdrive;
+    ULONG	os2access;
+    VRDev      *child;
+    ULONG	size;
+    Boolean	writable;
+    HPOINTER	inv_icon, rw_icon, ro_icon;
+
+  public:
+    VSingle(DEVID drive_id);
+    ~VSingle();
+
+    void	forceUnwritable() { writable = False; }
+
+    int		ioDeleteYourself();
+    int		ioRemoveParent();
+    int		ioChangeID(DEVID newid);
+    int		ioSync();
+
+    UCHAR	isArray() { return RDTYPE_SINGLE; }
+    Boolean	isHostdrive() { return hostdrive; }
+    char *	allocateDescription();
+    HPOINTER	queryIcon();
+    int		queryChildren();
+    VRDev *	getChild(int which);
+
+    void	setHostdrive(ULONG os2idx = -1UL);
+    void	addChild(VRDev * newchild,Boolean cfgv, ULONG datav = -1ul);
+
+    Boolean	isWritable() { return writable; }
+    ULONG	querySize();
+    APIRET	read(ULONG offset,ULONG count,PVOID buffer);
+    APIRET	write(ULONG offset,ULONG count,PVOID buffer);
+};
+
+@
+
+
+1.6
+log
+@- addChild() gets additional flag "config sector valid"
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1999/06/21 01:38:32 $
+d10 3
+d30 1
+a30 1
+#define _SINGLE_HPP	"$Id: single.hpp,v 1.5 1999/06/21 01:38:32 vitus Exp vitus $"
+d62 1
+a62 1
+    void	addChild(VRDev * newchild,Boolean cfgv,Boolean datav=True);
+@
+
+
+1.5
+log
+@- corrected english spelling
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1999/06/19 18:28:27 $
+d10 3
+d27 1
+a27 1
+#define _SINGLE_HPP	"$Id: single.hpp,v 1.4 1999/06/19 18:28:27 vitus Exp vitus $"
+d59 1
+a59 1
+    void	addChild(VRDev * newchild,Boolean valid=True);
+@
+
+
+1.4
+log
+@- minor corrections to keep compiler happy
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1999/06/02 01:44:54 $
+d10 3
+d24 1
+a24 1
+#define _SINGLE_HPP	"$Id: single.hpp,v 1.3 1999/06/02 01:44:54 vitus Exp vitus $"
+d52 1
+a52 1
+    int		queryChilds();
+@
+
+
+1.3
+log
+@- added inv_icon member (icon if child is invalid in respect to parent)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1999/03/08 05:07:30 $
+d10 3
+d21 1
+a21 1
+#define _SINGLE_HPP	"$Id: single.hpp,v 1.2 1999/03/08 05:07:30 vitus Exp vitus $"
+d52 1
+a52 1
+    void	setHostdrive(ULONG os2idx = -1);
+@
+
+
+1.2
+log
+@- added queryIcon() method
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1999/03/04 00:22:17 $
+d10 3
+d18 1
+a18 1
+#define _SINGLE_HPP	"$Id: single.hpp,v 1.1 1999/03/04 00:22:17 vitus Exp vitus $"
+d29 1
+a29 1
+    HPOINTER	rw_icon, ro_icon;
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 3
+a11 1
+ * $Log$
+d15 1
+a15 1
+#define _SINGLE_HPP	"$Id$"
+d26 1
+d42 1
+@

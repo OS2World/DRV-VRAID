@@ -1,0 +1,2659 @@
+head	1.3;
+access;
+symbols
+	DSLEEPv0_98:1.3
+	DSLEEPv0_95:1.2
+	DSLEEPv0_93:1.2
+	DSLEEPv0_92:1.2
+	DSLEEPv0_91:1.2
+	DSLEEPv0_80:1.2
+	DSLEEPv0_70:1.2
+	DSLEEPv0_60:1.1;
+locks; strict;
+comment	@ * @;
+
+
+1.3
+date	97.12.05.01.17.16;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	96.11.03.23.51.35;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	96.09.30.00.22.24;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@IBM supplied command line parser
+@
+
+
+1.3
+log
+@- removed array index overrun
+@
+text
+@/**************************************************************************
+ *
+ * SOURCE FILE NAME = CMDPARSE.C
+ *
+ * DESCRIPTIVE NAME = ADD Command Line Parser
+ *		      ADD CONFIG.SYS Command Line Parser Helper Routine
+ *
+ *
+ *
+ * COPYRIGHT	Copyright (C) 1992 IBM Corporation
+ *
+ * The following IBM OS/2 2.1 source code is provided to you solely for
+ * the purpose of assisting you in your development of OS/2 2.x device
+ * drivers. You may use this code in accordance with the IBM License
+ * Agreement provided in the IBM Device Driver Source Kit for OS/2. This
+ * Copyright statement may not be removed.
+ *
+ *
+ *
+ * VERSION = V2.0
+ *
+ * DATE
+ *
+ * DESCRIPTION :
+ *
+ * Purpose: This module consists of the Command_Parser Function and
+ *	    its associated local routines.  For detailed description
+ *	    of the Command_Parser interface refer to the CMDPARSE.H
+ *	    file.
+ *
+ * FUNCTIONS  :  Command_Parser
+ *		 Insert_End_Token
+ *		 Locate_First_Slash
+ *		 FarStrLen
+ *		 strncmp
+ *		 Parse_Option_Value
+ *		 Skip_over_Blanks
+ *		 char_parser
+ *		 d_parser
+ *		 dd_parser
+ *		 hh_parser
+ *		 H_Char_To_Byte
+ *		 hhhh_parser
+ *		 format_parser
+ *		 scsi_id_parser
+ *		 dev_id_parser
+ *		 geometry_parser
+ *		 chgline_parser
+ *		 Insert_Token
+ *		 Locate_Next_Slash
+ *		 Validate_State_Index
+ *
+ *
+ * NOTES
+ *
+ *
+ * STRUCTURES
+ *
+ * EXTERNAL REFERENCES
+ *
+ *
+ *
+ * EXTERNAL FUNCTIONS
+ *
+ ***************************************************************************/
+
+
+
+#if !defined(OS2_INCLUDED)
+# define  INCL_NOBASEAPI
+# define  INCL_NOPMAPI
+# include "OS2.H"
+#endif
+#include "CMDPHDR.H"
+#include "CMDPROTO.H"
+#define  TOKVBUF_LEN   255
+#define  UNDEFINED     -1
+
+
+PSZ	  pcmdline1, pcmdline_slash, pcmdline_start;
+INT	  tokv_index, state_index, length;
+CHARBYTE  tokvbuf[TOKVBUF_LEN];
+POPT	  pend_option, ptable_option;
+PBYTE	  poutbuf1, poutbuf_end;
+CC	  cc;
+
+
+
+/*
+**    Command_Parser -	external entry point into this module
+*/
+
+
+/***************************************************************************
+ *
+ * FUNCTION NAME = Command_Parser
+ *
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose:
+ *
+ *
+ *   Function Calls:
+ *
+ *
+ *
+ *
+ * INPUT	 = (pCmdLine,pOptTable,pOutBuf,OutBuf_Len)
+ *
+ *
+ *
+ *
+ * OUTPUT	 = NONE
+ *
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = NONE
+ *
+ ****************************************************************************/
+CC FAR
+Command_Parser(PSZ pCmdLine,
+	       POPTIONTABLE pOptTable,
+	       PBYTE pOutBuf,
+	       USHORT OutBuf_Len)
+{
+    USHORT j,end_index;
+
+    if (OutBuf_Len < (TOKL_ID_END+TOK_MIN_LENGTH))
+    {
+	cc.ret_code = BUF_TOO_SMALL_ERR;
+	cc.err_index = 0;
+	return cc;
+    }
+    poutbuf_end = pOutBuf+OutBuf_Len;
+    poutbuf1 = pOutBuf;
+    for( poutbuf1 = pOutBuf; poutbuf1 < poutbuf_end; ++poutbuf1 )
+	*poutbuf1 = 0;
+    poutbuf1 = pOutBuf;
+    Insert_End_Token();
+
+    /* Locate the last entry in the Option Table. This special entry
+     * defines whether or not an option is required based on the index
+     * in the state table. */
+
+    for( end_index = 0;
+	pOptTable->poption[end_index]->id != TOK_ID_END;
+	++end_index )
+	;
+    pend_option = pOptTable->poption[end_index];
+
+    /* Setup the initial index into the state table. */
+
+    state_index = pOptTable->entry_state;
+    if( !Validate_State_Index(pOptTable->max_states) )
+	return cc;
+
+    /* On return from Locate_First_Slash call pcmdline_slash
+     * contains the ptr to the slash in the command line. */
+
+    pcmdline_start = pCmdLine;
+    pcmdline1 = pCmdLine;
+    if( !Locate_First_Slash() )
+	return cc;
+    for( j = 0; j < end_index; ++j )
+    {
+	/* Locate valid options in Option Table, based
+	 * on state table index. */
+
+	if( pOptTable->poption[j]->state[state_index] != E )
+	{
+	    /* Found a valid option. Check to see if this is the option
+	     * entered at this point in command line. */
+
+	    ptable_option = pOptTable->poption[j];
+	    length = FarStrLen(ptable_option->string);
+	    if( strncmp(pcmdline_slash, ptable_option->string, length) == TRUE )
+	    {
+		/* Found the command line option.  Now, syntax check its
+		 * associated value. */
+
+		if ( !Parse_Option_Value() )
+		    return cc;
+
+		/* No syntax err detected.  Now, insert the option and its
+		 * associated value into the output buffer in token format. */
+
+		if( !Insert_Token() )
+		    return cc;
+
+		/* Setup next index into the state table. */
+
+		state_index = ptable_option->state[state_index];
+		if( !Validate_State_Index(pOptTable->max_states) )
+		    return cc;
+
+		/* Setup cmdline_slash to point the the next / (option) in
+		 * the command line.
+		 * Parsing stops once either an invalid character is
+		 * found on the command line or the end of the command line
+		 * is detected. */
+
+		if( !Locate_Next_Slash() )
+		    return cc;
+
+		/* Setup for option search. Point to the top
+		 * of the Option Table. */
+
+		j = (USHORT)-1;
+	    } /*endif*/
+	} /*endif*/
+    } /*endfor*/
+
+    if( pend_option->state[state_index] == R )
+    {
+	/* A required option was not found on the command line. */
+
+	cc.ret_code = REQ_OPT_ERR;
+    }
+    else
+    {
+	/* Characters on the command line are not defined in the Option Table
+	 * as a valid option.  All options must start with a / character. */
+
+	cc.ret_code = INVALID_OPT_ERR;
+    }
+    cc.err_index = pcmdline_slash-pCmdLine;
+    return cc;
+}
+
+
+
+
+/***************************************************************************
+ *
+ * FUNCTION NAME = Insert_End_Token
+ *
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: Insert the end of token marker into the output buffer
+ *
+ *
+ *   Function Calls:
+ *
+ *
+ *
+ *
+ * INPUT	 = ()
+ *
+ *
+ *
+ *
+ * OUTPUT	 = NONE
+ *
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = NONE
+ *
+ ****************************************************************************/
+STATIC void NEAR
+Insert_End_Token(void)
+{
+    *poutbuf1 = TOKL_ID_END;
+    *(poutbuf1+1) = (BYTE)TOK_ID_END;
+    return;
+}
+
+
+
+
+/***************************************************************************
+ *
+ * FUNCTION NAME = Locate_First_Slash
+ *
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose:  Locate the / on the command line.  All characters entered prior
+ *	       to the first / are ignored.  This allows the parser to bypass
+ *	       the BASEDEV = xxxxxxxx.xxx portion of the command line.
+ *
+ *   Function Calls:
+ *
+ *
+ *
+ *
+ * INPUT	 = ()
+ *
+ *
+ *
+ *
+ * OUTPUT	 = NONE
+ *
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = NONE
+ *
+ ****************************************************************************/
+STATIC BOOL NEAR Locate_First_Slash(VOID)
+{
+    while( *pcmdline1 != '\0'  &&  *pcmdline1 != '\n'  &&  *pcmdline1 != '\r' )
+    {
+	if( *pcmdline1 == '/' )
+	{
+	    pcmdline_slash = pcmdline1;
+	    return TRUE;
+	}
+	++pcmdline1;
+    }
+    cc.err_index = 0;
+    cc.ret_code = NO_OPTIONS_FND_ERR;
+    if( pend_option->state[state_index] == R )
+	cc.ret_code = REQ_OPT_ERR;
+    return FALSE;
+}
+
+
+
+
+/***************************************************************************
+ *
+ * FUNCTION NAME = FarStrLen
+ *
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: Return the length of a string
+ *
+ *
+ *   Function Calls:
+ *
+ *
+ *
+ *
+ * INPUT	 = (s)
+ *
+ *
+ *
+ *
+ * OUTPUT	 = NONE
+ *
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ *
+ ****************************************************************************/
+STATIC INT NEAR FarStrLen(CHAR FAR *s)
+{
+    INT i;
+    for ( i=0; *s != '\0'; ++s )
+	++i;
+    return i;
+}
+
+
+/***************************************************************************
+ *
+ * FUNCTION NAME = strncmp
+ *
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: Compare n number of characters in 2 strings, return TRUE if =
+ *	      If s1 is in lower case, convert to upper prior to comparing.
+ *
+ *   Function Calls:
+ *
+ *
+ *
+ *
+ * INPUT	 = (s1,s2,n)
+ *
+ *
+ *
+ *
+ * OUTPUT	 = NONE
+ *
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ *
+ ****************************************************************************/
+STATIC BOOL NEAR strncmp(CHAR FAR *s1,CHAR FAR *s2,INT n)
+{
+    INT i;
+    CHAR temp;
+
+    for( i = 0; i < n; ++i, ++s1, ++s2 )
+	if( *s1 != *s2 )
+	{
+	    if( *s1 >= 'a'  &&  *s1 <= 'z' )
+	    {
+		temp = *s1 - (CHAR)' ';
+		if( temp == *s2 )
+		    continue;
+	    }
+	    return FALSE;
+	}
+    return TRUE;
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = Parse_Option_Value
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: Parse the command line for the value assigned to located option
+ *
+ *   Function Calls:
+ *
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC BOOL NEAR
+Parse_Option_Value()
+{
+    pcmdline1 = pcmdline_slash+length;
+    Skip_Over_Blanks();
+    for (tokv_index=0; tokv_index < TOKVBUF_LEN ; ++tokv_index)
+	tokvbuf[tokv_index].byte_value = 0;
+
+    tokv_index = UNDEFINED;
+    cc.ret_code = NO_ERR;
+    cc.err_index = 0;
+
+    switch (ptable_option->type)
+    {
+      case TYPE_0:
+	break;
+
+      case TYPE_CHAR:
+	char_parser();
+	break;
+
+      case TYPE_D:
+	d_parser();
+	break;
+
+      case TYPE_DD:
+	dd_parser();
+	break;
+
+      case TYPE_DDDD:
+	dddd_parser();
+	break;
+
+      case TYPE_ULIST:
+	ulist_parser();
+	break;
+
+      case TYPE_HH:
+	hh_parser();
+	break;
+
+      case TYPE_HHHH:
+	hhhh_parser();
+	break;
+
+      case TYPE_FORMAT:
+	format_parser();
+	break;
+
+      case TYPE_SCSI_ID:
+	scsi_id_parser();
+	break;
+
+      case TYPE_DEV_ID:
+	dev_id_parser();
+	break;
+
+      case TYPE_GEOMETRY:
+	geometry_parser();
+	break;
+
+      case TYPE_CHGLINE:
+	chgline_parser();
+	break;
+
+      default:
+	cc.ret_code = UNDEFINED_TYPE_ERR;
+    } /* endswitch */
+
+    if (cc.ret_code != NO_ERR)
+    {
+	cc.err_index = pcmdline1 - pcmdline_start;
+	return FALSE;
+    }
+    return TRUE;
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = Skip_Over_Blanks
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose:  Skip over all the blank and tab characters
+ *
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC void NEAR
+Skip_Over_Blanks()
+{
+    while( *pcmdline1 == ' '  ||  *pcmdline1 == '\t' )
+	++pcmdline1;
+    return;
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = char_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_CHAR option parser - scan till blank,tab,cr,new line or
+ *					end of string char
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC void NEAR
+char_parser()
+{
+    while( *pcmdline1 != '\0'  &&  *pcmdline1 != '\n'
+	  &&  *pcmdline1 != '\r'  &&  *pcmdline1 != '/' )
+    {
+	tokvbuf[++tokv_index].char_value = *pcmdline1;
+	++pcmdline1;
+    }
+    return;
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = d_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_D option parser - one digit decimal number (d)
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC void NEAR
+d_parser()
+{
+    if( (*pcmdline1 >= '0') && (*pcmdline1 <= '9') )
+    {
+       tokvbuf[++tokv_index].byte_value = *pcmdline1 - (CHAR)'0';
+       pcmdline1++;
+   }
+    else
+    {
+       cc.ret_code = SYNTAX_ERR;
+   }
+    return;
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = dd_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_DD option parser - two digit decimal number (dd)
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC void NEAR
+dd_parser()
+{
+    INT i;
+    BYTE n;
+    BOOL flag;
+
+    n = 0;
+    flag = FALSE;
+    for ( i=0; i < 2; i++ )
+    {
+	if( (*pcmdline1 >= '0') && (*pcmdline1 <= '9') )
+	{
+	    n = (BYTE)(10 * n + *pcmdline1 - '0');
+	    ++pcmdline1;
+	    flag = TRUE;
+	}
+	else
+	{
+	    /* Was at least 1 digit found on the command line? */
+
+	    if( flag )
+		break;
+	    cc.ret_code = SYNTAX_ERR;
+	    return;
+	}
+    }
+    tokvbuf[++tokv_index].byte_value = n;
+    return;
+}
+
+
+
+
+/*
+ * NAME
+ *	dddd_parser
+ * CALL
+ *	dddd_parser(void)
+ * PARAMETER
+ *	none
+ * RETURNS
+ *	nothing
+ * GLOBAL
+ *	cc
+ * DESPRIPTION
+ *	TYPE_DDDD option parser - four digit decimal number (dddd)
+ * REMARKS
+ */
+STATIC void NEAR
+dddd_parser()
+{
+    int		i;
+    NUMBER	un;
+    BYTE	c;
+    BOOL	flag = FALSE;
+
+    un.n = 0;
+    flag = FALSE;
+    for( i = 0; i < 4; ++i )
+    {
+	c = *pcmdline1;
+	if( c >= '0'  &&  c <= '9' )
+	{
+	    un.n = 10 * un.n + c - '0';
+	    ++pcmdline1;
+	    flag = TRUE;
+	}
+	else
+	{
+	    /* Was at least 1 digit found on the command line? */
+
+	    if( flag == TRUE )
+		break;
+	    cc.ret_code = SYNTAX_ERR;
+	    return;
+	}
+    }
+
+    tokvbuf[++tokv_index].byte_value = un.two_bytes.byte1;
+    tokvbuf[++tokv_index].byte_value = un.two_bytes.byte2;
+    return;
+}
+
+
+
+
+/*
+ * NAME
+ * CALL
+ * PARAMETER
+ * RETURNS
+ * GLOBAL
+ * DESPRIPTION
+ *	TYPE_ULIST option parser - two or three decimal
+ * 	number (d,d[,d]) list (!)
+ *	If only two decimal are supplied the third is
+ *	set to '0'.
+ * REMARKS
+ */
+/*STATIC*/ void NEAR
+ulist_parser()
+{
+    int		i;
+    int		counter = 0;
+    NUMBER	un_number;
+    BOOL	flag, inside;
+
+    while( TRUE )
+    {
+	if( counter == 0 )			/* first number in coordinate? */
+	{
+	    if( *pcmdline1 != '(' )
+	    {
+		cc.ret_code = SYNTAX_ERR;	/* no allowed */
+		return;
+	    }
+	    ++pcmdline1;
+	    Skip_Over_Blanks();
+	    inside = TRUE;			/* (inside) */
+	}
+
+	un_number.n = 0;
+	flag = FALSE;
+	for( i = 0; i < 4; ++i )
+	{
+	    if( *pcmdline1 >= '0'  &&  *pcmdline1 <= '9' )
+	    {
+		un_number.n = 10 * un_number.n + (*pcmdline1 - '0');
+		++pcmdline1;
+		flag = TRUE;
+	    }
+	    else
+	    {
+		/* Was at least 1 digit found on the command line? */
+		if( flag )
+		    break;
+		cc.ret_code = SYNTAX_ERR;
+		return;
+	    }
+	}
+	tokvbuf[++tokv_index].byte_value = un_number.two_bytes.byte1;
+	tokvbuf[++tokv_index].byte_value = un_number.two_bytes.byte2;
+	Skip_Over_Blanks();
+
+	if( *pcmdline1 == ')'  &&  (counter == 1  ||  counter == 2) )
+	{
+	    if( counter == 1 )			/* only 2? Third = 0! */
+	    {
+		tokvbuf[++tokv_index].byte_value = 0;
+		tokvbuf[++tokv_index].byte_value = 0;
+	    }
+	    counter = -1;			/* new coordinate */
+	    ++pcmdline1;			/* skip ')' */
+	    Skip_Over_Blanks();
+	    inside = FALSE;			/* not (inside) */
+	}
+	else if( counter == 2 )
+	{
+	    cc.ret_code = SYNTAX_ERR;
+	    return;
+	}
+	if( *pcmdline1 != ',' )
+	{
+	    if( inside )
+		cc.ret_code = SYNTAX_ERR;	/* missing ')' */
+	    return;
+	}
+	++pcmdline1;				/* skip ',' */
+	Skip_Over_Blanks();
+	++counter;
+    }
+
+    return;
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = hh_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_HH option parser	   hh,hh format (h = hex char)
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC void NEAR
+hh_parser()
+{
+    /* Convert command line HH char and setup token value buffer */
+
+    if( !HH_Char_To_Byte() )
+	return;
+    Skip_Over_Blanks();
+
+    if( *pcmdline1 != ',' )
+    {
+	cc.ret_code = SYNTAX_ERR;
+	return;
+    }
+    ++pcmdline1;
+    Skip_Over_Blanks();
+
+    /* Convert command line HH char and setup token value buffer */
+
+    HH_Char_To_Byte();
+    return;
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = HH_Char_To_Byte
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: Convert HH char to byte value
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC BOOL NEAR
+HH_Char_To_Byte()
+{
+    BYTE  n;
+    INT   i;
+    BOOL  flag = FALSE;
+    BYTE  c;
+
+    n = 0;
+    for( i = 0; i < 2; ++i )
+    {
+	c = *pcmdline1;
+	if( c >= '0'  &&  c <= '9' )
+	{
+	    n = (BYTE)(16 * n + c - '0');
+	    ++pcmdline1;
+	    flag = TRUE;
+	    continue;
+	}
+	c |= 0x20;				/* convert to lower case */
+	if( c >= 'a'  &&  c <= 'f' )
+	{
+	    n = (BYTE)(16 * n + c - 'W');
+	    ++pcmdline1;
+	    flag = TRUE;
+	    continue;
+	}
+
+	/* Was at least 1 hex digit found on the command line? */
+
+	if( flag )
+	    break;
+	cc.ret_code = SYNTAX_ERR;
+	return FALSE;
+    }
+
+    tokvbuf[++tokv_index].byte_value = n;
+    return TRUE;
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = hhhh_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_HHHH option parser	    hhhh format (h = hex char)
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC void NEAR
+hhhh_parser()
+{
+    INT    i;
+    BOOL   flag;
+    NUMBER un_number;
+    BYTE   c;
+
+    un_number.n = 0;
+    flag = FALSE;
+    for( i = 0; i < 4; ++i )
+    {
+	c = *pcmdline1;
+	if( c >= '0'  &&  c <= '9' )
+	{
+	    un_number.n = 16 * un_number.n + c - '0';
+	    ++pcmdline1;
+	    flag = TRUE;
+	    continue;
+	}
+	c |= 0x20;
+	if( c >= 'a'  &&  c <= 'f' )
+	{
+	    un_number.n = 16*un_number.n + c - 'W';
+	    ++pcmdline1;
+	    flag = TRUE;
+	    continue;
+	}
+
+	/* Was at least 1 hex digit found on the command line? */
+
+	if( flag )
+	    break;
+	cc.ret_code = SYNTAX_ERR;
+	return;
+    }
+
+    tokvbuf[++tokv_index].byte_value = un_number.two_bytes.byte1;
+    tokvbuf[++tokv_index].byte_value = un_number.two_bytes.byte2;
+    return;
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = format_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_FORMAT option parser -  format_table chars accepted
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = NONE
+ ****************************************************************************/
+STATIC void NEAR
+format_parser()
+{
+    typedef struct _formattable {
+	PSZ string;
+	USHORT type;
+	NUMBER MegBytes;
+    } FORMATTABLE;
+
+    /*
+     * FORMATTABLE type definitions
+     * accepts # string followed by:
+     */
+
+#define  M_BYTES       1	       /* accepts MB,mb,Mb,mB, or nothing */
+#define  K_BYTES       2	       /* accepts KB,kb,Kb,kB, or nothing */
+
+    INT str_len,k;
+    static FORMATTABLE format_table[] = {
+	{ "360",K_BYTES,360 } ,
+	{ "720",K_BYTES,720 } ,
+	{ "1200",K_BYTES,1200 } ,
+	{ "1.2",M_BYTES,1200 } ,
+	{ "1440",K_BYTES,1440 } ,
+	{ "1.44",M_BYTES,1440 } ,
+	{ "2880",K_BYTES,2880 } ,
+	{ "2	.88",M_BYTES,2880 } ,
+	{ "-1" } ,                          /* , ???? */
+    };
+
+    cc.ret_code = SYNTAX_ERR;
+    for( k = 0; (format_table[k].string != "-1"); ++k )
+    {
+	str_len = FarStrLen(format_table[k].string);
+	if( strncmp(pcmdline1, format_table[k].string, str_len) == TRUE )
+	{
+	    pcmdline1 += str_len;
+	    if( format_table[k].type == K_BYTES )
+	    {
+		if( *pcmdline1 == 'K'  || *pcmdline1 == 'k' )
+		{
+		    ++pcmdline1;
+		    if( *(pcmdline1) == 'B'  ||  *(pcmdline1) == 'b' )
+			++pcmdline1;
+		}
+	    }
+	    else
+	    {
+		if( *pcmdline1 == 'M'  ||  *pcmdline1 == 'm' )
+		{
+		    ++pcmdline1;
+		    if( *(pcmdline1) == 'B'  ||  *(pcmdline1) == 'b' )
+			++pcmdline1;
+		}
+	    }
+	    ++tokv_index;
+	    tokvbuf[tokv_index].byte_value
+		= format_table[k].MegBytes.two_bytes.byte1;
+	    ++tokv_index;
+	    tokvbuf[tokv_index].byte_value
+		= format_table[k].MegBytes.two_bytes.byte2;
+	    cc.ret_code = NO_ERR;
+	    break;
+	}
+    }
+
+    return;
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = scsi_id_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_SCSI_ID option parser - format d and (d,d) accepted
+ *					   where d = 0 - 7
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC void NEAR
+scsi_id_parser()
+{
+    BOOL found_bracket, found_one;
+
+    found_bracket = FALSE;
+    found_one = FALSE;
+    if( *pcmdline1 == '(' )
+    {
+	found_bracket = TRUE;
+	++pcmdline1;
+	Skip_Over_Blanks();
+    }
+    while( *pcmdline1 >= '0'  &&  *pcmdline1 <= '7' )
+    {
+	found_one = TRUE;
+	tokv_index++;
+	tokvbuf[tokv_index].byte_value = (BYTE)(*pcmdline1 - '0');
+	++pcmdline1;
+	if( !found_bracket )
+	{
+	    ++tokv_index;
+	    tokvbuf[tokv_index].byte_value = 0;
+	}
+	Skip_Over_Blanks();
+	if( *pcmdline1 != ',' )
+	{
+	    if( found_bracket )
+		cc.ret_code = SYNTAX_ERR;
+	    return;
+	}
+	++pcmdline1;
+	Skip_Over_Blanks();
+	if( found_bracket )
+	{
+	    if( *pcmdline1 >= '0'  && *pcmdline1 <= '7' )
+	    {
+		++tokv_index;
+		tokvbuf[tokv_index].byte_value = (BYTE)(*pcmdline1 - '0');
+		++pcmdline1;
+		Skip_Over_Blanks();
+		if( *pcmdline1 != ')' )
+		{
+		    cc.ret_code = SYNTAX_ERR;
+		    return;
+		}
+		++pcmdline1;
+		Skip_Over_Blanks();
+		found_bracket = FALSE;
+		if( *pcmdline1 != ',' )
+		    return;
+		++pcmdline1;
+		Skip_Over_Blanks();
+	    }
+	}
+	if( *pcmdline1 == '(' )
+	{
+	    found_bracket = TRUE;
+	    pcmdline1++;
+	    Skip_Over_Blanks();
+	}
+    }
+
+    if( found_bracket )
+	cc.ret_code = SYNTAX_ERR;
+    if( !found_one )
+	cc.ret_code = SYNTAX_ERR;
+    return;
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = dev_id_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_DEV_ID option parser - format c, (c,d) and (c,d,d) accepted
+ *					   where d = 0 - 7
+ *					   and	 c = 0 - 9
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ *
+ * 940215/VJ: Generated from scsi_id_parser() see CMDPDEFS.H for description
+ *	      of token
+ ****************************************************************************/
+VOID NEAR dev_id_parser()
+{
+    BOOL found_bracket=FALSE;
+    BOOL found_one=FALSE;
+
+    /* A SCSI coordinate may be contained in brackets */
+    if( *pcmdline1 == '(' )
+    {
+	found_bracket = TRUE;
+	++pcmdline1;
+	Skip_Over_Blanks();
+    }
+
+    /* Scan coordinates, first is cache device or scsi channel
+     * and may evaluate to any value (currently supported 0-9). */
+
+    while( *pcmdline1 >= '0'  &&  *pcmdline1 <= '9' )
+    {
+	found_one = TRUE;
+	tokvbuf[++tokv_index].byte_value = *pcmdline1 - (CHAR)'0';
+	++pcmdline1;
+	Skip_Over_Blanks();
+
+	if( *pcmdline1 != ',' )			/* more coordinates? */
+	{					/*  NO */
+	    if( found_bracket )			/* started w/ bracket? */
+		cc.ret_code = SYNTAX_ERR;	/*  have to stop w/ bracket! */
+	    tokvbuf[++tokv_index].byte_value = (CHAR)-1;
+	    tokvbuf[++tokv_index].byte_value = (CHAR)-1; /* fill w/ -1 */
+	    return;
+	}
+	++pcmdline1;
+	Skip_Over_Blanks();
+
+	if( found_bracket )			/* started w/ brackets? */
+	{					/*  YES, more may come */
+	    if ( *pcmdline1 >= '0'  &&  *pcmdline1 <= '7' )
+	    {
+		tokvbuf[++tokv_index].byte_value = *pcmdline1 - (CHAR)'0';
+		++pcmdline1;
+		Skip_Over_Blanks();
+
+		if( *pcmdline1 == ',' )		/* ',' behind 2nd coord. ? */
+		{				/*  YES, 3rd coord. follows */
+		    ++pcmdline1;
+		    Skip_Over_Blanks();
+		    if( *pcmdline1 >= '0'  &&  *pcmdline1 <= '7' )
+		    {
+			tokvbuf[++tokv_index].byte_value = *pcmdline1 - (CHAR)'0';
+			++pcmdline1;
+			Skip_Over_Blanks();
+		    }
+		    else
+		    {
+			cc.ret_code = SYNTAX_ERR;
+			return;
+		    }
+		}
+		else
+		{
+		    tokvbuf[++tokv_index].byte_value = (CHAR)-1; /* 3rd coord. not supplied */
+		}
+
+		if( *pcmdline1 != ')' )
+		{
+		    cc.ret_code = SYNTAX_ERR;
+		    return;
+		}
+		++pcmdline1;
+		Skip_Over_Blanks();
+
+		found_bracket = FALSE;
+		if( *pcmdline1 != ',' )
+		    return ;
+		++pcmdline1;
+		Skip_Over_Blanks();
+	    }
+	}
+	else
+	{
+	    tokvbuf[++tokv_index].byte_value = (CHAR)-1;
+	    tokvbuf[++tokv_index].byte_value = (CHAR)-1; /* fill w/ -1 */
+	}
+
+	if( *pcmdline1 == '(' )
+	{
+	    found_bracket = TRUE;
+	    ++pcmdline1;
+	    Skip_Over_Blanks();
+	}
+    }
+
+    if( found_bracket )				/* missing closing bracket */
+	cc.ret_code = SYNTAX_ERR;
+    if( !found_one )				/* no numbers */
+	cc.ret_code = SYNTAX_ERR;
+    return;
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = geometry_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_GEOMETRY option parser - dd or (dddd,dddd,dddd) accepted
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC void NEAR
+geometry_parser()
+{
+    INT	    i,counter;
+    NUMBER  un_number;
+    BOOL    flag;
+
+    if( *pcmdline1 != '(' )
+    {
+	dd_parser();
+	return ;
+    }
+    pcmdline1++;
+    Skip_Over_Blanks();
+    counter = 0;
+    while( TRUE )
+    {
+	un_number.n = 0;
+	flag = FALSE;
+	for( i = 0; i < 4; ++i )
+	{
+	    if( *pcmdline1 >= '0'  &&  *pcmdline1 <= '9' )
+	    {
+		un_number.n = 10*un_number.n+*pcmdline1-'0';
+		++pcmdline1;
+		flag = TRUE;
+	    }
+	    else
+	    {
+		/*
+		 * Was at least 1 digit found on the command line?
+		 */
+		if( flag )
+		    break;
+		cc.ret_code = SYNTAX_ERR;
+		return;
+	    }
+	}
+	++tokv_index;
+	tokvbuf[tokv_index].byte_value = un_number.two_bytes.byte1;
+	++tokv_index;
+	tokvbuf[tokv_index].byte_value = un_number.two_bytes.byte2;
+	Skip_Over_Blanks();
+	if( counter == 2 )
+	{
+	    if( *pcmdline1 != ')' )
+		cc.ret_code = SYNTAX_ERR;
+	    else
+		++pcmdline1;
+	    return;
+	}
+	if( *pcmdline1 != ',' )
+	{
+	    cc.ret_code = SYNTAX_ERR;
+	    return;
+	}
+	++pcmdline1;
+	++counter;
+	Skip_Over_Blanks();
+    }
+
+    return;
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = chgline_parser
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: TYPE_CHGLINE option parser - Valid options: PS2
+ *							  AT
+ *							  NONE
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = NONE
+ ****************************************************************************/
+STATIC void NEAR
+chgline_parser()
+{
+    USHORT k, str_len;
+    NPBYTE chgline_opts[] = { "\0","NONE","AT","PS2" };
+
+    for( k = 1; k < sizeof(chgline_opts)/sizeof(chgline_opts[0]); ++k )
+    {
+	str_len = FarStrLen( chgline_opts[k] );
+	if( strncmp(pcmdline1, chgline_opts[k], str_len) )
+	{
+	    pcmdline1 += str_len;
+	    ++tokv_index;
+	    tokvbuf[tokv_index].byte_value = (BYTE)k;
+	    return;
+	}
+    }
+    cc.ret_code = SYNTAX_ERR;
+    return;
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = Insert_Token
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: Insert the parsed option (token) into the output buffer.
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC BOOL NEAR
+Insert_Token()
+{
+    USHORT	tok_size;
+    INT		t;
+
+    tok_size = TOK_MIN_LENGTH + tokv_index;
+    if( (poutbuf1+tok_size+TOKL_ID_END) >= poutbuf_end )
+    {
+	cc.err_index = pcmdline_slash - pcmdline_start;
+	cc.ret_code = BUF_TOO_SMALL_ERR;
+	return FALSE;
+    }
+    *poutbuf1 = (BYTE)(tok_size + 1);
+    ++poutbuf1;
+    *poutbuf1 = (BYTE)ptable_option->id;
+    ++poutbuf1;
+    if( tokv_index != UNDEFINED )
+    {
+	for( t = 0; t <= tokv_index; ++t )
+	{
+	    *poutbuf1 = tokvbuf[t].byte_value;
+	    ++poutbuf1;
+	}
+    }
+    Insert_End_Token();
+    return TRUE;
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = Locate_Next_Slash
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: Locate the next / char.
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = ()
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = NONE
+ ****************************************************************************/
+STATIC BOOL NEAR
+Locate_Next_Slash()
+{
+    while( *pcmdline1 != '\0'  &&  *pcmdline1 != '\n'  &&  *pcmdline1 != '\r' )
+    {
+	if( *pcmdline1 == ' '  ||  *pcmdline1 == '\t' )
+	{
+	    ++pcmdline1;
+	}
+	else
+	{
+	    if( *pcmdline1 == '/' )
+	    {
+		pcmdline_slash = pcmdline1;
+		return TRUE;
+	    }
+	    else
+	    {
+		cc.ret_code = INVALID_OPT_ERR;
+		cc.err_index = pcmdline1 - pcmdline_start;
+		return FALSE;
+	    }
+	}
+    } /* endwhile */
+    if( pend_option->state[state_index] == R )
+    {
+	cc.ret_code = REQ_OPT_ERR;
+	cc.err_index = pcmdline1 - pcmdline_start;
+    }
+    else
+    {
+	cc.ret_code = NO_ERR;
+	cc.err_index = 0;
+    }
+
+    return FALSE;
+}
+
+
+
+
+/***************************************************************************
+ * FUNCTION NAME = Validate_State_Index
+ *
+ * DESCRIPTION	 =
+ *
+ *   Purpose: Validate the State Index
+ *
+ *   Function Calls:
+ *
+ * INPUT	 = (maxstate)
+ *
+ * OUTPUT	 = NONE
+ *
+ * RETURN-NORMAL = NONE
+ *
+ * RETURN-ERROR  = FALSE
+ ****************************************************************************/
+STATIC BOOL NEAR
+Validate_State_Index(USHORT maxstate)
+{
+    if( state_index > maxstate  ||  state_index < 0 )
+    {
+	cc.ret_code = UNDEFINED_STATE_ERR;
+	cc.err_index = 0;
+	return FALSE;
+    }
+    return TRUE;
+}
+
+@
+
+
+1.2
+log
+@Added ulist_parser (2 or 3 ushorts)
+Unified code layout
+@
+text
+@d434 1
+a434 1
+    for (tokv_index=0; tokv_index <= TOKVBUF_LEN ; ++tokv_index)
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d70 3
+a72 3
+   #define  INCL_NOBASEAPI
+   #define  INCL_NOPMAPI
+   #include "OS2.H"
+d79 1
+d88 1
+d122 5
+a126 5
+
+CC FAR Command_Parser( PSZ pCmdLine,
+		       POPTIONTABLE pOptTable,
+		       PBYTE pOutBuf,
+		       USHORT OutBuf_Len)
+d131 1
+a131 1
+	{
+d135 1
+a135 1
+	}
+d138 1
+a138 1
+    for (poutbuf1 = pOutBuf; (poutbuf1 < poutbuf_end); poutbuf1++ )
+d143 7
+a149 8
+  /*
+  **  Locate the last entry in the Option Table. This special entry
+  **  defines whether or not an option is required based on the index
+  **  in the state table.
+  */
+
+    for (end_index = 0; (pOptTable->poption[end_index]->id != TOK_ID_END);
+								 end_index++)
+d153 1
+a153 3
+  /*
+  **  Setup the initial index into the state table.
+  */
+d156 1
+a156 1
+    if (!Validate_State_Index(pOptTable->max_states))
+d159 2
+a160 4
+  /*
+  **  On return from Locate_First_Slash call pcmdline_slash
+  **  contains the ptr to the slash in the command line.
+  */
+d164 1
+a164 1
+    if (!Locate_First_Slash())
+d166 6
+a171 1
+    for ( j=0; j < end_index; ++j )
+d173 2
+a174 12
+
+    /*
+    **	Locate valid options in Option Table, based on state table index.
+    */
+
+	if ( pOptTable->poption[j]->state[state_index] != E )
+	    {
+
+      /*
+      **  Found a valid option. Check to see if this is the option
+      **  entered at this point in command line.
+      */
+d178 4
+a181 7
+	    if ( strncmp(pcmdline_slash, ptable_option->string, length) == TRUE )
+		{
+
+	/*
+	** Found the command line option.  Now, syntax check its
+	** associated value.
+	*/
+d186 2
+a187 4
+	/*
+	** No syntax err detected.  Now, insert the option and its
+	** associated value into the output buffer in token format.
+	*/
+d189 1
+a189 1
+		if ( !Insert_Token() )
+d192 1
+a192 3
+	/*
+	**  Setup next index into the state table.
+	*/
+d195 1
+a195 1
+		if ( !Validate_State_Index(pOptTable->max_states) )
+d198 5
+a202 7
+	/*
+	**  Setup cmdline_slash to point the the next / (option) in
+	**  the command line.
+	**  Parsing stops once either an invalid character is
+	**  found on the command line or the end of the command line
+	**  is detected.
+	*/
+d204 1
+a204 1
+		if ( !Locate_Next_Slash() )
+d207 2
+a208 3
+	/*
+	** Setup for option search. Point to the top of the Option Table.
+	*/
+a210 1
+		} /*endif*/
+d212 2
+a213 3
+	} /*endfor*/
+    if ( pend_option->state[state_index] == R )
+	{
+d215 3
+a217 3
+    /*
+    ** A required option was not found on the command line.
+    */
+d220 1
+a220 1
+	}
+d222 3
+a224 6
+	{
+
+    /*
+    ** Characters on the command line are not defined in the Option Table
+    ** as a valid option.  All options must start with a / character.
+    */
+d227 1
+a227 1
+	}
+d263 2
+a264 2
+
+STATIC VOID NEAR Insert_End_Token(VOID)
+d266 3
+a268 3
+  *poutbuf1 = TOKL_ID_END;
+  *(poutbuf1+1) = (BYTE)TOK_ID_END;
+  return;
+d305 3
+a307 1
+    while ( (*pcmdline1 != '\0')  &&  (*pcmdline1 != '\n')  &&  (*pcmdline1 != '\r') )
+a308 2
+	if ( *pcmdline1 == '/' )
+	    {
+d311 1
+a311 1
+	    }
+d313 1
+a313 1
+	}
+d316 1
+a316 1
+    if ( pend_option->state[state_index] == R )
+d394 4
+a397 2
+    for (i=0; i < n; i++, s1++, s2++)
+	if (*s1 != *s2)
+a398 2
+	    if ((*s1 >= 'a')  &&  (*s1 <= 'z'))
+		{
+d400 1
+a400 1
+		if (temp == *s2)
+d402 1
+a402 1
+		}
+d404 1
+a404 1
+	    }
+a427 1
+ *
+d429 2
+a430 1
+STATIC BOOL NEAR Parse_Option_Value()
+d442 3
+a444 43
+	{
+	case  TYPE_0 :
+	    break;
+
+	case  TYPE_CHAR :
+	    char_parser();
+	    break;
+
+	case  TYPE_D :
+	    d_parser();
+	    break;
+
+	case  TYPE_DD :
+	    dd_parser();
+	    break;
+
+	case  TYPE_HH :
+	    hh_parser();
+	    break;
+
+	case  TYPE_HHHH :
+	    hhhh_parser();
+	    break;
+
+	case  TYPE_FORMAT :
+	    format_parser();
+	    break;
+
+	case  TYPE_SCSI_ID :
+	    scsi_id_parser();
+	    break;
+
+	case  TYPE_DEV_ID :
+	    dev_id_parser();
+	    break;
+
+	case  TYPE_GEOMETRY :
+	    geometry_parser();
+	    break;
+
+	case  TYPE_CHGLINE :
+	    chgline_parser();
+	    break;
+d446 51
+a496 3
+	default  :
+	    cc.ret_code = UNDEFINED_TYPE_ERR;
+	} /* endswitch */
+d499 2
+a500 2
+	{
+	cc.err_index = pcmdline1-pcmdline_start;
+d502 1
+a502 1
+	}
+a509 1
+ *
+a511 1
+ *
+a518 3
+ *
+ *
+ *
+a520 3
+ *
+ *
+ *
+a522 1
+ *
+a525 1
+ *
+d527 2
+a528 1
+STATIC VOID NEAR Skip_Over_Blanks()
+d530 1
+a530 1
+    while ((*pcmdline1 == ' ') || (*pcmdline1 == '\t'))
+a538 1
+ *
+a540 1
+ *
+a547 3
+ *
+ *
+ *
+a549 3
+ *
+ *
+ *
+a551 1
+ *
+a554 1
+ *
+d556 2
+a557 1
+STATIC VOID NEAR char_parser()
+d559 3
+a561 3
+    while ( (*pcmdline1 != '\0')  &&  (*pcmdline1 != '\n')
+	    && (*pcmdline1 != '\r')  &&  (*pcmdline1 != '/') )
+	{
+d564 1
+a564 1
+	}
+a571 1
+ *
+a573 1
+ *
+a577 1
+ *
+a579 3
+ *
+ *
+ *
+a581 3
+ *
+ *
+ *
+a583 1
+ *
+a586 1
+ *
+d588 2
+a589 1
+STATIC VOID NEAR d_parser()
+d591 2
+a592 2
+    if ( (*pcmdline1 >= '0') && (*pcmdline1 <= '9') )
+       {
+d595 1
+a595 1
+       }
+d597 1
+a597 1
+       {
+d599 1
+a599 1
+       }
+a606 1
+ *
+a608 1
+ *
+a612 1
+ *
+a614 3
+ *
+ *
+ *
+a616 3
+ *
+ *
+ *
+a618 1
+ *
+a621 1
+ *
+d623 2
+a624 1
+STATIC VOID NEAR dd_parser()
+d633 2
+d636 1
+a636 3
+	if ( (*pcmdline1 >= '0') && (*pcmdline1 <= '9') )
+	    {
+	    n = 10*n + *pcmdline1 - '0';
+d639 1
+a639 1
+	    }
+d641 38
+a678 1
+	    {
+d680 14
+a693 3
+      /*
+      ** Was at least 1 digit found on the command line?
+      */
+d695 1
+a695 1
+	    if ( flag )
+d699 75
+d775 15
+d791 5
+a795 1
+    tokvbuf[++tokv_index].byte_value = n;
+a802 1
+ *
+a804 1
+ *
+a808 1
+ *
+a810 3
+ *
+ *
+ *
+a812 3
+ *
+ *
+ *
+a814 1
+ *
+a817 1
+ *
+d819 2
+a820 1
+STATIC VOID NEAR hh_parser()
+d822 1
+d824 1
+a824 5
+  /*
+  **  Convert command line HH char and setup token value buffer
+  */
+
+    if ( !HH_Char_To_Byte() )
+d828 2
+a829 2
+    if ( *pcmdline1 != ',' )
+	{
+d832 1
+a832 1
+	}
+d836 1
+a836 3
+  /*
+  **  Convert command line HH char and setup token value buffer
+  */
+a845 1
+ *
+a847 1
+ *
+a851 1
+ *
+a853 3
+ *
+ *
+ *
+a855 3
+ *
+ *
+ *
+a857 1
+ *
+a860 1
+ *
+d862 2
+a863 1
+STATIC BOOL NEAR HH_Char_To_Byte()
+d867 1
+a867 1
+    BOOL  flag;
+d871 4
+a874 2
+    flag = FALSE;
+    for ( i=0; i < 2; i++ )
+d876 1
+a876 4
+	c = *pcmdline1;
+	if ( (c >= '0') && (c <= '9') )
+	    {
+	    n = 16*n + c - (CHAR)'0';
+d880 5
+a884 5
+	    }
+	c |= 0x20;						/* convert to lower case */
+	if ( (c >= 'a') && (c <= 'f') )
+	    {
+	    n = 16*n + c - (CHAR)'W';
+d888 1
+a888 1
+	    }
+d890 1
+a890 3
+    /*
+    ** Was at least 1 hex digit found on the command line?
+    */
+d892 1
+a892 1
+	if ( flag )
+d896 1
+a896 1
+	}
+a905 1
+ *
+a907 1
+ *
+a911 1
+ *
+a913 3
+ *
+ *
+ *
+a915 3
+ *
+ *
+ *
+a917 1
+ *
+a920 1
+ *
+d922 2
+a923 1
+STATIC VOID NEAR hhhh_parser()
+d932 4
+a935 1
+    for ( i=0; i < 4; i++ )
+d937 1
+a937 4
+	c = *pcmdline1;
+	if ( (c >= '0') && (c <= '9') )
+	    {
+	    un_number.n = 16*un_number.n + c - '0';
+d941 1
+a941 1
+	    }
+d943 2
+a944 2
+	if ( (c >= 'a')  &&  (c <= 'f') )
+	    {
+d949 1
+a949 1
+	    }
+d951 1
+a951 3
+    /*
+    ** Was at least 1 hex digit found on the command line?
+    */
+d953 1
+a953 1
+	if ( flag )
+d957 1
+a957 1
+	}
+a967 1
+ *
+a969 1
+ *
+a973 1
+ *
+a975 3
+ *
+ *
+ *
+a977 3
+ *
+ *
+ *
+a979 1
+ *
+a982 1
+ *
+d984 2
+a985 1
+STATIC VOID NEAR format_parser()
+d987 10
+a996 12
+  typedef struct _formattable
+  {
+    PSZ string;
+    USHORT type;
+    NUMBER MegBytes;
+  }
+  FORMATTABLE;
+
+  /*
+  ** FORMATTABLE type definitions
+  ** accepts # string followed by:
+  */
+d1001 18
+a1018 24
+  INT str_len,k;
+  static FORMATTABLE format_table[] =
+  {
+    { "360",K_BYTES,360 } ,
+    { "720",K_BYTES,720 } ,
+    { "1200",K_BYTES,1200 } ,
+    { "1.2",M_BYTES,1200 } ,
+    { "1440",K_BYTES,1440 } ,
+    { "1.44",M_BYTES,1440 } ,
+    { "2880",K_BYTES,2880 } ,
+    { "2.88",M_BYTES,2880 } ,
+    { "-1" } ,                          /* , ???? */
+  };
+
+  cc.ret_code = SYNTAX_ERR;
+  for (k = 0; (format_table[k].string != "-1"); k++)
+  {
+    str_len = FarStrLen(format_table[k].string);
+    if (strncmp(pcmdline1, format_table[k].string, str_len) == TRUE)
+    {
+      pcmdline1 += str_len;
+      if (format_table[k].type == K_BYTES)
+      {
+	if ((*pcmdline1 == 'K') || (*pcmdline1 == 'k'))
+d1020 27
+a1046 12
+	  ++pcmdline1;
+	  if ((*(pcmdline1) == 'B') || (*(pcmdline1) == 'b'))
+	    ++pcmdline1;
+	}
+      }
+      else
+      {
+	if ((*pcmdline1 == 'M') || (*pcmdline1 == 'm'))
+	{
+	  ++pcmdline1;
+	  if ((*(pcmdline1) == 'B') || (*(pcmdline1) == 'b'))
+	    ++pcmdline1;
+a1047 9
+      }
+      tokv_index++;
+      tokvbuf[tokv_index].byte_value = format_table[k].MegBytes.two_bytes.byte1
+	 ;
+      tokv_index++;
+      tokvbuf[tokv_index].byte_value = format_table[k].MegBytes.two_bytes.byte2
+	 ;
+      cc.ret_code = NO_ERR;
+      break;
+d1049 2
+a1050 2
+  }
+  return ;
+a1056 1
+ *
+a1058 1
+ *
+a1065 3
+ *
+ *
+ *
+a1067 3
+ *
+ *
+ *
+a1069 1
+ *
+a1072 1
+ *
+d1074 4
+d1079 3
+a1081 18
+STATIC VOID NEAR scsi_id_parser()
+{
+  BOOL found_bracket,found_one;
+  found_bracket = FALSE;
+  found_one = FALSE;
+  if (*pcmdline1 == '(')
+  {
+    found_bracket = TRUE;
+    pcmdline1++;
+    Skip_Over_Blanks();
+  }
+  while ((*pcmdline1 >= '0') && (*pcmdline1 <= '7'))
+  {
+    found_one = TRUE;
+    tokv_index++;
+    tokvbuf[tokv_index].byte_value = *pcmdline1-'0';
+    pcmdline1++;
+    if (!found_bracket)
+d1083 3
+a1085 2
+      tokv_index++;
+      tokvbuf[tokv_index].byte_value = 0;
+d1087 1
+a1087 2
+    Skip_Over_Blanks();
+    if (*pcmdline1 != ',')
+d1089 1
+a1089 10
+      if (found_bracket)
+	cc.ret_code = SYNTAX_ERR;
+      return ;
+    }
+    pcmdline1++;
+    Skip_Over_Blanks();
+    if (found_bracket)
+    {
+      if ((*pcmdline1 >= '0') && (*pcmdline1 <= '7'))
+      {
+d1091 7
+a1097 2
+	tokvbuf[tokv_index].byte_value = *pcmdline1-'0';
+	pcmdline1++;
+d1099 1
+a1099 1
+	if (*pcmdline1 != ')')
+d1101 3
+a1103 2
+	  cc.ret_code = SYNTAX_ERR;
+	  return ;
+d1105 1
+a1105 1
+	pcmdline1++;
+d1107 28
+a1134 6
+	found_bracket = FALSE;
+	if (*pcmdline1 != ',')
+	  return ;
+	pcmdline1++;
+	Skip_Over_Blanks();
+      }
+d1136 6
+a1141 12
+    if (*pcmdline1 == '(')
+    {
+      found_bracket = TRUE;
+      pcmdline1++;
+      Skip_Over_Blanks();
+    }
+  }
+  if (found_bracket)
+    cc.ret_code = SYNTAX_ERR;
+  if (!found_one)
+    cc.ret_code = SYNTAX_ERR;
+  return ;
+d1171 2
+a1172 2
+  BOOL found_bracket=FALSE;
+  BOOL found_one=FALSE;
+d1174 3
+a1176 5
+/*
+----	A SCSI coordinate may be contained in brackets	----
+*/
+    if ( *pcmdline1 == '(' )
+	{
+d1180 4
+a1183 1
+	}
+d1185 2
+a1186 6
+/*
+----	Scan coordinates, first is cache device or scsi channel ----
+----	and may evaluate to any value (currently supported 0-9).----
+*/
+    while ( (*pcmdline1 >= '0') && (*pcmdline1 <= '9') )
+	{
+d1192 4
+a1195 4
+	if ( *pcmdline1 != ',' )                                // more coordinates ?
+	    {							//  NO
+	    if ( found_bracket )				// started w/ bracket ?
+		cc.ret_code = SYNTAX_ERR;			//  have to stop w/ bracket!
+d1197 1
+a1197 1
+	    tokvbuf[++tokv_index].byte_value = (CHAR)-1;	// fill w/ -1
+d1199 1
+a1199 1
+	    }
+d1203 4
+a1206 4
+	if ( found_bracket )					// started w/ brackets ?
+	    {							//  YES, more may come
+	    if ( (*pcmdline1 >= '0') && (*pcmdline1 <= '7') )
+		{
+d1211 2
+a1212 2
+		if ( *pcmdline1 == ',' )                        // ',' behind 2nd coord. ?
+		    {						//  YES, 3rd coord. follows
+d1215 2
+a1216 2
+		    if ( (*pcmdline1 >= '0') && (*pcmdline1 <= '7') )
+			{
+d1220 1
+a1220 1
+			}
+d1222 1
+a1222 1
+			{
+a1224 1
+			}
+d1226 1
+d1228 3
+a1230 3
+		    {
+		    tokvbuf[++tokv_index].byte_value = (CHAR)-1;	// 3rd coord. not supplied
+		    }
+d1232 2
+a1233 2
+		if ( *pcmdline1 != ')' )
+		    {
+d1236 1
+a1236 1
+		    }
+d1241 1
+a1241 1
+		if ( *pcmdline1 != ',' )
+a1244 1
+		}
+d1246 1
+d1248 1
+a1248 1
+	    {
+d1250 2
+a1251 2
+	    tokvbuf[++tokv_index].byte_value = (CHAR)-1;	// fill w/ -1
+	    }
+d1253 2
+a1254 2
+	if ( *pcmdline1 == '(' )
+	    {
+a1257 1
+	    }
+d1259 1
+d1261 1
+a1261 1
+    if ( found_bracket )				// missing closing bracket
+d1263 1
+a1263 1
+    if ( !found_one )					// no numbers
+d1270 1
+a1271 1
+ *
+a1273 1
+ *
+a1277 1
+ *
+a1279 3
+ *
+ *
+ *
+a1281 3
+ *
+ *
+ *
+a1283 1
+ *
+a1286 1
+ *
+d1288 6
+d1295 1
+a1295 23
+STATIC VOID NEAR geometry_parser()
+{
+  INT i,counter;
+  NUMBER un_number;
+  BOOL flag;
+  /*
+  BOOL found_bracket,found_one;
+  _asm {int 3};
+  */
+
+   if (*pcmdline1 != '(')
+  {
+    dd_parser();
+    return ;
+  }
+  pcmdline1++;
+  Skip_Over_Blanks();
+  counter = 0;
+  while (TRUE)
+  {
+    un_number.n = 0;
+    flag = FALSE;
+    for (i = 0; i < 4; i++)
+d1297 1
+a1297 16
+      if ((*pcmdline1 >= '0') && (*pcmdline1 <= '9'))
+      {
+	un_number.n = 10*un_number.n+*pcmdline1-'0';
+	pcmdline1++;
+	flag = TRUE;
+      }
+      else
+      {
+
+	/*
+	** Was at least 1 digit found on the command line?
+	*/
+
+	if (flag)
+	  break;
+	cc.ret_code = SYNTAX_ERR;
+a1298 1
+      }
+d1300 1
+a1300 4
+    tokv_index++;
+    tokvbuf[tokv_index].byte_value = un_number.two_bytes.byte1;
+    tokv_index++;
+    tokvbuf[tokv_index].byte_value = un_number.two_bytes.byte2;
+d1302 2
+a1303 1
+    if (counter == 2)
+d1305 42
+a1346 5
+      if (*pcmdline1 != ')')
+	cc.ret_code = SYNTAX_ERR;
+      else
+	pcmdline1++;
+      return ;
+d1348 2
+a1349 10
+    if (*pcmdline1 != ',')
+    {
+      cc.ret_code = SYNTAX_ERR;
+      return ;
+    }
+    pcmdline1++;
+    counter++;
+    Skip_Over_Blanks();
+  }
+  return ;
+d1354 1
+a1355 1
+ *
+a1357 1
+ *
+a1365 3
+ *
+ *
+ *
+a1367 3
+ *
+ *
+ *
+a1369 1
+ *
+a1372 1
+ *
+d1374 5
+d1380 13
+a1392 21
+VOID NEAR chgline_parser()
+{
+  USHORT k,str_len;
+  NPBYTE chgline_opts[] =
+  {
+    "\0","NONE","AT","PS2"
+  }
+  ;
+  for (k = 1; k < sizeof(chgline_opts)/sizeof(chgline_opts[0]); k++)
+  {
+    str_len = FarStrLen(chgline_opts[k]);
+    if (strncmp(pcmdline1, chgline_opts[k], str_len))
+    {
+      pcmdline1 += str_len;
+      tokv_index++;
+      tokvbuf[tokv_index].byte_value = k;
+      return ;
+    }
+  }
+  cc.ret_code = SYNTAX_ERR;
+  return ;
+d1395 3
+a1398 1
+ *
+a1400 1
+ *
+a1404 1
+ *
+a1406 3
+ *
+ *
+ *
+a1408 3
+ *
+ *
+ *
+a1410 1
+ *
+a1413 1
+ *
+d1415 2
+a1416 2
+
+STATIC BOOL NEAR Insert_Token()
+d1418 2
+a1419 1
+  USHORT t,tok_size;
+d1421 6
+a1426 18
+  tok_size = TOK_MIN_LENGTH+tokv_index;
+  if ((poutbuf1+tok_size+TOKL_ID_END) >= poutbuf_end)
+  {
+    cc.err_index = pcmdline_slash-pcmdline_start;
+    cc.ret_code = BUF_TOO_SMALL_ERR;
+    return (FALSE);
+  }
+  *poutbuf1 = tok_size+1;
+  poutbuf1++;
+  *poutbuf1 = ptable_option->id;
+  poutbuf1++;
+  if (tokv_index != UNDEFINED)
+    {
+    for ( t=0; t <= tokv_index; ++t )
+      {
+      *poutbuf1 = tokvbuf[t].byte_value;
+      poutbuf1++;
+      }
+d1428 14
+a1441 2
+  Insert_End_Token();
+  return (TRUE);
+d1444 3
+a1447 1
+ *
+a1449 1
+ *
+a1453 1
+ *
+a1455 3
+ *
+ *
+ *
+a1457 3
+ *
+ *
+ *
+a1459 1
+ *
+a1462 1
+ *
+d1464 2
+a1465 2
+
+STATIC BOOL NEAR Locate_Next_Slash()
+d1467 22
+a1488 3
+  while ((*pcmdline1 != '\0') && (*pcmdline1 != '\n') && (*pcmdline1 != '\r'))
+  {
+    if ((*pcmdline1 == ' ') || (*pcmdline1 == '\t'))
+d1490 2
+a1491 1
+      pcmdline1++;
+d1495 5
+a1499 24
+      if (*pcmdline1 == '/')
+      {
+	pcmdline_slash = pcmdline1;
+	return (TRUE);
+      }
+      else
+      {
+	cc.ret_code = INVALID_OPT_ERR;
+	cc.err_index = pcmdline1-pcmdline_start;
+	return (FALSE);
+      }
+    }
+  }				       /* endwhile			     */
+  if (pend_option->state[state_index] == R)
+  {
+    cc.ret_code = REQ_OPT_ERR;
+    cc.err_index = pcmdline1-pcmdline_start;
+  }
+  else
+  {
+    cc.ret_code = NO_ERR;
+    cc.err_index = 0;
+  }
+  return (FALSE);
+d1502 3
+a1505 1
+ *
+a1507 1
+ *
+a1511 1
+ *
+a1513 3
+ *
+ *
+ *
+a1515 3
+ *
+ *
+ *
+a1517 1
+ *
+a1520 1
+ *
+d1522 2
+a1523 2
+
+STATIC BOOL NEAR Validate_State_Index(USHORT maxstate)
+d1525 7
+a1531 7
+  if ((state_index > maxstate) || (state_index < 0))
+  {
+    cc.ret_code = UNDEFINED_STATE_ERR;
+    cc.err_index = 0;
+    return (FALSE);
+  }
+  return (TRUE);
+@

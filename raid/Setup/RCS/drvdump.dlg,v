@@ -1,0 +1,50 @@
+head	1.1;
+access;
+symbols
+	VSETUPv0_84:1.1
+	VSETUP_82:1.1
+	VSETUPv0_80:1.1
+	VSETUPv0_71:1.1
+	VSETUPv0_70:1.1
+	VSETUPv0_60:1.1
+	VSETUPv0_52:1.1
+	VSETUPv0_51:1.1
+	VSETUPv0_50:1.1
+	VSETUPv0_20:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	98.05.06.22.44.36;	author vitus;	state Stab;
+branches;
+next	;
+
+
+desc
+@Dialog: select drive to dump
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@#ifndef OS2_INCLUDED
+   #include <os2.h>
+#endif
+DLGINCLUDE 3 "D:\SOURCE\driver\raid\Setup\resources.H"
+
+DLGTEMPLATE IDW_DRVDUMP LOADONCALL MOVEABLE DISCARDABLE
+BEGIN
+    DIALOG  "Drive Dump", IDW_DRVDUMP, 65, 91, 120, 47, WS_VISIBLE, 
+            FCF_TITLEBAR
+    BEGIN
+        ENTRYFIELD      "-1", EF_DRVINDEX, 62, 31, 44, 8, ES_MARGIN
+        LTEXT           "Drive Index", 0, 11, 31, 45, 8
+        DEFPUSHBUTTON   "OK", DID_OK, 12, 6, 40, 14
+        PUSHBUTTON      "Cancel", DID_CANCEL, 61, 6, 40, 14
+    END
+END
+@

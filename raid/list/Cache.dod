@@ -1,0 +1,241 @@
+;	Static Name Aliases
+;
+;	$S170_vcid	EQU	vcid
+	TITLE   Cache.c
+	.286p
+	.287
+_TEXT	SEGMENT  WORD PUBLIC 'CODE'
+_TEXT	ENDS
+_DATA	SEGMENT  WORD PUBLIC 'DATA'
+_DATA	ENDS
+CONST	SEGMENT  WORD PUBLIC 'CONST'
+CONST	ENDS
+_BSS	SEGMENT  WORD PUBLIC 'BSS'
+_BSS	ENDS
+$$SYMBOLS	SEGMENT  BYTE PUBLIC 'DEBSYM'
+$$SYMBOLS	ENDS
+$$TYPES	SEGMENT  BYTE PUBLIC 'DEBTYP'
+$$TYPES	ENDS
+INITDATA	SEGMENT  WORD PUBLIC 'FAR_DATA'
+INITDATA	ENDS
+DGROUP	GROUP	CONST, _BSS, _DATA
+	ASSUME DS: DGROUP
+	ASSUME  SS: NOTHING
+PUBLIC  _CacheDrv
+EXTRN	_AllocateFixed:NEAR
+EXTRN	_FreeFixed:NEAR
+_DATA      SEGMENT
+$S170_vcid	DB	'$Id$',  00H
+	ORG	$+1
+_CacheDrv	DD	00H
+ 	DB	7820 DUP(0)
+
+_DATA      ENDS
+_TEXT      SEGMENT
+	ASSUME	CS: _TEXT
+	PUBLIC	_RequestCacheBlock
+_RequestCacheBlock	PROC NEAR
+; Line 87
+;	data = 12
+;	stripeno = 8
+;	drv = 4
+; Line 88
+	*** 000000	c3 			ret	
+	*** 000001	90 			nop	
+
+_RequestCacheBlock	ENDP
+	PUBLIC	_CreateCache
+_CreateCache	PROC NEAR
+; Line 103
+	*** 000002	c8 0c 00 00 		enter	12,0
+	*** 000006	56 			push	si
+;	allocated = -8
+;	rc = -2
+;	i = -4
+;	j = -6
+;	stripesize = 8
+;	drv = 4
+; Line 109
+	*** 000007	33 c0 			xor	ax,ax
+	*** 000009	89 46 f8 		mov	WORD PTR [bp-8],ax	;allocated
+	*** 00000c	89 46 fc 		mov	WORD PTR [bp-4],ax	;i
+	*** 00000f	eb 6c 			jmp	SHORT $F1345
+	*** 000011	90 			nop	
+					$I1353:
+; Line 129
+	*** 000012	8b 76 fa 		mov	si,WORD PTR [bp-6]	;j
+	*** 000015	8b c6 			mov	ax,si
+	*** 000017	c1 e6 02 		shl	si,2
+	*** 00001a	03 f0 			add	si,ax
+	*** 00001c	d1 e6 			shl	si,1
+	*** 00001e	69 5e fc 46 01 		imul	bx,WORD PTR [bp-4],326	;0146H	;i
+	*** 000023	2b c0 			sub	ax,ax
+	*** 000025	89 80 14 00 		mov	WORD PTR _CacheDrv[bx+14][si],ax
+	*** 000029	89 80 12 00 		mov	WORD PTR _CacheDrv[bx+12][si],ax
+; Line 130
+					$FC1350:
+	*** 00002d	ff 46 fa 		inc	WORD PTR [bp-6]	;j
+					$F1349:
+	*** 000030	83 7e fa 20 		cmp	WORD PTR [bp-6],32	;0020H	;j
+	*** 000034	7d 44 			jge	$FB1351
+; Line 117
+;	new = -12
+; Line 121
+	*** 000036	8b 5e fa 		mov	bx,WORD PTR [bp-6]	;j
+	*** 000039	8b c3 			mov	ax,bx
+	*** 00003b	c1 e3 02 		shl	bx,2
+	*** 00003e	03 d8 			add	bx,ax
+	*** 000040	d1 e3 			shl	bx,1
+	*** 000042	69 46 fc 46 01 		imul	ax,WORD PTR [bp-4],326	;0146H	;i
+	*** 000047	03 d8 			add	bx,ax
+	*** 000049	80 a7 0c 00 fc 		and	BYTE PTR _CacheDrv[bx+6],252	;00fcH
+; Line 123
+	*** 00004e	8d 4e f4 		lea	cx,WORD PTR [bp-12]	;new
+	*** 000051	16 			push	ss
+	*** 000052	51 			push	cx
+	*** 000053	6a 00 			push	0
+	*** 000055	ff 76 08 		push	WORD PTR [bp+8]	;stripesize
+	*** 000058	8b f3 			mov	si,bx
+	*** 00005a	e8 00 00 		call	_AllocateFixed
+	*** 00005d	83 c4 08 		add	sp,8
+	*** 000060	89 46 fe 		mov	WORD PTR [bp-2],ax	;rc
+	*** 000063	0b c0 			or	ax,ax
+	*** 000065	75 ab 			jne	$I1353
+; Line 124
+; Line 125
+	*** 000067	ff 46 f8 		inc	WORD PTR [bp-8]	;allocated
+; Line 126
+	*** 00006a	8b 46 f4 		mov	ax,WORD PTR [bp-12]	;new
+	*** 00006d	8b 56 f6 		mov	dx,WORD PTR [bp-10]
+	*** 000070	89 84 12 00 		mov	WORD PTR _CacheDrv[si+12],ax
+	*** 000074	89 94 14 00 		mov	WORD PTR _CacheDrv[si+14],dx
+; Line 127
+; Line 128
+	*** 000078	eb b3 			jmp	SHORT $FC1350
+					$FB1351:
+; Line 131
+; Line 132
+	*** 00007a	ff 46 fc 		inc	WORD PTR [bp-4]	;i
+					$F1345:
+	*** 00007d	83 7e fc 18 		cmp	WORD PTR [bp-4],24	;0018H	;i
+	*** 000081	7d 2b 			jge	$FB1347
+; Line 110
+; Line 111
+	*** 000083	69 5e fc 46 01 		imul	bx,WORD PTR [bp-4],326	;0146H	;i
+	*** 000088	8b 87 08 00 		mov	ax,WORD PTR _CacheDrv[bx+2]
+	*** 00008c	0b 87 06 00 		or	ax,WORD PTR _CacheDrv[bx]
+	*** 000090	75 e8 			jne	$FB1351
+; Line 112
+; Line 113
+	*** 000092	8b 46 04 		mov	ax,WORD PTR [bp+4]	;drv
+	*** 000095	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 000098	89 87 06 00 		mov	WORD PTR _CacheDrv[bx],ax
+	*** 00009c	89 97 08 00 		mov	WORD PTR _CacheDrv[bx+2],dx
+; Line 114
+	*** 0000a0	8b 46 08 		mov	ax,WORD PTR [bp+8]	;stripesize
+	*** 0000a3	89 87 0a 00 		mov	WORD PTR _CacheDrv[bx+4],ax
+; Line 116
+	*** 0000a7	c7 46 fa 00 00 		mov	WORD PTR [bp-6],0	;j
+	*** 0000ac	eb 82 			jmp	SHORT $F1349
+					$FB1347:
+; Line 134
+	*** 0000ae	83 7e f8 00 		cmp	WORD PTR [bp-8],0	;allocated
+	*** 0000b2	74 04 			je	$I1355
+; Line 135
+	*** 0000b4	33 c0 			xor	ax,ax
+	*** 0000b6	eb 03 			jmp	SHORT $EX1340
+					$I1355:
+; Line 137
+	*** 0000b8	b8 09 81 		mov	ax,-32503	;8109H
+; Line 138
+					$EX1340:
+	*** 0000bb	5e 			pop	si
+	*** 0000bc	c9 			leave	
+	*** 0000bd	c3 			ret	
+
+_CreateCache	ENDP
+	PUBLIC	_DestroyCache
+_DestroyCache	PROC NEAR
+; Line 153
+	*** 0000be	c8 06 00 00 		enter	6,0
+	*** 0000c2	56 			push	si
+;	rc = -2
+;	i = -4
+;	j = -6
+;	drv = 4
+; Line 154
+	*** 0000c3	c7 46 fe 01 81 		mov	WORD PTR [bp-2],-32511	;8101H	;rc
+; Line 157
+	*** 0000c8	c7 46 fc 00 00 		mov	WORD PTR [bp-4],0	;i
+	*** 0000cd	eb 04 			jmp	SHORT $F1364
+; Line 171
+; Line 172
+	*** 0000cf	90 			nop	
+					$FC1365:
+	*** 0000d0	ff 46 fc 		inc	WORD PTR [bp-4]	;i
+					$F1364:
+	*** 0000d3	83 7e fc 18 		cmp	WORD PTR [bp-4],24	;0018H	;i
+	*** 0000d7	7d 76 			jge	$FB1366
+; Line 158
+; Line 159
+	*** 0000d9	8b 46 04 		mov	ax,WORD PTR [bp+4]	;drv
+	*** 0000dc	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 0000df	69 5e fc 46 01 		imul	bx,WORD PTR [bp-4],326	;0146H	;i
+	*** 0000e4	39 87 06 00 		cmp	WORD PTR _CacheDrv[bx],ax
+	*** 0000e8	75 e6 			jne	$FC1365
+	*** 0000ea	39 97 08 00 		cmp	WORD PTR _CacheDrv[bx+2],dx
+	*** 0000ee	75 e0 			jne	$FC1365
+; Line 160
+; Line 161
+	*** 0000f0	c7 46 fa 00 00 		mov	WORD PTR [bp-6],0	;j
+					$FC1369:
+; Line 162
+; Line 163
+	*** 0000f5	8b 76 fa 		mov	si,WORD PTR [bp-6]	;j
+	*** 0000f8	8b c6 			mov	ax,si
+	*** 0000fa	c1 e6 02 		shl	si,2
+	*** 0000fd	03 f0 			add	si,ax
+	*** 0000ff	d1 e6 			shl	si,1
+	*** 000101	69 5e fc 46 01 		imul	bx,WORD PTR [bp-4],326	;0146H	;i
+	*** 000106	8b 80 14 00 		mov	ax,WORD PTR _CacheDrv[bx+14][si]
+	*** 00010a	0b 80 12 00 		or	ax,WORD PTR _CacheDrv[bx+12][si]
+	*** 00010e	74 0e 			je	$I1371
+; Line 164
+	*** 000110	ff b0 14 00 		push	WORD PTR _CacheDrv[bx+14][si]
+	*** 000114	ff b0 12 00 		push	WORD PTR _CacheDrv[bx+12][si]
+	*** 000118	e8 00 00 		call	_FreeFixed
+	*** 00011b	83 c4 04 		add	sp,4
+; Line 165
+					$I1371:
+; Line 166
+	*** 00011e	8b 76 fa 		mov	si,WORD PTR [bp-6]	;j
+	*** 000121	8b c6 			mov	ax,si
+	*** 000123	c1 e6 02 		shl	si,2
+	*** 000126	03 f0 			add	si,ax
+	*** 000128	d1 e6 			shl	si,1
+	*** 00012a	69 5e fc 46 01 		imul	bx,WORD PTR [bp-4],326	;0146H	;i
+	*** 00012f	80 a0 0c 00 fc 		and	BYTE PTR _CacheDrv[bx+6][si],252	;00fcH
+; Line 167
+	*** 000134	ff 46 fa 		inc	WORD PTR [bp-6]	;j
+	*** 000137	83 7e fa 20 		cmp	WORD PTR [bp-6],32	;0020H	;j
+	*** 00013b	7c b8 			jl	$FC1369
+; Line 168
+	*** 00013d	69 5e fc 46 01 		imul	bx,WORD PTR [bp-4],326	;0146H	;i
+	*** 000142	2b c0 			sub	ax,ax
+	*** 000144	89 87 08 00 		mov	WORD PTR _CacheDrv[bx+2],ax
+	*** 000148	89 87 06 00 		mov	WORD PTR _CacheDrv[bx],ax
+; Line 169
+	*** 00014c	89 46 fe 		mov	WORD PTR [bp-2],ax	;rc
+; Line 170
+					$FB1366:
+; Line 174
+	*** 00014f	8b 46 fe 		mov	ax,WORD PTR [bp-2]	;rc
+; Line 175
+	*** 000152	5e 			pop	si
+	*** 000153	c9 			leave	
+	*** 000154	c3 			ret	
+	*** 000155	90 			nop	
+
+_DestroyCache	ENDP
+_TEXT	ENDS
+END

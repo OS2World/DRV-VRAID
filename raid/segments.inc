@@ -1,0 +1,83 @@
+; -*- mode: asm -*-
+; $Source: R:/source/driver/raid/RCS\\segments.inc,v $
+; $Revision: 1.4 $
+; $Date: 1999/07/06 02:00:34 $
+; $Locker:  $
+;
+;	Order segments
+; 
+; $Log: segments.inc,v $
+; Revision 1.4  1999/07/06 02:00:34  vitus
+; - WORKMEM is classless in WatCom C
+;
+; Revision 1.3  1998/06/26 23:02:48  vitus
+; - corrected WORKMEM (FAR_DATA)
+; - added CONST2 to MS-C version (unused)
+;
+; Revision 1.2  1998/02/18 00:04:36  vitus
+; - ALP needs USE16
+; - segment WORKMEM, seperate group, contains locked down working set
+;
+; Revision 1.1  1998/02/12 01:32:14  vitus
+; Initial revision
+; ---------------------------------------------
+; This code is Copyright Vitus Jensen 1997-1999
+
+
+DDHeader	SEGMENT WORD USE16 PUBLIC 'CONST'
+DDHeader	ENDS
+
+IFNDEF WATCOMC
+CONST		SEGMENT DWORD USE16 PUBLIC 'CONST'
+CONST		ENDS
+CONST2		SEGMENT DWORD USE16 PUBLIC 'CONST'
+CONST2		ENDS
+ENDIF
+
+IFDEF WATCOMC
+CONST		SEGMENT WORD USE16 PUBLIC 'DATA'
+CONST		ENDS
+CONST2		SEGMENT WORD USE16 PUBLIC 'DATA'
+CONST2		ENDS
+ENDIF
+
+LIBDATA		SEGMENT DWORD USE16 PUBLIC 'DATA'
+LIBDATA		ENDS
+
+_DATA		SEGMENT WORD USE16 PUBLIC 'DATA'
+_DATA		ENDS
+
+_BSS		SEGMENT WORD USE16 PUBLIC 'BSS'
+_BSS		ENDS
+
+
+_TEXT		SEGMENT DWORD USE16 PUBLIC 'CODE'
+_TEXT		ENDS
+
+CODE		SEGMENT DWORD USE16 PUBLIC 'CODE'
+CODE		ENDS
+
+LIBCODE		SEGMENT DWORD USE16 PUBLIC 'CODE'
+LIBCODE		ENDS
+
+IFDEF WATCOMC
+WORKMEM		SEGMENT WORD USE16 PUBLIC ''
+WORKMEM		ENDS
+ELSE
+WORKMEM		SEGMENT WORD USE16 PUBLIC 'FAR_DATA'
+WORKMEM		ENDS
+ENDIF
+
+SwapData	SEGMENT DWORD USE16 PUBLIC 'FAR_DATA'
+SwapData	ENDS
+
+SwapCode	SEGMENT DWORD USE16 PUBLIC 'SWAP_CODE'
+SwapCode	ENDS
+
+	;; Group segments together
+
+DGROUP		GROUP	CONST, CONST2, _BSS, DDHeader, LIBDATA, _DATA
+CGROUP		GROUP	CODE, LIBCODE, _TEXT
+
+TGROUP		GROUP	WORKMEM
+SGROUP		GROUP	SwapData

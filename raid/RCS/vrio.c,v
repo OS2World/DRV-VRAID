@@ -1,0 +1,1361 @@
+head	1.15;
+access;
+symbols
+	vrflt031113:1.15
+	vrflt010903:1.15
+	PREV010803:1.15
+	VRAIDv0_85:1.14
+	VRAIDv0_84:1.14
+	VRAIDv0_82:1.11
+	VRAIDv0_70:1.9
+	VRAIDv0_60:1.5
+	VRAIDv0_51:1.5
+	VRAIDv0_50:1.5
+	VRAIDv0_40:1.5
+	VRAIDv0_30:1.4
+	ALPHA1:1.3;
+locks; strict;
+comment	@ * @;
+
+
+1.15
+date	2001.07.03.06.52.28;	author vitus;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2001.02.11.01.38.01;	author vitus;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2000.08.22.00.21.57;	author vitus;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2000.06.15.01.07.02;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	99.09.26.00.23.51;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.09.19.23.37.15;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.06.04.01.06.55;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.04.28.01.49.00;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.02.09.00.11.07;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.02.07.17.56.37;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	98.09.20.14.21.44;	author vitus;	state Stab;
+branches;
+next	1.4;
+
+1.4
+date	98.06.26.23.18.40;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.05.29.02.03.27;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.04.08.01.30.55;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.02.17.22.32.28;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Queue handling for VRIOs and IORBs
+@
+
+
+1.15
+log
+@- StartManyIorb: complete test of command modifiers
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/RCS/vrio.c,v $
+ * $Revision: 1.14 $
+ * $Date: 2001/02/11 01:38:01 $
+ * $Locker: vitus $
+ *
+ *	Queue handling for VRIOs and IORBs.
+ *
+ * $Log: vrio.c,v $
+ * Revision 1.14  2001/02/11 01:38:01  vitus
+ * - ProcessAdminIO, ProcessUserIO: have to return DRVSTATUS instead of
+ *   IORB error. Implemented XlateIOERR() to do the translation.
+ *
+ * Revision 1.13  2000/08/22 00:21:57  vitus
+ * - added debug code to alert when a ProcBlock has to be repeated (no impact
+ *   on non-debug versions)
+ *
+ * Revision 1.12  2000/06/15 01:07:02  vitus
+ * - implemented ProcessUserIO()
+ *
+ * Revision 1.11  1999/09/26 00:23:51  vitus
+ * - defined all DBGMSG() strings as located in CONST segment
+ *
+ * Revision 1.10  1999/09/19 23:37:15  vitus
+ * - changes to keep MS-C/C++ 7.0 happy
+ *
+ * Revision 1.9  1999/06/04 01:06:55  vitus
+ * - changed DBG_INFO to DBG_LEVEL3
+ *
+ * Revision 1.8  1999/04/28 01:49:00  vitus
+ * - implemented CompleteVrio()
+ * - uses IOCMD_A* commands and Worker
+ *
+ * Revision 1.7  1999/02/09 00:11:07  vitus
+ * - ProcessAdminIO() implemented
+ *
+ * Revision 1.6  1999/02/07 17:56:37  vitus
+ * - changed for iorb -> vrio transition
+ *
+ * Revision 1.5  1998/09/20 14:21:44  vitus
+ * - modified for AllocateVrio(working_dev,mother)
+ *
+ * Revision 1.4  1998/06/26 23:18:40  vitus
+ * - public routines now _Cdecl
+ * - StartManyIorb: don't allocate VRIO w/o IORB
+ *
+ * Revision 1.3  1998/05/29 02:03:27  vitus
+ * - calls to DEBMSG macro
+ *
+ * Revision 1.2  1998/04/08 01:30:55  vitus
+ * - StartManyIorb() handles some commands internally (dummies)
+ *
+ * Revision 1.1  1998/02/17 22:32:28  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-2001
+ */
+#if defined(__WATCOMC__)
+# pragma off (unreferenced)
+#endif
+static char const id[]="$Id: vrio.c,v 1.14 2001/02/11 01:38:01 vitus Exp vitus $";
+#if defined(__WATCOMC__)
+# pragma on (unreferenced)
+#endif
+
+#include <string.h>
+
+#define INCL_INITRP_ONLY
+#include "os2intf.h"
+
+#include "vraid.h"
+#include "proto.h"
+#include "extern.h"
+
+
+/* Linked list of queued VRIOs. */
+
+PRIVATE PVRIO	pVrioQueueHead = NULL;
+PRIVATE PVRIO	pVrioQueueFoot = NULL;
+PRIVATE ULONG	hlVrioQueue = 0;		/* lock handle for above */
+
+#if defined(DEBUG)
+CONSTMSG dszCompleteVrioParent[]=	"\r\n[CompleteVrio] calling parent %p, mother I/O %p";
+CONSTMSG dszCompleteVrioHDrive[]=	"\r\n[CompleteVrio] iorb != 0 -> Host Drive";
+CONSTMSG dszCompleteVrioIoctl[]=	"\r\n[CompleteVrio] nothing -> IOCtl";
+CONSTMSG dszQueueVrio[]=	"\r\n[QueueVrio] %p";
+CONSTMSG dszDequeueVrio[]=	"\r\n[DequeueVrio] %p";
+CONSTMSG dszInsertVrio[]=	"\r\n[InsertVrio] %p";
+CONSTMSG dszGetNextIorb[]=	"\r\n[GetNextIorb] %p";
+CONSTMSG dszInsertIorb[]=	"\r\n[InsertIorb] %p";
+CONSTMSG dszStartManyIorb[]=	"\r\n[StartManyIorb] entry";
+CONSTMSG dszSMIorbAlloc[]=	"\r\n[StartManyIorb] couldn't allocate VRIO";
+CONSTMSG dszSMIorbStart[]=	"\r\n[StartManyIorb] starting iorb %p";
+CONSTMSG dszDump[]=		"\r\n%z";
+CONSTMSG dszSMIorbVerify[]=	"\r\n[StartManyIorb] READ_VERIFY %w blocks from %lx";
+CONSTMSG dszSMIorbPrefetch[]=	"\r\n[StartManyIorb] READ_PREFETCH %w blocks from %lx";
+CONSTMSG dszSMIorbRead[]=	"\r\n[StartManyIorb] READ %w blocks from %lx";
+CONSTMSG dszSMIorbWrite[]=	"\r\n[StartManyIorb] WRITE %w blocks to %lx";
+CONSTMSG dszProcessAdminIo[]=	"\r\n[ProcessAdminIO] dev %p, sector %lx";
+CONSTMSG dszProcessUserIo[]=	"\r\n[ProcessUserIO] dev %p, sector %lx";
+CONSTMSG dszPAIoBlock[]=	"\r\n[ProcessAdminIO] ProcBlock - rc %w";
+CONSTMSG dszPAIoBlkCnt[]=	"\r\n[ProcessAdmin/UserIO] used %w ProcBlock's";
+#endif
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Private Routines ************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * XlateIOERR(ioerr)
+ *
+ * PARAMETER
+ *	ioerr		ADD error code
+ *
+ * RETURNS
+ *	driver status word
+ *
+ * DESCRIPTION
+ *	This translation is neccessary when we cross the bridge between
+ *	IORB processing and strategy code (i.e. init or ioctl).
+ *
+ * REMARKS
+ */
+PRIVATE DRVSTATUS NEAR
+XlateIOERR(USHORT const ioerr)
+{
+    DRVSTATUS result;
+
+    if( ioerr == 0 )
+	return 0;				/* fastest way back */
+    switch( (ioerr & 0xFF00) )
+    {
+      case IOERR_CMD:
+	result = STATUS_ERR_UNKCMD;
+	break;
+
+      case IOERR_UNIT:
+	result = STATUS_ERR_NOTREADY;
+	break;
+
+      case IOERR_RBA:
+	if( ioerr == IOERR_RBA_CRC_ERROR )
+	    result = STATUS_ERR_CRC;
+	else
+	    result = STATUS_ERR_NOTFOUND;
+	break;
+
+      case IOERR_MEDIA:
+	if( ioerr == IOERR_MEDIA_NOT_FORMATTED
+	    ||  ioerr == IOERR_MEDIA_NOT_SUPPORTED )
+	    result = STATUS_ERR_UNKMEDIA;
+	else if( ioerr == IOERR_MEDIA_WRITE_PROTECT )
+	    result = STATUS_ERR_WRFAULT;
+	else
+	    result = STATUS_ERR_CHGDISK;
+	break;
+
+      case IOERR_ADAPTER:
+	result = STATUS_ERR_UNCERTAIN;
+	break;
+
+      case IOERR_DEVICE:
+	result = STATUS_ERR_PAPEROUT;
+	break;
+
+      default:
+	result = STATUS_ERR_GENERR;
+	break;
+    }
+
+    return result;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Public Entries **************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * CompleteVrio(io)
+ *
+ * PARAMETER
+ *	io		PVRIO
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ * REMARKS
+ */
+PUBLIC void NEAR _Cdecl
+CompleteVrio(PVRIO const io)
+{
+    if( io->mother != NULL )
+    {
+	PVRDEVHDR const	parent = io->mother->vrd;
+
+	DEBMSG2(DBG_LEVEL3,dszCompleteVrioParent,parent,io->mother);
+	parent->notify(io);
+	FreeVrio(io);				/* don't need it anymore */
+    }
+    else if( io->iorb != NULL )
+    {
+	DEBMSG(DBG_LEVEL3,dszCompleteVrioHDrive);
+	HostdriveNotify(io);
+	FreeVrio(io);				/* don't need it anymore */
+    }
+    else
+    {
+	USHORT	awoken;
+
+	DEBMSG(DBG_LEVEL2,dszCompleteVrioIoctl);
+	DevHelp_ProcRun((ULONG)io, &awoken);	/* *nicht* freigeben! */
+    }
+    return;
+}
+
+
+
+
+
+/* **********************************************************************
+ * **** VRIO queuing/dequeuing ******************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	QueueVrio(io)
+ * PARAMETER
+ *	io			PVRIO
+ *	pVrioQueueHead, hlVrioQueue
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Adds 'io' to single linked list based at 'pVrioQueueHead'.
+ *	Used if a VRDEVICE isn't able to process the VRIO.
+ *	A timer should remove VRIOs from foot of this list and
+ *	restart them.
+ *
+ * REMARKS
+ *	SMP safe spinlocks are used to protect the queue.
+ */
+PUBLIC void NEAR _Cdecl
+QueueVrio(PVRIO const io)
+{
+    DEBMSG1(DBG_QUEUE,dszQueueVrio,(PVOID)io);
+    LOCK(hlVrioQueue);
+    if( pVrioQueueHead == NULL )		/* empty queue? */
+	pVrioQueueHead = io;			/* set as first */
+    else
+	pVrioQueueFoot->link = io;		/* set behind last */
+    pVrioQueueFoot = io;			/* new last IORB */
+    ++cVrioInQueue;
+    UNLOCK(hlVrioQueue);
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	DequeueVrio(void)
+ * PARAMETER
+ *	(none)
+ *	pVrioQueueHead, hlVrioQueue
+ *
+ * RETURNS
+ *	PVRIO		VRIO from list
+ *
+ * DESCRIPTION
+ *	Removes a VRIO from start of linked list based
+ *	at 'pVrioQueueHead'.
+ *	Used in timer routine to restart it.
+ *
+ * REMARKS
+ *	SMP safe spinlocks are used to protect the queue.
+ */
+PUBLIC PVRIO NEAR _Cdecl
+DequeueVrio(void)
+{
+    PVRIO	io;
+
+    LOCK(hlVrioQueue);
+    if( (io = pVrioQueueHead) != NULL )
+    {
+	if( (pVrioQueueHead = io->link) == NULL )
+	    pVrioQueueFoot = NULL;		/* foot == head (now empty) */
+	else
+	    io->link = NULL;			/* remove link */
+	++cVrioInQueue;
+    }
+    UNLOCK(hlVrioQueue);
+    if( io != NULL )
+    {
+	DEBMSG1(DBG_QUEUE,dszDequeueVrio,(PVOID)io);
+    }
+    return io;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	InsertVrio(io)
+ * PARAMETER
+ *	IO			PVRIO
+ *	pVrioQueueHead, hlVrioQueue
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Adds a VRIO to the head of internal VRIO queue.
+ *
+ * REMARKS
+ *	SMP safe spinlocks are used to protect the queue.
+ *
+ *	Should not be neccessary. But may if a VRDEVICE rejects this VRIO
+ *	again?
+ */
+PUBLIC void NEAR _Cdecl
+InsertVrio(PVRIO const io)
+{
+    DEBMSG1(DBG_QUEUE,dszInsertVrio,(PVOID)io);
+    LOCK(hlVrioQueue);
+    io->link = pVrioQueueHead;
+    pVrioQueueHead = io;
+    if( pVrioQueueFoot == NULL )		/* queue was empty? */
+	pVrioQueueFoot = pVrioQueueHead;	/* Yes, -> last == first */
+    ++cVrioInQueue;
+    UNLOCK(hlVrioQueue);
+    return;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** IORB queuing/dequeuing ******************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	GetNextIorb(drvp)
+ * PARAMETER
+ *	drvp		PHOSTDRIVE
+ *	cIorbInQueue
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Get a new IORB from the driver queues.
+ *	Requests are always removed from the queue head so this routine
+ *	implements part of a FIFO. The other part is located in iorb.c
+ *	(inside QueueIorbChain).
+ *
+ * REMARKS
+ *	SMP safe spinlocks are used to protect the queue.
+ */
+PUBLIC PIORB NEAR _Cdecl
+GetNextIorb(PHOSTDRIVE const drvp)
+{
+    PIORB pIorb;
+
+    LOCK(drvp->hlQueue);
+    if( (pIorb=drvp->pQueueHead) != NULL )
+    {
+	if( (drvp->pQueueHead=pIorb->pNxtIORB) == NULL )
+	    drvp->pQueueFoot = NULL;		/* Foot == Head (now empty) */
+	else
+	    pIorb->pNxtIORB = NULL;		/* remove linkage (safety) */
+	--cIorbInQueue;
+    }
+    UNLOCK(drvp->hlQueue);
+    if( pIorb != NULL )
+    {
+	DEBMSG1(DBG_PATH,dszGetNextIorb,(PVOID)pIorb);
+    }
+    return pIorb;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	InsertIorb(drvp,pIorb)
+ * PARAMETER
+ *	drvp			PHOSTDRIVE
+ *	pIorb			I/O request structure
+ *	cIorbInQueue
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Adds a lately retrieved OS request to the head of internal request
+ *	queue.
+ * REMARKS
+ *	SMP safe spinlocks are used to protect the queue.
+ *
+ *	Should not be neccessary. But may if command not available and
+ *	protocol free?
+ */
+PUBLIC void NEAR _Cdecl
+InsertIorb(PHOSTDRIVE const drvp,PIORB const pIorb)
+{
+    DEBMSG1(DBG_QUEUE,dszInsertIorb,(PVOID)pIorb);
+    LOCK(drvp->hlQueue);
+    pIorb->pNxtIORB	= drvp->pQueueHead;
+    drvp->pQueueHead	= pIorb;
+    if( !drvp->pQueueFoot )			/* queue was empty? */
+	drvp->pQueueFoot = drvp->pQueueHead;	/* Yes, -> last == first */
+    ++cIorbInQueue;
+    UNLOCK(drvp->hlQueue);
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * StartManyIorb(drvp)
+ *
+ * PARAMETER
+ *	drvp		PHOSTDRIVE
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Retrieve IORBs from 'drvp's queue, convert them to
+ *	new allocated VRIOs and pass them to child VRDEVICE.  Do this
+ *	until further processing is impossible.
+ *
+ * REMARKS
+ */
+PUBLIC void NEAR _Cdecl
+StartManyIorb(PHOSTDRIVE const drvp)
+{
+    DEBMSG(DBG_LEVEL3,dszStartManyIorb);
+    for(;;)
+    {
+	PIORB_EXECUTEIO const	iorb = (PVOID)GetNextIorb(drvp);
+	PVRIO			vrio;
+	USHORT			rc;
+
+	if( iorb == NULL )
+	    break;				/* No more work to do. */
+	vrio = AllocateVrio(drvp->child, NULL);
+	if( vrio == NULL )
+	{
+	    DEBMSG(DBG_ALL,dszSMIorbAlloc);
+	    InsertIorb(drvp, &iorb->iorbh);	/* insert back to queue */
+	    break;
+	}
+
+	DEBMSG1(DBG_LEVEL3,dszSMIorbStart,(PVOID)iorb);
+	DEBMSG2(DBG_LEVEL4,dszDump,(PIORB)iorb,iorb->iorbh.Length);
+	if( iorb->iorbh.CommandModifier == IOCM_READ_VERIFY )
+	{
+	    DEBMSG2(DBG_LEVEL3,dszSMIorbVerify,iorb->BlockCount,(PVOID)&iorb->RBA);
+	    FreeVrio(vrio);
+	    DO( vrio = NULL );
+	    NotifyIorb(&iorb->iorbh, 0);
+	    continue;				/* do next IORB */
+	}
+	else if( iorb->iorbh.CommandModifier == IOCM_READ_PREFETCH )
+	{
+	    DEBMSG2(DBG_LEVEL3,dszSMIorbPrefetch,iorb->BlockCount,(PVOID)&iorb->RBA);
+	    FreeVrio(vrio);
+	    DO( vrio = NULL );
+	    NotifyIorb(&iorb->iorbh, 0);
+	    continue;				/* do next IORB */
+	}
+	else if( iorb->iorbh.CommandModifier == IOCM_READ )
+	{
+	    DEBMSG2(DBG_LEVEL3,dszSMIorbRead,iorb->BlockCount,(PVOID)&iorb->RBA);
+	    vrio->iocmd = IOCMD_READ;
+	}
+	else if( iorb->iorbh.CommandModifier == IOCM_WRITE )
+	{
+	    DEBMSG2(DBG_LEVEL3,dszSMIorbWrite,iorb->BlockCount,(PVOID)&iorb->RBA);
+	    vrio->iocmd = IOCMD_WRITE;
+	}
+	else
+	{
+	    DBSTOP();
+	    FreeVrio(vrio);
+	    DO( vrio = NULL );
+	    NotifyIorb(&iorb->iorbh, IOERR_CMD_NOT_SUPPORTED);
+	    continue;
+	}
+
+	/* Translate IORB to VRIO */
+
+	vrio->iorb = iorb;			/* we need this thing when reporting
+						   completion */
+
+	vrio->cSGList = iorb->cSGList;
+	vrio->pSGList = iorb->pSGList;
+	vrio->ppSGList = iorb->ppSGList;
+
+	vrio->offset = 0;			/* relativ to S/G list */
+	vrio->blk = iorb->RBA;
+	vrio->bcnt = iorb->BlockCount;
+	vrio->oserr = 0xFFFF;			/* invalid error code */
+
+	/* Send VRIO to child. */
+
+	rc = vrio->vrd->worker(vrio->vrd, vrio);
+	if( rc )
+	{
+	    QueueVrio(vrio);
+	    break;				/* no reason to continue */
+	}
+    }
+
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * ProcessAdminIO(target,write,blk,bcnt,physaddr)
+ *
+ * PARAMETER
+ *	target		device to address
+ *	write		read (0) or write (/0)
+ *	blk		sector no relative to partition start
+ *	bcnt		sector count
+ *	physaddr	pyhsical addresse to do I/O to,from
+ *
+ * RETURNS
+ *	0		OK
+ *
+ * DESCRIPTION
+ *	Reads/Writes into administrative area of an array.  Context
+ *	has to allow blocking!
+ *
+ * REMARKS
+ *	If the ProcBlock was interrupted (process died, etc.) it's better
+ *	to keep all memory and waste space as to free it and produce
+ *	system traps when the I/O complets.
+ */
+PUBLIC DRVSTATUS NEAR _Cdecl
+ProcessAdminIO(PVRDEVHDR const target,BOOL write,
+	       ULONG blk,USHORT bcnt,ULONG physaddr)
+{
+    PSCATGATENTRY scga = MemAlloc(sizeof(*scga));
+    PVRIO const	vrio = AllocateVrio(target, NULL);
+    DRVSTATUS	result = 0;
+    USHORT	i;
+
+
+    DEBMSG2(DBG_LEVEL1,dszProcessAdminIo,(PVOID)target,(PVOID)&blk);
+
+    scga->ppXferBuf = physaddr;
+    scga->XferBufLen = bcnt * (ULONG)SECTOR_SIZE;
+
+    vrio->iocmd = (write ? IOCMD_AWRITE : IOCMD_AREAD);
+    vrio->cSGList = 1;				/* continuous memory */
+    vrio->pSGList = scga;
+    vrio->ppSGList = FP_OFF(scga) + ppWorkMem;
+
+    vrio->offset = 0;
+    vrio->bcnt = bcnt;
+    vrio->blk = blk;
+
+    vrio->oserr = 0xFFFF;
+
+    target->worker(target, vrio);
+
+    cli();
+    i = 0;
+    while( vrio->oserr == 0xFFFF )
+    {
+	USHORT	us;
+
+	us = DevHelp_ProcBlock((ULONG)vrio, (ULONG)-1L, WAIT_IS_INTERRUPTABLE);
+	if( us == WAIT_INTERRUPTED )
+	{
+	    DEBMSG1(DBG_ALL,dszPAIoBlock,us);
+	    result = STATUS_ERR_INTERRUPTED;
+	    break;
+	}
+	cli();
+	++i;
+    }
+    sti();
+    if( i > 1 )
+    {
+	DEBMSG1(DBG_ALL,dszPAIoBlkCnt,i);
+    }
+
+    if( result == 0 )
+    {
+	result = XlateIOERR(vrio->oserr);	/* translate and before FreeVrio */
+
+	FreeVrio(vrio);
+	MemFree(scga);
+    }
+
+    return result;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * ProcessUserIO(target,write,blk,bcnt,physaddr)
+ *
+ * PARAMETER
+ *	target		device to address
+ *	write		read (0) or write (/0)
+ *	blk		sector no in data area
+ *	bcnt		sector count
+ *	physaddr	pyhsical addresse to do I/O to,from
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		error (driver status word)
+ *
+ * DESCRIPTION
+ *	Reads/Writes into user area of an array.  Context
+ *	has to allow blocking!
+ *
+ * REMARKS
+ *	If the ProcBlock was interrupted (process died, etc.) it's better
+ *	to keep all memory and waste space as to free it and produce
+ *	system traps when the I/O complets.
+ */
+PUBLIC DRVSTATUS NEAR _Cdecl
+ProcessUserIO(PVRDEVHDR const target,BOOL write,
+	      ULONG blk,USHORT bcnt,ULONG physaddr)
+{
+    PSCATGATENTRY scga = MemAlloc(sizeof(*scga));
+    PVRIO const	vrio = AllocateVrio(target, NULL);
+    DRVSTATUS	result = 0;
+    USHORT	i;
+
+
+    DEBMSG2(DBG_LEVEL2,dszProcessUserIo,(PVOID)target,(PVOID)&blk);
+
+    scga->ppXferBuf = physaddr;
+    scga->XferBufLen = bcnt * (ULONG)SECTOR_SIZE;
+
+    vrio->iocmd = (write ? IOCMD_AWRITE : IOCMD_AREAD);
+    vrio->cSGList = 1;				/* continuous memory */
+    vrio->pSGList = scga;
+    vrio->ppSGList = FP_OFF(scga) + ppWorkMem;
+
+    vrio->offset = 0;
+    vrio->bcnt = bcnt;
+    vrio->blk = VRAID_ADMINSECTORS + blk;
+
+    vrio->oserr = 0xFFFF;
+
+    target->worker(target, vrio);
+
+    cli();
+    i = 0;
+    while( vrio->oserr == 0xFFFF )
+    {
+	USHORT	us;
+
+	us = DevHelp_ProcBlock((ULONG)vrio, (ULONG)-1L, WAIT_IS_INTERRUPTABLE);
+	if( us == WAIT_INTERRUPTED )
+	{
+	    DEBMSG1(DBG_ALL,dszPAIoBlock,us);
+	    result = STATUS_ERR_INTERRUPTED;
+	    break;
+	}
+	cli();
+	++i;
+    }
+    sti();
+    if( i > 1 )
+    {
+	DEBMSG1(DBG_ALL,dszPAIoBlkCnt,i);
+    }
+
+    if( result == 0 )
+    {
+	result = XlateIOERR(vrio->oserr);
+
+	FreeVrio(vrio);
+	MemFree(scga);
+    }
+
+    return result;
+}
+@
+
+
+1.14
+log
+@- ProcessAdminIO, ProcessUserIO: have to return DRVSTATUS instead of
+  IORB error. Implemented XlateIOERR() to do the translation.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.13 $
+ * $Date: 2000/08/22 00:21:57 $
+d10 4
+d61 1
+a61 1
+static char const id[]="$Id: vrio.c,v 1.13 2000/08/22 00:21:57 vitus Exp vitus $";
+d497 1
+a497 1
+	else
+d501 8
+@
+
+
+1.13
+log
+@- added debug code to alert when a ProcBlock has to be repeated (no impact
+  on non-debug versions)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.12 $
+ * $Date: 2000/06/15 01:07:02 $
+d10 4
+d52 1
+a52 1
+ * This code is Copyright Vitus Jensen 1998-2000
+d57 1
+a57 1
+static char const id[]="$Id: vrio.c,v 1.12 2000/06/15 01:07:02 vitus Exp vitus $";
+d106 4
+d111 76
+a186 1
+ * CALL
+d188 2
+d191 2
+d551 1
+a551 1
+PUBLIC USHORT NEAR _Cdecl
+d557 1
+a557 1
+    USHORT	rc = 0;
+d589 1
+a589 1
+	    rc = STATUS_ERR_INTERRUPTED;
+d601 1
+a601 1
+    if( rc == 0 )
+d603 1
+a603 1
+	rc = vrio->oserr;			/* as we have to survive free... */
+d609 1
+a609 1
+    return rc;
+d627 1
+d638 1
+a638 1
+PUBLIC USHORT NEAR _Cdecl
+d644 1
+a644 1
+    USHORT	rc = 0;
+d676 1
+a676 1
+	    rc = STATUS_ERR_INTERRUPTED;
+d688 1
+a688 1
+    if( rc == 0 )
+d690 1
+a690 1
+	rc = vrio->oserr;			/* as we have to survive free... */
+d696 1
+a696 1
+    return rc;
+@
+
+
+1.12
+log
+@- implemented ProcessUserIO()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.11 $
+ * $Date: 1999/09/26 00:23:51 $
+d10 3
+d47 2
+a48 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+d53 1
+a53 1
+static char const id[]="$Id: vrio.c,v 1.11 1999/09/26 00:23:51 vitus Exp vitus $";
+d94 1
+d471 1
+d493 1
+d506 1
+d509 4
+d557 1
+d560 1
+a560 1
+    DEBMSG2(DBG_LEVEL1,dszProcessUserIo,(PVOID)target,(PVOID)&blk);
+d579 1
+d592 1
+d595 4
+@
+
+
+1.11
+log
+@- defined all DBGMSG() strings as located in CONST segment
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/09/19 23:37:15 $
+d10 3
+d50 1
+a50 1
+static char const id[]="$Id: vrio.c,v 1.10 1999/09/19 23:37:15 vitus Exp vitus $";
+d89 1
+d344 2
+a345 2
+ * CALL
+ *	StartManyIorb(drvp)
+d439 1
+a439 2
+ * CALL
+ *	ProcessAdminIO(target,write,blk,bcnt,physaddr)
+d452 2
+d482 79
+@
+
+
+1.10
+log
+@- changes to keep MS-C/C++ 7.0 happy
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/06/04 01:06:55 $
+d10 3
+d47 1
+a47 1
+static char const id[]="$Id: vrio.c,v 1.9 1999/06/04 01:06:55 vitus Exp vitus $";
+d68 21
+d108 1
+a108 1
+	DEBMSG2(DBG_LEVEL3,"\r\n[CompleteVrio] calling parent %p, mother I/O %p",parent,io->mother);
+d114 1
+a114 1
+	DEBMSG(DBG_LEVEL3,"\r\n[CompleteVrio] iorb != 0 -> Host Drive");
+d122 1
+a122 1
+	DEBMSG(DBG_LEVEL2,"\r\n[CompleteVrio] nothing -> IOCtl");
+d158 1
+a158 1
+    DEBMSG1(DBG_QUEUE,"\r\n[QueueVrio] %p",(PVOID)io);
+d208 1
+a208 1
+	DEBMSG1(DBG_QUEUE,"\r\n[DequeueVrio] %p",(PVOID)io);
+d238 1
+a238 1
+    DEBMSG1(DBG_QUEUE,"\r\n[InsertVrio] %p",(PVOID)io);
+d294 1
+a294 1
+	DEBMSG1(DBG_PATH,"\r\n[GetNextIorb] %p",(PVOID)pIorb);
+d325 1
+a325 1
+    DEBMSG1(DBG_QUEUE,"\r\n[InsertIorb] %p",(PVOID)pIorb);
+d358 1
+a358 1
+    DEBMSG(DBG_LEVEL3,"\r\n[StartManyIorb] entry");
+d370 1
+a370 1
+	    DEBMSG(DBG_ALL,"\r\n[StartManyIorb] couldn't allocate VRIO");
+d375 2
+a376 2
+	DEBMSG1(DBG_LEVEL3,"\r\n[StartManyIorb] starting iorb %p",(PVOID)iorb);
+	DEBMSG2(DBG_LEVEL4,"\r\n%z",(PIORB)iorb,iorb->iorbh.Length);
+d379 1
+a379 1
+	    DEBMSG2(DBG_LEVEL3,"\r\n[StartManyIorb] READ_VERIFY %w blocks from %lx",iorb->BlockCount,(PVOID)&iorb->RBA);
+d387 1
+a387 1
+	    DEBMSG2(DBG_LEVEL3,"\r\n[StartManyIorb] READ_PREFETCH %w blocks from %lx",iorb->BlockCount,(PVOID)&iorb->RBA);
+d395 1
+a395 1
+	    DEBMSG2(DBG_LEVEL3,"\r\n[StartManyIorb] READ %w blocks from %lx",iorb->BlockCount,(PVOID)&iorb->RBA);
+d400 1
+a400 1
+	    DEBMSG2(DBG_LEVEL3,"\r\n[StartManyIorb] WRITE %w blocks to %lx",iorb->BlockCount,(PVOID)&iorb->RBA);
+d464 1
+a464 1
+    DEBMSG2(DBG_LEVEL1,"\r\n[ProcessAdminIO] dev %p, sector %lx",(PVOID)target,(PVOID)&blk);
+d490 1
+a490 1
+	    DEBMSG1(DBG_ALL,"\r\n[ProcessAdminIO] ProcBlock - rc %w",us);
+@
+
+
+1.9
+log
+@- changed DBG_INFO to DBG_LEVEL3
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/04/28 01:49:00 $
+d10 3
+d44 1
+a44 1
+static char const id[]="$Id: vrio.c,v 1.8 1999/04/28 01:49:00 vitus Exp vitus $";
+d463 1
+a463 1
+	us = DevHelp_ProcBlock((ULONG)vrio, -1L, WAIT_IS_INTERRUPTABLE);
+@
+
+
+1.8
+log
+@- implemented CompleteVrio()
+- uses IOCMD_A* commands and Worker
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/02/09 00:11:07 $
+d10 4
+d41 1
+a41 1
+static char const id[]="$Id: vrio.c,v 1.7 1999/02/09 00:11:07 vitus Exp vitus $";
+d331 1
+a331 1
+    DEBMSG(DBG_INFO,"\r\n[StartManyIorb] entry");
+@
+
+
+1.7
+log
+@- ProcessAdminIO() implemented
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1999/02/07 17:56:37 $
+d10 3
+d31 2
+a32 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+d37 1
+a37 1
+static char const id[]="$Id: vrio.c,v 1.6 1999/02/07 17:56:37 vitus Exp vitus $";
+d61 40
+d124 1
+a124 1
+PUBLIC VOID NEAR _Cdecl
+d204 1
+a204 1
+PUBLIC VOID NEAR _Cdecl
+d291 1
+a291 1
+PUBLIC VOID NEAR _Cdecl
+d324 1
+a324 1
+PUBLIC VOID NEAR _Cdecl
+d438 1
+a438 1
+    vrio->iocmd = (write ? IOCMD_WRITE : IOCMD_READ);
+d449 1
+a449 1
+    target->admin(target, vrio);
+@
+
+
+1.6
+log
+@- changed for iorb -> vrio transition
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1998/09/20 14:21:44 $
+d10 3
+d34 1
+a34 1
+static char const id[]="$Id: vrio.c,v 1.5 1998/09/20 14:21:44 vitus Stab vitus $";
+d355 78
+@
+
+
+1.5
+log
+@- modified for AllocateVrio(working_dev,mother)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1998/06/26 23:18:40 $
+d10 3
+d31 1
+a31 1
+static char const id[]="$Id: vrio.c,v 1.4 1998/06/26 23:18:40 vitus Exp vitus $";
+d59 1
+a59 1
+/*#
+d63 3
+a65 1
+ *	io		PVRIO
+d68 1
+a68 2
+ * GLOBAL
+ *	pVrioQueueHead, hlVrioQueue
+d96 1
+a96 1
+/*#
+d101 2
+d105 1
+a105 2
+ * GLOBAL
+ *	pVrioQueueHead, hlVrioQueue
+d139 1
+a139 1
+/*#
+d143 3
+a145 1
+ *	IO		PVRIO
+d148 1
+a148 2
+ * GLOBAL
+ *	pVrioQueueHead, hlVrioQueue
+d181 1
+a181 1
+/*#
+d186 2
+d190 1
+a190 2
+ * GLOBAL
+ *	cIorbInQueue
+d225 1
+a225 1
+/*#
+d231 2
+d235 1
+a235 2
+ * GLOBAL
+ *	cIorbInQueue
+d262 1
+a262 1
+/*#
+d267 1
+d270 1
+a270 2
+ * GLOBAL
+ *	(none)
+d319 1
+d324 1
+d329 8
+a336 2
+	vrio->request = iorb;
+	vrio->offset = 0;
+@
+
+
+1.4
+log
+@- public routines now _Cdecl
+- StartManyIorb: don't allocate VRIO w/o IORB
+@
+text
+@d3 3
+a5 3
+ * $Revision: 1.3 $
+ * $Date: 1998/05/29 02:03:27 $
+ * $Author: vitus $
+d7 1
+a7 1
+ * Queue handling for VRIOs and IORBs.
+d10 4
+d25 7
+a31 3
+#pragma off (unreferenced)
+static char const id[]="$Id: vrio.c,v 1.3 1998/05/29 02:03:27 vitus Exp vitus $";
+#pragma on (unreferenced)
+d51 1
+d210 1
+a210 1
+	DEBMSG1(DBG_QUEUE,"\r\n[GetNextIorb] %p",(PVOID)pIorb);
+d271 1
+a271 1
+StartManyIorb(PHOSTDRIVE drvp)
+d282 1
+a282 1
+	vrio = AllocateVrio(NULL);
+d296 1
+d304 1
+a318 1
+	vrio->vrd = drvp->child;
+@
+
+
+1.3
+log
+@- calls to DEBMSG macro
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/raid/RCS/vrio.c,v $
+ * $Revision: 1.2 $
+ * $Date: 1998/04/08 01:30:55 $
+d10 3
+d22 1
+a22 1
+static char const id[]="$Id: vrio.c,v 1.2 1998/04/08 01:30:55 vitus Exp vitus $";
+d25 2
+d39 1
+a39 1
+PRIVATE ULONG	hlVrioQueue = 0;		/* 0B: lock handle for above */
+d65 1
+a65 1
+PUBLIC void NEAR
+d100 1
+a100 1
+PUBLIC PVRIO NEAR
+d143 1
+a143 1
+PUBLIC void NEAR
+d184 1
+a184 1
+PUBLIC PIORB NEAR
+d228 1
+a228 1
+PUBLIC void NEAR
+d261 1
+a261 1
+PUBLIC void NEAR
+d268 1
+a268 1
+	PVRIO const		vrio = AllocateVrio(NULL);
+d271 4
+a274 1
+	if( iorb == NULL  ||  vrio == NULL )
+d276 2
+a277 6
+	    /* No more work to do or impossible to start. */
+
+	    if( iorb != NULL )
+		InsertIorb(drvp, &iorb->iorbh);
+	    if( vrio != NULL )
+		FreeVrio(vrio);
+d281 2
+a282 2
+	DEBMSG1(DBG_LEVEL2,"\r\n[StartManyIorb] starting iorb %p",(PVOID)iorb);
+	DEBMSG2(DBG_LEVEL3,"\r\n%z",(PIORB)iorb,iorb->iorbh.Length);
+d285 1
+a285 1
+	    DEBMSG2(DBG_LEVEL2,"\r\n[StartManyIorb] READ_VERIFY %w blocks from %lx",iorb->BlockCount,(PVOID)&iorb->RBA);
+d292 1
+a292 1
+	    DEBMSG2(DBG_LEVEL2,"\r\n[StartManyIorb] READ_PREFETCH %w blocks from %lx",iorb->BlockCount,(PVOID)&iorb->RBA);
+d299 1
+a299 1
+	    DEBMSG2(DBG_LEVEL2,"\r\n[StartManyIorb] READ %w blocks from %lx",iorb->BlockCount,(PVOID)&iorb->RBA);
+d303 1
+a303 1
+	    DEBMSG2(DBG_LEVEL2,"\r\n[StartManyIorb] WRITE %w blocks to %lx",iorb->BlockCount,(PVOID)&iorb->RBA);
+@
+
+
+1.2
+log
+@- StartManyIorb() handles some commands internally (dummies)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1998/02/17 22:32:28 $
+d10 3
+d19 1
+a19 1
+static char const id[]="$Id: vrio.c,v 1.1 1998/02/17 22:32:28 vitus Exp vitus $";
+d63 1
+a64 1
+
+a70 1
+
+d104 1
+a104 1
+	    pVrioQueueFoot = NULL;		/* foor == head (now empty) */
+d110 4
+d141 1
+d194 4
+d226 1
+d259 1
+a259 1
+    INFMSG("\r\n[StartManyIorb] entry");
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Author$
+d9 3
+a11 1
+ * $Log$
+d16 1
+a16 1
+static char const id[]="$Id$";
+d247 1
+d251 1
+a251 1
+	PVRIO const		vrio = AllocateVrio();
+d265 24
+a288 1
+	vrio->father = NULL;
+@

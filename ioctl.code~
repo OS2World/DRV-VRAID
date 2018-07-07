@@ -1,0 +1,29 @@
+
+
+
+
+/* DSKSleep.flt */
+
+#define IOCTL_DSKSLEEP_CATEGORY	0xC0		/* a user-defined category */
+#define DSKSL_QUERY_VERSION	0x60		/* returns version and more */
+#define DSKSL_QUERY_TIMEOUT	0x61		/* return device list */
+#define DSKSL_SET_TIMEOUT	0x41		/* changes single entry */
+#define DSKSL_QUERY_DEVSTATE	0x62		/* stopped? */
+#define DSKSL_SET_DEVSTATE	0x42		/* stop now! */
+#define DSKSL_READ_MSGS		0x63		/* read startup messages */
+#define DSKSL_CLEAR_MSGS	0x43		/* forget all messages */
+#define DSKSL_GET_LASTSTATUS	0x64		/* reads statusblock + sense */
+
+
+
+/* VRAID.flt */
+
+#define IOCTL_VRAID_CATEGORY	0xC0		/* a user-defined category */
+#define VRAID_QUERY_VERSION	0x60		/* returns USHORT */
+#define VRAID_READ_MSGS		0x63		/* read startup messages */
+#define VRAID_CLEAR_MSGS	0x43		/* forget all messages */
+
+#define VRAID_QUERY_PHYSLIST	0x65		/* return list of devices (phys) */
+#define VRAID_QUERY_PHYSINFO	0x66		/* return info about above */
+#define VRAID_ADMINSEC_IO	0x44		/* read/write administrative
+						   sectors to above */

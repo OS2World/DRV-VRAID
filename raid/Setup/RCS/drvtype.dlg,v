@@ -1,0 +1,74 @@
+head	1.2;
+access;
+symbols
+	VSETUPv0_84:1.2
+	VSETUP_82:1.2
+	VSETUPv0_80:1.2
+	VSETUPv0_71:1.2
+	VSETUPv0_70:1.2
+	VSETUPv0_60:1.2
+	VSETUPv0_52:1.2
+	VSETUPv0_51:1.2
+	VSETUPv0_50:1.2
+	VSETUPv0_20:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	98.06.09.01.30.03;	author vitus;	state Stab;
+branches;
+next	1.1;
+
+1.1
+date	98.05.17.19.10.36;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Dialog to select type of drive to create
+@
+
+
+1.2
+log
+@- three LTEXT instead of CTEXT
+@
+text
+@#ifndef OS2_INCLUDED
+   #include <os2.h>
+#endif
+DLGINCLUDE 4 "resources.h"
+
+DLGTEMPLATE IDW_DRVTYPE LOADONCALL MOVEABLE DISCARDABLE
+BEGIN
+    DIALOG  "Select type of drive", IDW_DRVTYPE, 141, 120, 183, 75, 
+            WS_VISIBLE, FCF_SYSMENU | FCF_TITLEBAR
+    BEGIN
+        CONTROL         "", CB_DRVTYPE, 91, 32, 84, 35, WC_COMBOBOX, 
+			CBS_DROPDOWNLIST | WS_GROUP | WS_TABSTOP | WS_VISIBLE
+        PUSHBUTTON      "OK", DID_OK, 6, 4, 40, 14
+        PUSHBUTTON      "Cancel", DID_CANCEL, 49, 4, 40, 14
+        PUSHBUTTON      "Help", -1, 92, 4, 40, 14
+        LTEXT           "Select type", -1, 13, 58, 78, 8
+        LTEXT           "Drive size", -1, 13, 37, 78, 8
+        LTEXT           "", SC_DRVSIZE, 91, 33, 84, 13
+    END
+END
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d11 1
+a11 1
+        CONTROL		"", CB_DRVTYPE, 11, 31, 71, 35, WC_COMBOBOX, 
+a12 2
+        CTEXT		"", SC_DRVSIZE, 93, 57, 80, 8, SS_TEXT | 
+                        DT_TOP | WS_GROUP | WS_VISIBLE
+d16 3
+@

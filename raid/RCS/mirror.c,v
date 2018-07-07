@@ -1,0 +1,3342 @@
+head	3.10;
+access;
+symbols
+	vrflt031113:3.10
+	vrflt010903:3.10
+	PREV010803:3.10
+	VRAIDv0_85:3.8
+	VRAIDv0_84:3.7
+	VRAIDv0_82:2.8
+	VRAIDv0_70:2.4
+	VRAIDv0_60:1.6
+	VRAIDv0_51:1.6
+	VRAIDv0_50:1.6
+	VRAIDv0_40:1.6
+	VRAIDv0_30:1.5
+	ALPHA1:1.4;
+locks; strict;
+comment	@ * @;
+
+
+3.10
+date	2001.07.25.01.56.52;	author vitus;	state Exp;
+branches;
+next	3.9;
+
+3.9
+date	2001.07.08.18.36.53;	author vitus;	state Exp;
+branches;
+next	3.8;
+
+3.8
+date	2001.06.25.00.31.08;	author vitus;	state Exp;
+branches;
+next	3.7;
+
+3.7
+date	2001.02.11.01.15.18;	author vitus;	state Exp;
+branches;
+next	3.6;
+
+3.6
+date	2001.01.30.00.31.47;	author vitus;	state Exp;
+branches;
+next	3.5;
+
+3.5
+date	2001.01.15.01.14.59;	author vitus;	state Exp;
+branches;
+next	3.4;
+
+3.4
+date	2000.10.24.23.58.39;	author vitus;	state Exp;
+branches;
+next	3.3;
+
+3.3
+date	2000.08.22.01.59.40;	author vitus;	state Exp;
+branches;
+next	3.2;
+
+3.2
+date	2000.07.23.00.19.01;	author vitus;	state Exp;
+branches;
+next	3.1;
+
+3.1
+date	2000.06.15.01.01.22;	author vitus;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	99.12.14.00.30.44;	author vitus;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	99.10.01.01.04.26;	author vitus;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	99.09.20.00.24.44;	author vitus;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	99.08.09.23.18.33;	author vitus;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	99.06.21.02.33.46;	author vitus;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	99.06.20.17.34.15;	author vitus;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	99.05.26.01.14.22;	author vitus;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	99.05.24.19.18.13;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	99.05.24.00.39.24;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.05.12.01.47.33;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.04.28.01.45.19;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.04.14.01.22.48;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.01.11.00.59.29;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	98.09.20.14.26.21;	author vitus;	state Stab;
+branches;
+next	1.5;
+
+1.5
+date	98.06.26.22.58.24;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	98.05.29.01.53.38;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.03.10.02.08.53;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.03.06.01.23.25;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.02.12.01.31.46;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@How to do RAID1 I/O
+@
+
+
+3.10
+log
+@- MirrorCreate: entries in tab[] got lost when the creation was postponed.  Fixed
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/RCS/mirror.c,v $
+ * $Revision: 3.9 $
+ * $Date: 2001/07/08 18:36:53 $
+ * $Locker: vitus $
+ *
+ *
+ *	How to do RAID 1 I/O.
+ *
+ *	Children to a RAID 1 device build a table.
+ *	Read I/Os will do round robbing on reads.
+ *
+ *
+ * $Log: mirror.c,v $
+ * Revision 3.9  2001/07/08 18:36:53  vitus
+ * - implemented NextValidChild() to select next device to read.  When there
+ *   is no valid device the array state is changed to ERROR
+ *
+ * Revision 3.8  2001/06/25 00:31:08  vitus
+ * - BuildCreate() now returns an error code.  Check and pass to caller
+ *
+ * Revision 3.7  2001/02/11 01:15:18  vitus
+ * - changed MirrorCtrl() to return DRVSTATUS
+ *
+ * Revision 3.6  2001/01/30 00:31:47  vitus
+ * - BUILD and REBUILD are now mostly the same except statt REBUILD is
+ *   possible w/o an invalid child.  In this case rebuild_sec is used.
+ *
+ * Revision 3.5  2001/01/15 01:14:59  vitus
+ * - VRDIOCTL_START_REBUILD: call UpdateCfg() immediately, we need that data
+ *   on disk and can't wait to the next shutdown.  Someone my restart vsetup
+ *   and wants to see the correct state.
+ *
+ * Revision 3.4  2000/10/24 23:58:39  vitus
+ * - changes for new BuildCreate() parameter 'mode'
+ * - more debugging output
+ *
+ * Revision 3.3  2000/08/22 01:59:40  vitus
+ * - implemented VRAID_SET_CHILD_STATE
+ *
+ * Revision 3.2  2000/07/23 00:19:01  vitus
+ * - code distinguishes between BUILD and REBUILD
+ * - implemented ioctl method VRDIOCTL_START_REBUILD
+ *
+ * Revision 3.1  2000/06/15 01:01:22  vitus
+ * - implemented ioctl method (VRDIOCTL_QUERY_CHILDREN, VRDIOCTL_INFO, VRDIOCTL_VERIFY)
+ *
+ * Revision 2.8  1999/12/14 00:30:44  vitus
+ * - moved ValidateVSec2() to init1.c
+ *
+ * Revision 2.7  1999/10/01 01:04:26  vitus
+ * - updates new iocnt and busycnt fields in VRDEVHDR
+ * - MirrorCreate: detect when RDFLAG_BUILDING still exist but building has
+ *   already completed.  Build is *not* started but update of configuration
+ *   is triggered.
+ * - MirrorNotify: only clear need_updatecfg if UpdateCfg() says it has
+ *   really started the update...
+ *
+ * Revision 2.6  1999/09/20 00:24:44  vitus
+ * - defined all DBGMSG() strings as located in CONST segment
+ *
+ * Revision 2.5  1999/08/09 23:18:33  vitus
+ * - MirrorCreate: initialize new VRDMIRROR structure with 0
+ *
+ * Revision 2.4  1999/06/21 02:33:46  vitus
+ * - corrected english spelling
+ * - MirrorNotify: did switch to same child on I/O errors, fixed
+ *
+ * Revision 2.3  1999/06/20 17:34:15  vitus
+ * - more code to avoid doing I/O to a missing child.  Old revision could access
+ *   NULL pointers when the first child was missing
+ *
+ * Revision 2.2  1999/05/26 01:14:22  vitus
+ * - lock a failed child from further access (perhaps this lock could be lifted
+ *   by an IOCtl?)
+ *
+ * Revision 2.1  1999/05/24 19:18:13  vitus
+ * - detects and handles situations were an out-of-data child is
+ *   found
+ *
+ * Revision 1.11  1999/05/24 00:39:24  vitus
+ * - MirrorUpdate() complete
+ * - MirrorNotify: triggers update of configuration sectors whenever an state
+ *   change occured.
+ *
+ * Revision 1.10  1999/05/12 01:47:33  vitus
+ * - new SEC_VRDEV2 layout
+ * - handles valid/non-valid per child
+ *
+ * Revision 1.9  1999/04/28 01:45:19  vitus
+ * - merged MirrorAdmin() code with Worker/Notify, IOCMD_A* commands
+ * - MirrorNotify() uses CompleteVrio()
+ * - dummy MirrorUpdate() code
+ *
+ * Revision 1.8  1999/04/14 01:22:48  vitus
+ * - implemented MirrorAdmin() method
+ * - changed for iorb -> vrio transition
+ * - changes for valid/not valid childs and build process, still untested
+ *
+ * Revision 1.7  1999/01/11 00:59:29  vitus
+ * - MirrorNotify: corrected, did free wrong VRIO, call wrong notification, etc.
+ *
+ * Revision 1.6  1998/09/20 14:26:21  vitus
+ * - modified for AllocateVrio(working_dev,mother)
+ * - clarified pointer naming (father -> myio)
+ *
+ * Revision 1.5  1998/06/26 22:58:24  vitus
+ * - switched to DDK macros (cli, sti, pushf)
+ * - worker,notify get const pointers and become _Cdecl
+ *
+ * Revision 1.4  1998/05/29 01:53:38  vitus
+ * - chnages for new prototype of AllocateVrio()
+ * - PUBLICs are now _Cdecl
+ *
+ * Revision 1.3  1998/03/10 02:08:53  vitus
+ * - changed to PUBLIC *Create() function and PRIVATE workers
+ *
+ * Revision 1.2  1998/03/06 01:23:25  vitus
+ * - Worker/Notify entries Need public?)
+ *
+ * Revision 1.1  1998/02/12 01:31:46  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-2001
+ */
+#if defined(__WATCOMC__)
+# pragma off (unreferenced)
+#endif
+static char const id[]="$Id: mirror.c,v 3.9 2001/07/08 18:36:53 vitus Exp vitus $";
+#if defined(__WATCOMC__)
+# pragma on (unreferenced)
+#endif
+
+#include <string.h>
+
+#define INCL_NOBASEAPI
+#define INCL_INITRP_ONLY
+#include "os2intf.h"
+
+#include "vraid.h"
+#include "proto.h"
+#include "extern.h"
+#include "vraidpub.h"
+
+
+
+/*
+ * Our object: the mirror drive.
+ */
+typedef struct _VRDMIRROR {
+    VRDEVHDR	header;				/* ALWAYS FIRST! */
+
+    USHORT	readchild;			/* read from this child */
+    BOOL	need_updatecfg;
+
+    ULONG	rebuild_sec;			/* secno reached in rebuild */
+
+    USHORT	children;			/* entries in table below */
+    struct {
+	PVRDEVHDR	vrd;
+	ULONG		valid;			/* 0 - vrd->size	needs update
+						   0xFFFFFFFF		valid */
+	struct {
+	    int		missing : 1;
+	};
+    } child[];
+
+} VRDMIRROR, FAR * PVRDMIRROR;
+
+
+
+PRIVATE USHORT NEAR _Cdecl	MirrorWorker(PVRDEVHDR const self,PVRIO const myio);
+PRIVATE USHORT NEAR _Cdecl	MirrorUpdate(PVRDEVHDR const self,PVOID const sec);
+PRIVATE DRVSTATUS NEAR _Cdecl	MirrorCtrl(PVRDEVHDR const self, USHORT const cmd,
+					   PVOID const param, PVOID const data);
+
+
+
+
+INITMSG	szMissingChild[]=	"MIRROR, fail state: %u child(s) missing";
+INITMSG	szCreationDelayed[]=	"MIRROR creation delayed";
+
+#if defined(DEBUG)
+CONSTMSG dszMirrorNotify[]=	"\r\n[MirrorNotify] io %p, myio %p, err %w";
+CONSTMSG dszMNotifyReStop[]=	"\r\n[MirrorNotify] rebuild now complete";
+CONSTMSG dszMNotifyValid[]=	"\r\n[MirrorNotify] child %w now valid";
+CONSTMSG dszMNotifyUStart[]=	"\r\n[MirrorNotify] starting UpdateCfg()";
+CONSTMSG dszMNotifyUDefer[]=	"\r\n[MirrorNotify] deferring UpdateCfg()";
+CONSTMSG dszMirrorWorker[]=	"\r\n[MirrorWorker] %p";
+CONSTMSG dszMWorkerRelease[]=	"\r\n[MirrorWorker] releasing VRIOs";
+CONSTMSG dszMWorkerBusy[]=	"\r\n[MirrorWorker] child busy, queuing VRIO";
+CONSTMSG dszMirrorCreate[]=	"\r\n[MirrorCreate] at %p"
+				"\r\n               ID %z"
+				"\r\n               Size 0x%lx";
+CONSTMSG dszMCreateAdminData[]=	"\r\n[MirrorCreate] admin data\r\n%z";
+CONSTMSG dszStr[]=		"\r\n%s";
+CONSTMSG dszMCreateNoBuild[]=	"\r\n[MirrorCreate] sector says [RE]BUILD, all children valid -> clear [RE]BUILD";
+CONSTMSG dszMCreateBuild[]=	"\r\n[MirrorCreate] BUILD, a child is invalid";
+CONSTMSG dszMCreateRebuild[]=	"\r\n[MirrorCreate] flags say REBUILD, at 0x%lx";
+CONSTMSG dszMUpdateRebuild[]=	"\r\n[MirrorUpdate] storing REBUILD flag, at 0x%lx";
+#endif
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Private Routines ************************************************
+ * ******************************************************************* */
+
+PRIVATE USHORT NEAR
+Vrd2Child(PVRDMIRROR const mirror,PVRDEVHDR const child)
+{
+    USHORT	i;
+
+    for( i = 0; i < mirror->children; ++i )
+    {
+	if( child == mirror->child[i].vrd )
+	    return i;
+    }
+    return (USHORT)-1;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * NextValidChild(mirror, previous)
+ *
+ * PARAMETER
+ *	mirror		a VRD which forms a mirror device
+ *	previous	the previously used child
+ *
+ * RETURNS
+ *	child index or (USHORT)-1
+ *
+ * DESCRIPTION
+ *	Selects another valid child.
+ *
+ * REMARKS
+ */
+PRIVATE USHORT
+NextValidChild(PVRDMIRROR const mirror, USHORT const previous)
+{
+    USHORT	next = previous;
+    USHORT	tries = mirror->children;
+    BOOL	found = FALSE;
+
+    do
+    {
+	next = (next + 1 == mirror->children ? 0 : next + 1);
+	if( mirror->child[next].vrd != NULL
+	    &&  !mirror->child[next].missing
+	    &&  mirror->child[next].valid == (ULONG)-1 )
+	{
+	    found = TRUE;
+	    break;
+	}
+    }
+    while( tries-- );
+    if( !found )
+    {
+	mirror->header.flags &= ~RDFLAG_STATEMASK;
+	mirror->header.flags |= RDFLAG_ERROR;	/* ERROR state */
+	mirror->need_updatecfg = TRUE;
+	return (USHORT)-1;
+    }
+    return next;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * MirrorNotify(io)
+ *
+ * PARAMETER
+ *	io			I/O chich completed
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Notified by child when it has completed an I/O.
+ *	At task time only a single child is called to execute
+ *	a specific I/O, when this I/O has completed it is time to check
+ *	whether it was successfull.  If not: choose another child!
+ *
+ * REMARKS
+ */
+PRIVATE VOID NEAR _Cdecl
+MirrorNotify(PVRIO const io)
+{
+    PVRIO const		myio = io->mother;		/* I/O to us */
+    PVRDMIRROR const	mirror = (PVRDMIRROR)myio->vrd; /* it's me */
+    USHORT const	childidx = Vrd2Child(mirror, io->vrd);
+
+
+    DEBMSG3(DBG_PATH,dszMirrorNotify,io,myio,io->oserr);
+
+    ASSERT( io->bcnt != 0 );
+    ASSERT( io->link == NULL );
+    ASSERT( myio->link == NULL );
+    ASSERT( myio->bcnt != 0 );
+    ASSERT( myio->vrd->size != 0 );
+    ASSERT( myio->vrd->notify == MirrorNotify );
+    ASSERT( myio->vrd->worker == MirrorWorker );
+    ASSERT( myio->vrd->update == MirrorUpdate );
+    ASSERT( myio->vrd->ioctl == MirrorCtrl );
+
+    pushf();
+    cli();
+
+
+    /* Error handling, keep OKs
+     * Force update if anything failed and this hasn't already be marked
+     * on disk. */
+
+    if( io->oserr != 0 )
+    {
+	if( mirror->child[childidx].valid != 0 )
+	{
+	    mirror->child[childidx].valid = 0;
+	    mirror->child[childidx].missing = 1;
+	    mirror->need_updatecfg = TRUE;	/* we *need* an update */
+	}
+	if( !(mirror->header.flags & RDFLAG_FAIL)	&&
+	    !(mirror->header.flags & RDFLAG_ERROR) )
+	{
+	    mirror->header.flags &= ~RDFLAG_STATEMASK;
+	    mirror->header.flags |= RDFLAG_FAIL;
+	    ++cBeeps;
+	    mirror->need_updatecfg = TRUE;	/* we *need* an update */
+	}
+    }
+    if( myio->oserr == 0xFFFF )			/* still not set? */
+	myio->oserr = io->oserr;		/* propagate error */
+    else if( myio->oserr != 0 )			/* any error until now? */
+	myio->oserr = io->oserr;		/* keep this (OK?) */
+
+
+    switch( io->iocmd )
+    {
+	/* **** WRITE data area **** */
+      case IOCMD_WRITE:
+	--myio->children;
+	if( io->oserr == 0 )
+	{
+	    if( (mirror->header.flags & RDFLAG_BUILDING)
+		||  (mirror->header.flags & RDFLAG_REBUILD) )
+	    {
+		/* Update [re]build variables when build is in effect and
+		 * this child isn't valid already. */
+
+		if( io->blk <= mirror->child[childidx].valid
+		    &&  io->blk + io->bcnt > mirror->child[childidx].valid )
+		{
+		    mirror->child[childidx].valid = io->blk + io->bcnt;
+		    if( mirror->child[childidx].valid == mirror->header.size )
+		    {
+			/* Build process is now complete.  Mark configuration
+			 * sectors.
+			 * The process itself should close down automatically. */
+
+			DEBMSG1(DBG_ALL,dszMNotifyValid,childidx);
+			mirror->child[childidx].valid = (ULONG)-1;
+			mirror->need_updatecfg = TRUE;
+		    }
+		}
+		if( (mirror->header.flags & RDFLAG_REBUILD) )
+		{
+		    if( io->blk <= mirror->rebuild_sec
+			&&  io->blk + io->bcnt > mirror->rebuild_sec )
+		    {
+			mirror->rebuild_sec = io->blk + io->bcnt;
+			if( mirror->rebuild_sec == mirror->header.size )
+			{
+			    DEBMSG(DBG_ALL,dszMNotifyReStop);
+			    mirror->need_updatecfg = TRUE;
+			    mirror->header.flags &= ~RDFLAG_REBUILD;
+			    mirror->rebuild_sec = 0; /*OK? Do we need to set this?*/
+			}
+		    }
+		}
+	    }
+	}
+	break;
+
+      case IOCMD_AWRITE:
+	/* **** AWRITE ****
+	 * If last I/O, call parent notification. */
+
+	--myio->children;
+	break;
+
+      case IOCMD_READ:
+      case IOCMD_AREAD:
+	/* **** READ ****
+	 * **** AREAD ****
+	 * Try next device if error.  Else call parent notification. */
+
+	if( io->oserr == 0 )
+	{
+	    myio->children = 0;			/* no more I/Os, see below */
+	}
+	else
+	{
+	    PVRDEVHDR	child = io->vrd;	/* child which completed */
+
+	    --myio->children;
+	    if( myio->children != 0 )
+	    {
+		PVRIO	newio;
+		USHORT	rc;
+		USHORT	i, found = 0;
+
+		/* Select next child. */
+
+		for( i = 0; i < mirror->children; ++i )
+		    if( child == mirror->child[i].vrd )
+		    {
+			i = (i + 1 == mirror->children ? 0 : i+1);
+			child = mirror->child[i].vrd;
+			found = 1;
+			break;
+		    }
+		ASSERT( found == 1 );
+
+		/* Allocate VRIO for this new child and start it.  We
+		 * can't reuse 'io' as it will be free when we return
+		 * from MirrorNotify! */
+
+		newio = AllocateVrio(child, myio);
+		if( newio == NULL )
+		    myio->children = 0;		/* will end 'myio' with last error */
+		else
+		{
+		    newio->iorb =	io->iorb;
+		    newio->iocmd =	io->iocmd;
+		    newio->cSGList =	io->cSGList;
+		    newio->pSGList =	io->pSGList;
+		    newio->ppSGList =	io->ppSGList;
+		    newio->offset =	io->offset;
+		    newio->bcnt =	io->bcnt;
+		    newio->blk =	io->blk;
+
+		    rc = newio->vrd->worker(newio->vrd, newio);
+		    if( rc )
+			QueueVrio(newio);
+		}
+	    } /* end[if(children!=0)] */
+	}
+	break;
+    } /* end[switch] */
+
+
+    if( myio->children == 0 )
+    {
+	/* Our task is now completed, all transfer has been done.
+	 * Complete 'myio' by calling it's notification routine. */
+
+	CompleteVrio(myio);
+
+	/* If neccessary rewrite configuration sector.  This is
+	 * delayed until all I/O regarding the data sector causing this
+	 * update have been completed. */
+
+	if( mirror->need_updatecfg == TRUE )
+	{
+	    DEBMSG(DBG_ALL,dszMNotifyUStart);
+	    if( UpdateCfg(&mirror->header, FALSE) == TRUE )
+		mirror->need_updatecfg = FALSE;
+	}
+    }
+    else if( mirror->need_updatecfg == TRUE )
+    {
+	DEBMSG(DBG_ALL,dszMNotifyUDefer);
+    }
+
+    popf();
+    return;
+} /* end[MirrorNotify] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * MirrorWorker(self,myio)
+ *
+ * PARAMETER
+ *	mirror		a VRD which forms a mirror device
+ *	myio		I/O to myself, distribute
+ *
+ * RETURNS
+ *	0		OK, I/O started
+ *	/0		not started
+ *
+ * DESCRIPTION
+ *	Pass VRIO to I/O routines of every child on write or to
+ *	a single child if read.
+ *
+ * REMARKS
+ */
+PRIVATE USHORT NEAR _Cdecl
+MirrorWorker(PVRDEVHDR const self, PVRIO const myio)
+{
+    PVRDMIRROR const	mirror = (PVRDMIRROR)self;
+    PVRIO	io;
+    PVRIO	newio;
+    PVRIO	firstio = NULL;
+
+    DEBMSG1(DBG_PATH,dszMirrorWorker,(PVOID)myio);
+
+    ASSERT( myio->vrd == self );
+    ASSERT( myio->link == NULL );
+    ASSERT( myio->bcnt != 0 );
+    ASSERT( mirror->header.size != 0 );
+    ASSERT( mirror->header.notify == MirrorNotify );
+    ASSERT( mirror->header.worker == MirrorWorker );
+    ASSERT( mirror->header.update == MirrorUpdate );
+    ASSERT( mirror->header.ioctl == MirrorCtrl );
+
+
+    if( (mirror->header.flags & RDFLAG_ERROR) )
+    {
+	myio->oserr = IOERR_DEVICE_DIAGFAIL;
+	CompleteVrio(myio);
+	return 0;
+    }
+
+
+    ++self->iocnt;
+    switch( myio->iocmd )
+    {
+	USHORT	i;
+
+
+      case IOCMD_WRITE:
+	/* Write: create VRIO to all children. */
+
+	myio->children = 0;
+
+	for( i = 0; i < mirror->children; ++i )
+	{
+	    if( mirror->child[i].vrd == NULL )
+		continue;			/* skip non-existing child */
+	    if( mirror->child[i].missing )
+		continue;			/* skip removed child */
+
+
+	    /* Allocate VRIOs and update links. */
+
+	    newio = AllocateVrio(mirror->child[i].vrd, myio);
+	    if( newio == NULL )			/* memory exhausted? */
+		break;
+
+	    if( firstio == NULL )
+		firstio = newio;		/* save this as first */
+	    else
+		io->link = newio;
+	    io = newio;
+	    io->link = NULL;
+	    ++myio->children;
+
+	    /* Children will receive exactly the same parameters
+	     * as this is a mirror device. */
+
+	    io->iorb = myio->iorb;
+	    io->iocmd = myio->iocmd;
+	    io->cSGList = myio->cSGList;
+	    io->pSGList = myio->pSGList;
+	    io->ppSGList = myio->ppSGList;
+
+	    io->offset = myio->offset;
+	    io->blk = myio->blk;
+	    io->bcnt = myio->bcnt;
+	    io->oserr = 0xFFFF;			/* invalid error code */
+	}
+	break;
+
+
+      case IOCMD_READ:
+	/* Read: create for 'readchild' child and
+	 * do another in Notify if this first failed!
+	 * Don't forget to increment 'readchild'. */
+
+	myio->children = mirror->children;	/* to detect 'all children tried' */
+
+	/* Allocate VRIOs and update links. */
+
+	do
+	{
+	    ASSERT( mirror->readchild != (USHORT)-1 );
+	    newio = AllocateVrio(mirror->child[mirror->readchild].vrd, myio);
+	    if( newio == NULL )			/* memory exhausted? */
+		break;
+
+	    if( firstio == NULL )
+		firstio = newio;		/* save this as first */
+	    else
+		io->link = newio;
+	    io = newio;
+	    io->link = NULL;
+
+	    /* Child will receive exactly the same parameters
+	     * as parent (mirror device). */
+
+	    io->iorb = myio->iorb;
+	    io->iocmd = myio->iocmd;
+	    io->cSGList = myio->cSGList;
+	    io->pSGList = myio->pSGList;
+	    io->ppSGList = myio->ppSGList;
+
+	    io->offset = myio->offset;
+	    io->blk = myio->blk;
+	    io->bcnt = myio->bcnt;
+	    io->oserr = 0xFFFF;			/* invalid error code */
+
+	    pushf();
+	    cli();
+	    mirror->readchild = NextValidChild(mirror, mirror->readchild);
+	    popf();
+	}
+	while(0);
+	break;
+
+
+      case IOCMD_AWRITE:
+
+	/* Write: create VRIO to *all* children. */
+
+	myio->children = 0;
+
+	for( i = 0; i < mirror->children; ++i )
+	{
+	    if( mirror->child[i].vrd == NULL )
+		continue;			/* skip non-existing child */
+	    if( mirror->child[i].missing != 0 )
+		continue;			/* skip removed child */
+
+
+	    /* Allocate VRIOs and update links. */
+
+	    newio = AllocateVrio(mirror->child[i].vrd, myio);
+	    if( newio == NULL )			/* memory exhausted? */
+		break;
+
+	    if( firstio == NULL )
+		firstio = newio;		/* save this as first */
+	    else
+		io->link = newio;
+	    io = newio;
+	    io->link = NULL;
+	    ++myio->children;
+
+	    /* Children will receive exactly the same parameters as the
+	     * configuration sectors are identical on all parts of a
+	     * VRAID device. */
+
+	    io->iorb = myio->iorb;
+	    io->iocmd = myio->iocmd;
+	    io->cSGList = myio->cSGList;
+	    io->pSGList = myio->pSGList;
+	    io->ppSGList = myio->ppSGList;
+
+	    io->offset = myio->offset;
+	    io->blk = myio->blk + 1;		/* as it is a configuraion sector */
+	    io->bcnt = myio->bcnt;
+	    io->oserr = 0xFFFF;			/* invalid error code */
+	}
+	break;
+
+
+      case IOCMD_AREAD:
+	/* Read: create for 'readchild' child and do another in Notify()
+	 * if this first failed!
+	 * Don't forget to increment 'readchild'. */
+
+	myio->children = mirror->children;	/* to detect 'all children tried' */
+
+	/* Allocate VRIOs and update links. */
+
+	do
+	{
+	    ASSERT( mirror->readchild != (USHORT)-1 );
+	    newio = AllocateVrio(mirror->child[mirror->readchild].vrd, myio);
+	    if( newio == NULL )			/* memory exhausted? */
+		break;
+
+	    if( firstio == NULL )
+		firstio = newio;		/* save this as first */
+	    else
+		io->link = newio;
+	    io = newio;
+	    io->link = NULL;
+
+	    /* Child will receive the same parameters
+	     * as parent (configuration sectors!). */
+
+	    io->iorb = myio->iorb;
+	    io->iocmd = myio->iocmd;
+	    io->cSGList = myio->cSGList;
+	    io->pSGList = myio->pSGList;
+	    io->ppSGList = myio->ppSGList;
+
+	    io->offset = myio->offset;
+	    io->blk = myio->blk + 1;		/* as it is a configuration sector */
+	    io->bcnt = myio->bcnt;
+	    io->oserr = 0xFFFF;			/* invalid error code */
+
+	    pushf();
+	    cli();
+	    mirror->readchild = NextValidChild(mirror, mirror->readchild);
+	    popf();
+	}
+	while(0);
+	break;
+    } /* end[switch] */
+
+
+    if( newio == NULL )
+    {
+	/* Not enough memory.  Free all allocated VRIOs
+	 * and return error code to parent. */
+
+	DEBMSG(DBG_ALL,dszMWorkerRelease);
+	for( io = firstio; io != NULL; io = newio )
+	{
+	    newio = io->link;
+	    io->link = NULL;
+	    FreeVrio(io);
+	    DO( io = NULL );
+	}
+
+	++self->busycnt;
+	return 1;
+    }
+
+
+    /* All VRIOs were allocated, now pass them to children. */
+
+    for( io = firstio; io != NULL; io = newio )
+    {
+	USHORT	rc;
+
+	newio = io->link;
+	io->link = NULL;
+	rc = io->vrd->worker(io->vrd, io);
+	if( rc )
+	{
+	    DEBMSG(DBG_ALL,dszMWorkerBusy);
+	    QueueVrio(io);
+	}
+    }
+
+    return 0;
+} /* end[MirrorWorker] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * MirrorUpdate(self,sec)
+ *
+ * PARAMETER
+ *	mirror		a VRD which forms a mirror device
+ *	sec		sector contains configuration
+ *
+ * RETURNS
+ *	0		don't write back, nothing changed
+ *	/0		modified, write back
+ *
+ * DESCRIPTION
+ *	Update configuration sector if anything has changed.
+ *
+ * REMARKS
+ */
+PRIVATE USHORT NEAR _Cdecl
+MirrorUpdate(PVRDEVHDR const self,PVOID const sec)
+{
+    PVRDMIRROR const	mirror = (PVRDMIRROR)self;
+    PSEC_VRDEV2 const	cfg = sec;
+    unsigned		i;
+
+
+    ASSERT( mirror->header.size != 0 );
+    ASSERT( mirror->header.notify == MirrorNotify );
+    ASSERT( mirror->header.worker == MirrorWorker );
+    ASSERT( mirror->header.update == MirrorUpdate );
+    ASSERT( mirror->header.ioctl == MirrorCtrl );
+
+    cfg->timestamp = pGlobalInfoSeg->SIS_BigTime;
+
+    for( i = 0; i < mirror->children; ++i )
+    {
+	if( mirror->child[i].vrd == 0 )
+	{
+	    cfg->u.s.child[i].flags &= ~0x01;
+	    cfg->u.s.child[i].valid = 0;	/* no sector at all */
+	}
+	else if( mirror->child[i].valid == (ULONG)-1 )
+	{
+	    cfg->u.s.child[i].flags |= 0x01;
+	    cfg->u.s.child[i].valid = (ULONG)-1;
+	}
+	else
+	{
+	    cfg->u.s.child[i].flags &= ~0x01;	/* no completely valid */
+	    cfg->u.s.child[i].valid = mirror->child[i].valid;
+	}
+    }
+
+
+    if( (mirror->header.flags & RDFLAG_BUILDING) )
+	cfg->u.s.flags |= RDFLAG_BUILDING;
+    else
+	cfg->u.s.flags &= ~RDFLAG_BUILDING;
+    if( (mirror->header.flags & RDFLAG_REBUILD)
+	&&  !(cfg->u.s.flags & RDFLAG_BUILDING) )
+    {
+	cfg->u.s.flags |= RDFLAG_REBUILD;
+	cfg->rebuild = mirror->rebuild_sec;
+	DEBMSG1(DBG_ALL,dszMUpdateRebuild,(PVOID)&cfg->rebuild);
+	ASSERT( cfg->rebuild < mirror->header.size );
+    }
+    else
+	cfg->u.s.flags &= ~RDFLAG_REBUILD;
+
+    cfg->crc = Crc16(sec, SECTOR_SIZE-2);
+    return 1;
+} /* end[MirrorUpdate] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * MirrorCtrl(self,cmd,param,data)
+ *
+ * PARAMETER
+ *	mirror		a VRD which forms a mirror device
+ *	cmd		I/O Control Code
+ *	data		data buffer
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		error (driver status code)
+ *
+ * DESCRIPTION
+ *	Special function interface
+ *
+ * REMARKS
+ */
+PRIVATE DRVSTATUS NEAR _Cdecl
+MirrorCtrl(PVRDEVHDR const self, USHORT const cmd,
+	   PVOID const param, PVOID const data)
+{
+    PVRDMIRROR const	mirror = (PVRDMIRROR)self;
+    DRVSTATUS		result = STATUS_ERR_UNKCMD;
+    USHORT		i, j;
+
+
+    ASSERT( mirror->header.size != 0 );
+    ASSERT( mirror->header.notify == MirrorNotify );
+    ASSERT( mirror->header.worker == MirrorWorker );
+    ASSERT( mirror->header.update == MirrorUpdate );
+    ASSERT( mirror->header.ioctl == MirrorCtrl );
+
+    switch( cmd )
+    {
+      case VRDIOCTL_QUERY_CHILDREN:
+	DEBMSG(DBG_PATH, "\r\nVRDIOCTL_QUERY_CHILDREN");
+	*(PUSHORT)data = mirror->children;
+	result = 0;
+	break;
+
+
+      case VRDIOCTL_INFO:
+	DEBMSG(DBG_PATH, "\r\nVRDIOCTL_INFO");
+	result = 0;
+	{
+	    PVRAID_ARRAYINFO_DATA	d = data;
+
+	    _fmemcpy(d->id, mirror->header.id, sizeof(d->id));
+	    d->reqcnt = mirror->header.iocnt;
+	    d->size = mirror->header.size;
+
+	    d->children = mirror->children;
+	    d->flags = mirror->header.flags;
+	    d->reserved = 0;
+	}
+	break;
+
+
+      case VRDIOCTL_START_REBUILD:
+	DEBMSG(DBG_PATH, "\r\nVRDIOCTL_START_REBUILD");
+	result = 0;
+	do
+	{
+	    PVRAID_REBUILD_PARM	p = param;
+
+	    if( p->secno >= mirror->header.size )
+	    {
+		result = STATUS_ERR_NOTFOUND;
+		break;
+	    }
+	    if( mirror->header.flags != 0 )	/* build, fail, error? */
+	    {
+		result = STATUS_ERR_DEVINUSE;;
+		break;
+	    }
+
+	    mirror->header.flags |= RDFLAG_REBUILD;
+	    mirror->rebuild_sec = ((PVRAID_REBUILD_PARM)param)->secno;
+
+	    UpdateCfg(&mirror->header, TRUE);	/* save configuration first */
+	    if( BuildCreate(&mirror->header, p->secno, 1) != 0 )
+		result = STATUS_ERR_PAPEROUT;	/* out of memory */
+	}
+	while(0);
+	self->ioctl(self, VRDIOCTL_INFO, 0, data);
+	break;
+
+
+      case VRDIOCTL_CHILD_STATE:
+	DEBMSG(DBG_PATH, "\r\nVRDIOCTL_CHILD_STATE");
+	result = 0;
+	do
+	{
+	    PVRAID_CHILD_PARAM	p = param;
+
+	    if( p->secno >= mirror->header.size )
+	    {
+		result = STATUS_ERR_NOTFOUND;
+		break;
+	    }
+
+	    result = STATUS_ERR_INVPARAM;
+	    for( i = 0; i < mirror->children; ++i )
+	    {
+		if( _fmemcmp(p->id, mirror->child[i].vrd->id, sizeof(DEVID)) == 0 )
+		{
+		    result = 0;			/* OK, even if ignored */
+
+		    /* Should we allow someone to declare one of our
+		     * children as valid even if we have another idea
+		     * of the situation?  I don't think so... 		xxx */
+
+		    if( (p->flags & 0x01) )
+		    {
+			result = STATUS_ERR_UNCERTAIN;
+			break;
+		    }
+		    if( mirror->child[i].valid == (ULONG)-1
+			||  p->secno < mirror->child[i].valid )
+		    {
+			mirror->child[i].valid = p->secno;
+			if( mirror->header.flags == 0 )	/* build, fail, error? */
+			{
+			    mirror->header.flags |= RDFLAG_REBUILD;
+			    mirror->rebuild_sec = p->secno;
+
+			    UpdateCfg(&mirror->header, TRUE);
+			    if( BuildCreate(&mirror->header, p->secno, 0) != 0 )
+				result = STATUS_ERR_PAPEROUT;
+			}
+		    }
+		    break;
+		}
+	    }
+	}
+	while(0);
+	break;
+
+
+      case VRDIOCTL_VERIFY:
+	DEBMSG(DBG_PATH, "\r\nVRDIOCTL_VERIFY");
+	result = 0;				/* assume OK */
+	{
+	    PVRAID_VERIFY_PARM const 	pvp = (PVOID)param;
+	    USHORT const	vd_cb = (sizeof(VRAID_VERIFY_DATA) - 1
+					 + pvp->seccnt * SECTOR_SIZE);
+	    PUCHAR const	vdata = (PUCHAR)data + sizeof(VRAID_ARRAYINFO_DATA);
+	    PVRAID_VERIFY_DATA	pvd;
+	    ULONG	phys;
+
+
+	    DEBMSG2(DBG_LEVEL3,"\r\nData: %p, 1st Dev Contents: %p",data,vdata);
+	    DEBMSG1(DBG_LEVEL3,"\r\nPer device size: %w",vd_cb);
+	    if( pvp->secno + pvp->seccnt > mirror->header.size )
+	    {
+		result = STATUS_ERR_NOTFOUND;
+		break;
+	    }
+	    if( DevHelp_VirtToPhys(data, &phys) )
+	    {
+		DEBMSG1(DBG_LEVEL1,"\r\nVirtToPhys failed on %p",data);
+		result = STATUS_ERR_INVPARAM;
+		break;
+	    }
+
+	    phys += sizeof(VRAID_ARRAYINFO_DATA);
+	    for( i = 0; i < mirror->children; ++i )
+	    {
+		pvd = (PVOID)&vdata[i * vd_cb];
+
+		DEBMSG2(DBG_LEVEL3,"\r\n%w. Dev Contents: %p",i,pvd);
+		_fmemcpy(pvd->id, mirror->child[i].vrd->id, sizeof(DEVID));
+		pvd->valid = mirror->child[i].valid;
+		pvd->bcnt = pvp->seccnt * SECTOR_SIZE;
+		pvd->flags = 0;
+		pvd->reserved = 0;
+
+		result = ProcessUserIO(mirror->child[i].vrd, FALSE,
+				       pvp->secno, pvp->seccnt,
+				       phys + FIELDOFFSET(VRAID_VERIFY_DATA, data));
+		/*if( result != 0 ) break;*/
+
+		phys += vd_cb;
+	    }
+
+
+	    /* Now compare all children. */
+
+	    for( i = 0; i < mirror->children; ++i )
+		for( j = i+1; j < mirror->children; ++j )
+		{
+		    PVRAID_VERIFY_DATA const c1data = (PVOID)&vdata[i * vd_cb];
+		    PVRAID_VERIFY_DATA const c2data = (PVOID)&vdata[j * vd_cb];
+
+		    DEBMSG2(DBG_LEVEL2,"\r\n%w. child data: %p",i,c1data);
+		    DEBMSG2(DBG_LEVEL2,"\r\n%w. child data: %p",j,c2data);
+
+		    if( _fmemcmp(c1data->data, c2data->data,
+				 pvp->seccnt * SECTOR_SIZE) == 0 )
+		    {
+			DEBMSG2(DBG_LEVEL2,"\r\nCompared %w and %w: OK",i,j);
+			++c1data->reserved;
+			++c2data->reserved;
+		    }
+		    else
+		    {
+			DEBMSG2(DBG_LEVEL1,"\r\nComparing %p and %p: failed",c1data->data,c2data->data);
+			DBSTOP();
+		    }
+		}
+	    for( i = 0; i < mirror->children; ++i )
+	    {
+		PVRAID_VERIFY_DATA const cdata = (PVOID)&vdata[i*vd_cb];
+		DEBMSG2(DBG_LEVEL2,"\r\n%w. child data: %p",i,cdata);
+
+		if( cdata->reserved == mirror->children-1 )
+		{
+		    cdata->flags |= VVDF_CONFIRMED;
+		}
+		else
+		{
+		    DEBMSG2(DBG_LEVEL1,"\r\n%w. child failed (%w goods)",i,cdata->reserved);
+		}
+	    }
+	}
+	self->ioctl(self, VRDIOCTL_INFO, 0, data);
+	break;
+
+
+      default:
+	break;
+    }
+
+    return result;
+} /* end[MirrorCtrl] */
+
+
+
+
+
+
+/* **********************************************************************
+ * **** INIT-time processing ********************************************
+ * ******************************************************************* */
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Public Entries **************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * MirrorCreate(pVrh,pPhys,sec,pSize)
+ *
+ * PARAMETER
+ *	pVrh		create here
+ *	tab		table of device to build from
+ *	sec		contents of configuration sector
+ *	pSize		return: size used at '*pVrh'
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		couldn't create
+ *
+ * DESCRIPTION
+ *	Analyses configuration sector and builds mirror VRAID structure
+ *	in memory pointed to by 'pVrh'.
+ *
+ * REMARKS
+ */
+PUBLIC int NEAR _Cdecl
+MirrorCreate(PVRDEVHDR pVrh, PVRDEVHDR FAR * tab, PSEC_VRDEV2 sec, PUSHORT pSize)
+{
+    PVRDMIRROR const mirror = (PVRDMIRROR)pVrh;
+    USHORT	i, j, found;
+    int		invalids = 0;
+    int		result;
+
+
+    DEBMSG2(DBG_INIT3,dszMCreateAdminData,(PVOID)sec,SECTOR_SIZE);
+    _fmemset(mirror, 0, sizeof(*mirror));
+
+
+    /* Initialize header elements */
+
+    mirror->header.notify = MirrorNotify;
+    mirror->header.worker = MirrorWorker;
+    mirror->header.update = MirrorUpdate;
+    mirror->header.ioctl = MirrorCtrl;
+    mirror->header.size = 0;			/* initialize, will be modified */
+    mirror->header.flags = 0;
+    _fmemcpy(mirror->header.id, sec->u.s.id, sizeof(mirror->header.id));
+
+
+    /* Build linking by looking up all parts in 'tab'. */
+
+    mirror->children = sec->u.s.children;
+    _fmemset(mirror->child, 0, mirror->children * sizeof(mirror->child[0]));
+    found = 0;
+    for( i = 0; i < mirror->children; ++i )
+    {
+	mirror->header.size = sec->u.s.child[i].size;
+	for( j = 0; j < MAX_PDEV; ++j )
+	{
+	    if( tab[j] == NULL )
+		continue;			/* ignore empty entries */
+
+	    if( _fmemcmp(tab[j]->id, sec->u.s.child[i].id, sizeof(tab[j]->id)) == 0 )
+	    {
+		result = ValidateVSec2(tab[j], sec);
+		if( result < 0 )
+		{
+		    sprintk(szMsgBuffer, szCreationDelayed);
+		    DEBMSG1(DBG_INIT1,dszStr,(PSZ)szMsgBuffer);
+		    if( (fDriverFlags & DF_VERBOSE) )
+			SaveMessage();
+
+		    return 1;			/* don't create mirror, be quiet */
+		}
+		else if( result != 0 )
+		    continue;			/* don't use this child */
+
+		mirror->child[i].vrd = tab[j];
+		if( (sec->u.s.child[i].flags & 0x01) == 0 )
+		{
+		    ++invalids;
+		    mirror->child[i].valid = sec->u.s.child[i].valid;
+		}
+		else
+		{
+		    mirror->child[i].valid = (ULONG)-1;
+		}
+		++found;
+		break;				/* stop scan, next child */
+	    }
+	}
+    }
+
+
+    /* OK, we will indeed create an array.  Remove children from 'tab'
+     * so that they don't get used for another array. */
+
+    for( i = 0; i < mirror->children; ++i )
+    {
+	if( mirror->child[i].vrd != 0 )
+	{
+	    for( j = 0; j < MAX_PDEV; ++j )
+		if( tab[j] == mirror->child[i].vrd )
+		{
+		    tab[j] = NULL;
+		    break;
+		}
+	}
+    }
+
+
+    /* Update local flags and restart [re]build process if usefull. */
+
+    if( found != mirror->children )
+    {
+	/* There is at least one child missing: set FAIL state.
+	 * (should we restart Build/Rebuilds?  Currently they
+	 *  are *not* started) */
+
+	sprintk(szMsgBuffer, szMissingChild, mirror->children-found);
+	DEBMSG1(DBG_INIT1,dszStr,(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_VERBOSE) )
+	    SaveMessage();
+
+	mirror->header.flags |= RDFLAG_FAIL;
+	++cBeeps;
+	mirror->need_updatecfg = TRUE;		/* better do an update */
+    }
+    else if( (sec->u.s.flags & RDFLAG_BUILDING)
+	     ||  (sec->u.s.flags & RDFLAG_REBUILD)
+	     ||  invalids != 0 )
+    {
+	ULONG	bdone = (ULONG)-1;
+
+	/* There were either an invalid child detected or the
+	 * 'flag' field of the array says 'BUILDING' or 'REBUILD'.
+	 * Lets figure out what is meant to happen. */
+
+	if( (sec->u.s.flags & RDFLAG_REBUILD) )
+	{
+	    bdone = sec->rebuild;
+	    mirror->header.flags |= RDFLAG_REBUILD;
+	    mirror->rebuild_sec = sec->rebuild;
+	}
+	for( i = 0; i < mirror->children; ++i )
+	    bdone = MIN(bdone, mirror->child[i].valid);
+ 	if( bdone == (ULONG)-1 )
+	{
+ 	    /* Well, there may be all configuration data from
+ 	     * an aborted BUILD or REBUILD (stopped via VSetup).
+ 	     * We *need* to update: no [RE]BUILD */
+
+ 	    mirror->need_updatecfg = TRUE;
+ 	    DEBMSG(DBG_INIT1,dszMCreateNoBuild);
+ 	}
+  	else
+	{
+	    if( (sec->u.s.flags & RDFLAG_REBUILD) )
+	    {
+		/* Restart REBUILD process. */
+
+		DEBMSG1(DBG_INIT1,dszMCreateRebuild,(PVOID)&bdone);
+
+		mirror->header.flags |= RDFLAG_REBUILD;
+		mirror->rebuild_sec = bdone;
+		BuildCreate(pVrh, bdone, 1);
+	    }
+	    else
+	    {
+		DEBMSG(DBG_INIT1,dszMCreateBuild);
+		mirror->header.flags |= RDFLAG_BUILDING;
+		BuildCreate(pVrh, bdone, 0);
+	    }
+	}
+    }
+
+
+    mirror->readchild = NextValidChild(mirror, mirror->readchild);
+
+
+    /* Size of administrative data depends on count of children. */
+
+    *pSize = sizeof(*mirror) + mirror->children * sizeof(mirror->child[0]);
+
+    DEBMSG4(DBG_INIT1,dszMirrorCreate,(PVOID)pVrh,(PVOID)sec->u.s.id,6,(PVOID)&mirror->header.size);
+    return 0;
+} /* end[MirrorCreate] */
+
+
+/* **********************************************************************
+ * **** End Of File *****************************************************
+ * ******************************************************************* */
+@
+
+
+3.9
+log
+@- implemented NextValidChild() to select next device to read.  When there
+  is no valid device the array state is changed to ERROR
+@
+text
+@d3 2
+a4 2
+ * $Revision: 3.8 $
+ * $Date: 2001/06/25 00:31:08 $
+d15 4
+d129 1
+a129 1
+static char const id[]="$Id: mirror.c,v 3.8 2001/06/25 00:31:08 vitus Exp vitus $";
+d1114 1
+a1114 1
+    USHORT	i, found;
+a1140 2
+	USHORT	j;
+
+a1171 1
+		tab[j] = NULL;
+d1179 17
+d1272 5
+@
+
+
+3.8
+log
+@- BuildCreate() now returns an error code.  Check and pass to caller
+@
+text
+@d3 2
+a4 2
+ * $Revision: 3.7 $
+ * $Date: 2001/02/11 01:15:18 $
+d15 3
+d125 1
+a125 1
+static char const id[]="$Id: mirror.c,v 3.7 2001/02/11 01:15:18 vitus Exp vitus $";
+d189 3
+a191 2
+                                "\r\n               ID %z";
+CONSTMSG dstMCreateAdminData[]=	"\r\n[MirrorCreate] admin data\r\n%z";
+d225 47
+d276 1
+d324 2
+a325 1
+	if( (mirror->header.flags & RDFLAG_FAIL) == 0 )
+d327 1
+a328 2
+	    mirror->header.flags &= ~RDFLAG_BUILDING;
+	    mirror->header.flags &= ~RDFLAG_REBUILD; /* stop processes */
+d502 1
+a502 1
+MirrorWorker(PVRDEVHDR const self,PVRIO const myio)
+d520 9
+a529 1
+
+d534 1
+d544 1
+a544 1
+	    if( mirror->child[i].missing != 0 )
+d578 1
+d590 1
+a615 2
+	    /* Move 'readchild'. */
+
+d618 1
+a618 8
+	    do
+	    {
+		mirror->readchild = (mirror->readchild + 1 == mirror->children
+				     ? 0 : mirror->readchild + 1);
+	    }
+	    while( mirror->child[mirror->readchild].vrd == NULL
+		   ||  mirror->child[mirror->readchild].missing != 0
+		   ||  mirror->child[mirror->readchild].valid != (ULONG)-1 );
+d670 1
+d682 1
+a707 2
+	    /* Move 'readchild'. */
+
+d710 1
+a710 8
+	    do
+	    {
+		mirror->readchild = (mirror->readchild + 1 == mirror->children
+				     ? 0 : mirror->readchild + 1);
+	    }
+	    while( mirror->child[mirror->readchild].vrd == NULL
+		   ||  mirror->child[mirror->readchild].missing != 0
+		   ||  mirror->child[mirror->readchild].valid != (ULONG)-1 );
+d715 1
+a715 2
+
+    }
+d916 1
+a916 1
+	while( 0 );
+d960 1
+a960 1
+			    if( BuildCreate(&mirror->header, p->secno, 1) != 0 )
+d968 1
+a968 1
+	while( 0 );
+d1107 1
+a1107 1
+MirrorCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,PSEC_VRDEV2 sec,PUSHORT pSize)
+d1115 1
+a1115 2
+    DEBMSG3(DBG_INIT1,dszMirrorCreate,(PVOID)pVrh,(PVOID)sec->u.s.id,6);
+    DEBMSG2(DBG_INIT2,dstMCreateAdminData,(PVOID)sec,SECTOR_SIZE);
+d1243 2
+a1244 7
+    while( mirror->child[mirror->readchild].vrd == NULL
+	   ||  mirror->child[mirror->readchild].missing != 0
+	   ||  mirror->child[mirror->readchild].valid != (ULONG)-1 )
+    {
+	mirror->readchild = (mirror->readchild + 1 == mirror->children
+			     ? 0 : mirror->readchild + 1);
+    }
+d1251 1
+a1253 1
+
+@
+
+
+3.7
+log
+@- changed MirrorCtrl() to return DRVSTATUS
+@
+text
+@d3 2
+a4 2
+ * $Revision: 3.6 $
+ * $Date: 2001/01/30 00:31:47 $
+d7 1
+d13 1
+d15 3
+d122 1
+a122 1
+static char const id[]="$Id: mirror.c,v 3.6 2001/01/30 00:31:47 vitus Exp vitus $";
+d867 2
+a868 1
+	    BuildCreate(&mirror->header, p->secno, 1);
+d893 2
+d914 2
+a915 1
+			    BuildCreate(&mirror->header, p->secno, 1);
+a917 1
+		    result = 0;			/* OK, even if ignored */
+@
+
+
+3.6
+log
+@- BUILD and REBUILD are now mostly the same except statt REBUILD is
+  possible w/o an invalid child.  In this case rebuild_sec is used.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 3.5 $
+ * $Date: 2001/01/15 01:14:59 $
+d7 1
+a7 1
+ *	How to do RAID1 I/O.
+d9 1
+a9 1
+ *	Children to a RAID1 device build a table.
+d13 4
+d117 1
+a117 1
+static char const id[]="$Id: mirror.c,v 3.5 2001/01/15 01:14:59 vitus Exp vitus $";
+d162 1
+a162 1
+PRIVATE USHORT NEAR _Cdecl	MirrorCtrl(PVRDEVHDR const self, USHORT const cmd,
+d799 1
+a799 1
+PRIVATE USHORT NEAR _Cdecl
+d804 1
+a804 1
+    USHORT		result = STATUS_ERR_UNKCMD;
+@
+
+
+3.5
+log
+@- VRDIOCTL_START_REBUILD: call UpdateCfg() immediately, we need that data
+  on disk and can't wait to the next shutdown.  Someone my restart vsetup
+  and wants to see the correct state.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 3.4 $
+ * $Date: 2000/10/24 23:58:39 $
+d13 5
+d113 1
+a113 1
+static char const id[]="$Id: mirror.c,v 3.4 2000/10/24 23:58:39 vitus Exp vitus $";
+d180 1
+a180 1
+CONSTMSG dszMCreateNoBuild[]=	"\r\n[MirrorCreate] sector says BUILD, all children valid -> clear BUILD";
+d285 2
+a286 1
+	    if( (mirror->header.flags & RDFLAG_BUILDING) )
+d288 1
+a288 1
+		/* Update build variables when build is in effect and
+d306 1
+a306 8
+	    }
+	    else if( (mirror->header.flags & RDFLAG_REBUILD) )
+	    {
+		/* Update rebuild variable when rebuild is in effect and
+		 * a new sector is reached. */
+
+		if( io->blk <= mirror->rebuild_sec
+		    &&  io->blk + io->bcnt > mirror->rebuild_sec )
+d308 2
+a309 2
+		    mirror->rebuild_sec = io->blk + io->bcnt;
+		    if( mirror->rebuild_sec == mirror->header.size )
+d311 8
+a318 8
+			/* Rebuild process is now complete.  Mark configuration
+			 * sectors.
+			 * The process itself should close down automatically. */
+
+			DEBMSG(DBG_ALL,dszMNotifyReStop);
+			mirror->need_updatecfg = TRUE;
+			mirror->header.flags &= ~RDFLAG_REBUILD;
+			mirror->rebuild_sec = 0; /* OK?  Do we need to set this? */
+d766 1
+a766 1
+	ASSERT( cfg->rebuild != 0 );
+d894 1
+d896 9
+d1138 3
+a1140 1
+    else if( (sec->u.s.flags & RDFLAG_BUILDING)  ||  invalids != 0 )
+d1145 2
+a1146 1
+	 * 'flag' field of the array says 'BUILDING'. */
+d1148 6
+d1155 1
+a1155 1
+	    bdone = MIN(bdone,mirror->child[i].valid);
+d1159 2
+a1160 2
+ 	     * an aborted BUILD (stopped via VSetup).
+ 	     * We *need* to update: no BUILD */
+d1167 3
+a1169 8
+	    DEBMSG(DBG_INIT1,dszMCreateBuild);
+	    mirror->header.flags |= RDFLAG_BUILDING;
+	    BuildCreate(pVrh, bdone, 0);
+	}
+    }
+    else if( (sec->u.s.flags & RDFLAG_REBUILD) )
+    {
+	/* Restart REBUILD process. */
+d1171 1
+a1171 1
+	DEBMSG1(DBG_INIT1,dszMCreateRebuild,(PVOID)&sec->rebuild);
+d1173 11
+a1183 3
+	mirror->header.flags |= RDFLAG_REBUILD;
+	mirror->rebuild_sec = sec->rebuild;
+	BuildCreate(pVrh, mirror->rebuild_sec, 1);
+@
+
+
+3.4
+log
+@- changes for new BuildCreate() parameter 'mode'
+- more debugging output
+@
+text
+@d3 2
+a4 2
+ * $Revision: 3.3 $
+ * $Date: 2000/08/22 01:59:40 $
+d13 4
+d103 1
+a103 1
+ * This code is Copyright Vitus Jensen 1998-2000
+d108 1
+a108 1
+static char const id[]="$Id: mirror.c,v 3.3 2000/08/22 01:59:40 vitus Exp vitus $";
+d408 1
+a408 1
+	    if( UpdateCfg(&mirror->header) == TRUE )
+a416 1
+    ASSERT( (mirror->header.flags & RDFLAG_REBUILD) ? mirror->rebuild_sec != 0 : 1 );
+d419 1
+a419 1
+}
+d857 2
+@
+
+
+3.3
+log
+@- implemented VRAID_SET_CHILD_STATE
+@
+text
+@d3 2
+a4 2
+ * $Revision: 3.2 $
+ * $Date: 2000/07/23 00:19:01 $
+d13 3
+d104 1
+a104 1
+static char const id[]="$Id: mirror.c,v 3.2 2000/07/23 00:19:01 vitus Exp vitus $";
+d168 1
+a168 1
+                                "\r\n                ID %z";
+d173 2
+a174 1
+CONSTMSG dszMCreateRebuild[]=	"\r\n[MirrorCreate] REBUILD";
+d257 2
+d314 2
+d413 1
+d758 2
+a759 1
+    if( (mirror->header.flags & RDFLAG_REBUILD) )
+d763 2
+d854 1
+a854 1
+	    BuildCreate(&mirror->header, p->secno);
+d1122 1
+d1146 1
+a1146 1
+	    BuildCreate(pVrh, bdone);
+d1153 1
+a1153 1
+	DEBMSG(DBG_INIT1,dszMCreateRebuild);
+d1156 2
+a1157 1
+	BuildCreate(pVrh, sec->rebuild);
+@
+
+
+3.2
+log
+@- code distinguishes between BUILD and REBUILD
+- implemented ioctl method VRDIOCTL_START_REBUILD
+@
+text
+@d3 2
+a4 2
+ * $Revision: 3.1 $
+ * $Date: 2000/06/15 01:01:22 $
+d13 4
+d101 1
+a101 1
+static char const id[]="$Id: mirror.c,v 3.1 2000/06/15 01:01:22 vitus Exp vitus $";
+d787 2
+d849 39
+a897 1
+	    USHORT	i, j;
+d900 2
+a901 2
+	    DEBMSG2(DBG_LEVEL1,"\r\nData: %p, 1st Dev Contents: %p",data,vdata);
+	    DEBMSG1(DBG_LEVEL1,"\r\nPer device size: %w",vd_cb);
+d919 1
+a919 1
+		DEBMSG2(DBG_LEVEL1,"\r\n%w. Dev Contents: %p",i,pvd);
+d943 2
+a944 2
+		    DEBMSG2(DBG_LEVEL1,"\r\n%w. child data: %p",i,c1data);
+		    DEBMSG2(DBG_LEVEL1,"\r\n%w. child data: %p",j,c2data);
+d949 1
+a949 1
+			DEBMSG2(DBG_LEVEL1,"\r\nCompared %w and %w: OK",i,j);
+d962 1
+a962 1
+		DEBMSG2(DBG_LEVEL1,"\r\n%w. child data: %p",i,cdata);
+@
+
+
+3.1
+log
+@- implemented ioctl method (VRDIOCTL_QUERY_CHILDREN, VRDIOCTL_INFO, VRDIOCTL_VERIFY)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.8 $
+ * $Date: 1999/12/14 00:30:44 $
+d13 3
+d91 2
+a92 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+d97 1
+a97 1
+static char const id[]="$Id: mirror.c,v 2.8 1999/12/14 00:30:44 vitus Exp vitus $";
+d124 2
+d153 1
+d160 2
+a161 1
+CONSTMSG dszMirrorCreate[]=	"\r\n[MirrorCreate] at %p";
+d165 2
+d264 1
+a264 1
+	if( io->oserr == 0  &&  (mirror->header.flags & RDFLAG_BUILDING) )
+d266 4
+a269 2
+	    /* Update build variables when build is in effect and
+	     * this child isn't valid already. */
+d271 17
+a287 2
+	    if( io->blk <= mirror->child[childidx].valid
+		&&  io->blk + io->bcnt > mirror->child[childidx].valid )
+d289 5
+a293 2
+		mirror->child[childidx].valid = io->blk + io->bcnt;
+		if( mirror->child[childidx].valid == mirror->header.size )
+d295 10
+a304 7
+		    /* Build process is now complete.  Mark configuration
+		     * sectors.
+		     * The build process itself should close down automatically. */
+
+		    DEBMSG1(DBG_ALL,dszMNotifyValid,childidx);
+		    mirror->child[childidx].valid = (ULONG)-1;
+		    mirror->need_updatecfg = TRUE;
+d745 7
+d816 27
+d987 1
+a987 1
+    DEBMSG1(DBG_INIT1,dszMirrorCreate,(PVOID)pVrh);
+d1051 1
+a1051 1
+    /* Update local flags and start [re]build process if usefull. */
+d1055 4
+d1071 3
+d1076 1
+a1076 1
+	if( bdone == (ULONG)-1 )
+d1078 8
+a1085 8
+	    /* Well, there may be all configuration data from
+	     * an aborted BUILD (stopped via VSetup).
+	     * We *need* to update: no BUILD */
+
+	    mirror->need_updatecfg = TRUE;
+	    DEBMSG(DBG_INIT1,dszMCreateNoBuild);
+	}
+	else
+d1087 1
+d1092 9
+d1117 1
+@
+
+
+2.8
+log
+@- moved ValidateVSec2() to init1.c
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.7 $
+ * $Date: 1999/10/01 01:04:26 $
+d13 3
+d94 1
+a94 1
+static char const id[]="$Id: mirror.c,v 2.7 1999/10/01 01:04:26 vitus Exp vitus $";
+d108 1
+d137 2
+d157 1
+a157 1
+CONSTMSG dszMCreateNoBuild[]=	"\r\n[MirrorCreate] sector says BUILD, all childs valid -> clear BUILD";
+d219 1
+d410 1
+d681 6
+d721 157
+d931 1
+@
+
+
+2.7
+log
+@- updates new iocnt and busycnt fields in VRDEVHDR
+- MirrorCreate: detect when RDFLAG_BUILDING still exist but building has
+  already completed.  Build is *not* started but update of configuration
+  is triggered.
+- MirrorNotify: only clear need_updatecfg if UpdateCfg() says it has
+  really started the update...
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.6 $
+ * $Date: 1999/09/20 00:24:44 $
+d13 8
+d91 1
+a91 1
+static char const id[]="$Id: mirror.c,v 2.6 1999/09/20 00:24:44 vitus Exp vitus $";
+a147 3
+CONSTMSG dszValidateVSet2[]=	"\r\n[ValidateVSec2] checking %p";
+CONSTMSG dszVal2Newer[]=	"\r\n[ValidateVSec2] %p contains newer admin data";
+CONSTMSG dsuVal2AdminData[]=	"\r\n[ValidateVSec2] admin data\r\n%z";
+a711 116
+
+/*# ----------------------------------------------------------------------
+ * ValidateVSec2(child,sec)
+ *
+ * PARAMETER
+ *	child		child to validate
+ *	sec		configuration space of sibling
+ *
+ * RETURNS
+ *	0		OK, use this child
+ *	/0		don't use it
+ *
+ * DESCRIPTION
+ *	This routine checks whether a VRDEV is a valid child as configured
+ *	in 'sec'.
+ *	Normally that means that 'child' contains the identical admin.
+ *	sector.  But whenever 'child' had problems during operation and
+ *	had to be deactivated those sectors may differ.  Certain combinations
+ *	are allowed, other not.  See below for details.
+ *
+ * REMARKS
+ *	OBS: there is a goto!
+ */
+PRIVATE int
+ValidateVSec2(PVRDEVHDR const child,SEC_VRDEV2 const FAR * const sec)
+{
+    int		result = 0;
+    USHORT	rc, i;
+    PVOID const	secbuf = MemAlloc(SECTOR_SIZE);	/* allocated in MemPool*/
+
+    DEBMSG1(DBG_INIT1,dszValidateVSet2,(PVOID)child);
+
+    do
+    {
+	++result;
+	if( secbuf == NULL )
+	{
+	    sprintk(szMsgBuffer, szMallocFailed, (PSZ)szDriverName);
+	    SaveMessage();
+	    break;
+	}
+
+	++result;
+	rc = ProcessAdminIO(child, FALSE, 1, 1, FP_OFF(secbuf) + ppWorkMem);
+	if( rc != 0 )
+	{
+	    sprintk(szMsgBuffer, szReadError, (PSZ)szDriverName, rc);
+	    SaveMessage();
+	    DBSTOP();
+	    MemFree(secbuf);
+	    break;
+	}
+
+	++result;
+	if( _fmemcmp(sec, secbuf, SECTOR_SIZE) != 0 )
+	{
+	    PSEC_VRDEV2 const	childsec = secbuf;
+
+	    if( _fmemcmp(childsec->sectype, "VRAIDDEVICE2    ", 16) != 0 )
+		break;
+
+	    ++result;
+	    if( Crc16(childsec, SECTOR_SIZE-2) != childsec->crc )
+		break;
+
+	    /* 'child' contains a valid admin. sector which *could* be an
+	     * old instance of 'child'.
+	     * To be true 'child's sector has to be older and from the same
+	     * machine.  It has to define the same RAID1 array, too. */
+
+	    ++result;
+	    if( childsec->timestamp > sec->timestamp )
+	    {
+		/* This is impossible to handle the current way: we detected
+		 * a sibling which is more uptodate than the one we are creating
+		 * an array now.  Better stop the current creation and repeat
+		 * this stuff when scanning reached this child. */
+
+		DEBMSG1(DBG_INIT1,dszVal2Newer,(PVOID)child);
+		DEBMSG2(DBG_INIT2,dsuVal2AdminData,(PVOID)childsec,SECTOR_SIZE);
+		result = -1;
+		break;
+	    }
+
+	    if( _fmemcmp(childsec->u.s.id, sec->u.s.id, sizeof(DEVID)) != 0 )
+		break;
+
+	    ++result;
+	    if( childsec->u.s.type != sec->u.s.type )
+		break;
+
+	    ++result;
+	    if( childsec->u.s.children != sec->u.s.children )
+		break;
+
+	    ++result;
+	    for( i = 0; i < sec->u.s.children; ++i )
+	    {
+		if( _fmemcmp(childsec->u.s.child[i].id, sec->u.s.child[i].id, sizeof(DEVID)) != 0 )
+		    goto XABORT;
+		if( childsec->u.s.child[i].size != sec->u.s.child[i].size )
+		    goto XABORT;
+	    }
+	}
+
+	/* When we finally reached this point 'child' may be used
+	 * to build a RAID1 array. */
+
+	result = 0;
+    }
+    while( 0 );
+
+  XABORT:
+    MemFree(secbuf);
+    return result;
+} /* end[ValidateVSec2] */
+@
+
+
+2.6
+log
+@- defined all DBGMSG() strings as located in CONST segment
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.5 $
+ * $Date: 1999/08/09 23:18:33 $
+d13 3
+d83 1
+a83 1
+static char const id[]="$Id: mirror.c,v 2.5 1999/08/09 23:18:33 vitus Exp vitus $";
+d146 1
+d175 1
+a175 2
+ * CALL
+ *	MirrorNotify(io)
+d348 2
+a349 2
+	    mirror->need_updatecfg = FALSE;
+	    UpdateCfg(&mirror->header);
+d365 1
+a365 2
+ * CALL
+ *	MirrorWorker(self,myio)
+d399 1
+d616 2
+d645 1
+a645 2
+ * CALL
+ *	MirrorUpdate(self,sec)
+d709 2
+a710 2
+ * CALL
+ *	ValidateVSec2(child,sec)
+d834 2
+a835 2
+ * CALL
+ *	MirrorCreate(pVrh,pPhys,sec,pSize)
+a939 1
+	mirror->header.flags |= RDFLAG_BUILDING;
+d942 14
+a955 1
+	BuildCreate(pVrh, bdone);
+@
+
+
+2.5
+log
+@- MirrorCreate: initialize new VRDMIRROR structure with 0
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.4 $
+ * $Date: 1999/06/21 02:33:46 $
+d13 3
+d80 1
+a80 1
+static char const id[]="$Id: mirror.c,v 2.4 1999/06/21 02:33:46 vitus Exp vitus $";
+d129 17
+d195 1
+a195 1
+    DEBMSG3(DBG_PATH,"\r\n[MirrorNotify] io %p, myio %p, err %w",io,myio,io->oserr);
+d255 1
+a255 1
+		    DEBMSG1(DBG_ALL,"\r\n[MirrorNotify] child %w now valid",childidx);
+d344 1
+a344 1
+	    DEBMSG(DBG_ALL,"\r\n[MirrorNotify] starting UpdateCfg()");
+d351 1
+a351 1
+	DEBMSG(DBG_ALL,"\r\n[MirrorNotify] deferring UpdateCfg()");
+d387 1
+a387 1
+    DEBMSG1(DBG_PATH,"\r\n[MirrorWorker] %p",(PVOID)myio);
+d605 1
+a605 1
+	DEBMSG(DBG_ALL,"\r\n[MirrorWorker] releasing VRIOs");
+d628 1
+a628 1
+	    DEBMSG(DBG_ALL,"\r\n[MirrorWorker] child busy, queuing VRIO");
+d733 1
+a733 1
+    DEBMSG1(DBG_INIT1,"\r\n[ValidateVSec2] checking %p",(PVOID)child);
+d781 2
+a782 2
+		DEBMSG1(DBG_INIT1,"\r\n[ValidateVSec2] %p contains newer admin data",(PVOID)child);
+		DEBMSG2(DBG_INIT2,"\r\n[ValidateVSec2] admin data\r\n%z",(PVOID)childsec,SECTOR_SIZE);
+d857 2
+a858 2
+    DEBMSG1(DBG_INIT1,"\r\n[MirrorCreate] at %p",(PVOID)pVrh);
+    DEBMSG2(DBG_INIT2,"\r\n[MirrorCreate] admin data\r\n%z",(PVOID)sec,SECTOR_SIZE);
+d893 1
+a893 1
+		    DEBMSG1(DBG_INIT1,"\r\n%s",(PSZ)szMsgBuffer);
+d925 1
+a925 1
+	DEBMSG1(DBG_INIT1,"\r\n%s",(PSZ)szMsgBuffer);
+@
+
+
+2.4
+log
+@- corrected english spelling
+- MirrorNotify: did switch to same child on I/O errors, fixed
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.3 $
+ * $Date: 1999/06/20 17:34:15 $
+d13 4
+d77 1
+a77 1
+static char const id[]="$Id: mirror.c,v 2.3 1999/06/20 17:34:15 vitus Exp vitus $";
+d839 1
+@
+
+
+2.3
+log
+@- more code to avoid doing I/O to a missing child.  Old revision could access
+  NULL pointers when the first child was missing
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.2 $
+ * $Date: 1999/05/26 01:14:22 $
+d9 1
+a9 1
+ *	Childs to a RAID1 device build a table.
+d13 4
+d73 1
+a73 1
+static char const id[]="$Id: mirror.c,v 2.2 1999/05/26 01:14:22 vitus Exp vitus $";
+d99 1
+a99 1
+    USHORT	childs;				/* entries in table below */
+d135 1
+a135 1
+    for( i = 0; i < mirror->childs; ++i )
+d215 1
+a215 1
+	--myio->childs;
+d243 1
+a243 1
+	--myio->childs;
+d254 1
+a254 1
+	    myio->childs = 0;			/* no more I/Os, see below */
+d260 2
+a261 2
+	    --myio->childs;
+	    if( myio->childs != 0 )
+d269 1
+a269 1
+		for( i = 0; i < mirror->childs; ++i )
+d272 1
+a272 1
+			i = (i + 1 == mirror->childs ? 0 : i+1);
+d285 1
+a285 1
+		    myio->childs = 0;		/* will end 'myio' with last error */
+d297 1
+a297 1
+		    rc = io->vrd->worker(child, newio);
+d301 1
+a301 1
+	    } /* end[if(childs!=0)] */
+d307 1
+a307 1
+    if( myio->childs == 0 )
+d379 1
+a379 1
+	/* Write: create VRIO to all childs. */
+d381 1
+a381 1
+	myio->childs = 0;
+d383 1
+a383 1
+	for( i = 0; i < mirror->childs; ++i )
+d403 1
+a403 1
+	    ++myio->childs;
+d405 1
+a405 1
+	    /* Childs will receive exactly the same parameters
+d426 1
+a426 1
+	myio->childs = mirror->childs;		/* to detect 'all childs tried' */
+d463 1
+a463 1
+		mirror->readchild = (mirror->readchild + 1 == mirror->childs
+d477 1
+a477 1
+	/* Write: create VRIO to *all* childs. */
+d479 1
+a479 1
+	myio->childs = 0;
+d481 1
+a481 1
+	for( i = 0; i < mirror->childs; ++i )
+d501 1
+a501 1
+	    ++myio->childs;
+d503 1
+a503 1
+	    /* Childs will receive exactly the same parameters as the
+d525 1
+a525 1
+	myio->childs = mirror->childs;		/* to detect 'all childs tried' */
+d562 1
+a562 1
+		mirror->readchild = (mirror->readchild + 1 == mirror->childs
+d593 1
+a593 1
+    /* All VRIOs were allocated, now pass them to childs. */
+d642 1
+a642 1
+    for( i = 0; i < mirror->childs; ++i )
+d771 1
+a771 1
+	    if( childsec->u.s.childs != sec->u.s.childs )
+d775 1
+a775 1
+	    for( i = 0; i < sec->u.s.childs; ++i )
+d849 2
+a850 2
+    mirror->childs = sec->u.s.childs;
+    _fmemset(mirror->child, 0, mirror->childs * sizeof(mirror->child[0]));
+d852 1
+a852 1
+    for( i = 0; i < mirror->childs; ++i )
+d897 1
+a897 1
+    if( found != mirror->childs )
+d899 1
+a899 1
+	sprintk(szMsgBuffer, szMissingChild, mirror->childs-found);
+d912 1
+a912 1
+	for( i = 0; i < mirror->childs; ++i )
+d921 1
+a921 1
+	mirror->readchild = (mirror->readchild + 1 == mirror->childs
+d926 1
+a926 1
+    /* Size of administrative data depends on count of childs. */
+d928 1
+a928 1
+    *pSize = sizeof(*mirror) + mirror->childs * sizeof(mirror->child[0]);
+@
+
+
+2.2
+log
+@- lock a failed child from further access (perhaps this lock could be lifted
+  by an IOCtl?)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.1 $
+ * $Date: 1999/05/24 19:18:13 $
+d13 4
+d69 1
+a69 1
+static char const id[]="$Id: mirror.c,v 2.1 1999/05/24 19:18:13 vitus Exp vitus $";
+d462 3
+a464 1
+	    while( mirror->child[mirror->readchild].valid == 0 );
+d479 6
+d561 3
+a563 1
+	    while( mirror->child[mirror->readchild].valid == 0 );
+d911 8
+@
+
+
+2.1
+log
+@- detects and handles situations were an out-of-data child is
+  found
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.11 $
+ * $Date: 1999/05/24 00:39:24 $
+d13 4
+d65 1
+a65 1
+static char const id[]="$Id: mirror.c,v 1.11 1999/05/24 00:39:24 vitus Exp vitus $";
+d96 3
+d187 1
+d379 3
+d464 1
+d467 1
+a467 1
+	/* Write: create VRIO to all childs. */
+d691 1
+a691 1
+    DEBMSG1(DBG_LEVEL2,"\r\n[ValidateVSec2] checking %p",(PVOID)&child);
+d739 2
+d815 4
+d850 1
+a850 1
+		    DEBMSG(DBG_LEVEL1,(PSZ)szMsgBuffer);
+d882 1
+a882 1
+	DEBMSG(DBG_LEVEL1,(PSZ)szMsgBuffer);
+@
+
+
+1.11
+log
+@- MirrorUpdate() complete
+- MirrorNotify: triggers update of configuration sectors whenever an state
+  change occured.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/05/12 01:47:33 $
+d13 5
+d61 1
+a61 1
+static char const id[]="$Id: mirror.c,v 1.10 1999/05/12 01:47:33 vitus Exp vitus $";
+d104 2
+a105 2
+PRIVATE INITMSG	szMissingChild[]=	"MIRROR, fail state: %u child(s) missing";
+
+d639 124
+a762 1
+}
+d792 1
+a792 1
+PUBLIC USHORT NEAR _Cdecl
+d798 1
+d828 13
+d863 1
+a863 1
+	sprintk(szMsgBuffer,szMissingChild,mirror->childs-found);
+@
+
+
+1.10
+log
+@- new SEC_VRDEV2 layout
+- handles valid/non-valid per child
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/04/28 01:45:19 $
+d13 4
+d56 1
+a56 1
+static char const id[]="$Id: mirror.c,v 1.9 1999/04/28 01:45:19 vitus Exp vitus $";
+d80 2
+a92 1
+
+d99 4
+d105 5
+d148 1
+a148 1
+    BOOL		updatecfg = FALSE;		/* rewrite configuration? */
+a164 1
+    /* Error handling, keep any OK. */
+d166 18
+d195 1
+a195 1
+	if( (mirror->header.flags & RDFLAG_BUILDING) )
+a199 2
+	    USHORT	childidx = Vrd2Child(mirror, io->vrd);
+
+d210 1
+d212 1
+a212 2
+		    mirror->header.flags &= ~RDFLAG_BUILDING; /* really??? */
+		    updatecfg = TRUE;
+d242 1
+d258 23
+a280 7
+		/* Patch new child into VRIO and start it. */
+
+		io->vrd = child;
+		rc = io->vrd->worker(child, io);
+		if( rc )
+		    QueueVrio(io);
+	    }
+d292 15
+a308 3
+    if( updatecfg == TRUE )
+	UpdateCfg(&mirror->header);
+
+d364 3
+d602 1
+a602 1
+    unsigned	i;
+a605 4
+    if( (mirror->header.flags & RDFLAG_BUILDING) )
+	cfg->u.s.flags |= RDFLAG_BUILDING;
+    else
+	cfg->u.s.flags &= ~RDFLAG_BUILDING;
+d626 6
+a632 1
+
+d660 1
+a660 1
+ *	ind memory pointed to by 'pVrh'.
+d721 7
+a727 2
+	DEBMSG2(DBG_ALL,"\r\n[MirrorCreate] only found %w out of %w",found,mirror->childs);
+	mirror->header.flags = RDFLAG_FAIL;
+@
+
+
+1.9
+log
+@- merged MirrorAdmin() code with Worker/Notify, IOCMD_A* commands
+- MirrorNotify() uses CompleteVrio()
+- dummy MirrorUpdate() code
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/04/14 01:22:48 $
+d13 5
+d52 1
+a52 1
+static char const id[]="$Id: mirror.c,v 1.8 1999/04/14 01:22:48 vitus Exp vitus $";
+a72 1
+
+a74 2
+    ULONG	nextb;				/* sector done while building */
+
+d79 2
+a80 1
+	UCHAR		valid;
+d96 16
+d161 1
+a162 4
+	/* **** WRITE ****
+	 * Update build variables when build is in effect (nextb != -1).
+	 * If last I/O, call parent notification. */
+
+d164 1
+a164 2
+	if( myio->childs == 0  &&  mirror->nextb != -1
+	    &&  io->blk <= mirror->nextb  &&  io->blk + io->bcnt > mirror->nextb )
+d166 7
+a172 2
+	    mirror->nextb = io->blk + io->bcnt;
+	    if( mirror->nextb == mirror->header.size )
+d174 11
+a184 5
+		/* Build process is now complete.  Mark configuration
+		 * sectors.
+		 * The build process itself should close down automatically. */
+
+		updatecfg = TRUE;
+d292 1
+d541 1
+d544 28
+a571 1
+    return 0;
+d619 1
+d639 1
+d641 2
+d644 3
+a646 1
+		    mirror->child[i].valid = 1;
+d653 4
+d660 1
+a660 4
+	if( found == mirror->childs-1 )
+	    mirror->header.flags = RDFLAGS_FAIL;
+	else
+	    mirror->header.flags = RDFLAGS_ERROR;
+d662 1
+a662 1
+    else
+d664 6
+a669 8
+	if( (sec->u.s.flags & RDFLAG_BUILDING)  ||  invalids != 0 )
+	{
+	    mirror->nextb = sec->u.s.bdone;
+	    mirror->header.flags |= RDFLAGS_BUILD;
+	    BuildCreate(pVrh, sec->u.s.bdone);
+	}
+	else
+	    mirror->nextb = -1;
+d672 3
+d676 1
+@
+
+
+1.8
+log
+@- implemented MirrorAdmin() method
+- changed for iorb -> vrio transition
+- changes for valid/not valid childs and build process, still untested
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/01/11 00:59:29 $
+d13 5
+d47 1
+a47 1
+static char const id[]="$Id: mirror.c,v 1.7 1999/01/11 00:59:29 vitus Exp vitus $";
+a77 1
+	UCHAR		uch;
+a84 1
+PRIVATE USHORT NEAR _Cdecl	MirrorAdmin(PVRDEVHDR const self,PVRIO const myio);
+d86 3
+d114 2
+d117 2
+a118 1
+    DEBMSG3(DBG_PATH,"\r\n[MirrorNotify] io %p, myio %p, error %w",io,myio,io->oserr);
+a125 1
+    ASSERT( myio->vrd->admin == MirrorAdmin );
+d127 1
+d140 1
+a140 1
+    if( io->iocmd == IOCMD_WRITE )
+d142 1
+a142 2
+	PVRDMIRROR const	mirror = (PVRDMIRROR)myio->vrd; /* it's me */
+
+d144 2
+a145 2
+	 * Update build variables when build is in effect (nextb != -1),
+	 * if last I/O, call parent notification. */
+d155 4
+a158 5
+		 * sectors (xxx where?).
+		 * The process itself should close down automatically. */
+#if 0
+xxx
+#endif
+d161 11
+a171 3
+    }
+    else
+    {
+d173 1
+a182 1
+	    PVRDMIRROR const	mirror = (PVRDMIRROR)myio->vrd; /* it's me */
+d210 2
+a211 1
+    } /* end[read] */
+d219 2
+a220 17
+	if( myio->mother != NULL )
+	{
+	    PVRDEVHDR const	parent = myio->mother->vrd;
+
+	    DEBMSG2(DBG_LEVEL3,"\r\n[MirrorNotify] calling parent %p, mother I/O %p",parent,myio->mother);
+	    parent->notify(myio);
+	    FreeVrio(myio);			/* don't need anymore */
+	}
+	else if( myio->iorb != NULL )
+	{
+	    DEBMSG(DBG_LEVEL3,"\r\n[MirrorNotify] iorb != 0 -> Host Drive");
+	    HostdriveNotify(myio);
+	    FreeVrio(myio);			/* don't need anymore */
+	}
+	else
+	{
+	    USHORT	awoken;
+d222 2
+a223 4
+	    DEBMSG(DBG_LEVEL2,"\r\n[MirrorNotify] nothing -> IOCtl");
+	    DevHelp_ProcRun((ULONG)myio, &awoken); /* *nicht* freigeben! */
+	}
+    }
+d234 1
+a234 1
+ *	MirrorAdmin(stripe,myio)
+d237 2
+a238 2
+ *	mirror		set building a mirrorning set
+ *	myio		I/O to mirrorning set (to myself)
+d241 2
+a242 2
+ *	0		OK
+ *	/0		I/O not processed, please retry
+d245 2
+a246 2
+ *	Pass VRIO to underlying administrative I/O routines
+ *	of all childs.
+d251 1
+a251 1
+MirrorAdmin(PVRDEVHDR const self,PVRIO const myio)
+d258 1
+a258 7
+    ULONG const	firstblk = myio->blk;		/* first blk */
+    ULONG const	lastblk = firstblk + myio->bcnt - 1;
+    ULONG	devstart = 0;
+
+
+    DEBMSG1(DBG_PATH,"\r\n[MirrorAdmin] %p",(PVOID)myio);
+    DEBMSG2(DBG_LEVEL3,"\r\n[MirrorAdmin] first blk %lx, last blk %lx",(PVOID)&firstblk,(PVOID)&lastblk);
+a264 1
+    ASSERT( mirror->header.admin == MirrorAdmin );
+d268 1
+a268 1
+    if( myio->iocmd == IOCMD_WRITE )
+d272 1
+d293 2
+a294 3
+	    /* Childs will receive exactly the same parameters as the
+	     * configuration sectors are identical on all parts of a
+	     * VRAID device. */
+d303 1
+a303 1
+	    io->blk = myio->blk + 1;		/* as usual */
+d307 5
+a311 5
+    }
+    else
+    {
+	/* Read: create for 'readchild' child and do another in Notify()
+	 * if this first failed!
+d331 2
+a332 2
+	    /* Child will receive the same parameters
+	     * as parent (configuration sectors!). */
+d341 1
+a341 1
+	    io->blk = myio->blk + 1;		/* as usual */
+d358 1
+a358 37
+    }
+
+    if( newio == NULL )
+    {
+	/* Not enough memory.  Free all allocated VRIOs
+	 * and return error code to parent. */
+
+	DEBMSG(DBG_ALL,"\r\n[MirrorAdmin] releasing VRIOs");
+	for( io = firstio; io != NULL; io = newio )
+	{
+	    newio = io->link;
+	    io->link = NULL;
+	    FreeVrio(io);
+	    DO( io = NULL );
+	}
+	return 1;
+    }
+
+    /* All VRIOs were allocated, now pass them to childs. */
+
+    for( io = firstio; io != NULL; io = newio )
+    {
+	USHORT	rc;
+
+	newio = io->link;
+	io->link = NULL;
+	rc = io->vrd->admin(io->vrd, io);
+	if( rc )
+	{
+	    DEBMSG(DBG_ALL,"\r\n[MirrorAdmin] child busy, queuing VRIO");
+	    QueueVrio(io);
+	}
+    }
+
+    return 0;
+} /* end[MirrorAdmin] */
+
+d360 1
+a360 42
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	MirrorWorker(self,myio)
+ *
+ * PARAMETER
+ *	mirror		a VRD which forms a mirror device
+ *	myio		I/O to myself, distribute
+ *
+ * RETURNS
+ *	0		OK, I/O started
+ *	/0		not started
+ *
+ * DESCRIPTION
+ *	Pass VRIO to I/O routines of every child on wrote or to
+ *	a single child if read.
+ *
+ * REMARKS
+ */
+PRIVATE USHORT NEAR _Cdecl
+MirrorWorker(PVRDEVHDR const self,PVRIO const myio)
+{
+    PVRDMIRROR const	mirror = (PVRDMIRROR)self;
+    PVRIO	io;
+    PVRIO	newio;
+    PVRIO	firstio = NULL;
+
+    DEBMSG1(DBG_PATH,"\r\n[MirrorWorker] %p",(PVOID)myio);
+
+    ASSERT( myio->vrd == self );
+    ASSERT( myio->link == NULL );
+    ASSERT( myio->bcnt != 0 );
+    ASSERT( mirror->header.size != 0 );
+    ASSERT( mirror->header.notify == MirrorNotify );
+    ASSERT( mirror->header.admin == MirrorAdmin );
+    ASSERT( mirror->header.worker == MirrorWorker );
+
+
+    if( myio->iocmd == IOCMD_WRITE )
+    {
+	USHORT	i;
+d382 3
+a384 2
+	    /* Childs will receive exactly the same parameters
+	     * as this is a mirror device. */
+d393 1
+a393 1
+	    io->blk = myio->blk;
+d397 5
+a401 5
+    }
+    else
+    {
+	/* Read: create for 'readchild' child and
+	 * do another in Notify if this first failed!
+d421 2
+a422 2
+	    /* Child will receive exactly the same parameters
+	     * as parent (mirror device). */
+d431 1
+a431 1
+	    io->blk = myio->blk;
+d448 2
+d452 1
+d469 1
+d492 30
+d557 1
+a557 1
+    mirror->header.admin = MirrorAdmin;		/* required */
+d559 2
+a560 2
+    mirror->header.notify = MirrorNotify;
+    mirror->header.size = 0;			/* initialize, wil be modified */
+a603 1
+	    CreateBuild(pVrh, sec->u.s.bdone);
+d605 2
+@
+
+
+1.7
+log
+@- MirrorNotify: corrected, did free wrong VRIO, call wrong notification, etc.
+@
+text
+@d3 3
+a5 3
+ * $Revision: 1.6 $
+ * $Date: 1998/09/20 14:26:21 $
+ * $Author: vitus $
+d9 2
+a10 2
+ *	Siblings to a RAID1 device build a closed linked list.  Father's
+ *	child will do round robbing on reads.
+d13 3
+d36 2
+a37 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+d42 1
+a42 1
+static char const id[]="$Id: mirror.c,v 1.6 1998/09/20 14:26:21 vitus Stab vitus $";
+d66 2
+d69 6
+a74 3
+
+    USHORT	childs;
+    PVRDEVHDR	child[];
+d81 1
+d90 1
+d95 1
+a95 2
+ * GLOBAL
+ *	(nothing)
+a113 1
+    ASSERT( myio->request != NULL );
+d117 1
+d131 1
+a131 2
+    if( io->request->iorbh.CommandModifier == IOCM_WRITE
+	||  io->request->iorbh.CommandModifier == IOCM_WRITE_VERIFY )
+d133 2
+d136 2
+a137 1
+	 * Nothing special.  If last, call parent notification. */
+d140 14
+d178 1
+a178 1
+		    if( child == mirror->child[i] )
+d181 1
+a181 1
+			child = mirror->child[i];
+d197 1
+d209 7
+d219 4
+a222 2
+	    DEBMSG(DBG_LEVEL3,"\r\n[MirrorNotify] no mother I/O -> Host Drive");
+	    HostdriveNotify(myio);
+a223 1
+	FreeVrio(myio);				/* don't need anymore */
+d235 173
+d409 1
+d413 1
+d417 1
+a417 1
+ * GLOBAL
+a435 1
+    ASSERT( myio->request != NULL );
+d439 1
+d442 2
+a443 2
+    if( myio->request->iorbh.CommandModifier == IOCM_WRITE
+	||  myio->request->iorbh.CommandModifier == IOCM_WRITE_VERIFY )
+d447 1
+a447 1
+	/* Write: create VRIO to all siblings. */
+d455 1
+a455 1
+	    newio = AllocateVrio(mirror->child[i], myio);
+d470 6
+a475 1
+	    io->request = myio->request;
+d494 1
+a494 1
+	    newio = AllocateVrio(mirror->child[mirror->readchild], myio);
+d508 6
+a513 1
+	    io->request = myio->request;
+d523 6
+a528 2
+	    mirror->readchild = (mirror->readchild + 1 == mirror->childs
+				 ? 0 : mirror->readchild + 1);
+d567 1
+a567 1
+}
+d578 1
+a578 1
+/*#
+d582 1
+a582 1
+ *	pVrh		room to create device structure
+d586 1
+d590 1
+a590 1
+ * GLOBAL
+d592 3
+d598 1
+a598 1
+MirrorCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,PSEC_VRDEV sec,PUSHORT pSize)
+d602 2
+d607 2
+a608 1
+    mirror->header.worker = MirrorWorker;	/* required */
+d631 5
+a635 1
+		mirror->child[i] = tab[j];
+d650 10
+d663 1
+a663 1
+}
+@
+
+
+1.6
+log
+@- modified for AllocateVrio(working_dev,mother)
+- clarified pointer naming (father -> myio)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1998/06/26 22:58:24 $
+d7 1
+a7 1
+ * How to do RAID1 I/O.
+d9 2
+a10 2
+ * Siblings to a RAID1 device build a closed linked list.  Father's
+ * child will do round robbing on reads.
+d13 4
+d39 1
+a39 1
+static char const id[]="$Id: mirror.c,v 1.5 1998/06/26 22:58:24 vitus Exp vitus $";
+d78 1
+a78 1
+/*#
+d121 1
+d125 2
+a126 1
+	/* Write: remove VRIO.  If last, call parent notification. */
+a128 2
+	FreeVrio(io);				/* don't need it anymore */
+	DO( *(PVOID *)&io = NULL );
+d132 2
+a133 2
+	/* Read: try next device if error.  Else call
+	 * parent notification. */
+d137 1
+a137 3
+	    myio->childs = 0;			/* no more I/Os */
+	    FreeVrio(io);
+	    DO( *(PVOID *)&io = NULL );
+d172 19
+a190 2
+    if( myio->childs == 0 )			/* I/O completed? */
+	myio->vrd->notify(myio);
+d199 1
+a199 1
+/*#
+@
+
+
+1.5
+log
+@- switched to DDK macros (cli, sti, pushf)
+- worker,notify get const pointers and become _Cdecl
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1998/05/29 01:53:38 $
+d13 4
+d32 7
+a38 3
+#pragma off (unreferenced)
+static char const id[]="$Id: mirror.c,v 1.4 1998/05/29 01:53:38 vitus Exp vitus $";
+#pragma on (unreferenced)
+d68 6
+d94 12
+a105 3
+    PVRDEVHDR		child = io->vrd;		/* child which completed */
+    PVRIO const		father_io = io->mother;		/* I/O to us */
+    PVRDMIRROR const	mirror = (PVRDMIRROR)father_io->vrd; /* it's me */
+d112 4
+a115 4
+    if( father_io->oserr == 0xFFFF )		/* still not set? */
+	father_io->oserr = io->oserr;		/* propagate error */
+    else if( father_io->oserr != 0 )		/* any error until now? */
+	father_io->oserr = io->oserr;		/* keep this (OK?) */
+d122 1
+a122 1
+	--father_io->childs;
+d124 1
+d133 1
+a133 1
+	    father_io->childs = 0;		/* no more I/Os */
+d135 1
+d139 5
+a143 2
+	    --father_io->childs;
+	    if( father_io->childs != 0 )
+d160 2
+d170 2
+a171 2
+    if( father_io->childs == 0 )		/* father I/O ready? */
+	father_io->vrd->notify(father_io);
+d182 1
+a182 1
+ *	MirrorWorker(self,father_io)
+d185 1
+a185 1
+ *	father_io	I/O to distribute
+d197 1
+a197 1
+MirrorWorker(PVRDEVHDR const self,PVRIO const father_io)
+d204 12
+a215 2
+    if( father_io->request->iorbh.CommandModifier == IOCM_WRITE
+	||  father_io->request->iorbh.CommandModifier == IOCM_WRITE_VERIFY )
+d221 1
+a221 1
+	father_io->childs = 0;
+d227 1
+a227 1
+	    newio = AllocateVrio(father_io);
+d237 1
+a237 1
+	    ++father_io->childs;
+d242 4
+a245 5
+	    io->vrd = mirror->child[i];
+	    io->request = father_io->request;
+	    io->offset = father_io->offset;
+	    io->blk = father_io->blk;
+	    io->bcnt = father_io->bcnt;
+d255 1
+a255 1
+	father_io->childs = mirror->childs;	/* to detect 'all childs tried' */
+d261 1
+a261 1
+	    newio = AllocateVrio(father_io);
+d275 4
+a278 5
+	    io->vrd = mirror->child[mirror->readchild];
+	    io->request = father_io->request;
+	    io->offset = father_io->offset;
+	    io->blk = father_io->blk;
+	    io->bcnt = father_io->bcnt;
+d303 1
+@
+
+
+1.4
+log
+@- chnages for new prototype of AllocateVrio()
+- PUBLICs are now _Cdecl
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/raid/RCS/mirror.c,v $
+ * $Revision: 1.3 $
+ * $Date: 1998/03/10 02:08:53 $
+d13 4
+d29 1
+a29 1
+static char const id[]="$Id: mirror.c,v 1.3 1998/03/10 02:08:53 vitus Exp vitus $";
+d77 2
+a78 2
+PRIVATE VOID NEAR
+MirrorNotify(PVRIO io)
+d84 2
+a85 2
+    SAVE_IF();
+    DISABLE();
+d143 1
+a143 1
+    RESTORE_IF();
+d166 2
+a167 2
+PRIVATE USHORT NEAR
+MirrorWorker(PVRDEVHDR self,PVRIO father_io)
+d245 2
+a246 2
+	    SAVE_IF();
+	    DISABLE();
+d249 1
+a249 1
+	    RESTORE_IF();
+d259 1
+d279 2
+d282 1
+d318 2
+d322 3
+d335 1
+d350 1
+a350 3
+    if( found == mirror->childs )
+	mirror->header.flags = 0;
+    else
+d358 1
+@
+
+
+1.3
+log
+@- changed to PUBLIC *Create() function and PRIVATE workers
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1998/03/06 01:23:25 $
+d13 3
+d25 1
+a25 1
+static char const id[]="$Id: mirror.c,v 1.2 1998/03/06 01:23:25 vitus Exp vitus $";
+d76 3
+a78 3
+    PVRDEVHDR		child = io->vrd;
+    PVRIO const		father_io = io->father;
+    PVRDMIRROR const	mirror = (PVRDMIRROR)father_io->vrd;
+d183 1
+a183 1
+	    newio = AllocateVrio();
+a192 1
+	    io->father = father_io;
+d218 1
+a218 1
+	    newio = AllocateVrio();
+a227 1
+	    io->father = father_io;
+d304 2
+a305 2
+PUBLIC USHORT NEAR
+MirrorCreate(PVRDEVHDR pVrh,PVRDEVHDR tab[MAX_PDEV],PSEC_VRDEV sec,PUSHORT pSize)
+d315 1
+a315 1
+    mirror->childs = sec->childs;
+d327 1
+a327 1
+	    if( tab[j]->id == sec->child[i].id )
+d332 1
+a337 2
+    else if( found == mirror->childs-1 )
+	mirror->header.flags = RDFLAGS_FAIL;
+d339 7
+a345 2
+	mirror->header.flags = RDFLAGS_ERROR;
+
+@
+
+
+1.2
+log
+@- Worker/Notify entries Need public?)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1998/02/12 01:31:46 $
+d13 3
+d22 1
+a22 1
+static char const id[]="$Id: mirror.c,v 1.1 1998/02/12 01:31:46 vitus Exp vitus $";
+d37 13
+d55 1
+a55 1
+ *	MirrorNotify(child,io)
+a56 1
+ *	child			child which I/O completed
+d70 2
+a71 2
+PUBLIC VOID NEAR
+MirrorNotify(PVRDEVICE child,PVRIO io)
+d73 1
+a73 1
+    PVRDEVICE const	self = io->vrd;
+d75 1
+d93 1
+a93 1
+	FreeVrio(io);				/* don't need anymore */
+d111 3
+d115 12
+a126 2
+		io->vrd = self->sibling;	/* next sibling */
+		rc = io->vrd->worker(io->vrd, io);
+d134 1
+a134 1
+	self->parent->notify(self, father_io);
+d145 1
+a145 1
+ *	MirrorWorker(mirror,father_io)
+d147 1
+a147 2
+ *	mirror		first of siblings which form a
+ *			mirror device
+d154 2
+a155 1
+ *	Pass iorb to underlying I/O routine of every sibling.
+d159 2
+a160 2
+PUBLIC USHORT NEAR
+MirrorWorker(PVRDEVICE mirror,PVRIO father_io)
+d162 1
+a162 1
+    PVRDEVICE	vrd;
+d170 2
+d175 2
+a176 2
+	vrd = mirror; 
+	do
+d193 1
+a193 1
+	    /* Siblings will receive exactly the same parameters
+d196 1
+a196 1
+	    io->vrd = vrd;
+a202 1
+	while( (vrd=vrd->sibling) != mirror );
+d206 5
+a210 2
+	/* Read: create for first sibling and
+	 * do another in Notify if this first failed! */
+d212 1
+a212 8
+	father_io->childs = 0;
+	vrd = mirror;
+	do
+	{
+	    ++father_io->childs;		/* count childs */
+	    vrd = vrd->sibling;
+	}
+	while( vrd != mirror );
+a215 2
+	    /* Allocate VRIOs and update links. */
+
+a226 1
+	    ++father_io->childs;
+d231 1
+a231 1
+	    io->vrd = mirror;
+d238 1
+a238 2
+	    /* Move parent's child pointer to next sibling
+	     * for start of next [independent] read I/O. */
+d242 2
+a243 1
+	    mirror->parent->child = mirror->sibling;
+d263 1
+a263 1
+    /* Now pass all allocated VRIOs to childs. */
+d276 66
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Author$
+d12 3
+a14 1
+ * $Log$
+d19 1
+a19 1
+static char const id[]="$Id$";
+d55 2
+a56 2
+PUBLIC void
+MirrorNotify(VRDEVICE child,PVRIO io)
+d116 1
+a116 1
+ *	MirrorIo(mirror,father_io)
+d130 2
+a131 2
+PUBLIC USHORT
+MirrorIo(PVRDEVICE mirror,PVRIO father_io)
+@

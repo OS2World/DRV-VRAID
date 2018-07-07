@@ -1,0 +1,137 @@
+head	1.2;
+access;
+symbols
+	DSLEEPv0_98:1.2
+	DSLEEPv0_95:1.2
+	DSLEEPv0_93:1.2
+	DSLEEPv0_92:1.2
+	DSLEEPv0_91:1.2
+	DSLEEPv0_80:1.2
+	DSLEEPv0_70:1.2
+	DSLEEPv0_60:1.1;
+locks; strict;
+comment	@ * @;
+
+
+1.2
+date	96.11.03.23.58.45;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	96.09.30.00.24.38;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Internal header (command line parser)
+@
+
+
+1.2
+log
+@Added ulist_parser()
+@
+text
+@/**************************************************************************
+ *
+ * SOURCE FILE NAME = CMDPROTO.H
+ *
+ * DESCRIPTIVE NAME = ADD command line parser
+ *		      C prototypes for Command Parser internal functions
+ *
+ *
+ *
+ * COPYRIGHT	Copyright (C) 1992 IBM Corporation
+ *
+ * The following IBM OS/2 2.1 source code is provided to you solely for
+ * the purpose of assisting you in your development of OS/2 2.x device
+ * drivers. You may use this code in accordance with the IBM License
+ * Agreement provided in the IBM Device Driver Source Kit for OS/2. This
+ * Copyright statement may not be removed.
+ *
+ *
+ *
+ * VERSION = V2.0
+ *
+ * DATE
+ *
+ * DESCRIPTION :
+ *
+ * Purpose:
+ *
+ *
+ *
+ *
+ * FUNCTIONS  :
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * NOTES
+ *
+ *
+ * STRUCTURES
+ *
+ * EXTERNAL REFERENCES
+ *
+ *
+ *
+ * EXTERNAL FUNCTIONS
+ *
+ ***************************************************************************/
+
+
+
+/*
+**  Command_Parser local function - PROTOTYPES
+*/
+
+#ifndef STATIC
+  #define STATIC static
+#endif
+
+STATIC VOID NEAR Insert_End_Token(void);
+STATIC BOOL NEAR Locate_First_Slash(void);
+STATIC INT  NEAR FarStrLen(CHAR FAR *);
+STATIC BOOL NEAR strncmp(CHAR FAR *,CHAR FAR *,INT);
+STATIC BOOL NEAR Parse_Option_Value(void);
+STATIC VOID NEAR Skip_Over_Blanks(void);
+STATIC VOID NEAR char_parser(void);
+STATIC VOID NEAR d_parser(void);
+STATIC VOID NEAR dd_parser(void);
+       void NEAR dddd_parser(void);
+       void NEAR ulist_parser(void);
+STATIC VOID NEAR hh_parser(void);
+STATIC VOID NEAR hhhh_parser(void);
+STATIC VOID NEAR format_parser(void);
+STATIC VOID NEAR scsi_id_parser(void);
+STATIC void NEAR dev_id_parser(void);
+STATIC VOID NEAR geometry_parser(void);
+STATIC VOID NEAR chgline_parser(void);
+STATIC BOOL NEAR Insert_Token(void);
+STATIC BOOL NEAR Locate_Next_Slash(void);
+STATIC BOOL NEAR Validate_State_Index(USHORT);
+STATIC BOOL NEAR HH_Char_To_Byte(void);
+
+
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d66 1
+a66 1
+       BOOL NEAR Parse_Option_Value(void);
+d71 2
+d77 1
+a77 1
+       VOID NEAR dev_id_parser(void);
+@

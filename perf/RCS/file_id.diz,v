@@ -1,0 +1,41 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	97.12.16.02.23.51;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	97.10.28.02.11.18;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@file_id.diz
+@
+
+
+1.2
+log
+@- renamed driver
+@
+text
+@SCSIOpt.flt modifies performance related settings of your SCSI devices.  Source included.
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d1 1
+a1 1
+DSKPERF.FLT modifies performance related settings of your SCSI disks
+@

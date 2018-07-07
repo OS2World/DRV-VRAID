@@ -1,0 +1,593 @@
+head	2.4;
+access;
+symbols
+	vrflt031113:2.4
+	vrflt010903:2.4
+	PREV010803:2.4
+	VRAIDv0_85:2.3
+	VRAIDv0_84:2.2
+	VRAIDv0_82:2.2
+	VRAIDv0_70:1.10
+	VRAIDv0_60:1.5
+	VRAIDv0_51:1.4
+	VRAIDv0_50:1.4
+	VRAIDv0_40:1.4
+	VRAIDv0_30:1.3
+	ALPHA1:1.2;
+locks; strict;
+comment	@ * @;
+
+
+2.4
+date	2001.07.22.00.30.10;	author vitus;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.06.25.00.06.30;	author vitus;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	99.10.01.00.53.29;	author vitus;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	99.09.18.14.36.54;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.06.19.00.26.48;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.05.26.00.32.35;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.05.12.01.33.34;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.04.21.00.26.04;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.01.22.02.50.35;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	98.12.21.23.58.44;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	98.09.08.00.52.47;	author vitus;	state Stab;
+branches;
+next	1.3;
+
+1.3
+date	98.06.26.22.09.30;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.05.29.01.36.01;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.03.10.02.36.04;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Declares all data used in this driver
+@
+
+
+2.4
+log
+@- added hdBuildHook, another context hook handle
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/RCS/data.c,v $
+ * $Revision: 2.3 $
+ * $Date: 2001/06/25 00:06:30 $
+ * $Locker: vitus $
+ *
+ *	Declares all data used in this driver.  This should be
+ *	done in a seperate source file to have greater control
+ *	on segment/data allocation.
+ *
+ * History:
+ * $Log: data.c,v $
+ * Revision 2.3  2001/06/25 00:06:30  vitus
+ * - added hdMemHook, context hook handle
+ *
+ * Revision 2.2  1999/10/01 00:53:29  vitus
+ * - BuildParent and UpdateParent adjusted to include new VRDEVHDR fields
+ *
+ * Revision 2.1  1999/09/18 14:36:54  vitus
+ * - added apBDisk[], cBDisk to hald BASEDISKs
+ *
+ * Revision 1.10  1999/06/19 00:26:48  vitus
+ * - mehr statistische Daten
+ * - MemPool[] nun in DATA, wir sparen Speicher!
+ *
+ * Revision 1.9  1999/05/26 00:32:35  vitus
+ * - some initialization messages now located here.  They may be usefull for
+ *   all modules!
+ *
+ * Revision 1.8  1999/05/12 01:33:34  vitus
+ * - added UpdateParent and vrioUpdate for rewriting configuration sectors
+ *
+ * Revision 1.7  1999/04/21 00:26:04  vitus
+ * - added BuildParent and vrioBuild for build processes
+ *
+ * Revision 1.6  1999/01/22 02:50:35  vitus
+ * - aBuildProcess[], cBuildProcess to manyge build processed
+ * - cBeeps added: as long as this variable is !0, the driver should be or
+ *   flash or do anything usable to notify the sysop
+ *
+ * Revision 1.5  1998/12/21 23:58:44  vitus
+ * - added 'uRegLevel', used instead of flag inside 'fDriverFlags'
+ *
+ * Revision 1.4  1998/09/08 00:52:47  vitus
+ * - added ulADDMaxTransfer (minimum of all ADDs)
+ *
+ * Revision 1.3  1998/06/26 22:09:30  vitus
+ * - corrected apPDev[]
+ * - history at top of file
+ *
+ * Revision 1.2  1998/05/29 01:36:01  vitus
+ * - added uDebugLevel
+ * - corrected ppMemPool to ppWorkMem
+ *
+ * Revision 1.1  1998/03/10 02:36:04  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1997-2001
+ */
+#if defined(__WATCOMC__)
+# pragma off (unreferenced)
+#endif
+static char const vcid[]="$Id: data.c,v 2.3 2001/06/25 00:06:30 vitus Exp vitus $";
+#if defined(__WATCOMC__)
+# pragma on (unreferenced)
+#endif
+
+#define INCL_INITRP_ONLY
+#include "os2intf.h"
+
+#include "vraid.h"
+#include "proto.h"
+#include "extern.h"
+
+
+
+/* **********************************************************************
+ * **** Static Data *****************************************************
+ ********************************************************************** */
+
+#if defined(DEBUG)
+USHORT		uDebugLevel = 0x8031;
+#endif
+
+ULONG		ppDiskDDHeader = 0;
+ULONG		ppWorkMem = 0;
+
+PFN		Device_Help =	0;
+struct InfoSegGDT FAR	*pGlobalInfoSeg = 0;
+
+USHORT		fDriverFlags =	0;
+USHORT		uRegLevel =	0;
+USHORT		hdThisDriver =	0;
+ULONG		hdMemHook = 0;
+ULONG		hdBuildHook = 0;
+
+
+/* A structure for every unit allocated by our filter.  Used to
+ * pass I/Os directly to underlying ADD. */
+
+PBASEDISK	apBDisk[MAX_PDEV] = {0};
+USHORT		cBDisk =	0;		/* entries in above table */
+
+
+/* A structure for every PHYSDEV build for units allocated
+ * by our filter.  Enter pointer here. */
+
+PVRDEVHDR	apPDev[MAX_PDEV] = {0};
+USHORT		cPDev =		0;		/* entries in above table */
+
+
+/* A structure for every HOSTDEVICE known as a unit
+ * for OS/2.  Enter pointer here. */
+
+PHOSTDRIVE	apHDrv[MAX_HDRV] = {0};
+USHORT		cHDrv =		0;		/* entries in above table */
+
+
+/* A structure for every VRDEVICE requiring the build process. */
+
+BUILDPROCESS	aBuildProcess[MAX_PDEV/2] = {0};
+USHORT		cBuildProcess = 0;		/* entries in above table */
+
+
+/* Dummy VRDEVICEs and VRIOs related to build processes and
+ * automatic configuration changes. */
+
+VRDEVHDR	BuildParent = {{0,0,0,0,0,0},0,0,0,0,BuildNotify,0};
+VRIO		vrioBuild = {&BuildParent,0,0,0,0,0};
+VRDEVHDR	UpdateParent = {{0,0,0,0,0,0},0,0,0,0,UpdateNotify,0};
+VRIO		vrioUpdate = {&UpdateParent,0,0,0,0,0};
+
+
+USHORT		cBeeps = 0;			/* how many reasons for beeping? */
+
+
+
+
+/* Data from underlying ADDs and UNITs. */
+
+USHORT		uADDMaxSGList = 16;		/* see AllocateIorb()! */
+ULONG		ulADDMaxTransfer = 16*1024;	/* ??? */
+USHORT		uMaxQueueCount = MAX_ACTIVE_IORB; /* reduced if neccessary */
+USHORT		fADDFlags = 0;
+
+
+ULONG		ulTimer = 0;			/* free running 1s timer */
+
+
+/* Statistical Data: */
+
+USHORT		cIorbInQueue = 0;
+USHORT		cVrioInQueue = 0;
+USHORT		cIorbAllocated = 0;
+USHORT		cVrioAllocated = 0;
+
+
+/* Message generated by this driver.  May
+ * be discarded after INIT. */
+
+#define MSG_REPLACEMENT_STRING	1178		/* %1 %2 %3 ... */
+
+UCHAR	szMsgBuffer[1024]		= {0};
+
+MSGTABLE msgBuffer = {
+    MSG_REPLACEMENT_STRING, 1, (PBYTE)szMsgBuffer 
+};
+
+
+
+/* **********************************************************************
+ * **** Initialization Data *********************************************
+ ********************************************************************** */
+
+UCHAR	MemPool[30*1024] = {0};
+NPUCHAR	npInitData =		MemPool;
+BYTE    DeviceTable[MAX_DEVICETABLE_SIZE] = {0};
+
+
+
+char _ininit	szMallocFailed[]=	"%s: internal memory allocation failed";
+char _ininit	szReadError[]=		"%s: error %04x reading configuration data";
+@
+
+
+2.3
+log
+@- added hdMemHook, context hook handle
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.2 $
+ * $Date: 1999/10/01 00:53:29 $
+d13 3
+d57 2
+a58 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1997-99
+d63 1
+a63 1
+static char const vcid[]="$Id: data.c,v 2.2 1999/10/01 00:53:29 vitus Exp vitus $";
+d95 1
+@
+
+
+2.2
+log
+@- BuildParent and UpdateParent adjusted to include new VRDEVHDR fields
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.1 $
+ * $Date: 1999/09/18 14:36:54 $
+d13 3
+d60 1
+a60 1
+static char const vcid[]="$Id: data.c,v 2.1 1999/09/18 14:36:54 vitus Exp vitus $";
+d91 1
+@
+
+
+2.1
+log
+@- added apBDisk[], cBDisk to hald BASEDISKs
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/06/19 00:26:48 $
+d13 3
+d57 1
+a57 1
+static char const vcid[]="$Id: data.c,v 1.10 1999/06/19 00:26:48 vitus Exp vitus $";
+d120 1
+a120 1
+VRDEVHDR	BuildParent = {{0,0,0,0,0,0},0,0,BuildNotify,0};
+d122 1
+a122 1
+VRDEVHDR	UpdateParent = {{0,0,0,0,0,0},0,0,UpdateNotify,0};
+@
+
+
+1.10
+log
+@- mehr statistische Daten
+- MemPool[] nun in DATA, wir sparen Speicher!
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/05/26 00:32:35 $
+d13 4
+d54 1
+a54 1
+static char const vcid[]="$Id: data.c,v 1.9 1999/05/26 00:32:35 vitus Exp vitus $";
+d87 9
+a95 2
+/* A structure for every unit allocated
+ * by our filter to build a RAID.  Enter pointer here. */
+d100 1
+d107 1
+d112 1
+@
+
+
+1.9
+log
+@- some initialization messages now located here.  They may be usefull for
+  all modules!
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/05/12 01:33:34 $
+d13 4
+d50 1
+a50 1
+static char const vcid[]="$Id: data.c,v 1.8 1999/05/12 01:33:34 vitus Exp vitus $";
+d122 9
+a130 3
+ULONG		ulTimer =	0;		/* free running 1s timer */
+USHORT		cIorbInQueue = 0;		/* queued, non-active IORB */
+USHORT		cVrioInQueue = 0;		/* queued, non-active VRIO */
+d150 1
+a150 1
+UCHAR	MemPool[30*1024];
+@
+
+
+1.8
+log
+@- added UpdateParent and vrioUpdate for rewriting configuration sectors
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/04/21 00:26:04 $
+d13 3
+d46 1
+a46 1
+static char const vcid[]="$Id: data.c,v 1.7 1999/04/21 00:26:04 vitus Exp vitus $";
+d65 1
+a65 1
+USHORT		uDebugLevel = 0x8001;
+d144 4
+@
+
+
+1.7
+log
+@- added BuildParent and vrioBuild for build processes
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1999/01/22 02:50:35 $
+d13 3
+d38 1
+a38 1
+ * This code is Copyright Vitus Jensen 1997-98
+d43 1
+a43 1
+static char const vcid[]="$Id: data.c,v 1.6 1999/01/22 02:50:35 vitus Exp vitus $";
+d88 1
+a88 1
+/* A structure for every  VRDEVICE requiring the build process. */
+d92 5
+a96 1
+VRDEVHDR	BuildParent = {{0,0,0,0,0,0},0,0,BuildNotify,0,0};
+d98 2
+@
+
+
+1.6
+log
+@- aBuildProcess[], cBuildProcess to manyge build processed
+- cBeeps added: as long as this variable is !0, the driver should be or
+  flash or do anything usable to notify the sysop
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1998/12/21 23:58:44 $
+d13 5
+d40 1
+a40 1
+static char const vcid[]="$Id: data.c,v 1.5 1998/12/21 23:58:44 vitus Exp vitus $";
+d59 1
+a59 1
+USHORT		uDebugLevel = 0x8101;
+d89 3
+d96 2
+d106 1
+a106 1
+ULONG		ulTimer =	0;		/* free running timer */
+@
+
+
+1.5
+log
+@- added 'uRegLevel', used instead of flag inside 'fDriverFlags'
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1998/09/08 00:52:47 $
+d13 3
+d35 1
+a35 1
+static char const vcid[]="$Id: data.c,v 1.4 1998/09/08 00:52:47 vitus Stab vitus $";
+d69 1
+a69 1
+ * by our filter to build a RAID. */
+d75 1
+a75 1
+ * for OS/2. */
+d79 8
+@
+
+
+1.4
+log
+@- added ulADDMaxTransfer (minimum of all ADDs)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1998/06/26 22:09:30 $
+d7 3
+a9 3
+ * Declares all data used in this driver.  This should be
+ * done in a seperate source file to have greater control
+ * on segment/data allocation.
+d13 3
+d32 1
+a32 1
+static char const id[]="$Id: data.c,v 1.3 1998/06/26 22:09:30 vitus Exp vitus $";
+d61 1
+@
+
+
+1.3
+log
+@- corrected apPDev[]
+- history at top of file
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1998/05/29 01:36:01 $
+d13 4
+d26 7
+a32 3
+#pragma off (unreferenced)
+static char const id[]="$Id: data.c,v 1.2 1998/05/29 01:36:01 vitus Exp vitus $";
+#pragma on (unreferenced)
+d48 1
+a48 1
+USHORT		uDebugLevel = 0x8103;
+d75 2
+a76 1
+USHORT		uADDMaxSGList = 0;		/* 0: no restriction */
+@
+
+
+1.2
+log
+@- added uDebugLevel
+- corrected ppMemPool to ppWorkMem
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/raid/RCS/data.c,v $
+ * $Revision: 1.1 $
+ * $Date: 1998/03/10 02:36:04 $
+d11 8
+a18 1
+ * History: see bottom of file
+d23 1
+a23 1
+static char id[]="$Id: data.c,v 1.1 1998/03/10 02:36:04 vitus Exp vitus $";
+d56 1
+a56 1
+PPHYSDEVICE	apPDev[MAX_PDEV] = {0};
+d94 1
+a94 1
+UCHAR	MemPool[30*1024] =	{0};
+a97 7
+
+/* History:
+ *
+ * $Log: data.c,v $
+ * Revision 1.1  1998/03/10 02:36:04  vitus
+ * Initial revision
+ */
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d16 1
+a16 1
+static char id[]="$Id$";
+d32 4
+d37 2
+a38 1
+ULONG		ppMemPool = 0;
+d94 3
+a96 1
+ * $Log$
+@

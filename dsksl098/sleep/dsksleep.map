@@ -1,0 +1,200 @@
+
+ DSKSLEEP
+
+ Start     Length     Name                   Class
+ 0001:0000 00020H     DDHeader               CONST
+ 0001:0020 00002H     CONST                  CONST
+ 0001:0024 00000H     CONST2                 CONST
+ 0001:0030 00000H     CONST                  DATA
+ 0001:0030 00000H     CONST2                 DATA
+ 0001:0030 00029H     LIBDATA                DATA
+ 0001:005C 08328H     _DATA                  DATA
+ 0001:8384 00000H     _BSS                   BSS
+ 0001:8390 00126H     c_common               BSS
+ 0002:0000 000AEH     LIBCODE                CODE
+ 0002:00B0 00272H     CODE                   CODE
+ 0002:0324 03666H     _TEXT                  CODE
+ 0003:0000 00C02H     SwapData               FAR_DATA
+ 0004:0000 006EAH     INITDATA               FAR_DATA
+ 0005:0000 00000H     SwapCode               SWAP_CODE
+
+ Origin   Group
+ 0001:0   DGROUP
+ 0003:0   SGROUP
+ 0002:0   StaticGroup
+
+  Address         Publics by Name
+
+ 0002:0324       AsmStrategy
+ 0002:01EA       DEVHELP_BEEP
+ 0002:00E0       DEVHELP_GETDOSVAR
+ 0002:0114       DEVHELP_PROCBLOCK
+ 0002:0146       DEVHELP_PROCRUN
+ 0002:01C3       DevHelp_RegisterBeep
+ 0002:0211       DEVHELP_REGISTERDEVICECLASS
+ 0002:019C       DevHelp_RegisterPDD
+ 0002:0248       DEVHELP_SAVE_MESSAGE
+ 0002:0174       DEVHELP_TICKCOUNT
+ 0002:00B0       DEVHELP_VERIFYACCESS
+ 0002:0270       DHRET_0
+ 0002:02B2       DHRET_10
+ 0002:02C0       DHRET_12
+ 0002:02CE       DHRET_14
+ 0002:02DC       DHRET_16
+ 0002:02EA       DHRET_18
+ 0002:027A       DHRET_2
+ 0002:02F8       DHRET_20
+ 0002:0306       DHRET_22
+ 0002:0314       DHRET_24
+ 0002:0288       DHRET_4
+ 0002:0296       DHRET_6
+ 0002:02A4       DHRET_8
+ 0004:0000       _achDump
+ 0001:00AA       _anpUnit
+ 0002:0000       _APMAttach
+ 0002:009B       _APMDeregister
+ 0002:0964       _APMEventHandler
+ 0002:002E       _APMRegister
+ 0002:032D       _AsmTimer
+ 0002:033F       _CallADD
+ 0001:84B0       _cc
+ 0002:2CE8       _Command_Parser
+ 0001:00DA       _cUnit
+ 0001:7CE6       _DeviceTable
+ 0001:008E       _Device_Help
+ 0001:0098       _fAPMSuspended
+ 0001:0096       _fDriverFlags
+ 0002:09A4       _FilterFunction
+ 0002:1693       _GenIOCtl
+ 0001:00A4       _hdThisDriver
+ 0002:2740       _InitBase
+ 0002:08B0       _IssueStart
+ 0002:0B9C       _IssueStop
+ 0001:839C       _length
+ 0001:04E4       _MemPool
+ 0001:04DC       _msgBuffer
+ 0001:7CE4       _npInitData
+ 0001:825C       _opttable
+ 0001:8240       _OPT_APM
+ 0001:81EC       _OPT_DEBUG_DEFAULT
+ 0001:81FA       _OPT_DEBUG_NO
+ 0001:824E       _OPT_END
+ 0001:8232       _OPT_NAPM
+ 0001:81D0       _OPT_NSR
+ 0001:8216       _OPT_NUT
+ 0001:81DE       _OPT_SR
+ 0001:8208       _OPT_TIME
+ 0001:8224       _OPT_UT
+ 0001:81C2       _OPT_VERBOSE
+ 0001:8390       _pcmdline1
+ 0001:8394       _pcmdline_slash
+ 0001:84A0       _pcmdline_start
+ 0001:84A4       _pend_option
+ 0001:0092       _pGlobalInfoSeg
+ 0001:84A8       _poutbuf1
+ 0001:84AC       _poutbuf_end
+ 0001:8398       _ptable_option
+ 0004:0630       _RegData
+ 0002:15FD       _SaveMessage
+ 0002:2954       _sprintk
+ 0001:84B4       _state_index
+ 0002:03BC       _Strategy
+ 0001:009A       _szDriverName
+ 0001:00DC       _szMsgBuffer
+ 0002:0C52       _Timer
+ 0001:839E       _tokvbuf
+ 0001:849E       _tokv_index
+ 0004:0688       _ToOption
+ 0002:31C0       _ulist_parser
+ 0001:00A6       _ulTimer
+ 0002:04DE       __aNFauldiv
+ 0002:0500       __aNuldiv
+ 0002:0472       __aNulrem
+
+  Address         Publics by Value
+
+ 0001:008E       _Device_Help
+ 0001:0092       _pGlobalInfoSeg
+ 0001:0096       _fDriverFlags
+ 0001:0098       _fAPMSuspended
+ 0001:009A       _szDriverName
+ 0001:00A4       _hdThisDriver
+ 0001:00A6       _ulTimer
+ 0001:00AA       _anpUnit
+ 0001:00DA       _cUnit
+ 0001:00DC       _szMsgBuffer
+ 0001:04DC       _msgBuffer
+ 0001:04E4       _MemPool
+ 0001:7CE4       _npInitData
+ 0001:7CE6       _DeviceTable
+ 0001:81C2       _OPT_VERBOSE
+ 0001:81D0       _OPT_NSR
+ 0001:81DE       _OPT_SR
+ 0001:81EC       _OPT_DEBUG_DEFAULT
+ 0001:81FA       _OPT_DEBUG_NO
+ 0001:8208       _OPT_TIME
+ 0001:8216       _OPT_NUT
+ 0001:8224       _OPT_UT
+ 0001:8232       _OPT_NAPM
+ 0001:8240       _OPT_APM
+ 0001:824E       _OPT_END
+ 0001:825C       _opttable
+ 0001:8390       _pcmdline1
+ 0001:8394       _pcmdline_slash
+ 0001:8398       _ptable_option
+ 0001:839C       _length
+ 0001:839E       _tokvbuf
+ 0001:849E       _tokv_index
+ 0001:84A0       _pcmdline_start
+ 0001:84A4       _pend_option
+ 0001:84A8       _poutbuf1
+ 0001:84AC       _poutbuf_end
+ 0001:84B0       _cc
+ 0001:84B4       _state_index
+ 0002:0000       _APMAttach
+ 0002:002E       _APMRegister
+ 0002:009B       _APMDeregister
+ 0002:00B0       DEVHELP_VERIFYACCESS
+ 0002:00E0       DEVHELP_GETDOSVAR
+ 0002:0114       DEVHELP_PROCBLOCK
+ 0002:0146       DEVHELP_PROCRUN
+ 0002:0174       DEVHELP_TICKCOUNT
+ 0002:019C       DevHelp_RegisterPDD
+ 0002:01C3       DevHelp_RegisterBeep
+ 0002:01EA       DEVHELP_BEEP
+ 0002:0211       DEVHELP_REGISTERDEVICECLASS
+ 0002:0248       DEVHELP_SAVE_MESSAGE
+ 0002:0270       DHRET_0
+ 0002:027A       DHRET_2
+ 0002:0288       DHRET_4
+ 0002:0296       DHRET_6
+ 0002:02A4       DHRET_8
+ 0002:02B2       DHRET_10
+ 0002:02C0       DHRET_12
+ 0002:02CE       DHRET_14
+ 0002:02DC       DHRET_16
+ 0002:02EA       DHRET_18
+ 0002:02F8       DHRET_20
+ 0002:0306       DHRET_22
+ 0002:0314       DHRET_24
+ 0002:0324       AsmStrategy
+ 0002:032D       _AsmTimer
+ 0002:033F       _CallADD
+ 0002:03BC       _Strategy
+ 0002:0472       __aNulrem
+ 0002:04DE       __aNFauldiv
+ 0002:0500       __aNuldiv
+ 0002:08B0       _IssueStart
+ 0002:0964       _APMEventHandler
+ 0002:09A4       _FilterFunction
+ 0002:0B9C       _IssueStop
+ 0002:0C52       _Timer
+ 0002:15FD       _SaveMessage
+ 0002:1693       _GenIOCtl
+ 0002:2740       _InitBase
+ 0002:2954       _sprintk
+ 0002:2CE8       _Command_Parser
+ 0002:31C0       _ulist_parser
+ 0004:0000       _achDump
+ 0004:0630       _RegData
+ 0004:0688       _ToOption

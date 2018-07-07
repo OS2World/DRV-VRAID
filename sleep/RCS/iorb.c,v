@@ -1,0 +1,2434 @@
+head	1.17;
+access;
+symbols
+	DSLEEPv0_98:1.16
+	DSLEEPv0_95:1.11
+	DSLEEPv0_93:1.11
+	DSLEEPv0_92:1.9
+	DSLEEPv0_91:1.7
+	DSLEEPv0_80:1.4
+	DSLEEPv0_70:1.4
+	DSLEEPv0_60:1.3;
+locks; strict;
+comment	@ * @;
+
+
+1.17
+date	2002.01.03.05.52.00;	author vitus;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2001.02.27.22.36.36;	author vitus;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	99.11.29.00.39.52;	author vitus;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	99.09.17.08.00.46;	author vitus;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	98.10.14.00.30.32;	author vitus;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	97.12.05.01.37.12;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	97.10.26.00.32.08;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	97.10.11.17.32.41;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	97.08.23.22.26.24;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	97.06.18.00.54.29;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	97.05.11.01.57.44;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	97.04.27.22.30.34;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	97.03.03.23.41.27;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	96.11.03.23.39.57;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	96.10.23.23.41.14;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	96.09.30.00.27.56;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	96.09.27.03.19.52;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Request Time processing
+Timer processing
+@
+
+
+1.17
+log
+@- notification seperated in function NotifyIorb()
+- new DDK, new APM_* constants
+- more debugging code
+@
+text
+@/*
+ * $Source: r:/source/driver/sleep/RCS/iorb.c,v $
+ * $Revision: 1.16 $
+ * $Date: 2001/02/27 22:36:36 $
+ * $Locker: vitus $
+ *
+ *	Request Time processing	- Timer processing
+ *
+ *	DDK says we have to saved SI,DI,DS,ES but all code I've seen
+ *	only uses 'loadds' restoring only SI,DI,DS (and remember: CorelSCSI
+ *	even changed DS!).  Nevertheless I will do a '_saveregs' now and
+ *	save/restore all registers when calling other drivers...
+ *
+ * History: see bottom of file
+ * ------------------------------------------------
+ * This code is Copyright Vitus Jensen 1996-99,2001
+ */
+static char const id[]="$Id: iorb.c,v 1.16 2001/02/27 22:36:36 vitus Exp vitus $";
+
+#define INCL_NOBASEAPI
+#define INCL_NOPMAPI
+#define INCL_INITRP_ONLY
+#include "dsksleep.h"
+#include "apmcalls.h"
+
+#include "dskslpub.h"
+#include "proto.h"
+#include "extern.h"
+
+
+
+
+
+/* **********************************************************************
+ * **** Debugging Data **************************************************
+ * ******************************************************************* */
+#if defined(DEBUG)
+char _inconst dszQueueIorb[]=		"\r\n[QueueIorb] entry";
+char _inconst dszYankQueue[]=		"\r\n[YankQueue] entry";
+char _inconst dszStartComplete[]=	"\r\n[StartComplete] entry";
+char _inconst dszStartUnitComplete[]=	"\r\n[StartComplete] START UNIT completed";
+char _inconst dszStartUnitFailed[]=	"\r\nSTART UNIT failed, error %w";
+char _inconst dszTestUnitComplete[]=	"\r\n[StartComplete] TEST UNIT READY completed";
+char _inconst dszTestUnitFailed[]=	"\r\nTEST UNIT READY failed, error %w";
+char _inconst dszStartExit[]=		"\r\n[StartComplete] exit(none)";
+char _inconst dszIssueStart[]=		"\r\n[IssueStart] entry";
+char _inconst dszIssueStartMem[]=	"\r\n[IssueStart] no memory";
+char _inconst dszIssueStartExit[]=	"\r\n[IssueStart] exit(0)";
+char _inconst dszUnknPwrstate[]=	"\r\nUnknown pwrstate %w";
+char _inconst dszFilterFunction[]=	"\r\n[FilterFunction] entry";
+char _inconst dszFF_Suspended[]=	"\r\n[FilterFunction] suspended! (ignored)";
+char _inconst dszCC_Config[]=		"\r\nCC Configuration";
+char _inconst dszCM_DevTab[]=		"\r\nCM Device Table";
+char _inconst dszC[]=			"C";
+char _inconst dszR[]=			"R";
+char _inconst dszStopComplete[]=	"\r\n[StopComplete] entry";
+char _inconst dszIssueStop[]=		"\r\n[IssueStop] entry";
+char _inconst dszEventDump[]=		"\r\nAPMEvent: %z";
+char _inconst dszAPMSuspend[]=		"\r\n[APMSuspend] entry";
+char _inconst dszAPMResume[]=		"\r\n[APMResume] entry";
+#endif
+
+
+
+
+/* **********************************************************************
+ * **** Allocation of per device IORB ***********************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * AllocateIorb(device)
+ *
+ * PARAMETER
+ *	device		IORB for this device
+ * RETURNS
+ *	/0		allocated IORB
+ *	0		no IORB available
+ * GLOBAL
+ *	none
+ * DESPRIPTION
+ *	Simple, as there is only a single IORB to allocate from.
+ * REMARKS
+ */
+#if defined(_MSC_VER)
+# pragma optimize("lge",off)
+#endif
+PRIVATE NPVOID NEAR
+AllocateIorb(NPDEVICE const device)
+{
+    NPVOID np = 0;
+
+    pushf();
+    cli();
+    if( device->iorb_busy == 0 )
+    {
+	device->iorb_busy = 1;
+	np = &device->iorb;
+    }
+    popf();
+    return np;
+}
+#if defined(_MSC_VER)
+# pragma optimize("",on)
+#endif
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * FreeIorb(device)
+ *
+ * PARAMETER
+ *	device		device to stop
+ * RETURNS
+ *	nothing
+ * GLOBAL
+ *	none
+ * DESPRIPTION
+ *	Frees previously allocated IORB.
+ * REMARKS
+ */
+PRIVATE void NEAR
+FreeIorb(NPDEVICE device)
+{
+    device->iorb_busy = 0;
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * NotifyIorb(pIorbh,ErrorCode)
+ *
+ * PARAMETER
+ *	pIorbh			I/O request buffer
+ *	ErrorCode		see DDK
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Return IORB to OS, setting errorcode and flags. 'pIorbh' may
+ *	be head of linked list or single request.
+ *
+ * REMARKS
+ */
+PRIVATE VOID NEAR _Cdecl
+NotifyIorb(PIORBH const pIorbh, USHORT ErrorCode)
+{
+    PIORB	p;
+
+    /* Set IORB_ERROR in pIorb->Status if there is a non-zero
+     * error code AND the RECOVERED ERROR bit is not set in
+     * the IORB status field. */
+
+    for( p = pIorbh; p != NULL;
+	 p = (p->RequestControl & IORB_CHAIN ? p->pNxtIORB : NULL) )
+    {
+	p->ErrorCode = ErrorCode;
+	p->Status |= (IORB_DONE | ((ErrorCode && !(p->Status & IORB_RECOV_ERROR))
+				   ? IORB_ERROR : 0));
+	if( (p->RequestControl & IORB_ASYNC_POST) )
+	    CallADD(p->NotifyAddress, p);
+    }
+    return;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Code to queue/dequeue IORBs *************************************
+ * ******************************************************************* */
+
+typedef union {
+    PIORB	next;
+    UCHAR	dummy[ADD_WORKSPACE_SIZE];
+} ADDWS, FAR * PADDWS;
+
+
+
+/*# ----------------------------------------------------------------------
+ * QueueIorb(device, iorb)
+ *
+ * PARAMETER
+ *	device		stopped device
+ *	iorb		IORB or IORB chain from DMD
+ * RETURNS
+ *	(nothing)
+ * GLOBAL
+ *	(none)
+ * PURPOSE
+ *	Adds 'iorb' to per device queue of 'to-be-restarted'
+ *	IORB (chains).
+ * REMARKS
+ *	Don't use 'iorb->pNxtIORB' (designed to let ADD build
+ *	IORB chains) as we would have to seperate IORB types
+ *	when yanking the queue to the ADD (see DDK inf).
+ */
+#if defined(_MSC_VER)
+# pragma optimize("lge",off)
+#endif
+PRIVATE void NEAR
+QueueIorb(NPDEVICE const device,PIORB const iorb)
+{
+    DEBMSG(dszQueueIorb);
+    _fmemset(iorb->ADDWorkSpace, 0, ADD_WORKSPACE_SIZE);
+
+    pushf();
+    cli();					/* do not disturb */
+    if( device->pQueueHead == NULL )		/* empty queue? */
+	device->pQueueHead = iorb;
+    else
+    {
+	PADDWS const ws = (PADDWS)device->pQueueFoot->ADDWorkSpace;
+	ws->next = iorb;
+    }
+    device->pQueueFoot = iorb;
+    popf();
+    return;
+}
+#if defined(_MSC_VER)
+# pragma optimize("",on)
+#endif
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * YankQueue(device)
+ *
+ * PARAMETER
+ *	device		our device structure
+ * RETURNS
+ *	(nothing)
+ * GLOBAL
+ *	(none)
+ * PURPOSE
+ *	Passes all saved IORBs for this device to it's ADD.
+ * REMARKS
+ *	Only pass a single IORB at a time if not IOCC_EXECUTE_IO
+ *	CommandCode (see DDK inf).
+ *	For safety: clear used bytes in ADDWorkSpace.
+ */
+#if defined(_MSC_VER)
+# pragma optimize("lge",off)
+#endif
+PRIVATE void NEAR
+YankQueue(NPDEVICE const device)
+{
+    PIORB iorb;
+
+    DEBMSG(dszYankQueue);
+    pushf();
+    cli();
+    while( (iorb=device->pQueueHead) != NULL )
+    {
+	PADDWS const	ws = (PADDWS)iorb->ADDWorkSpace;
+	PIORB		p;
+
+	/* Set 'pQueueHead' to next IORB to remove an IORB from
+	 * our queue and clear anything left in ADDWorkSpace. */
+
+	if( (device->pQueueHead=ws->next) == NULL )
+	    device->pQueueFoot = NULL;
+	ws->next = NULL;
+
+	/* Make sure the correct unit handle is set (in all IORB,
+	 * may be a linked list) and call ADD. */
+
+	for( p = iorb; p != NULL;
+	     p = (p->RequestControl & IORB_CHAIN ? p->pNxtIORB : NULL) )
+	    p->UnitHandle = device->hdADDUnit;
+	device->counter = 0;			/* reset counter */
+
+	CallADD(device->pADDEntry, iorb);
+
+	cli();				/* ADD may have changed */
+    }
+    popf();
+
+    return;
+}
+#if defined(_MSC_VER)
+# pragma optimize("",on)
+#endif
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Task Time Processing (filter) ***********************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * APMSuspend(void)
+ *
+ * PARAMETER
+ *	(none)
+ *
+ * RETURNS
+ *	0		always
+ *
+ * DESCRIPTION
+ *	Called whenever the system enters suspend state.  It checks
+ *	all disks and stops any left in running state.
+ *	And sets 'fAPMSuspended'.
+ *
+ * REMARKS
+ */
+PRIVATE USHORT
+APMSuspend(void)
+{
+    DEBMSG(dszAPMSuspend);
+    fAPMSuspended = 1;				/* when suspended, refuse any IORBs*/
+#if 0
+    {
+	USHORT	i;
+
+	for( i = 0; i < cUnit; ++i )
+	{
+	    if( anpUnit[i] != 0  &&  !anpUnit[i]->stopped )
+	    {
+		IssueStop(anpUnit[i]);
+	    }
+	}
+    }
+#endif
+
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * APMResume(void)
+ *
+ * PARAMETER
+ *	(none)
+ *
+ * RETURNS
+ *	0		always
+ *
+ * DESCRIPTION
+ *	Clears 'fAPMSuspended'.
+ *
+ * REMARKS
+ *	We could do a lot more (restart all disks) but why do it
+ *	now?  If OS/2 accesses a disk it will be restarted anyway
+ *	and if it does not the disk doesn't have to do a start/stop
+ *	cycle.
+ *
+ */
+PRIVATE USHORT
+APMResume(void)
+{
+    DEBMSG(dszAPMResume);
+
+    fAPMSuspended = 0;                  /* OK, process IORB's */
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * StartComplete(iorb)
+ *
+ * PARAMETER
+ *	iorb		request completed
+ * RETURNS
+ *	(nothing)
+ * GLOBAL
+ *	(none)
+ *
+ * DESPRIPTION
+ *	Called when the ADD completed a START UNIT or TEST UNIT READY
+ *	command. Updates flags and unblocks waiting threads.
+ *	Any unblocking/clearing of flags will be done *after* TEST UNIT
+ *	READY verified a correct working drive!
+ *
+ * REMARKS
+ *	Do retries make any sense?
+ */
+#if defined(_MSC_VER)
+# pragma optimize("lge",off)
+#endif
+PRIVATE VOID FAR /*_saveregs*/ _loadds _Cdecl
+StartComplete(PIORB iorb)
+{
+    NPDEVICE const		device = *(NPDEVICE FAR *)iorb->DMWorkSpace;
+    PIORB_ADAPTER_PASSTHRU const ioadp = (PIORB_ADAPTER_PASSTHRU)iorb;
+
+
+    DEBMSG(dszStartComplete);
+    if( ioadp->pControllerCmd[0] == 0x1B )	/* START UNIT ? */
+    {
+	DEBMSG(dszStartUnitComplete);
+
+	device->iotype = DSKIO_START;
+	device->laststatus = ioadp->iorbh.Status;
+	device->lasterror = ioadp->iorbh.ErrorCode;
+
+	if( (ioadp->iorbh.Status & IORB_ERROR) )
+	{
+	    DEBMSG1(dszStartUnitFailed,ioadp->iorbh.ErrorCode);
+	}
+
+	/* Well, target may be in a UNIT ATTENTION state.  Issue
+	 * TEST UNIT READY (plus REQUEST SENSE) to clear that state. */
+
+	memset(&device->sensedata, 0, sizeof(SCSI_REQSENSE_DATA));
+	memset(&device->statusblock, 0, sizeof(SCSI_STATUS_BLOCK));
+	device->statusblock.ReqSenseLen = sizeof(SCSI_REQSENSE_DATA);
+	device->statusblock.SenseData = &device->sensedata;
+
+	_fmemset(ioadp, 0, MAX_IORB_SIZE);
+	ioadp->iorbh.Length =		sizeof(IORB_ADAPTER_PASSTHRU);
+	ioadp->iorbh.UnitHandle =	device->hdADDUnit;
+	ioadp->iorbh.CommandCode =	IOCC_ADAPTER_PASSTHRU;
+	ioadp->iorbh.CommandModifier =	IOCM_EXECUTE_CDB;
+	ioadp->iorbh.RequestControl =	IORB_ASYNC_POST | IORB_REQ_STATUSBLOCK;
+	ioadp->iorbh.NotifyAddress =	(PVOID)StartComplete;
+
+	ioadp->iorbh.StatusBlockLen =	sizeof(SCSI_STATUS_BLOCK);
+	ioadp->iorbh.pStatusBlock =	(NPBYTE)&device->statusblock;
+
+	ioadp->pControllerCmd =		device->cdbTestReady;
+	ioadp->ControllerCmdLen =	6;
+
+	*(NPDEVICE FAR *)ioadp->iorbh.DMWorkSpace = device;
+
+	{
+	    PVOID volatile	p = &ioadp->iorbh; /* WatCom error: force far ptr */
+
+	    CallADD(device->pADDEntry, p);
+	}
+	/* Will return to this routine after
+	 * TEST UNIT READY (else case) */
+
+    } /* end[START STOP UNIT] */
+    else					/* TEST UNIT READY */
+    {
+	DEBMSG(dszTestUnitComplete);
+
+	device->iotype = DSKIO_TESTREADY;
+	device->laststatus = ioadp->iorbh.Status;
+	device->lasterror = ioadp->iorbh.ErrorCode;
+
+	if( (ioadp->iorbh.Status & IORB_ERROR) )
+	{
+	    DEBMSG1(dszTestUnitFailed,ioadp->iorbh.ErrorCode);
+
+	    /* Bad!  What to do?  HELP!!!
+	     * We could at least notify the user if he's there... */
+
+	    DevHelp_Beep(440, 500);
+	    DevHelp_Beep(300, 1000);
+
+	    FreeIorb(device);			/* So IssueStart may allocate */
+	    if( (fDriverFlags & DF_INITDONE) )	/* no retries during /DEBUG */
+	    {
+		/* There is something more we can do: retry.
+		 * If this isn't possible, clear 'blocked' flag
+		 * and let next I/O call 'IssueStart'. */
+
+		if( IssueStart(device) )
+		    device->blocked = 0;
+	    }
+	    else
+		device->blocked = 0;		/* keep on running */
+	}
+	else
+	{
+	    /* TEST UNIT READY completed without errors,
+	     * clear 'stopped' flag and reset 'counter' to zero.
+	     * Clear flags after 'FreeIorb()', a timer interrupt
+	     * may occure during that function. */
+
+	    device->counter = 0;
+	    device->stopped = 0;
+	    FreeIorb(device);
+	    device->blocked = 0;
+	    YankQueue(device);			/* restart any queued I/Os */
+	}
+    } /* end[TEST UNIT READY] */
+
+    DEBMSG(dszStartExit);
+    return;
+}
+#if defined(_MSC_VER)
+# pragma optimize("",on)
+#endif
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * IssueStart(device)
+ *
+ * PARAMETER
+ *	device		device to start
+ * RETURNS
+ *	0		START UNIT issued
+ *	/0		error, cmd not started
+ * GLOBAL
+ *	none
+ * DESPRIPTION
+ *	Builds START STOP UNIT cdb with start bit set
+ *	in newly allocated IORB and passes this IORB
+ *	to ADD for 'device'.
+ *	Set 'blocked' even if already set (init1.c).
+ *
+ * REMARKS
+ *	Uses 'StartComplete' as notification routine.
+ */
+#if defined(_MSC_VER)
+# pragma optimize("lge",off)
+#endif
+PUBLIC int NEAR
+IssueStart(NPDEVICE const device)
+{
+    NPIORB_ADAPTER_PASSTHRU ioadp = AllocateIorb(device);
+
+    DEBMSG(dszIssueStart);
+    if( ioadp == NULL )
+    {
+	DEBMSG(dszIssueStartMem);
+	return -1;				/* not possible */
+    }
+
+    device->blocked = 1;			/* please, no I/Os */
+
+    memset(&device->sensedata, 0, sizeof(SCSI_REQSENSE_DATA));
+    memset(&device->statusblock, 0, sizeof(SCSI_STATUS_BLOCK));
+    device->statusblock.ReqSenseLen = sizeof(SCSI_REQSENSE_DATA);
+    device->statusblock.SenseData = &device->sensedata;
+
+    memset(ioadp, 0, MAX_IORB_SIZE);
+    ioadp->iorbh.Length =		sizeof(IORB_ADAPTER_PASSTHRU);
+    ioadp->iorbh.UnitHandle =		device->hdADDUnit;
+    ioadp->iorbh.CommandCode =		IOCC_ADAPTER_PASSTHRU;
+    ioadp->iorbh.CommandModifier =	IOCM_EXECUTE_CDB;
+    ioadp->iorbh.Timeout =		START_TIMEOUT;
+    ioadp->iorbh.RequestControl =	IORB_ASYNC_POST | IORB_REQ_STATUSBLOCK;
+    ioadp->iorbh.NotifyAddress =	(PVOID)StartComplete;
+
+    ioadp->iorbh.StatusBlockLen =	sizeof(SCSI_STATUS_BLOCK);
+    ioadp->iorbh.pStatusBlock =		(NPBYTE)&device->statusblock;
+
+    ioadp->pControllerCmd =		device->cdbStart;
+    ioadp->ControllerCmdLen =		6;
+
+    /* To reconstruct which unit this start command has
+     * been issued for save pointer in request.  The DM
+     * workspace will never be used by an ADD and is
+     * therefore free (there is no DMD either...) */
+
+    *(NPDEVICE FAR *)ioadp->iorbh.DMWorkSpace = device;
+
+    CallADD(device->pADDEntry, &ioadp->iorbh);
+
+    DEBMSG(dszIssueStartExit);
+    return 0;
+}
+#if defined(_MSC_VER)
+# pragma optimize("",on)
+#endif
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * APMEventHandler(event)
+ *
+ * PARAMETER
+ *	event
+ *
+ * RETURNS
+ *	0
+ *
+ * DESCRIPTION
+ * REMARKS
+ */
+PUBLIC USHORT FAR _saveregs _Cdecl
+APMEventHandler(PAPMEVENT event)
+{
+    USHORT const SubId = LOUSHORT(event->ulParm1);
+
+
+    DEBMSG2(dszEventDump,, (PVOID)event, sizeof(*event));
+    if( SubId == APM_SETPWRSTATEEVENT )
+    {
+	USHORT const pwrstate = HIUSHORT(event->ulParm2);
+
+	switch( pwrstate )
+	{
+	  case APM_PWRSTATESUSPEND:
+	    return APMSuspend();
+
+	  case APM_PWRSTATEREADY:
+	    return APMResume();
+
+	  default:
+	    DEBMSG1(dszUnknPwrstate,pwrstate);
+	    break;
+	}
+    }
+    else if( SubId == APM_NORMRESUMEEVENT
+	     ||  SubId == APM_CRITRESUMEEVENT
+	     /*||  SubId == APM_STANDBYRESUMEEVENT*/ )
+    {
+        return APMResume();
+    }
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * FilterFunction(iorb)
+ *
+ * PARAMETER
+ *	iorb		request to anylyse
+ * RETURNS
+ *	nothing
+ * GLOBAL
+ *	anpUnit
+ *
+ * DESPRIPTION
+ *	Besides returning our own device table (there is none) this
+ *	routine checks whether the addressed device is still running
+ *	and forwards the request to ADD if it is.
+ *	A stopped device is passed to 'IssueStart' and forwarding waits
+ *	until the START completed.  To prevent I/Os during START or
+ *	STOP the routine checks 'blocked' flag first.
+ *
+ * REMARKS
+ */
+#if defined(_MSC_VER)
+# pragma optimize("lge",off)
+#endif
+PUBLIC void FAR _saveregs _loadds _Cdecl
+FilterFunction(PIORB const iorb)
+{
+    NPDEVICE	device = 0;
+
+
+    /*DEBMSG(dszFilterFunction);*/
+#if 1
+    if( fAPMSuspended )
+    {
+	DevHelp_Beep(220, 2000);
+	DEBMSG(dszFF_Suspended);
+# if 0
+	NotifyIorb(iorb, IOERR_UNIT_PWR_OFF);
+	return;
+# endif
+    }
+#endif
+
+    /* Handle the Get Device Table call.  Since we are just filtering
+     * requests, return a table with no unit info. */
+
+    if( iorb->CommandCode == IOCC_CONFIGURATION )
+    {
+	PVOID	p = iorb;
+
+	DEBMSG(dszCC_Config);
+	switch( iorb->CommandModifier )
+	{
+	  case IOCM_GET_DEVICE_TABLE:
+	    DEBMSG(dszCM_DevTab);
+	    ((PIORB_CONFIGURATION)iorb)->pDeviceTable->ADDLevelMajor = 1;
+	    ((PIORB_CONFIGURATION)iorb)->pDeviceTable->ADDLevelMinor = 0;
+	    ((PIORB_CONFIGURATION)iorb)->pDeviceTable->ADDHandle = hdThisDriver;
+	    ((PIORB_CONFIGURATION)iorb)->pDeviceTable->TotalAdapters = 0;
+	    NotifyIorb(iorb, 0);
+	    break;
+
+	  default:
+	    NotifyIorb(iorb, IOERR_CMD_NOT_SUPPORTED);
+	    break;
+	}
+	return;
+    }
+
+
+    /* iorb->UnitHandle should be a valid pointer in
+     * our global table, save in 'device'.  If not -> tell caller. */
+
+    {
+	int	i;
+
+	for( i = 0; i < MAX_UNITS; ++i )
+	{
+	    if( iorb->UnitHandle == (USHORT)anpUnit[i] )
+	    {
+		device = (NPDEVICE)iorb->UnitHandle; /* device structure */
+		break;
+	    }
+	    else if( anpUnit[i] == 0 )		/* end of used range */
+		break;
+	} /* end[for()] */
+    }
+    if( device == 0 )				/* not found? */
+    {
+	NotifyIorb(iorb, IOERR_UNIT_NOT_ALLOCATED);
+	return;
+    }
+
+
+    /* First, there may be a start or stop pending (setting
+     * blocked flag):  add this IORB(s) to internal chain and return. */
+
+    pushf();
+    cli();					/* needed? */
+    if( device->blocked )
+    {
+	QueueIorb(device, iorb);		/* StartComplete restarts it */
+	popf();
+	return;					/* return to caller */
+    }
+
+
+    /* Second, this device may be stopped and has
+     * to be started again.
+     * Only start device if this is a request accessing the medium. */
+
+    {
+	int	restart;
+	PIORB	p;
+
+	switch( iorb->CommandCode )
+	{
+	  case IOCC_UNIT_CONTROL:
+	  case IOCC_GEOMETRY:
+	    restart = 0;			/* no need to restart */
+	    break;
+
+	  default:
+	    restart = 1;			/* better restart */
+	    break;
+	}
+
+	if( restart  &&  device->stopped )	/* interrupts still disabled */
+	{
+	    device->blocked = 1;		/* no other I/Os */
+	    _fmemcpy(device->rst_reason, iorb, iorb->Length);
+	    QueueIorb(device, iorb);		/* StartComplete restarts it */
+	    IssueStart(device);			/* now START! */
+	    popf();
+	    return;				/* return to caller */
+	}
+
+
+	/* We are about to call the ADD for this request [chain].
+	 * Replace unit handle of filter with unit handle
+	 * of ADD (in all IORBs!). */
+
+	DEBMSG(dszC);
+	for( p = iorb; p != NULL;
+	     p = (p->RequestControl & IORB_CHAIN ? p->pNxtIORB : NULL) )
+	    p->UnitHandle = device->hdADDUnit;
+
+	/* Reset spindown timeout, but do this only if it's an important
+	 * command (one which would restart the disk. */
+
+	if( restart )
+	    device->counter = 0;
+    }
+
+    /* Call the ADD. */
+
+    {
+	PVOID volatile	p = iorb;		/* s.a. */
+
+	CallADD(device->pADDEntry, p);
+    }
+    DEBMSG(dszR);
+    popf();
+    return;
+}
+#if defined(_MSC_VER)
+# pragma optimize("",on)
+#endif
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Timer Context Processing ****************************************
+ * ******************************************************************* */
+
+
+/*#
+ * StopComplete(iorb)
+ *
+ * PARAMETER
+ *	iorb		STOP IORB completed
+ * RETURNS
+ *	nothing
+ * GLOBAL
+ *	none
+ * DESPRIPTION
+ *	see 'StartComplete'
+ * REMARKS
+ */
+PRIVATE void FAR _saveregs _loadds _Cdecl
+StopComplete(PIORB iorb)
+{
+    NPDEVICE const device = *(NPDEVICE FAR *)iorb->DMWorkSpace;
+
+    DEBMSG(dszStopComplete);
+
+    device->iotype = DSKIO_STOP;
+    device->laststatus = iorb->Status;
+    device->lasterror = iorb->ErrorCode;
+
+    FreeIorb(device);				/* so START can use it */
+    device->blocked = 0;			/* OK, do want you want */
+    return;
+}
+
+
+
+
+/*# -----------------------------------------------------------------------
+ * IssueStop(device)
+ *
+ * PARAMETER
+ *	device		to stop
+ * RETURNS
+ *	nothing
+ * GLOBAL
+ *	none
+ * DESPRIPTION
+ *	Allocates IORB, fills in START STOP UNIT cdb with
+ *	start bit cleared and passes it to ADD.
+ * REMARKS
+ *	Interrupts disabled!
+ */
+#if defined(_MSC_VER)
+# pragma optimize("lge",off)
+#endif
+PUBLIC void NEAR
+IssueStop(NPDEVICE const device)
+{
+    NPIORB_ADAPTER_PASSTHRU const ioadp = AllocateIorb(device);
+
+
+    DEBMSG(dszIssueStop);
+
+    device->counter = device->usSleep;			/* for IOCtls... */
+    device->rst_reason[0] = device->rst_reason[1] = 0; 	/* clear length field */
+
+
+    /* The IORB from unit structure may not be available.
+     * STOP while STARTing? */
+
+    if( ioadp != NULL )
+    {
+	device->stopped = 1;
+	device->blocked = 1;			/* please, no I/Os */
+
+	memset(&device->sensedata, 0, sizeof(SCSI_REQSENSE_DATA));
+	memset(&device->statusblock, 0, sizeof(SCSI_STATUS_BLOCK));
+	device->statusblock.ReqSenseLen = sizeof(SCSI_REQSENSE_DATA);
+	device->statusblock.SenseData = &device->sensedata;
+
+	memset(ioadp, 0, MAX_IORB_SIZE);
+	ioadp->iorbh.Length =		sizeof(IORB_ADAPTER_PASSTHRU);
+	ioadp->iorbh.UnitHandle =	device->hdADDUnit;
+	ioadp->iorbh.CommandCode =	IOCC_ADAPTER_PASSTHRU;
+	ioadp->iorbh.CommandModifier =	IOCM_EXECUTE_CDB;
+	ioadp->iorbh.RequestControl =	IORB_ASYNC_POST | IORB_REQ_STATUSBLOCK;
+	ioadp->iorbh.NotifyAddress =	(PVOID)StopComplete;
+
+	ioadp->iorbh.StatusBlockLen =	sizeof(SCSI_STATUS_BLOCK);
+	ioadp->iorbh.pStatusBlock =	(NPBYTE)&device->statusblock;
+
+	ioadp->pControllerCmd =		device->cdbStop;
+	ioadp->ControllerCmdLen =	6;
+
+	/* To reconstruct which unit this stop command has
+	 * been issued for save pointer in request.  The DM
+	 * workspace will never be used by an ADD and is
+	 * therefore free (there is no DMD either...) */
+
+	*(NPDEVICE FAR *)ioadp->iorbh.DMWorkSpace = device;
+
+	CallADD(device->pADDEntry, &ioadp->iorbh);
+    }
+
+    return;
+}
+#if defined(_MSC_VER)
+# pragma optimize("",on)
+#endif
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * Timer(void)
+ *
+ * PARAMETER
+ *	none
+ * RETURNS
+ *	nothing
+ * GLOBAL
+ *	ulTimer
+ *	anpUnit
+ * DESPRIPTION
+ *	Increments 'counter' in all unit structures
+ *	and sends stop if 'counter' reached limit.
+ * REMARKS
+ *	Called by assembler stub which saves/restores registers
+ *	but doesn't enable interrupts.
+ */
+#if defined(_MSC_VER)
+# pragma optimize("lge",off)
+#endif
+PUBLIC void NEAR _Cdecl
+Timer(void)
+{
+    USHORT i;
+
+    ++ulTimer;					/* free running counter */
+
+    /* Detect unused device */
+
+    for( i = 0; i < cUnit; ++i )
+    {
+	NPDEVICE const dev = anpUnit[i];
+
+	cli();
+	if(  !dev->stopped  &&  dev->usSleep != 0
+	   &&  ++dev->counter >= dev->usSleep )
+	{
+	    IssueStop(dev);
+	}
+	sti();
+    }
+
+    return;
+}
+#if defined(_MSC_VER)
+# pragma optimize("",on)
+#endif
+
+
+
+/* History:
+ *
+ * $Log: iorb.c,v $
+ * Revision 1.16  2001/02/27 22:36:36  vitus
+ * - coded all debugging messages as _inconst
+ * - added APMEventHandler: stopps all disks on suspend
+ *
+ * Revision 1.15  1999/11/29 00:39:52  vitus
+ * - moved all system includes to dsksleep.h
+ *
+ * Revision 1.14  1999/09/17 08:00:46  vitus
+ * - all DEBMSG() calls now use strings located in CONST segment
+ * - StartComplete: _saveregs removed (?)
+ *
+ * Revision 1.13  1998/10/14 00:30:32  vitus
+ * - swiched from SAVE_IF,RESTORE_IF, etc. to cli,st,pushf,popf
+ * - uses CallADD()
+ * - saves reason for restart in DEVICE structure
+ *
+ * Revision 1.12  1997/12/05 01:37:12  vitus
+ * - added WatCom specific code and header
+ * - declared all exported and imported functions as _Cdecl
+ *
+ * Revision 1.11  1997/10/26 00:32:08  vitus
+ * - modified for UnitHandle = pointer
+ *
+ * Revision 1.10  1997/10/11 17:32:41  vitus
+ * - FilterFunction,YankQueue: set UnitHandle of *all* IORBs in linked list
+ *   to ADDs value
+ * - clear IORB with MAX_IORB_SIZE bytes, as most DMD do
+ *
+ * Revision 1.9  1997/08/23 22:26:24  vitus
+ * - saves status and sense values in device structure (IOCtl retrieves)
+ * - IssueStart: now used by INIT code, too
+ *
+ * Revision 1.8  1997/06/18 00:54:29  vitus
+ * - preserve registers when calling other drivers
+ *   or being called from others
+ * - use SAVE_IF,RESTORE_IF to restore interrupt flag
+ *
+ * Revision 1.7  1997/05/11 01:57:44  vitus
+ * - switched from Block/Run to IORB queues (aka HPFS386 problem)
+ * - added debugging messages
+ *
+ * Revision 1.6  1997/04/27 22:30:34  vitus
+ * Added retries if START+TEST failed
+ * StartComplete: beeps if TEST failed
+ * StartComplete: flag updates after FreeIorb
+ *
+ * Revision 1.5  1997/03/03 23:41:27  vitus
+ * StartComplete: issue TEST UNIT READY after START
+ * StartComplete: only successfull TEST UNIT READY resets flags
+ *
+ * Revision 1.4  1996/11/03 23:39:57  vitus
+ * Use timeout from device structure instead of global
+ *
+ * Revision 1.3  1996/10/23 23:41:14  vitus
+ * Added pragma to display MS-C warnings
+ * Allows retries when stopping a device
+ *
+ * Revision 1.2  1996/09/30 00:27:56  vitus
+ * Removed indirection from pointer calls
+ *
+ * Revision 1.1  1996/09/27 03:19:52  vitus
+ * Initial revision
+ */
+@
+
+
+1.16
+log
+@- coded all debugging messages as _inconst
+- added APMEventHandler: stopps all disks on suspend
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.15 $
+ * $Date: 1999/11/29 00:39:52 $
+d18 1
+a18 1
+static char const id[]="$Id: iorb.c,v 1.15 1999/11/29 00:39:52 vitus Exp vitus $";
+a30 8
+/* Fehlt in apmcalls.h, nicht in apmioctl.h: */
+
+#define APM_PWRSTATESTANDBY	0x1
+#define APM_PWRSTATESUSPEND	0x2
+#define APM_PWRSTATEOFF		0x3
+
+
+
+d70 1
+a70 1
+/*#
+d109 1
+a109 1
+/*#
+d132 40
+d185 2
+a186 2
+/*#
+ * QueueIorb(device,iorb)
+d192 1
+a192 1
+ *	nothing
+d194 1
+a194 1
+ *	none
+d232 1
+a232 1
+/*#
+d238 1
+a238 1
+ *	nothing
+d240 1
+a240 1
+ *	none
+a318 2
+    USHORT	i;
+
+d320 2
+a321 1
+    for( i = 0; i < cUnit; ++i )
+d323 3
+a325 1
+	if( anpUnit[i] != 0  &&  !anpUnit[i]->stopped )
+d327 4
+a330 1
+	    IssueStop(anpUnit[i]);
+d333 1
+a334 1
+    fAPMSuspended = 1;                  /* when suspended, refuse any IORB's */
+d580 1
+a580 1
+ * <fkt>
+d583 2
+d586 2
+d594 2
+a595 1
+    USHORT const message = (USHORT)event->ulParm1;
+d598 1
+a598 1
+    if( message == APM_SETPWRSTATE )		/* APMEVENT_SetPowerState */
+d600 1
+a600 1
+	USHORT const	pwrstate = (USHORT)(event->ulParm2 >> 16);
+d604 1
+a604 1
+	  case APM_PWRSTATESUSPEND:		/* APMSTATE_Suspend */
+d607 3
+d615 3
+a617 1
+    else if( message == APM_NORMRESUMEEVENT ||  message == APM_CRITRESUMEEVENT )
+d657 1
+a657 1
+#if defined(DBG)
+d659 2
+d662 5
+d685 5
+a691 10
+
+	iorb->ErrorCode = 0;
+	iorb->Status = IORB_DONE;
+
+	/* Refering to DDK dox an ASYNC_POST is not allowed here
+	 * (only in EXECUTE_IO).  But all samples support it.  So do
+	 * as the rest of them. */
+
+	if( (iorb->RequestControl & IORB_ASYNC_POST) )
+	    CallADD(iorb->NotifyAddress, p);
+d715 1
+a715 6
+	PVOID volatile	p = iorb;
+
+	iorb->ErrorCode = IOERR_UNIT_NOT_ALLOCATED;
+	iorb->Status = IORB_DONE | IORB_ERROR;
+	if( (iorb->RequestControl & IORB_ASYNC_POST) )
+	    CallADD(iorb->NotifyAddress, p);
+d966 4
+@
+
+
+1.15
+log
+@- moved all system includes to dsksleep.h
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.14 $
+ * $Date: 1999/09/17 08:00:46 $
+d15 2
+a16 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1996-99
+d18 1
+a18 1
+static char const id[]="$Id: iorb.c,v 1.14 1999/09/17 08:00:46 vitus Exp vitus $";
+d24 2
+d31 7
+d45 25
+a69 2
+
+
+d177 1
+a177 1
+    DEBMSG("\r\n[QueueIorb] entry");
+d224 1
+a224 1
+    DEBMSG("\r\n[YankQueue] entry");
+d268 66
+d335 2
+a336 1
+/*#
+d345 1
+d347 5
+a351 4
+ *	Called when the ADD completed a START UNIT command.
+ *	Updates flags and unblocks waiting threads.
+ *	Any unblocking/clearing of flags will be done *after* TEST
+ *	UNIT READY verified a correct working drive!
+d364 2
+a365 1
+    DEBMSG("\r\n[StartComplete] entry");
+d368 1
+a368 1
+	DEBMSG("\r\n[StartComplete] START UNIT completed");
+d376 1
+a376 1
+	    DEBMSG1("\r\nSTART UNIT failed, error %w",ioadp->iorbh.ErrorCode);
+d414 1
+a414 1
+	DEBMSG("\r\n[StartComplete] TEST UNIT READY completed");
+d422 1
+a422 1
+	    DEBMSG1("\r\nTEST UNIT READY failed, error %w",ioadp->iorbh.ErrorCode);
+d458 1
+a458 1
+    DEBMSG("\r\n[StartComplete] exit(none)");
+d468 1
+a468 1
+/*#
+d495 1
+a495 1
+    DEBMSG("\r\n[IssueStart] entry");
+d498 1
+a498 1
+	DEBMSG("\r\n[IssueStart] no memory");
+d533 1
+a533 1
+    DEBMSG("\r\n[IssueStart] exit(0)");
+d543 39
+a581 1
+/*#
+d590 1
+d592 6
+a597 7
+ *	Besides returning our own device table (there is none)
+ *	this routine checks whether the addressed device is
+ *	still running and forwards the request to ADD if it is.
+ *	A stopped device is passed to 'IssueStart' and
+ *	forwarding waits until the START completed.
+ *	To prevent I/Os during START or STOP the routine
+ *	checks 'blocked' flag first.
+d610 5
+a614 1
+    /*DEBMSG("\r\n[FilterFunction] entry");*/
+d623 2
+a624 2
+	DEBMSG("\r\nCC Configuration");
+	if( iorb->CommandModifier == IOCM_GET_DEVICE_TABLE )
+d626 2
+a627 1
+	    DEBMSG("\r\nCM Device Table");
+d632 1
+d725 1
+a725 1
+	DEBMSG("C");
+d744 1
+a744 1
+    DEBMSG("R");
+d780 1
+a780 1
+    DEBMSG("\r\n[StopComplete] entry");
+d794 1
+a794 1
+/*#
+d815 7
+a821 1
+    NPIORB_ADAPTER_PASSTHRU ioadp = AllocateIorb(device);
+a822 1
+    DEBMSG("\r\n[IssueStop] entry");
+d870 1
+a870 1
+/*#
+a906 2
+	    dev->counter = dev->usSleep;	/* for IOCtls... */
+	    dev->rst_reason[0] = dev->rst_reason[1] = 0; /* clear length field */
+d923 3
+@
+
+
+1.14
+log
+@- all DEBMSG() calls now use strings located in CONST segment
+- StartComplete: _saveregs removed (?)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.13 $
+ * $Date: 1998/10/14 00:30:32 $
+d16 1
+a16 1
+ * This code is Copyright Vitus Jensen 1996-97
+d18 1
+a18 6
+#pragma off (unreferenced)
+static char const id[]="$Id: iorb.c,v 1.13 1998/10/14 00:30:32 vitus Exp vitus $";
+#pragma on (unreferenced)
+
+
+#include <string.h>
+a21 5
+#include <os2.h>
+
+#include <devcmd.h>
+#include <devclass.h>
+
+a22 12
+#include <reqpkt.h>
+
+#include <scsi.h>
+#include <iorb.h>
+#if defined(__WATCOMC__)
+# include <devhelp.h>
+typedef USHORT NEAR *NPUSHORT;
+typedef VOID   NEAR *NPVOID;
+#else
+# include <dhcalls.h>
+#endif
+
+d31 2
+d46 3
+a48 5
+/*
+ * NAME
+ *	AllocateIorb
+ * CALL
+ *	AllocateIorb(device)
+d85 3
+a87 5
+/*
+ * NAME
+ *	FreeIorb
+ * CALL
+ *	FreeIorb(device)
+d122 2
+a123 4
+ * NAME
+ *	QueueIorb
+ * CALL
+ *	QueueIorb(device,iorb)
+d169 2
+a170 4
+ * NAME
+ *	YankQueue
+ * CALL
+ *	YankQueue(device)
+d237 3
+a239 5
+/*
+ * NAME
+ *	StartComplete
+ * CALL
+ *	StartComplete(iorb)
+d366 3
+a368 5
+/*
+ * NAME
+ *	IssueStart
+ * CALL
+ *	IssueStart(device)
+d441 3
+a443 5
+/*
+ * NAME
+ *	FilterFunction
+ * CALL
+ *	FilterFunction(iorb)
+d616 3
+a618 5
+/*
+ * NAME
+ *	StopComplete
+ * CALL
+ *	StopComplete(iorb)
+d648 3
+a650 5
+/*
+ * NAME
+ *	IssueStop
+ * CALL
+ *	IssueStop(device)
+d719 3
+a721 5
+/*
+ * NAME
+ *	Timer
+ * CALL
+ *	Timer(void)
+d774 4
+@
+
+
+1.13
+log
+@- swiched from SAVE_IF,RESTORE_IF, etc. to cli,st,pushf,popf
+- uses CallADD()
+- saves reason for restart in DEVICE structure
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/sleep/RCS/iorb.c,v $
+ * $Revision: 1.12 $
+ * $Date: 1997/12/05 01:37:12 $
+d19 1
+a19 1
+static char const id[]="$Id: iorb.c,v 1.12 1997/12/05 01:37:12 vitus Exp vitus $";
+a55 16
+#if defined(DEBUG)
+char _inconst	dszYankQueue[]=		"\r\nYankQueue";
+char _inconst	dszQueueIorb[]=		"\r\nQueueIorb";
+char _inconst	dszIssueStart[]=	"\r\nIssueStart()";
+char _inconst	dszStartComplete[]=	"\r\nStartComplete()";
+char _inconst	dszIssueStop[]=		"\r\nIssueStop()";
+char _inconst	dszStopComplete[]=	"\r\nStopComplete()";
+char _inconst	dszTestFailed[]=	"\r\nTEST UNIT READY failed, error %w";
+char _inconst	dszStartFailed[]=	"\r\nSTART UNIT failed, error %w";
+
+char _inconst	dszFilter[]=		"\r\nFilterFunction";
+char _inconst	dszIorbConfig[]=	"\r\nCC Configuration";
+char _inconst	dszIorbDevtab[]=	"\r\nCM Device Table";
+char _inconst	dszCall[]=		"C";
+char _inconst	dszReturn[]=		"R";
+#endif /* DEBUG */
+d171 1
+a171 1
+    DEBMSG(dszQueueIorb);
+d220 1
+a220 1
+    DEBMSG(dszYankQueue);
+d287 1
+a287 1
+PRIVATE void FAR _saveregs _loadds _Cdecl
+d293 1
+a293 1
+    DEBMSG(dszStartComplete);
+d296 2
+d304 1
+a304 1
+	    DEBMSG1(dszStartFailed,ioadp->iorbh.ErrorCode);
+d308 1
+a308 1
+	 * TEST UNIT READY (plus REQUEST SENSE) to clear this state. */
+d342 2
+d350 1
+a350 1
+	    DEBMSG1(dszTestFailed,ioadp->iorbh.ErrorCode);
+d386 1
+d425 1
+a425 1
+    DEBMSG(dszIssueStart);
+d428 1
+d463 1
+d504 1
+a504 1
+    /*DEBMSG(dszFilter);*/
+d513 1
+a513 1
+	DEBMSG(dszIorbConfig);
+d516 1
+a516 1
+	    DEBMSG(dszIorbDevtab);
+d613 1
+a613 1
+	DEBMSG(dszCall);
+d632 1
+a632 1
+    DEBMSG(dszReturn);
+d670 1
+a670 1
+    DEBMSG(dszStopComplete);
+d709 1
+a709 1
+    DEBMSG(dszIssueStop);
+d814 5
+@
+
+
+1.12
+log
+@- added WatCom specific code and header
+- declared all exported and imported functions as _Cdecl
+@
+text
+@d2 3
+a4 3
+ * $Source: e:/source/driver/sleep/RCS/iorb.c,v $
+ * $Revision: 1.11 $
+ * $Date: 1997/10/26 00:32:08 $
+d7 1
+a7 1
+ * Request Time processing	- Timer processing
+d9 4
+a12 4
+ * DDK says we have to saved SI,DI,DS,ES but all code I've seen
+ * only uses 'loadds' restoring only SI,DI,DS (and remember: CorelSCSI
+ * even changed DS!).  Nevertheless I will do a '_saveregs' now and
+ * save/restore all registers when calling other drivers...
+d19 1
+a19 1
+static char const id[]="$Id: iorb.c,v 1.11 1997/10/26 00:32:08 vitus Exp vitus $";
+a36 1
+#include <addcalls.h>
+d106 2
+a107 2
+    SAVE_IF();
+    DISABLE();
+d113 1
+a113 1
+    RESTORE_IF();
+d188 1
+a188 1
+    _far_memset(iorb->ADDWorkSpace, 0, ADD_WORKSPACE_SIZE);
+d190 2
+a191 2
+    SAVE_IF();
+    DISABLE();					/* do not disturb */
+d200 1
+a200 1
+    RESTORE_IF();
+d237 2
+a238 2
+    SAVE_IF();
+    DISABLE();
+d259 1
+a259 3
+	SAVE_REGS();
+	(device->pADDEntry)(iorb);
+	RESTORE_REGS();
+d261 1
+a261 1
+	DISABLE();				/* ADD may have changed */
+d263 1
+a263 1
+    RESTORE_IF();
+d306 2
+a307 2
+    NPDEVICE		device = *(NPDEVICE FAR *)iorb->DMWorkSpace;
+    PIORB_ADAPTER_PASSTHRU ioadp = (PIORB_ADAPTER_PASSTHRU)iorb;
+d310 1
+a310 1
+    if( ioadp->pControllerCmd[0] == 0x1b )	/* START UNIT ? */
+d329 1
+a329 1
+	_far_memset(ioadp, 0, MAX_IORB_SIZE);
+d345 2
+a346 3
+	SAVE_REGS();
+	(device->pADDEntry)(&ioadp->iorbh);
+	RESTORE_REGS();
+d348 2
+d424 1
+d471 2
+a472 3
+    SAVE_REGS();
+    (device->pADDEntry)(&ioadp->iorbh);
+    RESTORE_REGS();
+d501 1
+a510 2
+    PIORB	p;
+    int		i;
+d520 2
+d540 1
+a540 5
+	{
+	    SAVE_REGS();
+	    (iorb->NotifyAddress)(iorb);
+	    RESTORE_REGS();
+	}
+d544 1
+a547 1
+    for( i = 0; i < MAX_UNITS; ++i )
+d549 3
+a551 1
+	if( iorb->UnitHandle == (USHORT)anpUnit[i] )
+d553 9
+a561 7
+	    device = (NPDEVICE)iorb->UnitHandle; /* device structure */
+	    break;
+	}
+	else if( anpUnit[i] == 0 )		/* end of used range */
+	    break;
+    } /* end[for()] */
+
+d564 2
+d569 1
+a569 5
+	{
+	    SAVE_REGS();
+	    (iorb->NotifyAddress)(iorb);
+	    RESTORE_REGS();
+	}
+d577 2
+a578 2
+    SAVE_IF();
+    DISABLE();					/* needed? */
+d582 1
+a582 1
+	RESTORE_IF();
+d588 2
+a589 1
+     * to be started again. */
+a590 1
+    if( device->stopped )			/* interrupts still disabled */
+d592 40
+a631 5
+	device->blocked = 1;			/* no other I/Os */
+	QueueIorb(device, iorb);		/* StartComplete restarts it */
+	IssueStart(device);			/* now START! */
+	RESTORE_IF();
+	return;					/* return to caller */
+d634 4
+d639 2
+a640 12
+    /* Call the ADD for any requests which aren't filtered.
+     * Replace unit handle of filter with unit handle
+     * of ADD (in all IORBs!). */
+
+    DEBMSG(dszCall);
+    for( p = iorb; p != NULL;
+	 p = (p->RequestControl & IORB_CHAIN ? p->pNxtIORB : NULL) )
+	p->UnitHandle = device->hdADDUnit;
+    device->counter = 0;			/* reset counter */
+    SAVE_REGS();
+    (device->pADDEntry)(iorb);
+    RESTORE_REGS();
+d642 1
+a642 1
+    RESTORE_IF();
+d754 1
+a754 3
+	SAVE_REGS();
+	(device->pADDEntry)(&ioadp->iorbh);
+	RESTORE_REGS();
+d801 1
+a801 1
+	DISABLE();
+d806 1
+d809 1
+a809 1
+	ENABLE();
+d823 4
+@
+
+
+1.11
+log
+@- modified for UnitHandle = pointer
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1997/10/11 17:32:41 $
+d18 3
+a20 1
+static char const id[]="$Id: iorb.c,v 1.10 1997/10/11 17:32:41 vitus Exp vitus $";
+d38 7
+a44 2
+
+#include <dhcalls.h>
+d306 1
+a306 1
+PRIVATE void FAR _saveregs _loadds
+d338 1
+a338 1
+	ioadp->iorbh.NotifyAddress =	(PIORB (FAR *)())StartComplete;
+d457 1
+a457 1
+    ioadp->iorbh.NotifyAddress =	(PIORB (FAR *)())StartComplete;
+d508 1
+a508 1
+PUBLIC void FAR _saveregs _loadds
+d556 1
+a556 1
+	    device = (USHORT)iorb->UnitHandle;		/* device structure */
+d648 1
+a648 1
+PRIVATE void FAR _saveregs _loadds
+d713 1
+a713 1
+	ioadp->iorbh.NotifyAddress =	(PIORB (FAR *)())StopComplete;
+d764 1
+a764 1
+PUBLIC void NEAR
+d798 3
+@
+
+
+1.10
+log
+@- FilterFunction,YankQueue: set UnitHandle of *all* IORBs in linked list
+  to ADDs value
+- clear IORB with MAX_IORB_SIZE bytes, as most DMD do
+@
+text
+@d3 3
+a5 3
+ * $Revision: 1.9 $
+ * $Date: 1997/08/23 22:26:24 $
+ * $Locker$
+d18 1
+a18 1
+static char const id[]="$Id: iorb.c,v 1.9 1997/08/23 22:26:24 vitus Exp vitus $";
+d504 1
+a504 1
+    NPDEVICE	device;
+d506 1
+d542 2
+a543 2
+    /* iorb->UnitHandle should be a valid index in
+     * our global table.  If not -> tell caller. */
+d545 12
+a556 1
+    if( iorb->UnitHandle >= cUnit )
+a568 2
+    device = anpUnit[iorb->UnitHandle];		/* device structure */
+
+d597 2
+a598 2
+     * Replace unit handle for filter with unit handle
+     * for the ADD (in all IORBs!). */
+d791 5
+@
+
+
+1.9
+log
+@Saves status and sense values in device structure (IOCtl retrieves)
+IssueStart now used by INIT code, too
+@
+text
+@d3 3
+a5 3
+ * $Revision: 1.8 $
+ * $Date: 1997/06/18 00:54:29 $
+ * $Author: vitus $
+d14 1
+a14 31
+ * $Log: iorb.c,v $
+ * Revision 1.8  1997/06/18 00:54:29  vitus
+ * - preserve registers when calling other drivers
+ *   or being called from others
+ * - use SAVE_IF,RESTORE_IF to restore interrupt flag
+ *
+ * Revision 1.7  1997/05/11 01:57:44  vitus
+ * - switched from Block/Run to IORB queues (aka HPFS386 problem)
+ * - added debugging messages
+ *
+ * Revision 1.6  1997/04/27 22:30:34  vitus
+ * Added retries if START+TEST failed
+ * StartComplete: beeps if TEST failed
+ * StartComplete: flag updates after FreeIorb
+ *
+ * Revision 1.5  1997/03/03 23:41:27  vitus
+ * StartComplete: issue TEST UNIT READY after START
+ * StartComplete: only successfull TEST UNIT READY resets flags
+ *
+ * Revision 1.4  1996/11/03 23:39:57  vitus
+ * Use timeout from device structure instead of global
+ *
+ * Revision 1.3  1996/10/23 23:41:14  vitus
+ * Added pragma to display MS-C warnings
+ * Allows retries when stopping a device
+ *
+ * Revision 1.2  1996/09/30 00:27:56  vitus
+ * Removed indirection from pointer calls
+ *
+ * Revision 1.1  1996/09/27 03:19:52  vitus
+ * Initial revision
+d18 1
+a18 1
+static char const id[]="$Id: iorb.c,v 1.8 1997/06/18 00:54:29 vitus Exp vitus $";
+d235 2
+a236 1
+	PADDWS const ws = (PADDWS)iorb->ADDWorkSpace;
+d245 2
+a246 2
+	/* Make sure the correct unit handle is set and
+	 * call ADD. */
+d248 3
+a250 1
+	iorb->UnitHandle = device->hdADDUnit;
+d325 1
+a325 1
+	_far_memset(ioadp, 0, sizeof(IORB_ADAPTER_PASSTHRU));
+d428 1
+a428 1
+    NPIORB_ADAPTER_PASSTHRU ioadp = AllocateIorb( device );
+d443 1
+a443 1
+    memset(ioadp, 0, sizeof(IORB_ADAPTER_PASSTHRU));
+d502 1
+a502 1
+FilterFunction(PIORB iorb)
+d505 2
+d528 2
+a529 2
+	/* Refering to DDK an ASYNC_POST is not allowed here
+	 * (only EXECUTE_IO).  But all samples support it.  So do
+d588 1
+a588 1
+     * for the ADD */
+d591 3
+a593 1
+    iorb->UnitHandle = device->hdADDUnit;
+d690 1
+a690 1
+	memset(ioadp, 0, sizeof(IORB_ADAPTER_PASSTHRU));
+d775 41
+@
+
+
+1.8
+log
+@- preserve registers when calling other drivers
+  or being called from others
+- use SAVE_IF,RESTORE_IF to restore interrupt flag
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1997/05/11 01:57:44 $
+d15 5
+d48 1
+a48 1
+static char const id[]="$Id: iorb.c,v 1.7 1997/05/11 01:57:44 vitus Exp vitus $";
+d70 1
+a102 10
+ * **** Prototypes (if needed) ******************************************
+ * ******************************************************************* */
+PRIVATE int NEAR	IssueStart(NPDEVICE const device);
+
+
+
+
+
+
+/* **********************************************************************
+d250 1
+d312 1
+a312 1
+ *	nothing
+d314 1
+a314 1
+ *	none
+d318 2
+a319 3
+ *	Any unblocking/clearing of flags will be done
+ *	*after* TEST UNIT READY verified a correct working
+ *	drive!
+d335 4
+d347 6
+a352 1
+	_far_memset( ioadp, 0, sizeof(IORB_ADAPTER_PASSTHRU) );
+d357 1
+a357 1
+	ioadp->iorbh.RequestControl =	IORB_ASYNC_POST;
+d359 4
+d374 1
+d378 4
+d389 1
+a389 1
+	    /*DevHelp_Beep(440, 500);*/
+a391 4
+	    /* There is something more we can do: retry.
+	     * If this isn't possible, clear 'blocked' flag
+	     * and let next I/O call 'IssueStart'. */
+
+d393 11
+a403 2
+	    if( IssueStart(device) )
+		device->blocked = 0;
+d445 1
+d452 1
+a452 1
+PRIVATE int NEAR
+d463 21
+a483 10
+    memset( ioadp, 0, sizeof(IORB_ADAPTER_PASSTHRU) );
+    ioadp->iorbh.Length =	sizeof(IORB_ADAPTER_PASSTHRU);
+    ioadp->iorbh.UnitHandle =	device->hdADDUnit;
+    ioadp->iorbh.CommandCode =	IOCC_ADAPTER_PASSTHRU;
+    ioadp->iorbh.CommandModifier = IOCM_EXECUTE_CDB;
+    ioadp->iorbh.Timeout = START_TIMEOUT;
+    ioadp->iorbh.RequestControl = IORB_ASYNC_POST;
+    ioadp->iorbh.NotifyAddress = (PIORB (FAR *)())StartComplete;
+    ioadp->pControllerCmd =	device->cdbStart;
+    ioadp->ControllerCmdLen =	6;
+d661 3
+a663 2
+    /* Have to use FreeIorb() to unblock waiting threads,
+     * no problems to use it: ProcRun is always possible. */
+d665 1
+a665 1
+    FreeIorb( device );
+d693 1
+a693 1
+PRIVATE void NEAR
+d700 2
+a701 3
+    /* Need the IORB from unit entry structure but can't
+     * use AllocateIorb() because it blocks.  Test/set
+     * flags directly. */
+d708 6
+a713 1
+	memset( ioadp, 0, sizeof(IORB_ADAPTER_PASSTHRU) );
+d718 1
+a718 1
+	ioadp->iorbh.RequestControl =	IORB_ASYNC_POST;
+d720 4
+d788 1
+a788 1
+	    IssueStop( dev );
+@
+
+
+1.7
+log
+@- switched from Block/Run to IORB queues (aka HPFS386 problem)
+- added debugging messages
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1997/04/27 22:30:34 $
+d7 6
+a12 2
+ * Request Time processing
+ * Timer processing
+d15 4
+a39 1
+ *
+d43 1
+a43 1
+static char const id[]="$Id: iorb.c,v 1.6 1997/04/27 22:30:34 vitus Exp vitus $";
+d132 3
+d136 7
+a142 5
+    if( device->iorb_busy )
+	return 0;				/* no IORB... */
+
+    device->iorb_busy = 1;
+    return &device->iorb;
+d209 3
+d218 1
+d228 1
+d231 3
+d255 3
+d264 1
+d282 2
+d285 1
+d289 2
+d293 3
+d327 4
+a330 1
+PRIVATE void FAR _loadds
+d353 1
+a353 1
+	ioadp->iorbh.NotifyAddress =	StartComplete;
+d359 3
+a361 1
+	(device->pADDEntry)( &ioadp->iorbh );
+d403 3
+d429 3
+d450 1
+a450 1
+    ioadp->iorbh.NotifyAddress = StartComplete;
+d461 3
+a463 1
+    (device->pADDEntry)( &ioadp->iorbh );
+d466 3
+d497 1
+a497 1
+PUBLIC void FAR _loadds
+d521 5
+d527 5
+a531 1
+	    (iorb->NotifyAddress)( iorb );
+d543 5
+a547 1
+	    (iorb->NotifyAddress)( iorb );
+d557 1
+d562 1
+d575 1
+d587 1
+d589 1
+d591 1
+a591 1
+
+d623 1
+a623 1
+PRIVATE void FAR _loadds
+d658 3
+d683 1
+a683 1
+	ioadp->iorbh.NotifyAddress =	StopComplete;
+d694 3
+a696 1
+	(device->pADDEntry)( &ioadp->iorbh );
+d701 3
+@
+
+
+1.6
+log
+@Added retries if START+TEST failed
+StartComplete: beeps if TEST failed
+StartComplete: flag updates after FreeIorb
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1997/03/03 23:41:27 $
+d11 5
+d36 1
+a36 1
+static char vcid[]="$Id: iorb.c,v 1.5 1997/03/03 23:41:27 vitus Exp vitus $";
+d64 32
+d98 5
+d111 2
+a112 1
+ *	allocated IORB pointer
+d116 1
+a116 2
+ *	Never fails but stops execution if IORB
+ *	isn't available.
+d122 1
+a122 1
+PRIVATE NPVOID
+d126 3
+a128 6
+    while( device->iorb_busy )
+    {
+	DevHelp_ProcBlock( (ULONG)(PVOID)&device->iorb,
+			  -1L, WAIT_IS_NOT_INTERRUPTABLE );
+	DISABLE();
+    }
+a129 1
+    ENABLE();
+d151 1
+a151 2
+ *	Frees previously allocated IORB and awakens all
+ *	threads waiting for this IORB.
+d154 1
+a154 1
+PRIVATE void
+d157 59
+a215 1
+    USHORT awoken;
+d217 45
+a261 2
+    device->iorb_busy = 0;
+    DevHelp_ProcRun( (ULONG)(PVOID)&device->iorb, &awoken );
+a297 1
+    USHORT		awoken;
+d301 1
+d304 5
+d328 1
+a328 1
+    }
+d331 3
+a333 1
+	int	ok = 1;				/* assume running disk */
+a334 2
+	if( (iorb->Status & IORB_ERROR) )
+	{
+a337 1
+	    ok = 0;				/* tyv„rr, not OK */
+d340 8
+d349 1
+a349 7
+
+	/* Have to use FreeIorb() to unblock waiting threads,
+	 * no problems to use it: ProcRun is always possible. */
+
+	FreeIorb( device );
+
+	if( ok )
+d358 3
+d362 1
+a362 6
+
+	/* Unblock any thread waiting to do I/Os. */
+
+	device->blocked = 0;			/* no longer blocked for I/O */
+	DevHelp_ProcRun( (ULONG)(PVOID)device, &awoken );
+    }
+d378 2
+a379 1
+ *	nothing
+d389 1
+a389 1
+PRIVATE void
+d394 6
+a404 1
+#if defined(START_TIMEOUT)
+a405 1
+#endif
+d419 1
+a419 1
+    return;
+d449 1
+a449 1
+PUBLIC void _loadds FAR
+d454 2
+d461 1
+d464 1
+d492 1
+d494 1
+a494 1
+     * blocked flag).  Wait until it completes. */
+d496 2
+a497 2
+    DISABLE();
+    while( device->blocked )
+d499 2
+a500 3
+	DevHelp_ProcBlock( (ULONG)(PVOID)device,
+			  -1L, WAIT_IS_NOT_INTERRUPTABLE );
+	DISABLE();
+d503 1
+d507 1
+a507 1
+    while( device->stopped )			/* interrupts still disabled */
+d510 3
+a512 11
+	IssueStart( device );
+
+	/* Wait until start completed */
+
+	DISABLE();
+	while( device->blocked )
+	{
+	    DevHelp_ProcBlock( (ULONG)(PVOID)device,
+			      -1L, WAIT_IS_NOT_INTERRUPTABLE );
+	    DISABLE();
+	}
+a513 1
+    ENABLE();
+d520 1
+d524 1
+d562 2
+d592 1
+a592 1
+PRIVATE void
+d595 4
+d603 1
+a603 1
+    if( !device->iorb_busy )
+a604 3
+	NPIORB_ADAPTER_PASSTHRU ioadp = (NPIORB_ADAPTER_PASSTHRU)device->iorb;
+
+	device->iorb_busy = 1;
+d656 1
+a656 1
+PUBLIC void
+@
+
+
+1.5
+log
+@StartComplete: issue TEST UNIT READY after START
+StartComplete: only successfull TEST UNIT READY resets flags
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1996/11/03 23:39:57 $
+d11 4
+d31 1
+a31 1
+static char vcid[]="$Id: iorb.c,v 1.4 1996/11/03 23:39:57 vitus Exp vitus $";
+d152 1
+a152 1
+ *	*after* TEST UNIT READY varified a correct working
+d186 1
+a186 1
+    else					/* REQUEST SENSE */
+d188 3
+a190 1
+	if( !(iorb->Status & IORB_ERROR) )
+d192 2
+a193 2
+	    /* TEST UNIT READY completed without errors,
+	     * clear 'stopped' flag and reset 'counter' to zero. */
+d195 3
+a197 2
+	    device->counter = 0;
+	    device->stopped = 0;
+d205 11
+d355 1
+a355 1
+    if( device->stopped )			/* interrupts still disabled */
+d421 1
+d458 1
+@
+
+
+1.4
+log
+@Use timeout from device structure instead of global
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1996/10/23 23:41:14 $
+d11 3
+d24 2
+a25 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1996
+d27 1
+a27 1
+static char vcid[]="$Id: iorb.c,v 1.3 1996/10/23 23:41:14 vitus Exp vitus $";
+d147 3
+d156 3
+a158 2
+    USHORT	awoken;
+    NPDEVICE	device = *(NPDEVICE FAR *)iorb->DMWorkSpace;
+d160 1
+a160 1
+    if( !(iorb->Status & IORB_ERROR) )
+d162 2
+a163 2
+	/* Start command completed without errors,
+	 * clear 'stopped' flag. */
+d165 16
+a180 1
+	device->stopped = 0;
+d182 10
+d193 2
+a194 2
+    /* Have to use FreeIorb() to unblock waiting threads,
+     * no problems to use it: ProcRun is always possible. */
+d196 1
+a196 1
+    FreeIorb( device );
+d198 1
+a198 1
+    /* Unblock any thread waiting to do I/Os. */
+d200 3
+a202 2
+    device->blocked = 0;			/* no longer blocked for I/O */
+    DevHelp_ProcRun( (ULONG)(PVOID)device, &awoken );
+d238 3
+a438 1
+	device->counter = 0;		/* disable timeout */
+d479 2
+a480 2
+ *	Increments unused counters in all unit structures
+ *	and sends stop if counter reached limit.
+d505 1
+@
+
+
+1.3
+log
+@Added pragma to display MS-C warnings
+Allows retries when stopping a device
+@
+text
+@d2 3
+a4 3
+ * $Source: e:/source/driver/sleep/iorb.c,v $
+ * $Revision: 1.2 $
+ * $Date: 1996/09/30 00:27:56 $
+d11 4
+d24 1
+a24 1
+static char vcid[]="$Id: iorb.c,v 1.2 1996/09/30 00:27:56 vitus Exp vitus $";
+d467 2
+a468 2
+	if(  !dev->stopped
+	   &&  ++dev->counter >= usSleepSeconds )
+@
+
+
+1.2
+log
+@Removed indirection from pointer calls
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1996/09/27 03:19:52 $
+d11 3
+d20 1
+a20 1
+static char vcid[]="$Id: iorb.c,v 1.1 1996/09/27 03:19:52 vitus Exp vitus $";
+d66 3
+d83 3
+d241 3
+d325 3
+d406 1
+a406 1
+	ioadp->iorbh.RequestControl =	IORB_ASYNC_POST | IORB_DISABLE_RETRY;
+d446 3
+d473 3
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Author$
+d10 4
+a13 1
+ * $Log$
+d17 1
+a17 1
+static char vcid[]="$Id$";
+d204 1
+a204 1
+    (*device->pADDEntry)( &ioadp->iorbh );
+d309 1
+a309 1
+    (*device->pADDEntry)(iorb);
+d403 1
+a403 1
+	(*device->pADDEntry)( &ioadp->iorbh );
+@

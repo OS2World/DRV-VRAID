@@ -1,0 +1,13 @@
+
+/* OS/2 Warp 3.0 Resource Script File - Created by Prominare Designer */
+
+#define INCL_WINSYS
+#define INCL_WINBIDI
+#define INCL_WINSTDDLGS
+#define INCL_WINSTDSPIN
+#define INCL_NLS
+#define INCL_SW
+
+#include <os2.h>
+
+#include "\source\driver\raid\setup\resources.h"

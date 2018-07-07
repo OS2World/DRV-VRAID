@@ -1,0 +1,41 @@
+head	1.1;
+access;
+symbols
+	DSLEEPv0_98:1.1
+	DSLEEPv0_95:1.1
+	DSLEEPv0_93:1.1
+	DSLEEPv0_92:1.1
+	DSLEEPv0_91:1.1
+	DSLEEPv0_80:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	97.02.06.00.37.17;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Device Installation Profile
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@* $Id$
+:TITLE
+SCSI Disk Sleeper
+
+:CONFIG
+BASEDEV=DSKSLEEP.FLT
+
+:FILES
+DSKSLEEP.FLT \DSKSLEEP.FLT
+
+* END
+@

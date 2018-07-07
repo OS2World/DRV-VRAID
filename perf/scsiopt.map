@@ -1,0 +1,118 @@
+
+ SCSIOpt
+
+ Start     Length     Name                   Class
+ 0001:0000 00020H     DDHeader               CONST
+ 0001:0020 00000H     CONST                  CONST
+ 0001:0020 0007DH     CONST                  DATA
+ 0001:009E 00000H     CONST2                 DATA
+ 0001:00A0 00000H     LIBDATA                DATA
+ 0001:00A0 081F4H     _DATA                  DATA
+ 0001:8294 00125H     _BSS                   BSS
+ 0002:0000 00000H     LIBCODE                CODE
+ 0002:0000 00000H     CODE                   CODE
+ 0002:0000 02DCEH     _TEXT                  CODE
+ 0003:0000 02002H     SwapData               FAR_DATA
+ 0004:0000 009CBH     INITDATA               FAR_DATA
+ 0004:09D0 00000H     Ioctl11_DATA           FAR_DATA
+ 0004:09D0 00000H     Init111_DATA           FAR_DATA
+ 0004:09D0 00021H     Init112_DATA           FAR_DATA
+ 0004:0A00 00029H     Cmdparse11_DATA        FAR_DATA
+
+ Origin   Group
+ 0001:0   DGROUP
+ 0002:0   StaticGroup
+
+  Address         Publics by Name
+
+ 0002:20ED       Command_Parser_
+ 0002:0325       GenIOCtl_
+ 0002:1BF8       InitBase_
+ 0002:02AE       SaveMessage_
+ 0002:1E0A       sprintk_
+ 0002:2573       ulist_parser_
+ 0004:0000       _achDump
+ 0001:82B0       _cc
+ 0001:78E4       _DeviceTable
+ 0001:00D6       _Device_Help
+ 0001:0000       _DiskDDHeader
+ 0001:00DE       _fDriverFlags
+ 0001:00E0       _hdThisDriver
+ 0001:82B6       _length
+ 0001:00E2       _MemPool
+ 0001:80EC       _msgBuffer
+ 0001:78E2       _npInitData
+ 0001:81E8       _opttable
+ 0001:81B4       _OPT_ADAPTER
+ 0001:81A7       _OPT_DEBUG_DEFAULT
+ 0001:819A       _OPT_DEBUG_NO
+ 0001:81CE       _OPT_DISABLE
+ 0001:81C1       _OPT_ENABLE
+ 0001:81DB       _OPT_END
+ 0001:818D       _OPT_VERBOSE
+ 0001:82A4       _pcmdline1
+ 0001:82A8       _pcmdline_slash
+ 0001:82AC       _pcmdline_start
+ 0001:829C       _pend_option
+ 0001:00DA       _pGlobalInfoSeg
+ 0001:8294       _poutbuf1
+ 0001:82A0       _poutbuf_end
+ 0001:00D2       _ppDiskDDHeader
+ 0001:8298       _ptable_option
+ 0001:7CE4       _ScGaEntry
+ 0001:82B4       _state_index
+ 0002:0011       _Strategy
+ 0001:000A       _szDriverName
+ 0001:7CEC       _szMsgBuffer
+ 0001:82BA       _tokvbuf
+ 0001:82B8       _tokv_index
+ 0004:088B       _UnitOption
+ 0002:0076       __I4D
+ 0002:00C3       __U4D
+
+  Address         Publics by Value
+
+ 0001:0000       _DiskDDHeader
+ 0001:000A       _szDriverName
+ 0001:00D2       _ppDiskDDHeader
+ 0001:00D6       _Device_Help
+ 0001:00DA       _pGlobalInfoSeg
+ 0001:00DE       _fDriverFlags
+ 0001:00E0       _hdThisDriver
+ 0001:00E2       _MemPool
+ 0001:78E2       _npInitData
+ 0001:78E4       _DeviceTable
+ 0001:7CE4       _ScGaEntry
+ 0001:7CEC       _szMsgBuffer
+ 0001:80EC       _msgBuffer
+ 0001:818D       _OPT_VERBOSE
+ 0001:819A       _OPT_DEBUG_NO
+ 0001:81A7       _OPT_DEBUG_DEFAULT
+ 0001:81B4       _OPT_ADAPTER
+ 0001:81C1       _OPT_ENABLE
+ 0001:81CE       _OPT_DISABLE
+ 0001:81DB       _OPT_END
+ 0001:81E8       _opttable
+ 0001:8294       _poutbuf1
+ 0001:8298       _ptable_option
+ 0001:829C       _pend_option
+ 0001:82A0       _poutbuf_end
+ 0001:82A4       _pcmdline1
+ 0001:82A8       _pcmdline_slash
+ 0001:82AC       _pcmdline_start
+ 0001:82B0       _cc
+ 0001:82B4       _state_index
+ 0001:82B6       _length
+ 0001:82B8       _tokv_index
+ 0001:82BA       _tokvbuf
+ 0002:0011       _Strategy
+ 0002:0076       __I4D
+ 0002:00C3       __U4D
+ 0002:02AE       SaveMessage_
+ 0002:0325       GenIOCtl_
+ 0002:1BF8       InitBase_
+ 0002:1E0A       sprintk_
+ 0002:20ED       Command_Parser_
+ 0002:2573       ulist_parser_
+ 0004:0000       _achDump
+ 0004:088B       _UnitOption

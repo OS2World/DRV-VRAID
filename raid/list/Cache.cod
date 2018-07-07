@@ -1,0 +1,845 @@
+
+Module: R:\source\driver\raid\Cache.c
+Group: '_DATA32_GROUP' _DATA32CONST,_DATA32CONST2,_DATA32_DATA,_DATA32_BSS
+
+Segment: _TEXT32  BYTE USE32  0000019e bytes  
+ 0000  24 49 64 24       vcid            DB      24H,49H,64H,24H
+ 0004  00                                DB      00H
+
+/*
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+ *
+ *
+ *	This module administrates a shared memory arena for all
+ *	created caches.
+ *	The memory arena is allocated in one or more linear
+ *	continous ranges, non-swapable to make this cache usable
+ *	in any context.
+ *	OBS: caches aren't physically continous!
+ *
+ * $Log$
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 2001
+ */
+static char const vcid[]="$Id$";
+
+#include <string.h>
+
+#define INCL_NOBASEAPI
+#define INCL_INITRP_ONLY
+#include "os2intf.h"
+
+#include "vraid.h"
+#include "proto.h"
+#include "extern.h"
+
+
+
+
+/* ******************************************************************* *
+ * **** Memory Pool ************************************************** *
+ * ******************************************************************* */
+
+#define MAGIX1		0xAFFE
+#define MAGIX2		0xFACE
+
+
+typedef struct _HEADER {
+    struct _HEADER * 	ptr;
+    USHORT		magix;			/* MAGIX1 */
+    USHORT		size;			/* [HEADER] */
+} HEADER, * PHEADER;
+
+typedef struct _FOOTER {
+    USHORT	magix[2];			/* MAGIX2, ~MAGIX2 */
+    PHEADER	header;
+} FOOTER, * PFOOTER;				/* same size as HEADER! */
+
+
+
+PRIVATE HEADER	base = {0};			/* leere Liste zur Initial. */
+PRIVATE PHEADER	allocp = NULL;			/* letzter vergebener Block */
+PRIVATE ULONG	hlMem = 0;			/* lock handle for above */
+PRIVATE ULONG	hdMemLock = 0;			/* from DevHelp_Lock() */
+
+
+
+
+
+
+#define CACHE_BLKS	32
+
+
+typedef struct {
+    struct {
+	int	valid : 1;
+	int	dirty : 1;
+    };
+
+    char	data[];
+} CACHEBLK, * PCACHEBLK;
+
+
+PRIVATE struct _CACHEDRV {
+    PVRDEVHDR	drv;
+    USHORT	stripesize;
+
+    PCACHEBLK	aBlk[CACHE_BLKS];
+
+} CacheDrv[MAX_PDEV] = {0};
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Private Routines ************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * LinFree(alin)
+ *
+ * PARAMETER
+ *	ap	allocated memory region
+ * RETURNS
+ *	(nothing)
+ * GLOBAL
+ *	allocp
+ * DESCRIPTION
+ *	Frees a previously allocated memory region.
+ *
+ * REMARKS
+ *	From K&R pg 192
+ */
+PUBLIC void _Cdecl
+LinFree(void * const alin)
+{
+    PHEADER const	p = (PHEADER)alin - 1;	/* auf Beschreibung zeigen */
+    PFOOTER const	f = (PFOOTER)(p + p->size - 1);
+    register PHEADER	q;
+
+    ASSERT( p->magix == MAGIX1 );
+    ASSERT( f->magix[0] == MAGIX2 );
+    ASSERT( f->magix[1] == ~MAGIX2 );
+    ASSERT( f->header == p );
+#if defined(DEBUG)
+    memset(alin, 0xCC, p->size+sizeof(FOOTER));
+#endif
+
+ 0005  55                _LinFree        push    ebp
+ 0006  89 e5                             mov     ebp,esp
+ 0008  53                                push    ebx
+
+    LOCK(hlMem);
+ 0009  68 00 00 00 00                    push    offset hlMem
+ 000e  8b 5d 08                          mov     ebx,[ebp+8H]
+ 0011  e8 00 00 00 00                    call    __lock
+
+    for( q = allocp; !(p > q  &&  p < q->ptr); q = q->ptr )
+ 0016  a1 00 00 00 00                    mov     eax,allocp
+ 001b  83 eb 08                          sub     ebx,00000008H
+ 001e  83 c4 04                          add     esp,00000004H
+ 0021  eb 0e                             jmp     L3
+
+	if( q >= q->ptr  &&  (p > q  ||  p < q->ptr) )
+ 0023  3b 00             L1              cmp     eax,[eax]
+ 0025  72 08                             jb      L2
+ 0027  39 c3                             cmp     ebx,eax
+ 0029  77 0e                             ja      L4
+ 002b  3b 18                             cmp     ebx,[eax]
+ 002d  72 0a                             jb      L4
+
+	    break;				/* am einen oder anderen Ende */
+
+ 002f  8b 00             L2              mov     eax,[eax]
+ 0031  39 c3             L3              cmp     ebx,eax
+ 0033  76 ee                             jbe     L1
+ 0035  3b 18                             cmp     ebx,[eax]
+ 0037  73 ea                             jae     L1
+
+    if( p + p->size == q->ptr )
+    {
+	/* Mit Nachfolger kombinieren */
+
+ 0039  0f b7 53 06       L4              movzx   edx,word ptr [ebx+6H]
+ 003d  c1 e2 03                          shl     edx,03H
+ 0040  01 da                             add     edx,ebx
+ 0042  3b 10                             cmp     edx,[eax]
+ 0044  75 0e                             jne     L5
+
+	p->size += q->ptr->size;
+ 0046  66 8b 52 06                       mov     dx,[edx+6H]
+ 004a  66 01 53 06                       add     [ebx+6H],dx
+
+	p->ptr = q->ptr->ptr;
+    }
+ 004e  8b 10                             mov     edx,[eax]
+ 0050  8b 12                             mov     edx,[edx]
+
+    else
+ 0052  eb 02                             jmp     L6
+
+	p->ptr = q->ptr;
+ 0054  8b 10             L5              mov     edx,[eax]
+ 0056  89 13             L6              mov     [ebx],edx
+
+    if( q + q->size == p )
+    {
+	/* Mit Vorg„nger kombinieren */
+
+ 0058  0f b7 50 06                       movzx   edx,word ptr [eax+6H]
+ 005c  c1 e2 03                          shl     edx,03H
+ 005f  01 c2                             add     edx,eax
+ 0061  39 da                             cmp     edx,ebx
+ 0063  75 0e                             jne     L7
+
+	q->size += p->size;
+ 0065  66 8b 53 06                       mov     dx,[ebx+6H]
+ 0069  66 01 50 06                       add     [eax+6H],dx
+
+	q->ptr = p->ptr;
+    }
+ 006d  8b 13                             mov     edx,[ebx]
+ 006f  89 10                             mov     [eax],edx
+
+    else
+ 0071  eb 02                             jmp     L8
+
+	q->ptr = p;
+    allocp = q;
+ 0073  89 18             L7              mov     [eax],ebx
+
+ 0075  68 00 00 00 00    L8              push    offset hlMem
+
+    UNLOCK(hlMem);
+
+    return;
+ 007a  a3 00 00 00 00                    mov     allocp,eax
+ 007f  e8 00 00 00 00                    call    __unlock
+ 0084  83 c4 04                          add     esp,00000004H
+
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * LinAlloc(nbytes)
+ *
+ * PARAMETER
+ *	nbytes			size of object to allocate
+ * RETURNS
+ *	pointer to allocated memory or NULL
+ * GLOBAL
+ *	allocp
+ * DESCRIPTION
+ *	Allocates region of memory.
+ *
+ * REMARKS
+ *	From K&R pg 189
+ */
+PUBLIC void _Cdecl *
+ 0087  8d 65 fc                          lea     esp,[ebp-4H]
+ 008a  5b                                pop     ebx
+ 008b  5d                                pop     ebp
+ 008c  c3                                ret     
+
+LinAlloc(USHORT const nbytes)
+{
+    register PHEADER	p;
+    register PHEADER	q;
+ 008d  55                LinAlloc        push    ebp
+ 008e  89 e5                             mov     ebp,esp
+ 0090  53                                push    ebx
+ 0091  56                                push    esi
+
+    USHORT const	nunits = (1
+				  + (nbytes + sizeof(HEADER) - 1) / sizeof(HEADER)
+				  + 1);		/* includes FOOTER! */
+    void		* result = NULL;	/* default: no room */
+
+ 0092  0f b7 45 08                       movzx   eax,word ptr [ebp+8H]
+ 0096  83 c0 07                          add     eax,00000007H
+ 0099  c1 e8 03                          shr     eax,03H
+ 009c  40                                inc     eax
+ 009d  40                                inc     eax
+
+    LOCK(hlMem);
+ 009e  68 00 00 00 00                    push    offset hlMem
+ 00a3  89 c3                             mov     ebx,eax
+ 00a5  e8 00 00 00 00                    call    __lock
+
+    q = allocp;
+ 00aa  8b 15 00 00 00 00                 mov     edx,allocp
+ 00b0  31 f6                             xor     esi,esi
+ 00b2  83 c4 04                          add     esp,00000004H
+
+    for( p = q->ptr; ; q = p, p = p->ptr )
+    {
+ 00b5  8b 02                             mov     eax,[edx]
+
+	if( p->size >= nunits )			/* groá genug? */
+	{
+ 00b7  66 3b 58 06       L9              cmp     bx,[eax+6H]
+ 00bb  77 44                             ja      L12
+
+	    if( p->size == nunits )		/* passt genau? */
+ 00bd  75 06                             jne     L10
+
+		q->ptr = p->ptr;
+ 00bf  8b 30                             mov     esi,[eax]
+ 00c1  89 32                             mov     [edx],esi
+
+	    else
+	    {
+ 00c3  eb 11                             jmp     L11
+
+		p->size -= nunits;
+ 00c5  66 29 58 06       L10             sub     [eax+6H],bx
+
+		p += p->size;
+ 00c9  0f b7 70 06                       movzx   esi,word ptr [eax+6H]
+ 00cd  c1 e6 03                          shl     esi,03H
+ 00d0  01 f0                             add     eax,esi
+
+		p->size = nunits;
+	    }
+ 00d2  66 89 58 06                       mov     [eax+6H],bx
+
+	    allocp = q;
+	    result = (void *)(p+1);
+	    p->magix = MAGIX1;
+	    {
+ 00d6  89 15 00 00 00 00 L11             mov     allocp,edx
+
+		PFOOTER f = (PFOOTER)(p + p->size - 1);
+
+		f->magix[0] = MAGIX2;
+ 00dc  0f b7 50 06                       movzx   edx,word ptr [eax+6H]
+ 00e0  8d 70 08                          lea     esi,[eax+8H]
+ 00e3  c1 e2 03                          shl     edx,03H
+ 00e6  01 c2                             add     edx,eax
+ 00e8  83 ea 08                          sub     edx,00000008H
+ 00eb  66 c7 40 04 fe af                 mov     word ptr [eax+4H],0affeH
+
+		f->magix[1] = ~MAGIX2;
+ 00f1  66 c7 42 02 31 05                 mov     word ptr [edx+2H],0531H
+
+		f->header = p;
+	    }
+ 00f7  89 42 04                          mov     [edx+4H],eax
+ 00fa  66 c7 02 ce fa                    mov     word ptr [edx],0faceH
+
+	    break;
+	}
+ 00ff  eb 0e                             jmp     L13
+
+	if( p == allocp )			/* einmal rum um freie Liste? */
+	    break;				/* kein Platz mehr frei! */
+ 0101  3b 05 00 00 00 00 L12             cmp     eax,allocp
+ 0107  74 06                             je      L13
+
+    }
+ 0109  89 c2                             mov     edx,eax
+ 010b  8b 00                             mov     eax,[eax]
+ 010d  eb a8                             jmp     L9
+
+    UNLOCK(hlMem);
+
+    return result;
+ 010f  68 00 00 00 00    L13             push    offset hlMem
+ 0114  e8 00 00 00 00                    call    __unlock
+ 0119  83 c4 04                          add     esp,00000004H
+
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Public Entries **************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * <fkt>
+ *
+ * PARAMETER
+ * RETURNS
+ * DESCRIPTION
+ * REMARKS
+ */
+PUBLIC USHORT
+ 011c  89 f0                             mov     eax,esi
+ 011e  8d 65 f8                          lea     esp,[ebp-8H]
+ 0121  5e                                pop     esi
+ 0122  5b                                pop     ebx
+ 0123  5d                                pop     ebp
+ 0124  c3                                ret     
+
+CreateCache(PVRDEVHDR drv, PULONG hdCache, USHORT stripesize)
+{
+    LIN		new;
+    USHORT	rc;
+    int		i;
+
+
+ 0125  55                CreateCache     push    ebp
+ 0126  89 e5                             mov     ebp,esp
+ 0128  50                                push    eax
+
+    rc = AllocateFixed(stripesize * CACHE_BLKS, &new);
+ 0129  8c d0                             mov     ax,ss
+ 012b  0f b7 c0                          movzx   eax,ax
+ 012e  8d 55 fc                          lea     edx,[ebp-4H]
+ 0131  50                                push    eax
+ 0132  0f b7 45 10                       movzx   eax,word ptr [ebp+10H]
+ 0136  52                                push    edx
+ 0137  c1 e0 05                          shl     eax,05H
+ 013a  50                                push    eax
+ 013b  e8 00 00 00 00                    call    _AllocateFixed
+ 0140  83 c4 0c                          add     esp,0000000cH
+
+    if( rc != 0 )
+ 0143  66 85 c0                          test    ax,ax
+ 0146  74 09                             je      L14
+
+	return STATUS_ERR_PAPEROUT;
+
+
+    /* Initialize memory routines. */
+
+    {
+ 0148  b8 09 81 00 00                    mov     eax,00008109H
+ 014d  89 ec                             mov     esp,ebp
+ 014f  5d                                pop     ebp
+ 0150  c3                                ret     
+
+	PHEADER	x = (void *)new;
+
+	/* Noch keine freie Liste */
+
+ 0151  8b 45 fc          L14             mov     eax,[ebp-4H]
+
+	base.ptr = allocp = &base;
+	base.size = 0;
+	x->size = (WORKMEM_SIZE - sizeof(HEADER)) / sizeof(HEADER);
+#if defined(DEBUG)
+	x->magix = MAGIX1;
+	((PFOOTER)(x + x->size - 1))->magix[0] = MAGIX2;
+	((PFOOTER)(x + x->size - 1))->magix[1] = ~MAGIX2;
+	((PFOOTER)(x + x->size - 1))->header = x;
+#endif
+ 0154  c7 05 00 00 00 00 
+       00 00 00 00                       mov     dword ptr allocp,offset base
+ 015e  c7 05 00 00 00 00 
+       00 00 00 00                       mov     dword ptr base,offset base
+
+	LinFree(x+1);
+    }
+
+ 0168  83 c0 08                          add     eax,00000008H
+ 016b  66 c7 05 06 00 00 
+       00 00 00                          mov     word ptr base+6H,0000H
+ 0174  50                                push    eax
+ 0175  66 c7 40 fe 87 13                 mov     word ptr [eax-2H],1387H
+ 017b  e8 00 00 00 00                    call    _LinFree
+ 0180  83 c4 04                          add     esp,00000004H
+
+    for( i = 0; i < MAX_PDEV; ++i )
+    {
+ 0183  31 c0                             xor     eax,eax
+
+	if( CacheDrv[i].drv == NULL )
+	{
+	}
+ 0185  69 d0 86 00 00 00 L15             imul    edx,eax,00000086H
+ 018b  83 ba 00 00 00 00 
+       00                                cmp     dword ptr [edx+CacheDrv],00000000H
+
+    }
+
+
+ 0192  40                                inc     eax
+ 0193  83 f8 18                          cmp     eax,00000018H
+ 0196  7c ed                             jl      L15
+
+    return 0;
+ 0198  31 c0                             xor     eax,eax
+
+}
+
+extern USHORT	DestroyCache(ULONG hdCache);
+ 019a  89 ec                             mov     esp,ebp
+ 019c  5d                                pop     ebp
+ 019d  c3                                ret     
+
+No disassembly errors
+
+------------------------------------------------------------
+
+Segment: _DATA32_DATA  DWORD USE32  00000ca4 bytes  
+ 0000  00 00 00 00 00 00 00 00 base            - ........
+ 0008  00 00 00 00             allocp          - ....
+ 000c  00 00 00 00             hlMem           - ....
+ 0010  00 00 00 00             hdMemLock       - ....
+ 0014  00 00 00 00 00 00 00 00 CacheDrv        - ........
+       --- Above line repeats 401 time(s) --- 
+
+No disassembly errors
+
+------------------------------------------------------------
+
+Segment: $$SYMBOLS  BYTE USE16  0000011e bytes  
+ 0000  0e 12                                   - ..
+ 0002  00 00 00 00 00 00                       DP      base
+ 0008  80 94 62 61 73 65 12 12                 - ..base..
+ 0010  00 00 00 00 00 00                       DP      CacheDrv
+ 0016  80 b4 43 61 63 68 65 44                 - ..CacheD
+ 001e  72 76 0e 12                             - rv..
+ 0022  00 00 00 00 00 00                       DP      hlMem
+ 0028  14 68 6c 4d 65 6d 10 12                 - .hlMem..
+ 0030  00 00 00 00 00 00                       DP      allocp
+ 0036  80 b5 61 6c 6c 6f 63 70                 - ..allocp
+ 003e  12 12                                   - ..
+ 0040  00 00 00 00 00 00                       DP      hdMemLock
+ 0046  14 68 64 4d 65 6d 4c 6f                 - .hdMemLo
+ 004e  63 6b 0e 12                             - ck..
+ 0052  00 00 00 00 00 00                       DP      vcid
+ 0058  80 b6 76 63 69 64 08 32                 - ..vcid.2
+ 0060  05 00 00 00 00 00                       DP      _LinFree
+ 0066  1d 24 00 00 00 00 88 00                 - .$......
+ 006e  00 00 00 00 04 06 04 00                 - ........
+ 0076  00 00 80 b8 00 00 4c 69                 - ......Li
+ 007e  6e 46 72 65 65 0a 11 10                 - nFree...
+ 0086  08 80 b7 61 6c 69 6e 0c                 - ...alin.
+ 008e  23 fa 00 00 00 00 00 00                 - #.......
+ 0096  00 99 00 1f 24 88 00 00                 - ....$...
+ 009e  00 98 00 00 00 00 00 05                 - ........
+ 00a6  07 04 00 00 00 80 ba 30                 - .......0
+ 00ae  1c 00 4c 69 6e 41 6c 6c                 - ..LinAll
+ 00b6  6f 63 0c 11 10 08 80 8f                 - oc......
+ 00be  6e 62 79 74 65 73 0c 23                 - nbytes.#
+ 00c6  80 01 00 00 00 00 00 00                 - ........
+ 00ce  d0 00 21 24 20 01 00 00                 - ..!$ ...
+ 00d6  79 00 00 00 00 00 04 04                 - y.......
+ 00de  04 00 00 00 80 bb 48 00                 - ......H.
+ 00e6  43 72 65 61 74 65 43 61                 - CreateCa
+ 00ee  63 68 65 09 11 10 08 80                 - che.....
+ 00f6  95 64 72 76 0c 11 10 0c                 - .drv....
+ 00fe  32 68 64 43 61 63 68 65                 - 2hdCache
+ 0106  0f 11 10 10 13 73 74 72                 - .....str
+ 010e  69 70 65 73 69 7a 65 09                 - ipesize.
+ 0116  11 10 fc 80 84 6e 65 77                 - .....new
+
+No disassembly errors
+
+------------------------------------------------------------
+
+Segment: $$TYPES  BYTE USE16  000006ea bytes  
+ 0000  06 13 ea 06 00 00 08 11                 - ........
+ 0008  73 74 72 75 63 74 07 11                 - struct..
+ 0010  75 6e 69 6f 6e 06 11 65                 - union..e
+ 0018  6e 75 6d 0e 10 00 73 69                 - num...si
+ 0020  67 6e 65 64 20 63 68 61                 - gned cha
+ 0028  72 10 10 10 75 6e 73 69                 - r...unsi
+ 0030  67 6e 65 64 20 63 68 61                 - gned cha
+ 0038  72 08 10 01 73 68 6f 72                 - r...shor
+ 0040  74 11 10 11 75 6e 73 69                 - t...unsi
+ 0048  67 6e 65 64 20 73 68 6f                 - gned sho
+ 0050  72 74 06 10 03 69 6e 74                 - rt...int
+ 0058  0f 10 13 75 6e 73 69 67                 - ...unsig
+ 0060  6e 65 64 20 69 6e 74 0b                 - ned int.
+ 0068  12 00 07 77 63 68 61 72                 - ...wchar
+ 0070  5f 74 0a 12 00 09 73 69                 - _t....si
+ 0078  7a 65 5f 74 10 10 13 75                 - ze_t...u
+ 0080  6e 73 69 67 6e 65 64 20                 - nsigned 
+ 0088  6c 6f 6e 67 0a 12 00 0c                 - long....
+ 0090  41 50 49 52 45 54 0c 12                 - APIRET..
+ 0098  00 07 41 50 49 52 45 54                 - ..APIRET
+ 00a0  31 36 0c 12 00 0c 41 50                 - 16....AP
+ 00a8  49 52 45 54 33 32 0b 12                 - IRET32..
+ 00b0  00 0c 53 48 41 4e 44 4c                 - ..SHANDL
+ 00b8  45 0b 12 00 0c 4c 48 41                 - E....LHA
+ 00c0  4e 44 4c 45 09 12 00 05                 - NDLE....
+ 00c8  55 43 48 41 52 0a 12 00                 - UCHAR...
+ 00d0  07 55 53 48 4f 52 54 09                 - .USHORT.
+ 00d8  12 00 0c 55 4c 4f 4e 47                 - ...ULONG
+ 00e0  08 12 00 09 55 49 4e 54                 - ....UINT
+ 00e8  08 12 00 05 42 59 54 45                 - ....BYTE
+ 00f0  03 46 05 07 12 00 17 50                 - .F.....P
+ 00f8  53 5a 08 12 00 17 4e 50                 - SZ....NP
+ 0100  53 5a 07 12 00 17 50 43                 - SZ....PC
+ 0108  48 08 12 00 17 4e 50 43                 - H....NPC
+ 0110  48 04 72 08 00 03 46 1c                 - H.r...F.
+ 0118  07 12 00 1d 50 46 4e 03                 - ....PFN.
+ 0120  46 1c 08 12 00 1f 4e 50                 - F.....NP
+ 0128  46 4e 03 46 16 09 12 00                 - FN.F....
+ 0130  21 50 42 59 54 45 0a 12                 - !PBYTE..
+ 0138  00 21 4e 50 42 59 54 45                 - .!NPBYTE
+ 0140  03 46 05 09 12 00 24 50                 - .F....$P
+ 0148  43 48 41 52 03 46 06 0a                 - CHAR.F..
+ 0150  12 00 26 50 53 48 4f 52                 - ..&PSHOR
+ 0158  54 07 10 03 6c 6f 6e 67                 - T...long
+ 0160  03 46 28 09 12 00 29 50                 - .F(...)P
+ 0168  4c 4f 4e 47 03 46 08 08                 - LONG.F..
+ 0170  12 00 2b 50 49 4e 54 03                 - ..+PINT.
+ 0178  46 12 0a 12 00 2d 50 55                 - F....-PU
+ 0180  43 48 41 52 03 46 13 0b                 - CHAR.F..
+ 0188  12 00 2f 50 55 53 48 4f                 - ../PUSHO
+ 0190  52 54 03 46 14 0a 12 00                 - RT.F....
+ 0198  31 50 55 4c 4f 4e 47 03                 - 1PULONG.
+ 01a0  46 15 09 12 00 33 50 55                 - F....3PU
+ 01a8  49 4e 54 07 10 30 76 6f                 - INT..0vo
+ 01b0  69 64 03 46 35 09 12 00                 - id.F5...
+ 01b8  36 50 56 4f 49 44 03 46                 - 6PVOID.F
+ 01c0  37 0a 12 00 38 50 50 56                 - 7...8PPV
+ 01c8  4f 49 44 08 12 00 0c 42                 - OID....B
+ 01d0  4f 4f 4c 03 46 3a 09 12                 - OOL.F:..
+ 01d8  00 3b 50 42 4f 4f 4c 0a                 - .;PBOOL.
+ 01e0  12 00 07 42 4f 4f 4c 31                 - ...BOOL1
+ 01e8  36 03 46 3d 0b 12 00 3e                 - 6.F=...>
+ 01f0  50 42 4f 4f 4c 31 36 07                 - PBOOL16.
+ 01f8  12 00 07 53 45 4c 03 46                 - ...SEL.F
+ 0200  40 08 12 00 41 50 53 45                 - @...APSE
+ 0208  4c 0b 12 00 14 45 52 52                 - L....ERR
+ 0210  4f 52 49 44 03 46 43 0c                 - ORID.FC.
+ 0218  12 00 44 50 45 52 52 4f                 - ..DPERRO
+ 0220  52 49 44 0b 12 00 11 48                 - RID....H
+ 0228  4d 4f 44 55 4c 45 07 12                 - MODULE..
+ 0230  00 11 50 49 44 07 12 00                 - ..PID...
+ 0238  11 54 49 44 09 12 00 11                 - .TID....
+ 0240  48 46 49 4c 45 03 46 49                 - HFILE.FI
+ 0248  0a 12 00 4a 50 48 46 49                 - ...JPHFI
+ 0250  4c 45 08 12 00 13 53 47                 - LE....SG
+ 0258  49 44 03 46 46 0c 12 00                 - ID.FF...
+ 0260  4d 50 48 4d 4f 44 55 4c                 - MPHMODUL
+ 0268  45 03 46 47 08 12 00 4f                 - E.FG...O
+ 0270  50 50 49 44 03 46 48 08                 - PPID.FH.
+ 0278  12 00 51 50 54 49 44 08                 - ..QPTID.
+ 0280  12 00 36 48 53 45 4d 03                 - ..6HSEM.
+ 0288  46 53 09 12 00 54 50 48                 - FS...TPH
+ 0290  53 45 4d 07 12 00 11 48                 - SEM....H
+ 0298  41 42 03 46 56 08 12 00                 - AB.FV...
+ 02a0  57 50 48 41 42 07 12 00                 - WPHAB...
+ 02a8  11 48 50 53 03 46 59 08                 - .HPS.FY.
+ 02b0  12 00 5a 50 48 50 53 07                 - ..ZPHPS.
+ 02b8  12 00 11 48 44 43 03 46                 - ...HDC.F
+ 02c0  5c 08 12 00 5d 50 48 44                 - \...]PHD
+ 02c8  43 08 12 00 11 48 52 47                 - C....HRG
+ 02d0  4e 03 46 5f 09 12 00 60                 - N.F_...`
+ 02d8  50 48 52 47 4e 0b 12 00                 - PHRGN...
+ 02e0  11 48 42 49 54 4d 41 50                 - .HBITMAP
+ 02e8  03 46 62 0c 12 00 63 50                 - .Fb...cP
+ 02f0  48 42 49 54 4d 41 50 07                 - HBITMAP.
+ 02f8  12 00 11 48 4d 46 03 46                 - ...HMF.F
+ 0300  65 08 12 00 66 50 48 4d                 - e...fPHM
+ 0308  46 08 12 00 11 48 50 41                 - F....HPA
+ 0310  4c 03 46 68 09 12 00 69                 - L.Fh...i
+ 0318  50 48 50 41 4c 09 12 00                 - PHPAL...
+ 0320  28 43 4f 4c 4f 52 03 46                 - (COLOR.F
+ 0328  6b 0a 12 00 6c 50 43 4f                 - k...lPCO
+ 0330  4c 4f 52 09 12 00 28 46                 - LOR...(F
+ 0338  49 58 45 44 03 46 6e 0a                 - IXED.Fn.
+ 0340  12 00 6f 50 46 49 58 45                 - ..oPFIXE
+ 0348  44 04 20 07 05 08 12 00                 - D. .....
+ 0350  71 53 54 52 38 03 46 72                 - qSTR8.Fr
+ 0358  09 12 00 73 50 53 54 52                 - ...sPSTR
+ 0360  38 03 46 18 10 12 00 75                 - 8.F....u
+ 0368  50 44 45 56 4f 50 45 4e                 - PDEVOPEN
+ 0370  44 41 54 41 0a 12 00 36                 - DATA...6
+ 0378  4d 50 41 52 41 4d 03 46                 - MPARAM.F
+ 0380  77 0b 12 00 78 50 4d 50                 - w...xPMP
+ 0388  41 52 41 4d 0b 12 00 36                 - ARAM...6
+ 0390  4d 52 45 53 55 4c 54 03                 - MRESULT.
+ 0398  46 7a 0c 12 00 7b 50 4d                 - Fz...{PM
+ 03a0  52 45 53 55 4c 54 08 12                 - RESULT..
+ 03a8  00 11 48 57 4e 44 03 46                 - ..HWND.F
+ 03b0  7d 09 12 00 7e 50 48 57                 - }...~PHW
+ 03b8  4e 44 07 12 00 11 48 4d                 - ND....HM
+ 03c0  51 03 46 11 09 12 00 80                 - Q.F.....
+ 03c8  81 50 48 4d 51 0c 12 00                 - .PHMQ...
+ 03d0  11 48 50 4f 49 4e 54 45                 - .HPOINTE
+ 03d8  52 07 12 00 14 4c 49 4e                 - R....LIN
+ 03e0  03 47 14 09 12 00 80 85                 - .G......
+ 03e8  50 4c 49 4e 0c 12 00 2f                 - PLIN.../
+ 03f0  4e 50 55 53 48 4f 52 54                 - NPUSHORT
+ 03f8  0a 12 00 36 4e 50 56 4f                 - ...6NPVO
+ 0400  49 44 0d 12 00 13 44 52                 - ID....DR
+ 0408  56 53 54 41 54 55 53 04                 - VSTATUS.
+ 0410  20 05 12 0a 12 00 80 8a                 -  .......
+ 0418  44 45 56 49 44 04 46 80                 - DEVID.F.
+ 0420  8b 0b 12 00 80 8c 50 44                 - ......PD
+ 0428  45 56 49 44 09 12 00 36                 - EVID...6
+ 0430  50 56 4f 49 44 0a 12 00                 - PVOID...
+ 0438  07 55 53 48 4f 52 54 0b                 - .USHORT.
+ 0440  12 00 2d 4e 50 55 43 48                 - ..-NPUCH
+ 0448  41 52 0c 12 01 80 93 5f                 - AR....._
+ 0450  48 45 41 44 45 52 04 46                 - HEADER.F
+ 0458  80 91 08 60 03 00 08 00                 - ...`....
+ 0460  00 00 08 61 06 13 73 69                 - ...a..si
+ 0468  7a 65 09 61 04 13 6d 61                 - ze.a..ma
+ 0470  67 69 78 08 61 00 80 92                 - gix.a...
+ 0478  70 74 72 0b 12 00 80 91                 - ptr.....
+ 0480  48 45 41 44 45 52 0e 12                 - HEADER..
+ 0488  00 80 ac 50 56 52 44 45                 - ...PVRDE
+ 0490  56 48 44 52 0a 12 01 80                 - VHDR....
+ 0498  9d 5f 56 52 49 4f 04 46                 - ._VRIO.F
+ 04a0  80 96 0a 12 00 80 97 50                 - .......P
+ 04a8  56 52 49 4f 08 60 02 00                 - VRIO.`..
+ 04b0  08 00 00 00 0e 61 04 14                 - .....a..
+ 04b8  58 66 65 72 42 75 66 4c                 - XferBufL
+ 04c0  65 6e 0d 61 00 14 70 70                 - en.a..pp
+ 04c8  58 66 65 72 42 75 66 12                 - XferBuf.
+ 04d0  12 01 80 99 5f 53 43 41                 - ...._SCA
+ 04d8  54 47 41 54 45 4e 54 52                 - TGATENTR
+ 04e0  59 04 46 80 9a 12 12 00                 - Y.F.....
+ 04e8  80 9b 50 53 43 41 54 47                 - ..PSCATG
+ 04f0  41 54 45 4e 54 52 59 08                 - ATENTRY.
+ 04f8  60 0d 00 28 00 00 00 07                 - `..(....
+ 0500  61 24 14 62 6c 6b 08 61                 - a$.blk.a
+ 0508  22 13 62 63 6e 74 0a 61                 - ".bcnt.a
+ 0510  20 13 6f 66 66 73 65 74                 -  .offset
+ 0518  0c 61 1c 14 70 70 53 47                 - .a..ppSG
+ 0520  4c 69 73 74 0c 61 18 80                 - List.a..
+ 0528  9c 70 53 47 4c 69 73 74                 - .pSGList
+ 0530  0b 61 16 13 63 53 47 4c                 - .a..cSGL
+ 0538  69 73 74 09 61 14 13 69                 - ist.a..i
+ 0540  6f 63 6d 64 09 61 12 13                 - ocmd.a..
+ 0548  6f 73 65 72 72 0c 61 10                 - oserr.a.
+ 0550  13 63 68 69 6c 64 72 65                 - .childre
+ 0558  6e 0b 61 0c 80 98 6d 6f                 - n.a...mo
+ 0560  74 68 65 72 08 61 08 37                 - ther.a.7
+ 0568  69 6f 72 62 09 61 04 80                 - iorb.a..
+ 0570  98 6c 69 6e 6b 08 61 00                 - .link.a.
+ 0578  80 95 76 72 64 04 46 80                 - ..vrd.F.
+ 0580  96 0a 12 00 80 9e 50 56                 - ......PV
+ 0588  52 49 4f 06 72 35 01 80                 - RIO.r5..
+ 0590  9f 04 46 80 a0 0e 12 01                 - ..F.....
+ 0598  80 ab 5f 56 52 44 45 56                 - .._VRDEV
+ 05a0  48 44 52 04 46 80 a2 0e                 - HDR.F...
+ 05a8  12 00 80 a3 50 56 52 44                 - ....PVRD
+ 05b0  45 56 48 44 52 08 72 13                 - EVHDR.r.
+ 05b8  02 80 a4 80 9f 04 46 80                 - ......F.
+ 05c0  a5 08 72 13 02 80 a4 80                 - ..r.....
+ 05c8  8e 04 46 80 a7 0d 72 80                 - ..F...r.
+ 05d0  89 04 80 a4 80 8f 80 8e                 - ........
+ 05d8  80 8e 04 46 80 a9 08 60                 - ...F...`
+ 05e0  09 00 1f 00 00 00 0a 61                 - .......a
+ 05e8  1b 80 aa 69 6f 63 74 6c                 - ...ioctl
+ 05f0  0b 61 17 80 a8 75 70 64                 - .a...upd
+ 05f8  61 74 65 0b 61 13 80 a6                 - ate.a...
+ 0600  77 6f 72 6b 65 72 0b 61                 - worker.a
+ 0608  0f 80 a1 6e 6f 74 69 66                 - ...notif
+ 0610  79 08 61 0b 14 73 69 7a                 - y.a..siz
+ 0618  65 0b 61 09 13 62 75 73                 - e.a..bus
+ 0620  79 63 6e 74 09 61 07 13                 - ycnt.a..
+ 0628  69 6f 63 6e 74 09 61 06                 - iocnt.a.
+ 0630  12 66 6c 61 67 73 07 61                 - .flags.a
+ 0638  00 80 8b 69 64 04 46 80                 - ...id.F.
+ 0640  a2 04 20 00 05 08 60 03                 - .. ...`.
+ 0648  00 04 00 00 00 09 61 04                 - ......a.
+ 0650  80 ad 64 61 74 61 0b 64                 - ..data.d
+ 0658  00 01 01 08 64 69 72 74                 - ....dirt
+ 0660  79 0b 64 00 00 01 08 76                 - y.d....v
+ 0668  61 6c 69 64 04 46 80 ae                 - alid.F..
+ 0670  0e 12 00 80 af 50 43 41                 - .....PCA
+ 0678  43 48 45 42 4c 4b 05 20                 - CHEBLK. 
+ 0680  1f 80 b0 08 60 03 00 86                 - ....`...
+ 0688  00 00 00 09 61 06 80 b1                 - ....a...
+ 0690  61 42 6c 6b 0e 61 04 13                 - aBlk.a..
+ 0698  73 74 72 69 70 65 73 69                 - stripesi
+ 06a0  7a 65 08 61 00 80 95 64                 - ze.a...d
+ 06a8  72 76 0e 12 01 80 b2 5f                 - rv....._
+ 06b0  43 41 43 48 45 44 52 56                 - CACHEDRV
+ 06b8  05 20 17 80 b3 0c 12 00                 - . ......
+ 06c0  80 92 50 48 45 41 44 45                 - ..PHEADE
+ 06c8  52 04 20 04 05 03 46 35                 - R. ...F5
+ 06d0  06 72 35 01 80 b7 03 46                 - .r5....F
+ 06d8  35 07 72 80 b9 01 80 8f                 - 5.r.....
+ 06e0  08 72 13 03 80 95 32 13                 - .r....2.
+ 06e8  02 14                                   - ..
+
+No disassembly errors
+
+------------------------------------------------------------
+
+Segment: $$TYPES  BYTE USE16  00000225 bytes  
+ 0000  00 00 13 00 00 00 1e 00                 - ........
+ 0008  37 00 57 00 6a 00 80 00                 - 7.W.j...
+ 0010  96 00 ac 00 c2 00 da 00                 - ........
+ 0018  f1 00 08 01 1f 01 44 01                 - ......D.
+ 0020  62 01 84 01 a7 01 be 01                 - b.......
+ 0028  dc 01 52 3a 5c 73 6f 75                 - ..R:\sou
+ 0030  72 63 65 5c 64 72 69 76                 - rce\driv
+ 0038  65 72 5c 72 61 69 64 5c                 - er\raid\
+ 0040  43 61 63 68 65 2e 63 00                 - Cache.c.
+ 0048  52 3a 5c 64 65 76 5c 77                 - R:\dev\w
+ 0050  61 74 63 6f 6d 5c 48 5c                 - atcom\H\
+ 0058  73 74 72 69 6e 67 2e 68                 - string.h
+ 0060  00 52 3a 5c 73 6f 75 72                 - .R:\sour
+ 0068  63 65 5c 64 72 69 76 65                 - ce\drive
+ 0070  72 5c 72 61 69 64 5c 6f                 - r\raid\o
+ 0078  73 32 69 6e 74 66 2e 68                 - s2intf.h
+ 0080  00 52 3a 5c 44 65 76 5c                 - .R:\Dev\
+ 0088  44 64 6b 5c 48 5c 6f 73                 - Ddk\H\os
+ 0090  32 2e 68 00 52 3a 5c 44                 - 2.h.R:\D
+ 0098  65 76 5c 44 64 6b 5c 48                 - ev\Ddk\H
+ 00a0  5c 6f 73 32 64 65 66 2e                 - \os2def.
+ 00a8  68 00 52 3a 5c 44 65 76                 - h.R:\Dev
+ 00b0  5c 44 64 6b 5c 48 5c 64                 - \Ddk\H\d
+ 00b8  65 76 63 6d 64 2e 68 00                 - evcmd.h.
+ 00c0  52 3a 5c 44 65 76 5c 44                 - R:\Dev\D
+ 00c8  64 6b 5c 48 5c 73 74 72                 - dk\H\str
+ 00d0  61 74 32 2e 68 00 52 3a                 - at2.h.R:
+ 00d8  5c 44 65 76 5c 44 64 6b                 - \Dev\Ddk
+ 00e0  5c 48 5c 72 65 71 70 6b                 - \H\reqpk
+ 00e8  74 2e 68 00 52 3a 5c 44                 - t.h.R:\D
+ 00f0  65 76 5c 44 64 6b 5c 48                 - ev\Ddk\H
+ 00f8  5c 64 65 76 63 6c 61 73                 - \devclas
+ 0100  73 2e 68 00 52 3a 5c 44                 - s.h.R:\D
+ 0108  65 76 5c 44 64 6b 5c 48                 - ev\Ddk\H
+ 0110  5c 64 73 6b 69 6e 69 74                 - \dskinit
+ 0118  2e 68 00 52 3a 5c 44 65                 - .h.R:\De
+ 0120  76 5c 44 64 6b 5c 48 5c                 - v\Ddk\H\
+ 0128  69 6e 66 6f 73 65 67 2e                 - infoseg.
+ 0130  68 00 52 3a 5c 44 65 76                 - h.R:\Dev
+ 0138  5c 44 64 6b 5c 48 5c 64                 - \Ddk\H\d
+ 0140  65 76 68 65 6c 70 2e 68                 - evhelp.h
+ 0148  00 52 3a 5c 44 65 76 5c                 - .R:\Dev\
+ 0150  44 64 6b 5c 53 72 63 5c                 - Ddk\Src\
+ 0158  44 65 76 5c 44 61 73 64                 - Dev\Dasd
+ 0160  5c 44 69 73 6b 68 5c 69                 - \Diskh\i
+ 0168  6f 72 62 2e 68 00 52 3a                 - orb.h.R:
+ 0170  5c 73 6f 75 72 63 65 5c                 - \source\
+ 0178  64 72 69 76 65 72 5c 72                 - driver\r
+ 0180  61 69 64 5c 76 72 61 69                 - aid\vrai
+ 0188  64 2e 68 00 52 3a 5c 73                 - d.h.R:\s
+ 0190  6f 75 72 63 65 5c 64 72                 - ource\dr
+ 0198  69 76 65 72 5c 72 61 69                 - iver\rai
+ 01a0  64 5c 64 73 6b 6c 61 79                 - d\dsklay
+ 01a8  6f 75 74 2e 68 00 52 3a                 - out.h.R:
+ 01b0  5c 73 6f 75 72 63 65 5c                 - \source\
+ 01b8  64 72 69 76 65 72 5c 72                 - driver\r
+ 01c0  61 69 64 5c 64 65 76 73                 - aid\devs
+ 01c8  74 72 75 63 74 73 2e 68                 - tructs.h
+ 01d0  00 52 3a 5c 44 65 76 5c                 - .R:\Dev\
+ 01d8  44 64 6b 5c 48 5c 69 6e                 - Ddk\H\in
+ 01e0  63 6c 75 64 65 2e 68 00                 - clude.h.
+ 01e8  52 3a 5c 73 6f 75 72 63                 - R:\sourc
+ 01f0  65 5c 64 72 69 76 65 72                 - e\driver
+ 01f8  5c 72 61 69 64 5c 70 72                 - \raid\pr
+ 0200  6f 74 6f 2e 68 00 52 3a                 - oto.h.R:
+ 0208  5c 73 6f 75 72 63 65 5c                 - \source\
+ 0210  64 72 69 76 65 72 5c 72                 - driver\r
+ 0218  61 69 64 5c 65 78 74 65                 - aid\exte
+ 0220  72 6e 2e 68 00                          - rn.h.
+
+No disassembly errors
+
+------------------------------------------------------------

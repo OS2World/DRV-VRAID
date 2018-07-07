@@ -1,0 +1,6480 @@
+head	4.1;
+access;
+symbols
+	vrflt031113:3.8
+	vrflt010903:3.7
+	PREV010803:3.6
+	VRAIDv0_85:3.4
+	VRAIDv0_84:3.3
+	VRAIDv0_82:3.3
+	VRAIDv0_70:2.5
+	VRAIDv0_60:1.8
+	VRAIDv0_51:1.7
+	VRAIDv0_50:1.6
+	VRAIDv0_40:1.6
+	VRAIDv0_30:1.5
+	ALPHA1:1.4;
+locks; strict;
+comment	@ * @;
+
+
+4.1
+date	2005.06.17.05.54.29;	author vitus;	state Exp;
+branches;
+next	3.8;
+
+3.8
+date	2003.11.14.00.35.27;	author vitus;	state Exp;
+branches;
+next	3.7;
+
+3.7
+date	2001.09.03.02.56.33;	author vitus;	state Exp;
+branches;
+next	3.6;
+
+3.6
+date	2001.08.03.02.19.03;	author vitus;	state Exp;
+branches;
+next	3.5;
+
+3.5
+date	2001.07.22.00.32.01;	author vitus;	state Exp;
+branches;
+next	3.4;
+
+3.4
+date	2001.06.25.00.28.38;	author vitus;	state Exp;
+branches;
+next	3.3;
+
+3.3
+date	2000.04.09.12.24.22;	author vitus;	state Exp;
+branches;
+next	3.2;
+
+3.2
+date	99.12.14.00.35.49;	author vitus;	state Exp;
+branches;
+next	3.1;
+
+3.1
+date	99.09.23.23.06.47;	author vitus;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	99.06.22.00.06.01;	author vitus;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	99.06.15.22.43.29;	author vitus;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	99.06.06.23.34.42;	author vitus;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	99.05.26.00.40.22;	author vitus;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	99.05.24.19.23.05;	author vitus;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	99.05.24.00.46.29;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	99.05.11.23.48.19;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.04.21.00.29.16;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.01.22.02.53.49;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	98.12.13.23.02.24;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	98.11.05.22.40.49;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	98.09.20.15.18.29;	author vitus;	state Stab;
+branches;
+next	1.5;
+
+1.5
+date	98.06.26.22.33.14;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	98.05.29.01.42.58;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.04.08.01.09.03;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.03.10.02.27.06;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.03.06.01.25.12;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@First step of initialization
+@
+
+
+4.1
+log
+@- added New BSD license statement
+- removed tabs
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/RCS/init1.c,v $
+ * $Revision: 3.8 $
+ * $Date: 2003/11/14 00:35:27 $
+ * $Locker: vitus $
+ *
+ *      First step of initialization, executed at ring 0 in protected
+ *      mode as the only running process.
+ *
+ * History:
+ * $Log: init1.c,v $
+ * Revision 3.8  2003/11/14 00:35:27  vitus
+ * - NORAID5: prohibits calls to Raid5Create().  To build old versions...
+ *
+ * Revision 3.7  2001/09/03 02:56:33  vitus
+ * - corrected setting of AF_NOT16M flag
+ * - calls Raid5Create()
+ *
+ * Revision 3.6  2001/08/03 02:19:03  vitus
+ * - update fADDFlags with ADD specific restrictions
+ *
+ * Revision 3.5  2001/07/22 00:32:01  vitus
+ * - allocates another context hook which executes UpdateBuilds()
+ *
+ * Revision 3.4  2001/06/25 00:28:38  vitus
+ * - allocates context hook which executes MemoryHook()
+ *
+ * Revision 3.3  2000/04/09 12:24:22  vitus
+ * - handles VRAID partitions inside extended partitions
+ * - handles /[!]SHARE and doesn't install router if not requested
+ *
+ * Revision 3.2  1999/12/14 00:35:49  vitus
+ * - added ValidateVSec2() from mirror.c
+ *
+ * Revision 3.1  1999/09/23 23:06:47  vitus
+ * - defined all DBGMSG() strings as located in CONST segment
+ * - implemented InstallRouter(), installs a BASEDISK for every PHYSDEVICE found
+ * - all shortterm memory is now allocated via routines from memory.c.  We
+ *   had a memory-overwrite problem (in inter-release versions)
+ *
+ * Revision 2.5  1999/06/22 00:06:01  vitus
+ * - calls ReleaseWorkmem() when initialization failed (hangs the machine w/o)
+ *
+ * Revision 2.4  1999/06/15 22:43:29  vitus
+ * - BuildDevTree: changed the way device pointers are temporaly saved.  It was
+ *   impossible to create a parent from child just created in the same loop.
+ *   Switching from two to a single table made it possible.
+ *
+ * Revision 2.3  1999/06/06 23:34:42  vitus
+ * - changed key calculation to use XOR and include previous characters
+ * - checks and display demo keys
+ *
+ * Revision 2.2  1999/05/26 00:40:22  vitus
+ * - BuildDevTee: AnalyseVRDev[2] and *Create() return/handle 0 (OK), >0 (creation
+ *   deferred) and <0 (error) values.
+ *
+ * Revision 2.1  1999/05/24 19:23:05  vitus
+ * - *Create() may return 0 (OK), >0 (quiet fail) or <0 (load fail)
+ *
+ * Revision 1.12  1999/05/24 00:46:29  vitus
+ * - ignore any disks which contain a VRAID partition but no PHYSDEVICE sector.  User
+ *   may try to destroy any VRAID traces of those drives.
+ *
+ * Revision 1.11  1999/05/11 23:48:19  vitus
+ * - moved CRC code to memory.c
+ *
+ * Revision 1.10  1999/04/21 00:29:16  vitus
+ * - switched from PhysdevPartIO() and offset calculation
+ *   to ProcessAdminIO() and offset 1 (fix!)
+ *
+ * Revision 1.9  1999/01/22 02:53:49  vitus
+ * - added support if VRAIDEVICE2 sectors (preliminary)
+ *
+ * Revision 1.8  1998/12/13 23:02:24  vitus
+ * - CheckReqistration: now sets global variable 'uRegLevel' (1-3)
+ * - changes for removed elements from HOSTDRIVE (flags, vrd, size)
+ *
+ * Revision 1.7  1998/11/05 22:40:49  vitus
+ * - addred registration code
+ * - LocalSendIORB: check ProcBlock return code
+ *
+ * Revision 1.6  1998/09/20 15:18:29  vitus
+ * - modified for AllocateVrio(working_dev,mother)
+ * - added timebombed code
+ * - collects minimum of MaxHWSGList and MaxCDBTransferLength
+ *
+ * Revision 1.5  1998/06/26 22:33:14  vitus
+ * - switched to DDK macros (cli, sti, pushf)
+ * - first scanning now build PHYSDEVICE devices (VerifyDiskData checks
+ *   SEC_PHYSDEV) and BuildDevTree uses PhysdevPartIO() on that devices.
+ *
+ * Revision 1.4  1998/05/29 01:42:58  vitus
+ * - changed all INFMSG to DEBMSG(DBG_LEVEL4,...)
+ *
+ * Revision 1.3  1998/04/08 01:09:03  vitus
+ * - added CRC16 calculation
+ * - only excepts UIB_TYPE_DISK
+ * - corrected IORB handling when using created PHYSDEVICEs
+ * - corrected adapter index calculation
+ * - moved initialization of memory routines
+ * - test successfull (single, chain)
+ *
+ * Revision 1.2  1998/03/10 02:27:06  vitus
+ * - BuildDevTree: calls PUBLIC *Create() functions per device type
+ *
+ * Revision 1.1  1998/03/06 01:25:12  vitus
+ * Initial revision
+ * ---------------------------------------------
+ *      Copyright (c) 1998-2001,2005, Vitus Jensen
+ *      All rights reserved.
+ *
+ *      Redistribution and use in source and binary forms, with or without
+ *      modification, are permitted provided that the following conditions are
+ *      met:
+ *
+ *          * Redistributions of source code must retain the above copyright
+ *            notice, this list of conditions and the following disclaimer.
+ *          * Redistributions in binary form must reproduce the above copyright
+ *            notice, this list of conditions and the following disclaimer in
+ *            the documentation and/or other materials provided with the
+ *            distribution.
+ *          * Neither the name of Vitus Jensen nor the names of its
+ *            contributors may be used to endorse or promote products derived
+ *            from this software without specific prior written permission.
+ *
+ *      THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *      "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *      LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *      A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *      OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *      SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *      LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *      DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *      THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *      (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *      OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+#if defined(__WATCOMC__)
+# pragma off (unreferenced)
+#endif
+static char const id[]="$Id: init1.c,v 3.8 2003/11/14 00:35:27 vitus Exp vitus $";
+#if defined(__WATCOMC__)
+# pragma on (unreferenced)
+#endif
+
+#include <string.h>
+
+#define INCL_DOSERRORS
+#define INCL_INITRP_ONLY
+#include "os2intf.h"
+#include "cmdphdr.h"
+
+#include "vraid.h"
+#include "proto.h"
+#include "extern.h"
+
+extern PASCAL NEAR MemoryHook();
+extern PASCAL NEAR BuildHook();
+
+
+/* locally used error codes */
+
+#define ERR_NO_MEM              ((USHORT)-1)
+#define ERR_NO_VRAIDPART        ((USHORT)-2)
+#define ERR_BAD_PHYSDEV         ((USHORT)-3)
+#define ERR_XLATION_FAIL        ((USHORT)-4)
+#define ERR_BAD_REGLEVEL        ((USHORT)-5)
+#define ERR_UNKNOWN_RTYPE       ((USHORT)-6)
+
+
+
+
+
+/*
+ * Macro to allocate *permanent* data from memory pool.
+ * OBS: to free this memory decrement 'npInitData' by the amount
+ * allocated.  Be sure to undo it inverse.
+ */
+#define GETINITRAM(p,type,size) (p=(type)npInitData,npInitData+=(size))
+
+
+
+
+/*
+ * Messages used during initialization
+ *
+ * 1. error messages start with driver name as they are
+ * displayed even if '/V' isn't used.
+ */
+INITMSG szErrorVAddr[]=         "%s: error converting virtual to physical address";
+INITMSG szNoMem[]=              "%s: error getting permanent memory";
+INITMSG szNoDriverTab[]=        "%s: error retrieving driver table";
+INITMSG szNoDevTab[]=           "%s: error retrieving device table from ADD %u (0x%x)";
+INITMSG szAllocFailed[]=        "%s: adapter %u, unit %u allocation failed (0x%x)";
+INITMSG szDeallocFailed[]=      "%s: adapter %u, unit %u, deallocation failed";
+
+INITMSG szReadFailed[]=         "%s: adapter %u, unit %u READ failed (%04x)";
+INITMSG szReadFailed2[]=        "%s: phys %u, admin. sector %lu READ failed (%04x)";
+INITMSG szAdminDestroyed[]=     "%s: phys %u, admin. sector %lu destroyed";
+INITMSG szAdminUnknown[]=       "%s: phys %u, unknown format of admin. sector";
+
+INITMSG szRegDevClassFailed[]=  "%s: error registering device class";
+INITMSG szNoTimer[]=            "%s: error registrating timer routine";
+INITMSG szBadPhysdevSector[]=   "%s: adapter %u, unit %u, PHYSDEV definition destroyed, device ignored";
+INITMSG szCreateFail[]=         "%s: creation of VRAID device failed";
+
+INITMSG szUnknownRType[]=       "%s: unknown RDTYPE %u, drive ignored";
+INITMSG szMirrorNotReg[]=       "%s: MIRROR defined but driver isn't registrated for MIRROR support"
+"\r\n-- MIRROR parts will appear as seperate drives --";
+INITMSG szRaidNotReg[]=         "%s: RAID4,5 defined but driver isn't registrated for it's support"
+"\r\n-- array parts will appear as seperate drives --";
+
+/* 2. Screen messages only displayed if '/V' or '/DEBUG' are used. */
+
+INITMSG szSearchPhysDevices[] = "Looking for physical devices...";
+INITMSG szFoundPhysDevices[] =  "Found %u PHYSDEVICE's";
+INITMSG szNoPhysDevices[]=      "No PHYSDEVICE's found";
+INITMSG szFoundPhysDevice[]=    "Adapter %u, Unit %u: found PHYSDEVICE";
+INITMSG szNo16M[]=      "Adapter %u: hardware doesn't support memory above 16MB";
+INITMSG szNoScGa[]=     "Adapter %u: hardware doesn't support scatter/gather";
+INITMSG szDiskette[]=           "Adapter %u, Unit %u: diskette drive";
+INITMSG szDefective[]=          "Adapter %u, Unit %u: defect";
+INITMSG szNoDiskType[]=         "Adapter %u, unit %u: no disk device";
+
+INITMSG szBuildDevTree[]=       "Building device tree...";
+INITMSG szHostDriveCreate[] =   "Creating array drive";
+INITMSG szHostDriveCount[] =    "Found %u array drive(s)";
+INITMSG szNoHostDrive[] =       "No array drives found!";
+INITMSG szSingleCreate[]=       "Creating SINGLE...";
+INITMSG szSpanCreate[]=         "Creating SPAN...";
+INITMSG szStripeCreate[]=       "Creating STRIPE...";
+INITMSG szMirrorCreate[]=       "Creating MIRROR...";
+INITMSG szRaid5Create[]=        "Creating RAID 5...";
+
+
+/* Related to command line parsing */
+
+INITMSG szCmdLineSyntax[]= "%s: syntax error in command line";
+INITMSG szMissingOption[]= "%s: required option missing in command line";
+INITMSG szUnknownOption[]= "%s: unknown command line option";
+INITMSG szCmdLineError[]=  "%s: command line option error %d";
+
+
+#if defined(DEBUG)
+INITMSG dszValidateVSet2[]=     "\r\n[ValidateVSec2] checking %p";
+INITMSG dszVal2Newer[]=         "\r\n[ValidateVSec2] %p contains newer admin data";
+INITMSG dszVal2AdminData[]=     "\r\n[ValidateVSec2] admin data\r\n%z";
+#endif
+
+
+
+
+/*
+ * Very important :-)
+ */
+INITMSG szProduct[]=    "Visual RAID Filter";
+INITMSG szLogo[]=
+"\r\n%s                                            Version %u.%02u"
+"\r\nCopyright 1998-2001,2005 by Vitus Jensen (2:2474/424)         " __DATE__ ;
+
+INITMSG szNoReg[]=      "Unregistered version, please register after a trial period";
+INITMSG szDemo[]=       "Demonstration key, valid until %u/%u";
+INITMSG szReg[]=        "Registered to: %s (level %u)";
+
+#define REG_MAGIC       0x53A1B7F9
+#define REG_KEYLEN      40
+#pragma pack(1)
+typedef struct {
+    ULONG       ulMagic;
+    UCHAR       szUser[REG_KEYLEN];
+    UCHAR       szRegCode[REG_KEYLEN];
+    ULONG       ulSize;
+} REGSTRUCT;
+#pragma pack()
+REGSTRUCT _ininit RegData = {
+    REG_MAGIC,
+    "\000T3456789012345678901234567890123456789",
+    "nfjhfjhfkjshffdsfsfsfjshfkjshfkjsfhsjkf",
+    sizeof(REGSTRUCT) };
+
+INITMSG szTimeExpired[]= "Timebomb expired, get new key or register!";
+
+
+
+
+
+
+/*
+ * Last element in code segments which remains resident
+ */
+PRIVATE void
+Code_End(void) {}
+
+
+
+
+
+/* **********************************************************************
+ * **** Init-time I/O related *******************************************
+ * ******************************************************************* */
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *      SendIORBNotify(iorb)
+ * PARAMETER
+ *      iorb            completed request
+ * RETURNS
+ *      (nothing)
+ * GLOBAL
+ *      (nothing)
+ * DESPRIPTION
+ *      Awakens any process blocking on the passed IORB.  Used
+ *      by 'SendIORB'.
+ *
+ * REMARKS
+ */
+PRIVATE void FAR _loadds _Cdecl
+SendIORBNotify(PIORB iorb)
+{
+    USHORT awoken;
+
+    DevHelp_ProcRun((ULONG)iorb, &awoken);
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * LocalSendIORB(iorb,addentry)
+ *
+ * PARAMETER
+ *      iorb            request to execute
+ *      addentry        entry point of ADD to call
+ * RETURNS
+ *      0               OK
+ *      /0              error code returned from ADD
+ * GLOBAL
+ *      (nothing)
+ * DESPRIPTION
+ *      Uses 'SendIORBNotify' as notification routine.
+ * REMARKS
+ *      Need local variable to prevent restoring sp from bp
+ *      after ADD call.
+ */
+#pragma optimize("lge",off)
+PRIVATE USHORT NEAR
+LocalSendIORB(PIORB iorb,void (FAR _Cdecl * addentry)(PIORB))
+{
+    USHORT      rc;                             /* define here (see cli) */
+
+    iorb->NotifyAddress = (PVOID)SendIORBNotify; /* kind of hack */
+    iorb->RequestControl |= IORB_ASYNC_POST;
+    iorb->ErrorCode =   0;
+    iorb->Status =      0;
+
+    CallADD(addentry, iorb);
+
+    cli();
+    while( !(iorb->Status & IORB_DONE) )
+    {
+        rc = DevHelp_ProcBlock((ULONG)iorb, (ULONG)-1L, WAIT_IS_INTERRUPTABLE);
+        if( rc != 0 )
+        {
+            DEBMSG1(DBG_INIT1,"\r\n[LocalSendIORB] ProcBlock - rc %w, ignored",rc);
+#if 0
+            iorb->Status = IORB_DONE | IORB_ERROR;
+            iorb->ErrorCode = IOERR_CMD_ABORTED;
+#endif
+        }
+        cli();
+    }
+    sti();
+
+    if( (iorb->Status & IORB_ERROR) )
+    {
+        DEBMSG1(DBG_INIT1,"\r\n[LocalSendIORB] IORB ERROR %w",iorb->ErrorCode);
+        DEBMSG2(DBG_INIT1,"\r\nIORB dump\r\n%z",(PVOID)iorb,iorb->Length);
+        return iorb->ErrorCode;
+    }
+    else
+        return 0;
+}
+#pragma optimize("",on)
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Physical Device Searching (ADDs and UNITs) **********************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *      CheckAdapterInfo(iAdapter,npAdapterInfo)
+ * PARAMETER
+ *      iAdapter                index of adapter in system
+ *,     npAdapterInfo           from GET_DEVICE_TABLE
+ *
+ * RETURNS
+ *      0                       OK to process units from this adapter
+ *      /0                      no SCSI, defect, ...
+ *
+ *      fDriverFlags
+ * DESPRIPTION
+ *      Checks adapter flags, additional service: displays some
+ *      performance related capabilities of adapter.
+ *
+ * REMARKS
+ *      There is really no reason to reject a certain adapter.
+ *      We don't have to propagate a AF_16M flag because OS/2 will
+ *      detect it anyway (getting infos from the ADD itself).
+ */
+PRIVATE int
+CheckAdapterInfo(USHORT const iAdapter,NPADAPTERINFO const npAdapterInfo)
+{
+    if( !(npAdapterInfo->AdapterFlags & AF_16M) )
+    {
+        sprintk(szMsgBuffer, szNo16M, iAdapter);
+        DEBMSG1(DBG_INIT2,"\r\n[CheckAdapterInfo] %s",(PSZ)szMsgBuffer);
+        if( (fDriverFlags & DF_DEBUG) )
+            SaveMessage();
+    }
+    if( !(npAdapterInfo->AdapterFlags & AF_HW_SCATGAT) )
+    {
+        sprintk(szMsgBuffer, szNoScGa, iAdapter);
+        DEBMSG1(DBG_INIT2,"\r\n[CheckAdapterInfo] %s",(PSZ)szMsgBuffer);
+        if( (fDriverFlags & DF_DEBUG) )
+            SaveMessage();
+    }
+
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *      CheckUnitInfo(iAdapter,npUnitInfo)
+ * PARAMETER
+ *      iAdapter                index of adapter in system
+ *      npUnitInfo              from GET_DEVICE_TABLE
+ *
+ * RETURNS
+ *      0       OK, try/use this unit
+ *      /0      bad type, defective, etc.
+ *
+ *
+ * DESPRIPTION
+ *      If this unit is defect then skip the unit.
+ *      Dito if it's diskette A or B.
+ *
+ * REMARKS
+ *      Should we skip removable media?
+ *      Uses global 'fDriverFlags'.
+ */
+PRIVATE int
+CheckUnitInfo(PPHYSDEVICE const phys,NPUNITINFO const npUnitInfo)
+{
+    USHORT const uflags = npUnitInfo->UnitFlags;
+    USHORT const utype = npUnitInfo->UnitType;
+
+    DEBMSG2(DBG_INIT3,"\r\n[CheckUnitInfo] %w %w",phys->iAdapter,phys->iUnit);
+    if( (uflags & (UF_A_DRIVE | UF_B_DRIVE)) )
+    {
+        sprintk(szMsgBuffer, szDiskette, phys->iAdapter, phys->iUnit);
+        DEBMSG1(DBG_INIT2,"\r\n[CheckUnitInfo] %s",(PSZ)szMsgBuffer);
+        if( (fDriverFlags & DF_DEBUG) )
+            SaveMessage();
+        return 3;
+    }
+
+    if( (utype != UIB_TYPE_DISK) )
+    {
+        sprintk(szMsgBuffer, szNoDiskType, phys->iAdapter, phys->iUnit);
+        DEBMSG1(DBG_INIT2,"\r\n[CheckUnitInfo] %s",(PSZ)szMsgBuffer);
+        if( (fDriverFlags & DF_DEBUG) )
+            SaveMessage();
+        return 4;
+    }
+
+    if( (uflags & UF_DEFECTIVE) )
+    {
+        sprintk(szMsgBuffer, szDefective, phys->iAdapter, phys->iUnit);
+        DEBMSG1(DBG_INIT1,"\r\n[CheckUnitInfo] %s",(PSZ)szMsgBuffer);
+        if( (fDriverFlags & DF_VERBOSE) )
+            SaveMessage();
+        return 4;
+    }
+
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * LocalAllocateUnit(phys)
+ *
+ * PARAMETER
+ *      phys            local structure
+ *
+ * RETURNS
+ *      0               OK
+ *      /0              something failed, skip this device
+ *
+ * DESPRIPTION
+ *      Allocate unit.
+ *
+ * REMARKS
+ */
+PRIVATE int NEAR
+LocalAllocateUnit(PPHYSDEVICE const phys)
+{
+    PIORB_UNIT_CONTROL  pIOUC = (PVOID)AllocateIorb(1);
+    int                 rc = 0;
+    USHORT              failed;
+
+
+    DEBMSG1(DBG_INIT2,"\r\n[LocalAllocateUnit] PPHYSDEVICE %p",phys);
+
+    /* Send request to ALLOCATE UNIT.  May be done
+     * without registering our driver. */
+
+    _fmemset(pIOUC, 0, MAX_IORB_SIZE);
+    pIOUC->iorbh.Length =               sizeof(IORB_UNIT_CONTROL);
+    pIOUC->iorbh.UnitHandle =           phys->hdADDUnit;
+    pIOUC->iorbh.CommandCode =          IOCC_UNIT_CONTROL;
+    pIOUC->iorbh.CommandModifier =      IOCM_ALLOCATE_UNIT;
+
+    failed = LocalSendIORB((PIORB)pIOUC, phys->pADDEntry);
+
+    if( failed )
+    {
+        sprintk(szMsgBuffer, szAllocFailed, (PSZ)szDriverName,
+                phys->iAdapter, phys->iUnit, failed);
+        SaveMessage();
+        rc = 1;
+    }
+
+    FreeIorb((PVOID)pIOUC);
+    DEBMSG(DBG_INIT3,"\r\n[LocalAllocateUnit] end");
+    return rc;
+} /* end[LocalAllocateUnit] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * LocalDeallocateUnit(phys)
+ *
+ * PARAMETER
+ *      phys            device structure
+ *
+ * RETURNS
+ *      0               OK
+ *      /0              error, not deallocated
+ *
+ * DESPRIPTION
+ *      Deallocates unit.
+ *
+ * REMARKS
+ */
+PRIVATE int NEAR
+LocalDeallocateUnit(PPHYSDEVICE const phys)
+{
+    PIORB_UNIT_CONTROL  pIOUC = (PVOID)AllocateIorb(1);
+    int                 rc = 0;
+    USHORT              failed;
+
+
+    DEBMSG1(DBG_INIT2,"\r\n[LocalDeallocateUnit] PPHYSDEVICE %p",(PVOID)phys);
+
+    /* Send request to DEALLOCATE UNIT */
+
+    _fmemset(pIOUC, 0, MAX_IORB_SIZE);
+    pIOUC->iorbh.Length =               sizeof(IORB_UNIT_CONTROL);
+    pIOUC->iorbh.UnitHandle =           phys->hdADDUnit;
+    pIOUC->iorbh.CommandCode =          IOCC_UNIT_CONTROL;
+    pIOUC->iorbh.CommandModifier =      IOCM_DEALLOCATE_UNIT;
+
+    failed = LocalSendIORB((PIORB)pIOUC, phys->pADDEntry);
+
+    if( failed )
+    {
+        /* Couldn't deallocte unit.
+         * Bad, display and ignore */
+
+        sprintk(szMsgBuffer, szDeallocFailed,
+                (PSZ)szDriverName, phys->iAdapter, phys->iUnit);
+        SaveMessage();
+    }
+
+    FreeIorb((PVOID)pIOUC);
+    DEBMSG(DBG_INIT3,"\r\n[LocalDeallocateUnit] end");
+    return rc;
+} /* end[LocalDeallocateUnit] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * LocalReadSector(phys,secno,physaddr)
+ *
+ * PARAMETER
+ *      phys            PHYSDEVICE structure
+ *      secno           PSN
+ *      physaddr        physical memory address to place data
+ *
+ * RETURNS
+ *      0               OK
+ *      /0              ADD error code
+ *
+ * DESCRIPTION
+ *      Read a sector from disk.
+ *
+ * REMARKS
+ * ------------------------------------------------------------------- #*/
+PRIVATE USHORT
+LocalReadSector(PPHYSDEVICE const phys,ULONG const secno,ULONG const physaddr)
+{
+    PIORB_EXECUTEIO const iorb = AllocateIorb(1);
+    USHORT              error;
+
+
+    if( iorb == NULL )
+    {
+        DEBMSG(DBG_INIT1,"\r\n[LocalReadSector] memory allocation failed");
+        return ERR_NO_MEM;
+    }
+
+    iorb->cSGList = 1;
+    iorb->pSGList->ppXferBuf = physaddr;
+    iorb->pSGList->XferBufLen = SECTOR_SIZE;
+
+    iorb->iorbh.Length =        sizeof(IORB_EXECUTEIO);
+    iorb->iorbh.UnitHandle =    phys->hdADDUnit;
+    iorb->iorbh.CommandCode =   IOCC_EXECUTE_IO;
+    iorb->iorbh.CommandModifier = IOCM_READ;
+
+    iorb->iorbh.RequestControl =        0;
+    iorb->iorbh.StatusBlockLen =        0;
+    iorb->iorbh.pStatusBlock =          0;
+
+    iorb->RBA = secno;
+    iorb->BlockCount = 1;                       /* only this single sector */
+    iorb->BlockSize = SECTOR_SIZE;
+
+    DEBMSG2(DBG_INIT4,"\r\n[LocalReadSector] IOCM_READ - iorb sc/ga\r\n%z",(PVOID)iorb,iorb->iorbh.Length);
+    DEBMSG2(DBG_LEVEL4,"\r\n%z",(PVOID)iorb->pSGList,sizeof(*iorb->pSGList));
+
+    if( (error=LocalSendIORB((PIORB)iorb, phys->pADDEntry)) )
+    {
+        sprintk(szMsgBuffer, szReadFailed, (PSZ)szDriverName,
+                phys->iAdapter, phys->iUnit, error);
+        SaveMessage();
+    }
+
+    FreeIorb(iorb);
+    return error;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * FindVRaidPartition(phys,secno,extstart,pstart,psize)
+ *
+ * PARAMETER
+ *      phys            
+ *      secno           secto no of partition sector
+ *      extstart        start of first extended partition, offsets are
+ *                      calculated from here
+ *      pstart          returns VRAID start (absolute)
+ *      psize           returns VRAID size
+ *
+ * RETURNS
+ *      APIRET
+ *
+ * DESCRIPTION
+ *      Used to search recursive after a VRAID partition.
+ *
+ * REMARKS
+ * ------------------------------------------------------------------- #*/
+PRIVATE USHORT NEAR
+FindVRaidPartition(PPHYSDEVICE const phys,ULONG const secno,ULONG extstart,
+                   PULONG const pstart,PULONG const psize)
+{
+    PMBR const  mbr = MemAlloc(SECTOR_SIZE);
+    USHORT      rc;
+
+
+    DEBMSG1(DBG_INIT1,"\r\n[FindVRaidPartition] %p", phys);
+    if( mbr == 0 )
+    {
+        DEBMSG(DBG_INIT1,"\r\n[FindVRaidPartition] memory allocation failed");
+        return ERR_NO_MEM;
+    }
+
+    do
+    {
+        int     j;
+
+        rc = LocalReadSector(phys, secno, FP_OFF(mbr) + ppWorkMem);
+        if( rc != 0 )
+            break;
+
+        if( mbr->Signature != 0xAA55 )
+            break;
+
+
+        for( j = 0; j < 4  &&  *psize == 0; ++j )
+        {
+            switch( mbr->PartitionTable[j].SysIndicator )
+            {
+              case VRAID_PARTTYPE:
+                *pstart = secno + mbr->PartitionTable[j].RelativeSectors;
+                *psize = mbr->PartitionTable[j].NumSectors;
+                DEBMSG1(DBG_INIT1,"\r\n[FindVRaidPartition] found starting at %lx",(PVOID)pstart);
+                break;
+
+              case EXTENDED_PARTTYPE:
+                if( extstart == 0 )
+                {
+                    /* First EXT: calculate from there */
+
+                    extstart = mbr->PartitionTable[j].RelativeSectors;
+                    rc = FindVRaidPartition(phys,
+                                            mbr->PartitionTable[j].RelativeSectors,
+                                            extstart, pstart, psize);
+                }
+                else
+                {
+                    rc = FindVRaidPartition(phys,
+                                            extstart
+                                            + mbr->PartitionTable[j].RelativeSectors,
+                                            extstart, pstart, psize);
+                }
+                break;
+
+              default:
+                break;                          /* ignore empty or other types */
+            }
+        }
+    }
+    while( 0 );
+
+    MemFree(mbr);
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VerifyDiskData(phys)
+ *
+ * PARAMETER
+ *      phys            describes device
+ *
+ * RETURNS
+ *      0               OK
+ *      /0              really bad things happend.
+ *                      Don't touch this device.
+ *
+ * DESCRIPTION
+ *      Do a first check whether this unit has been configured
+ *      for VRaid.flt
+ *      Builds VRDEVICE PHYSDEV if successfull.
+ *
+ * REMARKS
+ *      Updates global 'apPDev', 'npInitData'.
+ * ------------------------------------------------------------------- #*/
+PRIVATE USHORT NEAR
+VerifyDiskData(PPHYSDEVICE const phys)
+{
+    USHORT      error;
+    PSEC_PHYSDEV sec = NULL;
+
+
+    DEBMSG1(DBG_INIT1,"\r\n[VerifyDiskData] %p", phys);
+    do
+    {
+        USHORT          crc;
+
+
+        /* Search VRAID partition.  This works recursive starting from
+         * sector 0 (the 'Master Boot Record'). */
+
+        error = FindVRaidPartition(phys, 0, 0, &phys->ulVRStart, &phys->ulVRSize);
+        if( error != 0 )
+            break;
+        if( phys->ulVRStart == 0 )
+        {
+            DEBMSG(DBG_INIT2,"\r\n[VerifyDiskData] no VRAID partition");
+            error = ERR_NO_VRAIDPART;
+            break;
+        }
+
+
+        /* Allocate resources (after FindVRaidPartition()). */
+
+        sec = MemAlloc(SECTOR_SIZE);
+        if( sec == NULL )
+        {
+            DEBMSG(DBG_INIT1,"\r\n[VerifyDiskData] memory allocation failed");
+            error = ERR_NO_MEM;
+            break;
+        }
+
+
+        /* -------- Read 'PHYSDEVICE' sector -------- */
+
+        error = LocalReadSector(phys, phys->ulVRStart, FP_OFF(sec)+ppWorkMem);
+        if( error != 0 )
+            break;
+
+
+        /* Analyse PHYSDEV sector.  That's really no big deal
+         * as it contains nearly nothing. */
+
+        DEBMSG2(DBG_INIT4,"\r\n[VerifyDiskData] SEC_PHYSDEV\r\n%z",(PVOID)sec,512u);
+        crc = Crc16(sec, SECTOR_SIZE-2);
+        if( _fmemcmp(sec->sectype,"PHYSDEVICE      ",16) != 0  ||  crc != sec->crc )
+        {
+            sprintk(szMsgBuffer, szBadPhysdevSector,
+                    (PSZ)szDriverName, phys->iAdapter, phys->iUnit);
+            SaveMessage();
+            error = ERR_BAD_PHYSDEV;            /* bad layout (?) */
+            DBSTOP();
+            break;
+        }
+
+
+        /* Create a PHYSDEVICE.
+         * afterwards it's getting simpler because we can rely on PHYSDEVICE
+         * to handle all that IORB stuff. */
+
+        sprintk(szMsgBuffer, szFoundPhysDevice, phys->iAdapter, phys->iUnit);
+        DEBMSG1(DBG_INIT1,"\r\n[VerifyDiskData] %s",(PSZ)szMsgBuffer);
+        if( (fDriverFlags & DF_VERBOSE) )
+            SaveMessage();
+        {
+            USHORT      size;
+
+            PhysdevCreate((PVRDEVHDR)npInitData, phys, sec, &size);
+
+            apPDev[cPDev] = (PVOID)npInitData;
+            npInitData += size;
+            ++cPDev;                            /* one more */
+        }
+    }
+    while( 0 );
+
+    if( sec != NULL )   MemFree(sec);
+    return error;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * InstallRouter(phys,npUnitInfo)
+ *
+ * PARAMETER
+ *      phys
+ *      npUnitInfo
+ *
+ * RETURNS
+ *      (nothing)
+ *
+ * DESCRIPTION
+ *      Create an entry in 'apBDisk[]' for this PHYSDEVICE.  The
+ *      entry will contain any data for allocation/deallocation and
+ *      device_table.
+ *
+ * REMARKS
+ */
+PRIVATE void NEAR
+InstallRouter(PPHYSDEVICE const phys,NPUNITINFO const npUnitInfo)
+{
+    PBASEDISK           disk;
+
+
+    GETINITRAM(disk,PBASEDISK,sizeof(BASEDISK));
+    _fmemset(disk, 0, sizeof(BASEDISK));
+    DEBMSG1(DBG_INIT2,"\r\n[InstallRouter] new BASEDISK: %p",disk);
+
+    /* Link BASEDISK to PHYSDEVICE. */
+
+    disk->phys = phys;
+
+    /* Build unit info for later IOCC_DEVICE_TABLE calls.
+     * Some data is from the original ADD but most flags/indices
+     * are new. */
+
+    _fmemcpy(&disk->info, npUnitInfo, sizeof(disk->info));
+    disk->info.UnitHandle = (USHORT)&apBDisk[cBDisk];
+    disk->info.FilterADDHandle = 0;             /* none so far */
+    disk->info.UnitSCSITargetID = 0;            /* remove SCSI infos */
+    disk->info.UnitSCSILUN = 0;
+
+    /* Last step: add to table of BASEDISK and we are done. */
+
+    apBDisk[cBDisk] = disk;
+    ++cBDisk;
+
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *      SearchPhysDevices(void)
+ *
+ * PARAMETER
+ *      (none)
+ *
+ * RETURNS
+ *      0               OK, install driver
+ *      <0              fatal error, loud abort
+ *      >0              no device found, be quiet
+ *
+ * DESPRIPTION
+ *      Scans all adapters on all ADDs for DASD and inserts
+ *      our DASD (OK, VRAID partition) into apPDev.
+ *
+ * REMARKS
+ *      Updates global 'apPdev', 'npInitData' and 'fDriverFlags'.
+ */
+PRIVATE int NEAR
+SearchPhysDevices(void)
+{
+    USHORT      j, k;
+    USHORT      add_count;
+    USHORT      add_index;
+    USHORT      adapter_index;
+
+    void        (FAR _Cdecl * pADDBaseEP)(PIORB);
+
+    struct DevClassTableEntry FAR *pDCE;
+    struct DevClassTableStruc FAR *pDCT;
+
+
+    sprintk(szMsgBuffer, szSearchPhysDevices);
+    DEBMSG1(DBG_INIT2,"\r\n[SearchPhysDevices] %s",(PSZ)szMsgBuffer);
+    if( (fDriverFlags & DF_DEBUG) )
+        SaveMessage();
+
+
+    /* Get address of Registered ADD Table */
+
+    if( DevHelp_GetDOSVar(DHGETDOSV_DEVICECLASSTABLE,DRIVERCLASS_ADD,(PPVOID)&pDCT) )
+    {
+        /* Should never happen.  What can we do? */
+
+        sprintk(szMsgBuffer, szNoDriverTab, (PSZ)szDriverName);
+        SaveMessage();
+        return -1;
+    }
+
+
+    /* For each ADD registered  */
+
+    DEBMSG(DBG_INIT3,"\r\n[SearchPhysDevices] Looking for ADDs");
+    pDCE = pDCT->DCTableEntries;
+    add_count = pDCT->DCCount;
+
+    for( add_index = 0, adapter_index = 0;
+         add_index < add_count; ++add_index, ++pDCE )
+    {
+        {
+            PIORB_CONFIGURATION pIOCF = (PVOID)AllocateIorb(1);
+            USHORT              rc;
+
+            /* Get ADD's Device Table */
+
+            _fmemset(pIOCF, 0, sizeof(IORB_CONFIGURATION));
+            pIOCF->iorbh.Length =               sizeof(IORB_CONFIGURATION);
+            pIOCF->iorbh.UnitHandle =           0;
+            pIOCF->iorbh.CommandCode =          IOCC_CONFIGURATION;
+            pIOCF->iorbh.CommandModifier =      IOCM_GET_DEVICE_TABLE;
+
+            pIOCF->pDeviceTable =       (PDEVICETABLE)DeviceTable;
+            pIOCF->DeviceTableLen =     sizeof(DeviceTable);
+
+            pADDBaseEP = (PVOID)MAKEP(pDCE->DCSelector, pDCE->DCOffset);
+
+            if( (rc=LocalSendIORB((PIORB)pIOCF, pADDBaseEP)) != 0 )
+            {
+                /* Error (?), could not get device table of installed
+                 * ADD.  Just ignore that ADD (which probably hasn't
+                 * any adapters/devices, either). */
+
+                sprintk(szMsgBuffer, szNoDevTab, (PSZ)szDriverName, add_index, rc);
+                SaveMessage();
+                FreeIorb((PVOID)pIOCF);
+                continue;
+            }
+            FreeIorb((PVOID)pIOCF);
+        }
+
+
+        /* -------- For each Adapter in ADD's Device Table -------- */
+
+        for( j = 0;
+             j < ((PDEVICETABLE)DeviceTable)->TotalAdapters;
+             ++j, ++adapter_index )
+        {
+            NPADAPTERINFO const npAdapterInfo
+                = ((PDEVICETABLE)DeviceTable)->pAdapter[j];
+            NPUNITINFO          npUnitInfo;
+
+
+            if( CheckAdapterInfo(adapter_index, npAdapterInfo) )
+                continue;
+
+            /* -------- Access UNITINFO for each Device on adapter -------- */
+
+            DEBMSG1(DBG_INIT2,"\r\n[SearchPhysDevices] looking for units on adapter %w",adapter_index);
+            npUnitInfo = npAdapterInfo->UnitInfo;
+
+            for( k = 0; k < npAdapterInfo->AdapterUnits; ++k, ++npUnitInfo )
+            {
+                PPHYSDEVICE     phys;
+
+                GETINITRAM(phys,PPHYSDEVICE,sizeof(PHYSDEVICE));
+                _fmemset(phys, 0, sizeof(PHYSDEVICE));
+                DEBMSG1(DBG_INIT2,"\r\n[SearchPhysDevices] new PHYSDEVICE: %p",phys);
+
+                /* If a Filter ADD has registered for this unit
+                 * then send subsequent requests to the Filter ADD
+                 * and not to the ADD. */
+
+                if( (phys->hdFilter=npUnitInfo->FilterADDHandle) != 0 )
+                {
+                    struct DevClassTableEntry FAR *pDCEFilter;
+
+                    DEBMSG(DBG_INIT3,"\r\n[SearchPhysDevices] found other filter for unit");
+                    pDCEFilter = &pDCT->DCTableEntries[phys->hdFilter-1];
+                    phys->pADDEntry = (PVOID)MAKEP(pDCEFilter->DCSelector,
+                                                   pDCEFilter->DCOffset);
+                }
+                else
+                {
+                    phys->pADDEntry = pADDBaseEP;
+                }
+                phys->iAdapter = adapter_index;
+                phys->iUnit = npUnitInfo->UnitIndex;
+                phys->hdADDUnit = npUnitInfo->UnitHandle;
+
+                if( CheckUnitInfo(phys, npUnitInfo) )
+                {
+                    npInitData -= sizeof(PHYSDEVICE); /* release memory */
+                    continue;
+                }
+
+                if( LocalAllocateUnit(phys) )
+                {
+                    /* Couldn't allocate unit.  Release any data
+                     * allocated and continue with next device. */
+
+                    npInitData -= sizeof(PHYSDEVICE); /* free memory */
+                    continue;
+                }
+
+                /* Now read partition table to verify that this
+                 * is an unit managed by our filter. */
+
+                if( VerifyDiskData(phys) != 0 )
+                {
+                    LocalDeallocateUnit(phys);
+                    npInitData -= sizeof(PHYSDEVICE); /* free memory */
+                    continue;
+                }
+
+                /* Save some restrictions in global variables. */
+
+                if( npAdapterInfo->MaxHWSGList != 0
+                    &&  npAdapterInfo->MaxHWSGList < uADDMaxSGList )
+                    uADDMaxSGList = npAdapterInfo->MaxHWSGList;
+                if( npAdapterInfo->MaxCDBTransferLength != 0
+                    &&  npAdapterInfo->MaxCDBTransferLength < ulADDMaxTransfer )
+                    ulADDMaxTransfer = npAdapterInfo->MaxCDBTransferLength;
+                if( (npAdapterInfo->AdapterFlags & AF_16M) == 0 )
+                    fADDFlags |= AF_NOT16M;
+                if( (npAdapterInfo->AdapterFlags & AF_HW_SCATGAT) )
+                    fADDFlags |= AF_HWSCATGAT;
+
+                if( (fDriverFlags & DF_NOROUTER) == 0 )
+                    InstallRouter(phys, npUnitInfo);
+
+            } /* for each unit */
+        } /* for each adapter */
+    } /* for each ADD */
+
+    if( cPDev == 0 )
+    {
+        sprintk(szMsgBuffer, szNoPhysDevices);
+        DEBMSG1(DBG_INIT1,"\r\n[SearchPhysDevices] %s",(PSZ)szMsgBuffer);
+        if( (fDriverFlags & DF_VERBOSE) )
+            SaveMessage();
+        return 1;                               /* non-fatal error */
+    }
+
+    sprintk(szMsgBuffer, szFoundPhysDevices, cPDev);
+    DEBMSG1(DBG_INIT1,"\r\n[InitBase] %s",(PSZ)szMsgBuffer);
+    if( (fDriverFlags & DF_VERBOSE) )
+        SaveMessage();
+
+    return 0;
+} /* end[SearchPhysDevices] */
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Analysis of configuration sectors *******************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *      AddHostDrive(PVRDEVHDR vrd)
+ * PARAMETER
+ *      vrd             VRDEVICE to build HOSTDRIVE for
+ * RETURNS
+ *      (nothing)
+ * GLOBAL
+ *      apHDrv
+ * DESCRIPTION
+ *      Builds an entry in 'apHDrv' for a VRDEVICE.  Called if a VRDEVICE
+ *      is top of structure (configuration sector marks it as HOSTDRIVE).
+ *
+ * REMARKS
+ */
+PRIVATE VOID NEAR
+AddHostDrive(PVRDEVHDR vrd)
+{
+    GETINITRAM(apHDrv[cHDrv],PHOSTDRIVE,sizeof(HOSTDRIVE));
+
+    DEBMSG2(DBG_INIT1,"\r\n[AddHostDrive] creating at %p for %p",(PVOID)apHDrv[cHDrv],(PVOID)vrd);
+    sprintk(szMsgBuffer, szHostDriveCreate);
+    DEBMSG1(DBG_INIT2,"\r\n[AddHostDrive] %s",(PSZ)szMsgBuffer);
+    if( (fDriverFlags & DF_DEBUG) )
+        SaveMessage();
+    _fmemset(apHDrv[cHDrv], 0, sizeof(HOSTDRIVE));
+    apHDrv[cHDrv]->child = vrd;
+    ++cHDrv;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CompressTab(tab)
+ *
+ * PARAMETER
+ *      tab     table of FAR pointer
+ *
+ * RETURNS
+ *      count of entries inside table
+ *
+ * DESCRIPTION
+ *      Compresses entries in 'tab' so that no holes (NULL pointers) appear.
+ *
+ * REMARKS
+ */
+PRIVATE int NEAR
+CompressTab(PVRDEVHDR FAR * tab,int const cnt)
+{
+    int j, i;
+
+    for( j = i = 0; i < cnt; ++i )
+    {
+        if( tab[i] != 0 )
+            tab[j++] = tab[i];
+    }
+    for( i = j; i < cnt; ++i )
+        tab[i] = 0;
+
+    return j;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ *      AnalyseVRDev(sec,save_here,tab2[])
+ *
+ * PARAMETER
+ *      sec             sector to analyse
+ *      save_here       saves pointer to new VRDEVHDR here
+ *      tab2[]          drives to build from
+ *
+ * RETURNS
+ *      0       OK, device created
+ *      /0      no device created, don't try again
+ *
+ * DESCRIPTION
+ *      Analyse VRDEVICE-description sector.
+ *
+ * REMARKS
+ */
+PRIVATE int NEAR
+AnalyseVRDev(PSEC_VRDEV const sec,PVRDEVHDR FAR * save_here,PVRDEVHDR tab2[])
+{
+    USHORT      size;
+    int         rc = 0;
+    int         i;
+
+
+    *save_here = NULL;
+    switch( sec->u.s.type )
+    {
+      case RDTYPE_SINGLE:
+        sprintk(szMsgBuffer, szSingleCreate);
+        DEBMSG1(DBG_INIT1,"\r\n[AnalyseVRDev] %s",(PSZ)szMsgBuffer);
+        if( (fDriverFlags & DF_VERBOSE) )
+            SaveMessage();
+        i = SingleCreate((PVRDEVHDR)npInitData, tab2, sec, &size);
+        if( i  == 0 )
+        {
+            *save_here = (PVOID)npInitData;
+            npInitData += size;
+        }
+        else
+        {
+            if( i < 0 )
+            {
+                sprintk(szMsgBuffer, szCreateFail, (PSZ)szDriverName);
+                SaveMessage();
+            }
+            rc = i;
+        }
+        break;
+
+      case RDTYPE_STRIPE:
+        sprintk(szMsgBuffer, szStripeCreate);
+        DEBMSG1(DBG_INIT1,"\r\n[AnalyseVRDev] %s",(PSZ)szMsgBuffer);
+        if( (fDriverFlags & DF_VERBOSE) )
+            SaveMessage();
+        i = StripeCreate((PVRDEVHDR)npInitData, tab2, sec, &size);
+        if( i == 0 )
+        {
+            *save_here = (PVOID)npInitData;
+            npInitData += size;
+        }
+        else
+        {
+            if( i < 0 )
+            {
+                sprintk(szMsgBuffer, szCreateFail, (PSZ)szDriverName);
+                SaveMessage();
+            }
+            rc = i;
+        }
+        break;
+
+      case RDTYPE_CHAIN:
+        sprintk(szMsgBuffer, szSpanCreate);
+        DEBMSG1(DBG_INIT1,"\r\n[AnalyseVRDev] %s",(PSZ)szMsgBuffer);
+        if( (fDriverFlags & DF_VERBOSE) )
+            SaveMessage();
+        i = SpanCreate((PVRDEVHDR)npInitData, tab2, sec, &size);
+        if( i == 0 )
+        {
+            *save_here = (PVOID)npInitData;
+            npInitData += size;
+        }
+        else
+        {
+            if( i < 0 )
+            {
+                sprintk(szMsgBuffer, szCreateFail, (PSZ)szDriverName);
+                SaveMessage();
+            }
+            rc = i;
+        }
+        break;
+
+      default:
+        sprintk(szMsgBuffer, szUnknownRType, (PSZ)szDriverName, sec->u.s.type);
+        SaveMessage();
+        rc = ERR_UNKNOWN_RTYPE;
+        break;
+    }
+
+    if( *save_here != NULL )
+    {
+        if( (sec->u.s.flags & 0x80) )
+        {
+            AddHostDrive(*save_here);           /*End of VRDEVICE: add as HostDrive*/
+            *save_here = NULL;                  /* and remove from list */
+        }
+    }
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ *      AnalyseVRDev2(sec,save_here,tab2[])
+ *
+ * PARAMETER
+ *      sec             sector to analyse
+ *      save_here       saves pointer to new VRDEVHDR here
+ *      tab2[]          drives to build from
+ * RETURNS
+ *      0       OK, device created
+ *      /0      no device created, don't try again
+ *
+ * DESCRIPTION
+ *      Analyse VRDEVICE-description sector.
+ *
+ * REMARKS
+ */
+PRIVATE int NEAR
+AnalyseVRDev2(PSEC_VRDEV2 const sec,PVRDEVHDR FAR * save_here,PVRDEVHDR tab2[])
+{
+    USHORT      size;
+    int         rc = 0;
+    int         i;
+
+    *save_here = NULL;
+    switch( sec->u.s.type )
+    {
+      case RDTYPE_MIRROR:
+        if( uRegLevel < 2 )
+        {
+            sprintk(szMsgBuffer, szMirrorNotReg, (PSZ)szDriverName);
+            SaveMessage();
+            rc = ERR_BAD_REGLEVEL;
+            break;
+        }
+
+        sprintk(szMsgBuffer, szMirrorCreate);
+        DEBMSG1(DBG_INIT1,"\r\n[AnalyseVRDev2] %s",(PSZ)szMsgBuffer);
+        if( (fDriverFlags & DF_VERBOSE) )
+            SaveMessage();
+        i = MirrorCreate((PVOID)npInitData, tab2, sec, &size);
+        if( i == 0 )
+        {
+            *save_here = (PVOID)npInitData;
+            npInitData += size;
+        }
+        else
+        {
+            if( i < 0 )
+            {
+                sprintk(szMsgBuffer, szCreateFail, (PSZ)szDriverName);
+                SaveMessage();
+            }
+            rc = i;
+        }
+        break;
+
+
+#if !defined(NORAID5)
+      case RDTYPE_RAID4:
+      case RDTYPE_RAID5:
+        if( uRegLevel < 3 )
+        {
+            sprintk(szMsgBuffer, szRaidNotReg, (PSZ)szDriverName);
+            SaveMessage();
+            rc = ERR_BAD_REGLEVEL;
+            break;
+        }
+
+        sprintk(szMsgBuffer, szRaid5Create);
+        DEBMSG1(DBG_INIT1,"\r\n[AnalyseVRDev2] %s",(PSZ)szMsgBuffer);
+        if( (fDriverFlags & DF_VERBOSE) )
+            SaveMessage();
+        i = Raid5Create((PVOID)npInitData, tab2, sec, &size);
+        if( i == 0 )
+        {
+            *save_here = (PVOID)npInitData;
+            npInitData += size;
+        }
+        else
+        {
+            if( i < 0 )
+            {
+                sprintk(szMsgBuffer, szCreateFail, (PSZ)szDriverName);
+                SaveMessage();
+            }
+            rc = i;
+        }
+        break;
+#endif
+
+
+      default:
+        sprintk(szMsgBuffer, szUnknownRType, (PSZ)szDriverName, sec->u.s.type);
+        SaveMessage();
+        rc = ERR_UNKNOWN_RTYPE;
+        break;
+    }
+
+    if( *save_here != NULL )
+    {
+        if( (sec->u.s.flags & 0x80) )
+        {
+            AddHostDrive(*save_here);           /*End of VRDEVICE:add as HostDrive*/
+            *save_here = NULL;                  /* and remove from list */
+        }
+    }
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *      BuildDevTree(void)
+ * PARAMETER
+ *      (none)
+ *      aPDev, cPDev    previously found PHYSDEVICEs
+ *
+ * RETURNS
+ *      0               OK
+ *      /0              fatal error, don't install driver
+ *
+ * DESCRIPTION
+ *      Scans all previously found physical devices and does:
+ *      - add their ID to structure
+ *      - read next adminsector and build VRDEVICE
+ *      - ...
+ *
+ * REMARKS
+ */
+PRIVATE int NEAR
+BuildDevTree(void)
+{
+    /* Temporary table to hold pointers (all PHYSDEVs plus
+     * all parents (may all be Singles!)) */
+
+    static PVRDEVHDR            tab1[2*MAX_PDEV];
+
+    PVOID const         secbuf = MemAlloc(SECTOR_SIZE); /* allocated in MemPool*/
+    USHORT              rc = 0;
+    ULONG               adsecno;
+    int                 i;
+
+    sprintk(szMsgBuffer, szBuildDevTree);
+    DEBMSG1(DBG_INIT1,"\r\n[BuildDevTree] %s",(PSZ)szMsgBuffer);
+    if( (fDriverFlags & DF_DEBUG) )
+        SaveMessage();
+    DEBMSG1(DBG_INIT3,"\r\n[BuildDevTree] sector buffer %p",secbuf);
+
+    if( secbuf == NULL )
+    {
+        sprintk(szMsgBuffer, szMallocFailed, (PSZ)szDriverName);
+        SaveMessage();
+        return ERR_NO_MEM;
+    }
+
+    _fmemset(tab1, 0, sizeof(tab1));
+    _fmemcpy(tab1, apPDev, cPDev*sizeof(apPDev[0]));
+
+
+    /* ------------------------------------------------------------ */
+    /* We already read the first administrative sector and installed
+     * all physical devices (all PHYSDEVICE sectors read).
+     * All devices still in tab1[] build complicated structures. */
+
+    for( adsecno = 1; adsecno < VRAID_ADMINSECTORS; ++adsecno )
+    {
+        int const found = CompressTab(tab1, sizeof(tab1)/sizeof(tab1[0]));
+        int     j = found;
+
+        /* 'found' contains the count of non-empty entries in 'tab1',
+         * starting from index 0 to 'found-1' (compressed).
+         * 'j' is the index of the first free entry in 'tab1', new
+         * device will be entered here and in later entries */
+
+        if( found == 0 )
+            break;                              /* nothing left in table = done */
+
+
+        /* Now read administrative sector 'adsecno' of every VRDEVICE
+         * in 'tab1' and build entry in 'tab1' at index 'j'. */
+
+        for( i = 0; i < found; ++i )
+        {
+            if( tab1[i] == NULL )
+            {
+                DEBMSG1(DBG_INIT3,"\r\n[BuildDevTree] ignored empty index %w",i);
+                continue;
+            }
+
+            DEBMSG1(DBG_INIT2,"\r\n[BuildDevTree] reading index %w",i);
+            rc = ProcessAdminIO(tab1[i], FALSE, 1, 1, FP_OFF(secbuf) + ppWorkMem);
+            if( rc != 0 )
+            {
+                sprintk(szMsgBuffer,szReadFailed2, (PSZ)szDriverName, i,adsecno,rc);
+                SaveMessage();
+                DBSTOP();
+                tab1[i] = NULL;
+                rc = 0;                         /* no reason to unload driver... */
+                continue;                       /* skip this device */
+            }
+
+
+            /* Verify VRDEVICE-description sector. */
+
+            DEBMSG2(DBG_INIT4,"\r\n[BuildDevTree] SEC_???\r\n%z",(PVOID)secbuf,512u);
+            if( _fmemcmp(secbuf, "VRAID", 5) != 0  &&  adsecno == 1 )
+            {
+                DEBMSG1(DBG_INIT1,"\r\n[BuildDevTree] PHYSDEVICE-only (index %w)",i);
+                tab1[i] = NULL;                 /* remove and ... */
+                continue;                       /* skip this device */
+            }
+
+            if( Crc16(secbuf, SECTOR_SIZE-2)
+                != ((PUSHORT)secbuf)[SECTOR_SIZE/2-1] )
+            {
+                sprintk(szMsgBuffer,szAdminDestroyed, (PSZ)szDriverName, i, adsecno);
+                SaveMessage();
+                DEBMSG2(DBG_ALL,"\r\n[BuildDevTree] contents:\r\n%z",secbuf,SECTOR_SIZE);
+                DBSTOP();
+                tab1[i] = NULL;
+                continue;                       /* skip this device */
+            }
+
+
+            /* Analyse sector data and build array structure. */
+
+            if( _fmemcmp(secbuf, "VRAIDDEVICE     ", 16) == 0 )
+            {
+                if( AnalyseVRDev(secbuf, &tab1[j++], tab1) < 0 )
+                    tab1[i] = NULL;             /* remove even this */
+            }
+            else if( _fmemcmp(secbuf, "VRAIDDEVICE2    ", 16) == 0 )
+            {
+                if( AnalyseVRDev2(secbuf, &tab1[j++], tab1) < 0 )
+                    tab1[i] = NULL;             /* remove even this */
+            }
+            else
+            {
+                sprintk(szMsgBuffer,szAdminUnknown, (PSZ)szDriverName, i, adsecno);
+                SaveMessage();
+                DEBMSG2(DBG_ALL,"\r\n[BuildDevTree] contents:\r\n%z",secbuf,SECTOR_SIZE);
+                DBSTOP();
+                tab1[i] = NULL;
+                continue;                       /* skip this device */
+            }
+        } /* end[for every found device] */
+    } /* end[for(adsecno)] */
+
+    MemFree(secbuf);
+    if( cHDrv != 0 )
+    {
+        sprintk(szMsgBuffer, szHostDriveCount, cHDrv);
+        DEBMSG1(DBG_INIT2,"\r\n[BuildDevTree] %s",(PSZ)szMsgBuffer);
+        if( (fDriverFlags & DF_VERBOSE) )
+            SaveMessage();
+    }
+    else
+    {
+        sprintk(szMsgBuffer, szNoHostDrive);
+        DEBMSG1(DBG_INIT2,"\r\n[BuildDevTree] %s",(PSZ)szMsgBuffer);
+        if( (fDriverFlags & DF_VERBOSE) )
+            SaveMessage();
+    }
+
+    return rc;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Other routines **************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *      RegisterDriver(void)
+ * PARAMETER
+ *      (none)
+ * RETURNS
+ *      0               OK
+ *      /0              registration failed
+ * GLOBAL
+ *      fDriverFlags
+ * DESCRIPTION
+ *      Add our filter driver to OS/2 internal tables.
+ *
+ * REMARKS
+ *      Call DevHelp_RegisterDevClass() as late as possible.
+ *      A registered driver returning 'don't install' will
+ *      panic the kernel. :-(
+ */
+PRIVATE int NEAR
+RegisterDriver(void)
+{
+    BOOL        b;
+    int         rc = 0;                         /* assume OK */
+
+    DEBMSG(DBG_INIT2,"\r\n[RegisterDriver] entry");
+    b = DevHelp_RegisterDeviceClass((NPSZ)szDriverName,
+                                    (PFN)IorbEntry,
+                                    (USHORT)DRIVERFLAGS,
+                                    (USHORT)DRIVERCLASS_ADD,
+                                    (PUSHORT)&hdThisDriver);
+    if( b )
+    {
+        sprintk(szMsgBuffer, szRegDevClassFailed, (PSZ)szDriverName);
+        SaveMessage();
+        rc = 3;
+    }
+    return rc;
+}
+
+
+
+
+
+
+#define ENTRY_STATE        0
+#define MAX_STATES         2
+
+/*
+ *                                      opt.state[] initialization definitions
+ *
+ *                                              ____ entry state
+ *                                              |               previous
+ *                                              v                 opt   |
+ *  ----Command Line Option --------            ----- STATE TABLE ----- |
+ *  token id            string  type            0   1   2               |
+ *                                                                      |
+ *                                              *  /A:  /A:      <-------
+ *                                                       plus
+ */
+#define TOK_ID_EF       100
+#define TOK_ID_DF       101
+
+OPT OPT_VERBOSE =
+    {TOK_ID_VERBOSE,0,  "/V", TYPE_0,           {0,  E,  E}};
+
+OPT OPT_DEBUG_NO =
+    {TOK_ID_DEBUG,0,    "/DEBUG:", TYPE_D,      {0,  E,  E}};
+
+OPT OPT_DEBUG_DEFAULT =
+    {TOK_ID_DEBUG,0,    "/DEBUG", TYPE_0,       {0,  E,  E}};
+
+OPT OPT_NSHARE =
+    {TOK_ID_NOT_SHARE,0,"/!SHARE", TYPE_0,      {0,  E,  E}};
+
+OPT OPT_SHARE =
+    {TOK_ID_SHARE,0,    "/SHARE", TYPE_0,       {0,  E,  E}};
+
+OPT OPT_END =
+    {TOK_ID_END,0,      "\0", TYPE_0,           {O,  O,  O}};
+
+
+/*
+ *   Please note the importance of the ordering of entries in poption[]
+ *   For example: the pointer to the option "/DM:" must come before the
+ *   option "/DM"
+ */
+OPTIONTABLE  opttable = {
+    ENTRY_STATE, MAX_STATES,
+    {
+        &OPT_VERBOSE,
+        &OPT_DEBUG_NO,
+        &OPT_DEBUG_DEFAULT,
+        &OPT_NSHARE,
+        &OPT_SHARE,
+        &OPT_END
+    }
+};
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *      AnalyseCmdLine(pszLine)
+ * PARAMETER
+ *      pszLine         pointer to command line
+ * RETURNS
+ *      0               OK
+ * GLOBAL
+ * DESPRIPTION
+     Invoke parser and analyse token output.
+ * REMARKS
+ */
+PRIVATE int NEAR
+AnalyseCmdLine(PSZ const pszLine)
+{
+    CC          parse_rc;
+    PCHAR       tp;
+    UCHAR       TokenId;
+    USHORT      adapter = 0xFFFF;
+
+
+    /* Call IBM supplied parser with the above defined option
+     * table. */
+
+    parse_rc = Command_Parser(pszLine, &opttable,
+                              DeviceTable, MAX_DEVICETABLE_SIZE);
+
+    /* Process errors. Although errors were detected the
+     * command line and 'DeviceTable' may contain valid tokens
+     * which have to be processed later, so only use 'break'
+     * in 'case' clauses. */
+
+    switch( parse_rc.ret_code )
+    {
+        /* SYNTAX_ERR:
+         *      General error in command line, no special handling
+         */
+      case SYNTAX_ERR:
+        sprintk(szMsgBuffer, szCmdLineSyntax, (PSZ)szDriverName);
+        SaveMessage();
+        break;
+
+        /* REQ_OPT_ERR:
+         *      Required option is missing in command line (probably /A: )
+         */
+      case REQ_OPT_ERR:
+        sprintk(szMsgBuffer, szMissingOption, (PSZ)szDriverName);
+        SaveMessage();
+        break;
+
+        /* INVALID_OPT_ERR:
+         *      Bad format?
+         */
+      case INVALID_OPT_ERR:
+        sprintk(szMsgBuffer, szUnknownOption, (PSZ)szDriverName, (PBYTE)DeviceTable);
+        SaveMessage();
+        break;
+
+      case UNDEFINED_TYPE_ERR:
+      case UNDEFINED_STATE_ERR:
+      case BUF_TOO_SMALL_ERR:
+      default:
+        sprintk(szMsgBuffer, szCmdLineError, (PSZ)szDriverName, parse_rc.ret_code);
+        SaveMessage();
+      case NO_OPTIONS_FND_ERR:
+      case NO_ERR:
+        break;
+    }
+
+    /* Let 'tp' jump from token to token. */
+
+    for( tp = DeviceTable; (TokenId=*(tp+TOKL_ID)) != TOK_ID_END;
+         tp += *(tp+TOKL_LEN) )
+    {
+        switch( TokenId )
+        {
+          case TOK_ID_VERBOSE:
+            DEBMSG(DBG_INIT2,"\r\n/VERBOSE");
+            fDriverFlags |= DF_VERBOSE;
+            break;
+
+          case TOK_ID_DEBUG:
+            DEBMSG(DBG_INIT2,"\r\n/DEBUG");
+            fDriverFlags |= DF_VERBOSE;
+            fDriverFlags |= DF_DEBUG;
+
+            if( *(tp+TOKL_LEN) == TOK_MIN_LENGTH+1 )
+            {
+                UCHAR code = *(tp+TOKL_VALUE);
+
+                switch( code )
+                {
+                  default:
+                    sprintk(szMsgBuffer, szUnknownOption, 
+                            (PSZ)szDriverName, (PBYTE)DeviceTable);
+                    SaveMessage();
+                    break;
+                }
+            }
+            break;
+
+          case TOK_ID_SHARE:
+            DEBMSG(DBG_INIT2,"\r\n/SHARE");
+            fDriverFlags &= ~DF_NOROUTER;
+            break;
+
+          case TOK_ID_NOT_SHARE:
+            DEBMSG(DBG_INIT2,"\r\n/!SHARE");
+            fDriverFlags |= DF_NOROUTER;
+            break;
+
+          case TOK_ID_ADAPTER:
+            adapter = *(tp+TOKL_VALUE);
+            DEBMSG1(DBG_INIT2,"\r\n/A:%w",adapter);
+            break;
+
+          case TOK_ID_END:
+            break;
+
+          default:
+            break;
+        }
+    }
+
+    return 0;
+} /*end[AnalyseCmdLine]*/
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CheckRegistration(void)
+ *
+ * PARAMETER
+ *      (none)
+ *
+ * RETURNS
+ *      (nothing)
+ *
+ * DESPRIPTION
+ *      Sets global 'uRegLevel' according to registration code and
+ *      display message (if requested or not registered).
+ *
+ * REMARKS
+ */
+PRIVATE VOID NEAR
+CheckRegistration(VOID)
+{
+    UCHAR       code[REG_KEYLEN];
+    UCHAR       c;
+    int         i;
+    UCHAR _far *p, _far *k;
+    USHORT      try;
+
+    for( try = 1; try <= 3; ++try )
+    {
+        /* In case that some guy just patches the registration level
+         * inside the binary file... */
+
+        uRegLevel = 0;
+
+
+        /* Now calculate registration key for level 'try' and
+         * compare it with registration key inside our image. */
+
+        _fmemset(code, 0, REG_KEYLEN);
+        c = szProduct[0];                       /* start value */
+
+        for( i = 0, p = RegData.szUser, k = szProduct;
+             *p != '\0';
+             ++p, ++i, k = (*(k+1) == '\0' ? szProduct : k+1) )
+        {
+            c += (UCHAR)((*p & 0xf0) >> 2 ^ (*p & 0x0f));
+            c *= *k + try;
+            c += *k;
+            code[i] = c;
+        }
+        if( i == 0 )
+            break;                              /* no user data found */
+
+        if( _fmemcmp(code, RegData.szRegCode, i) == 0 )
+        {
+            uRegLevel = try;
+            DEBMSG1(DBG_INIT1,"\r\n!!!Registration level %w detected!!!",uRegLevel);
+            break;                              /* end, only single level possible */
+        }
+    }
+
+
+    /* Display registration or non-registration data. */
+
+    if( uRegLevel == 0 )
+        fDriverFlags |= DF_VERBOSE;
+    if( _fmemcmp(&RegData.szUser[4], "DEMO", 4) == 0 )
+    {
+        USHORT  year, month;
+
+        /* Demonstration key, timebombed. */
+
+        fDriverFlags |= DF_VERBOSE;             /* always verbose */
+        month = (RegData.szUser[0] - '0') * 10  +  (RegData.szUser[1] - '0');
+        year = (RegData.szUser[2] - '0') * 10  +  (RegData.szUser[3] - '0');
+        year += 2000;
+
+        sprintk(szMsgBuffer, szLogo, (PSZ)szProduct, VERSION, SUBVERSION);
+        SaveMessage();
+        sprintk(DeviceTable, szDemo, month, year);
+        sprintk(szMsgBuffer, szReg, (PSZ)DeviceTable, uRegLevel);
+        SaveMessage();
+
+        if( pGlobalInfoSeg->YrsDate > year
+            ||  (pGlobalInfoSeg->YrsDate == year
+                 &&  pGlobalInfoSeg->MonDate > (UCHAR)month) )
+        {
+            sprintk(szMsgBuffer, szTimeExpired);
+            SaveMessage();
+            uRegLevel = 0;
+        }
+    }
+    else if( (fDriverFlags & DF_VERBOSE) )
+    {
+        sprintk(szMsgBuffer, szLogo, (PSZ)szProduct, VERSION, SUBVERSION);
+        SaveMessage();
+        if( uRegLevel != 0 )
+        {
+            sprintk(szMsgBuffer, szReg, (PSZ)RegData.szUser, uRegLevel);
+            SaveMessage();
+        }
+        else
+        {
+            sprintk(szMsgBuffer, szNoReg);
+            SaveMessage();
+        }
+    }
+
+    return;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Public Entries **************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * ValidateVSec2(child,sec)
+ *
+ * PARAMETER
+ *      child           child to validate
+ *      sec             configuration space of sibling
+ *
+ * RETURNS
+ *      0               OK, use this child
+ *      /0              don't use it
+ *
+ * DESCRIPTION
+ *      This routine checks whether a VRDEV is a valid child as configured
+ *      in 'sec'.
+ *      Normally that means that 'child' contains the identical admin.
+ *      sector.  But whenever 'child' had problems during operation and
+ *      had to be deactivated those sectors may differ.  Certain combinations
+ *      are allowed, other not.  See below for details.
+ *
+ * REMARKS
+ *      OBS: there is a goto!
+ */
+PUBLIC int
+ValidateVSec2(PVRDEVHDR const child,SEC_VRDEV2 const FAR * const sec)
+{
+    int         result = 0;
+    USHORT      rc, i;
+    PVOID const secbuf = MemAlloc(SECTOR_SIZE); /* allocated in MemPool*/
+
+    DEBMSG1(DBG_INIT1,dszValidateVSet2,(PVOID)child);
+
+    do
+    {
+        ++result;
+        if( secbuf == NULL )
+        {
+            sprintk(szMsgBuffer, szMallocFailed, (PSZ)szDriverName);
+            SaveMessage();
+            break;
+        }
+
+        ++result;
+        rc = ProcessAdminIO(child, FALSE, 1, 1, FP_OFF(secbuf) + ppWorkMem);
+        if( rc != 0 )
+        {
+            sprintk(szMsgBuffer, szReadError, (PSZ)szDriverName, rc);
+            SaveMessage();
+            DBSTOP();
+            MemFree(secbuf);
+            break;
+        }
+
+        ++result;
+        if( _fmemcmp(sec, secbuf, SECTOR_SIZE) != 0 )
+        {
+            PSEC_VRDEV2 const   childsec = secbuf;
+
+            if( _fmemcmp(childsec->sectype, "VRAIDDEVICE2    ", 16) != 0 )
+                break;
+
+            ++result;
+            if( Crc16(childsec, SECTOR_SIZE-2) != childsec->crc )
+                break;
+
+            /* 'child' contains a valid admin. sector which *could* be an
+             * old instance of 'child'.
+             * To be true 'child's sector has to be older and from the same
+             * machine.  It has to define the same RAID1 array, too. */
+
+            ++result;
+            if( childsec->timestamp > sec->timestamp )
+            {
+                /* This is impossible to handle the current way: we detected
+                 * a sibling which is more uptodate than the one we are creating
+                 * an array now.  Better stop the current creation and repeat
+                 * this stuff when scanning reached this child. */
+
+                DEBMSG1(DBG_INIT1,dszVal2Newer,(PVOID)child);
+                DEBMSG2(DBG_INIT2,dszVal2AdminData,(PVOID)childsec,SECTOR_SIZE);
+                result = -1;
+                break;
+            }
+
+            if( _fmemcmp(childsec->u.s.id, sec->u.s.id, sizeof(DEVID)) != 0 )
+                break;
+
+            ++result;
+            if( childsec->u.s.type != sec->u.s.type )
+                break;
+
+            ++result;
+            if( childsec->u.s.children != sec->u.s.children )
+                break;
+
+            ++result;
+            for( i = 0; i < sec->u.s.children; ++i )
+            {
+                if( _fmemcmp(childsec->u.s.child[i].id, sec->u.s.child[i].id, sizeof(DEVID)) != 0 )
+                    goto XABORT;
+                if( childsec->u.s.child[i].size != sec->u.s.child[i].size )
+                    goto XABORT;
+            }
+        }
+
+        /* When we finally reached this point 'child' may be used
+         * to build an array. */
+
+        result = 0;
+    }
+    while( 0 );
+
+  XABORT:
+    MemFree(secbuf);
+    return result;
+} /* end[ValidateVSec2] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * NAME
+ *      InitBase
+ * CALL
+ *      InitBase(pRPI)
+ * PARAMETER
+ *      pRPI            init request
+ * RETURNS
+ *      error code as expected from the OS/2 device system
+ * GLOBAL
+ *      Device_Help
+ *      pGlobalInfoSeg
+ *      fDriverFlags
+ *      szDriverName, error messages
+ * DESPRIPTION
+ *      Process Base Initialization Request Packet
+ * REMARKS
+ *      Uses IBM supplied command line parser.
+ */
+PUBLIC USHORT NEAR
+InitBase(PRPINITIN pRPI)
+{
+    PULONG              pInfoSegSel;
+    int                 rc;
+    PRPINITOUT const    pRPO = (PRPINITOUT)pRPI;
+
+    PDDD_PARM_LIST const pInitParms = (PDDD_PARM_LIST)pRPI->InitArgs;
+    PSZ                 pCmdLine;
+
+    DEBMSG(DBG_INIT2,"\r\n[InitBase] entry");
+    DBSTOP();
+
+
+    /* Contains entry point to kernel functions */
+
+    Device_Help = pRPI->DevHlpEP;
+    pCmdLine    = MK_FP(FP_SEL(pInitParms),pInitParms->cmd_line_args);
+
+    if( DevHelp_VirtToPhys(&DiskDDHeader, &ppDiskDDHeader) )
+    {
+        sprintk(szMsgBuffer, szErrorVAddr, (PSZ)szDriverName);
+        SaveMessage();
+        rc = ERR_XLATION_FAIL;
+        goto ERROR_EXIT;                        /* !!! */
+    }
+
+    DevHelp_GetDOSVar(DHGETDOSV_SYSINFOSEG, 0, (PPVOID)&pInfoSegSel);
+    pGlobalInfoSeg = MAKEP(*pInfoSegSel, 0);
+
+
+    AnalyseCmdLine(pCmdLine);                   /* parse command line args */
+    CheckRegistration();                        /* analyse registration info */
+
+
+    do
+    {
+        /* Initialize memory routines, we need memory
+         * to scan and analyse disks. */
+
+        CrcInit(0xA001);                        /* CRC16 table */
+        rc = BuildWorkmem();
+        if( rc )
+        {
+            sprintk(szMsgBuffer, szNoMem, (PSZ)szDriverName);
+            SaveMessage();
+            break;
+        }
+        DEBMSG1(DBG_ALL,"\r\nppWorkMem == %lx",(PVOID)&ppWorkMem);
+
+        rc = DevHelp_AllocateCtxHook(MemoryHook, &hdMemHook);
+        if( rc != 0 )
+            break;
+        rc = DevHelp_AllocateCtxHook(BuildHook, &hdBuildHook);
+        if( rc != 0 )
+            break;
+
+        rc = SearchPhysDevices();
+        if( rc )
+            break;
+
+
+        /* We got some physical devices to install for.  So
+         * allocate now all drive-independed resources. */
+
+        /* Install a timer handler so we can detect timeouts. */
+
+        DEBMSG(DBG_INIT1,"\r\n[InitBase] allocating timer");
+        rc = DevHelp_TickCount((NPFN)&AsmTimer, 
+                               TIMER_TMS/pGlobalInfoSeg->SIS_ClkIntrvl);
+        if( rc )
+        {
+            sprintk(szMsgBuffer, szNoTimer, (PSZ)szDriverName);
+            SaveMessage();
+            break;
+        }
+
+
+        /* Analyse all physical devices found in the first run. */
+
+        rc = BuildDevTree();
+        if( rc )
+            break;
+    }
+    while( 0 );
+
+
+    /* Processing complete.  Analyse situation, should we install,
+     * quiet fail or even loudly stop Config.Sys processing? */
+
+    if( rc == 0 )
+    {
+        rc = RegisterDriver();                  /* very late! */
+        if( rc != 0 )
+            goto ERROR_EXIT;                    /* really sad */
+
+        /* Register host drives as units. */
+
+        pRPO->Unit    = (UCHAR)(cHDrv + cBDisk);
+        pRPO->CodeEnd = ((USHORT)Code_End & ~0x0F) + 0x10;
+        pRPO->DataEnd = ((USHORT)npInitData & ~0x0F) + 0x10;
+
+        DEBMSG2(DBG_INIT1,"\r\n[InitBase] driver installed (%w array, %w basedisks)",cHDrv,cBDisk);
+        fDriverFlags |= DF_INIT1DONE;
+        return STATUS_DONE;
+    }
+    else
+    {
+      ERROR_EXIT:                               /* goto destination */
+        pRPO->Unit    = 0;
+        pRPO->CodeEnd = 0;
+        pRPO->DataEnd = 0;
+
+        DEBMSG(DBG_INIT1,"\r\n[InitBase] don't load driver");
+        ReleaseWorkmem();                               /* !!! unlock memory !!! */
+        if( hdMemHook != 0 )
+            DevHelp_FreeCtxHook(hdMemHook);
+        if( hdBuildHook != 0 )
+            DevHelp_FreeCtxHook(hdBuildHook);
+
+        if( rc < 0 )
+            return STERR | STDON | ERROR_I24_GEN_FAILURE;
+        else
+            return STERR | STDON | ERROR_I24_QUIET_INIT_FAIL;
+    }
+} /* end[InitBase] */
+@
+
+
+3.8
+log
+@- NORAID5: prohibits calls to Raid5Create().  To build old versions...
+@
+text
+@d3 2
+a4 2
+ * $Revision: 3.7 $
+ * $Date: 2001/09/03 02:56:33 $
+d7 2
+a8 2
+ *	First step of initialization, executed at ring 0 in protected
+ *	mode as the only running process.
+d12 3
+d109 28
+a136 1
+ * This code is Copyright Vitus Jensen 1997-2001
+d141 1
+a141 1
+static char const id[]="$Id: init1.c,v 3.7 2001/09/03 02:56:33 vitus Exp vitus $";
+d163 6
+a168 6
+#define ERR_NO_MEM		((USHORT)-1)
+#define ERR_NO_VRAIDPART	((USHORT)-2)
+#define ERR_BAD_PHYSDEV		((USHORT)-3)
+#define ERR_XLATION_FAIL	((USHORT)-4)
+#define ERR_BAD_REGLEVEL	((USHORT)-5)
+#define ERR_UNKNOWN_RTYPE	((USHORT)-6)
+d190 16
+a205 16
+INITMSG	szErrorVAddr[]= 	"%s: error converting virtual to physical address";
+INITMSG	szNoMem[]=		"%s: error getting permanent memory";
+INITMSG	szNoDriverTab[]=	"%s: error retrieving driver table";
+INITMSG	szNoDevTab[]=		"%s: error retrieving device table from ADD %u (0x%x)";
+INITMSG	szAllocFailed[]=	"%s: adapter %u, unit %u allocation failed (0x%x)";
+INITMSG	szDeallocFailed[]=	"%s: adapter %u, unit %u, deallocation failed";
+
+INITMSG	szReadFailed[]=		"%s: adapter %u, unit %u READ failed (%04x)";
+INITMSG	szReadFailed2[]=	"%s: phys %u, admin. sector %lu READ failed (%04x)";
+INITMSG	szAdminDestroyed[]=	"%s: phys %u, admin. sector %lu destroyed";
+INITMSG	szAdminUnknown[]=	"%s: phys %u, unknown format of admin. sector";
+
+INITMSG	szRegDevClassFailed[]=	"%s: error registering device class";
+INITMSG szNoTimer[]=		"%s: error registrating timer routine";
+INITMSG szBadPhysdevSector[]=	"%s: adapter %u, unit %u, PHYSDEV definition destroyed, device ignored";
+INITMSG szCreateFail[]=		"%s: creation of VRAID device failed";
+d207 2
+a208 2
+INITMSG szUnknownRType[]=	"%s: unknown RDTYPE %u, drive ignored";
+INITMSG	szMirrorNotReg[]=	"%s: MIRROR defined but driver isn't registrated for MIRROR support"
+d210 1
+a210 1
+INITMSG	szRaidNotReg[]=		"%s: RAID4,5 defined but driver isn't registrated for it's support"
+d215 19
+a233 19
+INITMSG	szSearchPhysDevices[] = "Looking for physical devices...";
+INITMSG szFoundPhysDevices[] =	"Found %u PHYSDEVICE's";
+INITMSG	szNoPhysDevices[]=	"No PHYSDEVICE's found";
+INITMSG	szFoundPhysDevice[]=	"Adapter %u, Unit %u: found PHYSDEVICE";
+INITMSG	szNo16M[]=	"Adapter %u: hardware doesn't support memory above 16MB";
+INITMSG	szNoScGa[]=	"Adapter %u: hardware doesn't support scatter/gather";
+INITMSG	szDiskette[]=		"Adapter %u, Unit %u: diskette drive";
+INITMSG	szDefective[]=		"Adapter %u, Unit %u: defect";
+INITMSG	szNoDiskType[]= 	"Adapter %u, unit %u: no disk device";
+
+INITMSG	szBuildDevTree[]=	"Building device tree...";
+INITMSG szHostDriveCreate[] =	"Creating array drive";
+INITMSG szHostDriveCount[] =	"Found %u array drive(s)";
+INITMSG szNoHostDrive[] =	"No array drives found!";
+INITMSG szSingleCreate[]=	"Creating SINGLE...";
+INITMSG szSpanCreate[]=		"Creating SPAN...";
+INITMSG szStripeCreate[]=	"Creating STRIPE...";
+INITMSG szMirrorCreate[]=	"Creating MIRROR...";
+INITMSG szRaid5Create[]=	"Creating RAID 5...";
+d238 4
+a241 4
+INITMSG	szCmdLineSyntax[]= "%s: syntax error in command line";
+INITMSG	szMissingOption[]= "%s: required option missing in command line";
+INITMSG	szUnknownOption[]= "%s: unknown command line option";
+INITMSG	szCmdLineError[]=  "%s: command line option error %d";
+d245 3
+a247 3
+INITMSG dszValidateVSet2[]=	"\r\n[ValidateVSec2] checking %p";
+INITMSG dszVal2Newer[]=		"\r\n[ValidateVSec2] %p contains newer admin data";
+INITMSG dszVal2AdminData[]=	"\r\n[ValidateVSec2] admin data\r\n%z";
+d256 1
+a256 1
+INITMSG szProduct[]=	"Visual RAID Filter";
+d259 1
+a259 1
+"\r\nCopyright 1998-2001 by Vitus Jensen (2:2474/424)              " __DATE__ ;
+d261 3
+a263 3
+INITMSG szNoReg[]=	"Unregistrated version, please register after a trial period";
+INITMSG szDemo[]=	"Demonstration key, valid until %u/%u";
+INITMSG szReg[]=	"Registered to: %s (level %u)";
+d265 2
+a266 2
+#define REG_MAGIC	0x53A1B7F9
+#define REG_KEYLEN	40
+d269 4
+a272 4
+    ULONG	ulMagic;
+    UCHAR	szUser[REG_KEYLEN];
+    UCHAR	szRegCode[REG_KEYLEN];
+    ULONG	ulSize;
+d305 1
+a305 1
+ *	SendIORBNotify(iorb)
+d307 1
+a307 1
+ *	iorb		completed request
+d309 1
+a309 1
+ *	(nothing)
+d311 1
+a311 1
+ *	(nothing)
+d313 2
+a314 2
+ *	Awakens any process blocking on the passed IORB.  Used
+ *	by 'SendIORB'.
+d334 2
+a335 2
+ *	iorb		request to execute
+ *	addentry	entry point of ADD to call
+d337 2
+a338 2
+ *	0		OK
+ *	/0		error code returned from ADD
+d340 1
+a340 1
+ *	(nothing)
+d342 1
+a342 1
+ *	Uses 'SendIORBNotify' as notification routine.
+d344 2
+a345 2
+ *	Need local variable to prevent restoring sp from bp
+ *	after ADD call.
+d351 1
+a351 1
+    USHORT	rc;				/* define here (see cli) */
+d355 2
+a356 2
+    iorb->ErrorCode =	0;
+    iorb->Status =	0;
+d363 4
+a366 4
+	rc = DevHelp_ProcBlock((ULONG)iorb, (ULONG)-1L, WAIT_IS_INTERRUPTABLE);
+	if( rc != 0 )
+	{
+	    DEBMSG1(DBG_INIT1,"\r\n[LocalSendIORB] ProcBlock - rc %w, ignored",rc);
+d368 2
+a369 2
+	    iorb->Status = IORB_DONE | IORB_ERROR;
+	    iorb->ErrorCode = IOERR_CMD_ABORTED;
+d371 2
+a372 2
+	}
+	cli();
+d378 3
+a380 3
+	DEBMSG1(DBG_INIT1,"\r\n[LocalSendIORB] IORB ERROR %w",iorb->ErrorCode);
+	DEBMSG2(DBG_INIT1,"\r\nIORB dump\r\n%z",(PVOID)iorb,iorb->Length);
+	return iorb->ErrorCode;
+d383 1
+a383 1
+	return 0;
+d398 1
+a398 1
+ *	CheckAdapterInfo(iAdapter,npAdapterInfo)
+d400 2
+a401 2
+ *	iAdapter		index of adapter in system
+ *,	npAdapterInfo		from GET_DEVICE_TABLE
+d404 2
+a405 2
+ *	0			OK to process units from this adapter
+ *	/0			no SCSI, defect, ...
+d407 1
+a407 1
+ *	fDriverFlags
+d409 2
+a410 2
+ *	Checks adapter flags, additional service: displays some
+ *	performance related capabilities of adapter.
+d413 3
+a415 3
+ *	There is really no reason to reject a certain adapter.
+ *	We don't have to propagate a AF_16M flag because OS/2 will
+ *	detect it anyway (getting infos from the ADD itself).
+d422 4
+a425 4
+	sprintk(szMsgBuffer, szNo16M, iAdapter);
+	DEBMSG1(DBG_INIT2,"\r\n[CheckAdapterInfo] %s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_DEBUG) )
+	    SaveMessage();
+d429 4
+a432 4
+	sprintk(szMsgBuffer, szNoScGa, iAdapter);
+	DEBMSG1(DBG_INIT2,"\r\n[CheckAdapterInfo] %s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_DEBUG) )
+	    SaveMessage();
+d443 1
+a443 1
+ *	CheckUnitInfo(iAdapter,npUnitInfo)
+d445 2
+a446 2
+ *	iAdapter		index of adapter in system
+ *	npUnitInfo		from GET_DEVICE_TABLE
+d449 2
+a450 2
+ *	0	OK, try/use this unit
+ *	/0	bad type, defective, etc.
+d454 2
+a455 2
+ *	If this unit is defect then skip the unit.
+ *	Dito if it's diskette A or B.
+d458 2
+a459 2
+ *	Should we skip removable media?
+ *	Uses global 'fDriverFlags'.
+d470 5
+a474 5
+	sprintk(szMsgBuffer, szDiskette, phys->iAdapter, phys->iUnit);
+	DEBMSG1(DBG_INIT2,"\r\n[CheckUnitInfo] %s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_DEBUG) )
+	    SaveMessage();
+	return 3;
+d479 5
+a483 5
+	sprintk(szMsgBuffer, szNoDiskType, phys->iAdapter, phys->iUnit);
+	DEBMSG1(DBG_INIT2,"\r\n[CheckUnitInfo] %s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_DEBUG) )
+	    SaveMessage();
+	return 4;
+d488 5
+a492 5
+	sprintk(szMsgBuffer, szDefective, phys->iAdapter, phys->iUnit);
+	DEBMSG1(DBG_INIT1,"\r\n[CheckUnitInfo] %s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_VERBOSE) )
+	    SaveMessage();
+	return 4;
+d505 1
+a505 1
+ *	phys		local structure
+d508 2
+a509 2
+ *	0		OK
+ *	/0		something failed, skip this device
+d512 1
+a512 1
+ *	Allocate unit.
+d519 3
+a521 3
+    PIORB_UNIT_CONTROL 	pIOUC = (PVOID)AllocateIorb(1);
+    int			rc = 0;
+    USHORT		failed;
+d530 4
+a533 4
+    pIOUC->iorbh.Length =		sizeof(IORB_UNIT_CONTROL);
+    pIOUC->iorbh.UnitHandle =		phys->hdADDUnit;
+    pIOUC->iorbh.CommandCode =		IOCC_UNIT_CONTROL;
+    pIOUC->iorbh.CommandModifier =	IOCM_ALLOCATE_UNIT;
+d539 4
+a542 4
+	sprintk(szMsgBuffer, szAllocFailed, (PSZ)szDriverName,
+		phys->iAdapter, phys->iUnit, failed);
+	SaveMessage();
+	rc = 1;
+d557 1
+a557 1
+ *	phys		device structure
+d560 2
+a561 2
+ *	0		OK
+ *	/0		error, not deallocated
+d564 1
+a564 1
+ *	Deallocates unit.
+d571 3
+a573 3
+    PIORB_UNIT_CONTROL 	pIOUC = (PVOID)AllocateIorb(1);
+    int			rc = 0;
+    USHORT		failed;
+d581 4
+a584 4
+    pIOUC->iorbh.Length =		sizeof(IORB_UNIT_CONTROL);
+    pIOUC->iorbh.UnitHandle =		phys->hdADDUnit;
+    pIOUC->iorbh.CommandCode =		IOCC_UNIT_CONTROL;
+    pIOUC->iorbh.CommandModifier =	IOCM_DEALLOCATE_UNIT;
+d590 2
+a591 2
+	/* Couldn't deallocte unit.
+	 * Bad, display and ignore */
+d593 3
+a595 3
+	sprintk(szMsgBuffer, szDeallocFailed,
+		(PSZ)szDriverName, phys->iAdapter, phys->iUnit);
+	SaveMessage();
+d610 3
+a612 3
+ *	phys		PHYSDEVICE structure
+ *	secno		PSN
+ *	physaddr	physical memory address to place data
+d615 2
+a616 2
+ *	0		OK
+ *	/0		ADD error code
+d619 1
+a619 1
+ *	Read a sector from disk.
+d627 1
+a627 1
+    USHORT 		error;
+d632 2
+a633 2
+	DEBMSG(DBG_INIT1,"\r\n[LocalReadSector] memory allocation failed");
+	return ERR_NO_MEM;
+d640 3
+a642 3
+    iorb->iorbh.Length =	sizeof(IORB_EXECUTEIO);
+    iorb->iorbh.UnitHandle =	phys->hdADDUnit;
+    iorb->iorbh.CommandCode =	IOCC_EXECUTE_IO;
+d645 3
+a647 3
+    iorb->iorbh.RequestControl =	0;
+    iorb->iorbh.StatusBlockLen =	0;
+    iorb->iorbh.pStatusBlock =		0;
+d650 1
+a650 1
+    iorb->BlockCount = 1;			/* only this single sector */
+d658 3
+a660 3
+	sprintk(szMsgBuffer, szReadFailed, (PSZ)szDriverName,
+		phys->iAdapter, phys->iUnit, error);
+	SaveMessage();
+d674 6
+a679 6
+ *	phys		
+ *	secno		secto no of partition sector
+ *	extstart	start of first extended partition, offsets are
+ *			calculated from here
+ *	pstart		returns VRAID start (absolute)
+ *	psize		returns VRAID size
+d682 1
+a682 1
+ *	APIRET
+d685 1
+a685 1
+ *	Used to search recursive after a VRAID partition.
+d691 1
+a691 1
+		   PULONG const pstart,PULONG const psize)
+d693 2
+a694 2
+    PMBR const	mbr = MemAlloc(SECTOR_SIZE);
+    USHORT	rc;
+d700 2
+a701 2
+	DEBMSG(DBG_INIT1,"\r\n[FindVRaidPartition] memory allocation failed");
+	return ERR_NO_MEM;
+d706 38
+a743 1
+	int	j;
+d745 4
+a748 41
+	rc = LocalReadSector(phys, secno, FP_OFF(mbr) + ppWorkMem);
+	if( rc != 0 )
+	    break;
+
+	if( mbr->Signature != 0xAA55 )
+	    break;
+
+
+	for( j = 0; j < 4  &&  *psize == 0; ++j )
+	{
+	    switch( mbr->PartitionTable[j].SysIndicator )
+	    {
+	      case VRAID_PARTTYPE:
+		*pstart = secno + mbr->PartitionTable[j].RelativeSectors;
+		*psize = mbr->PartitionTable[j].NumSectors;
+		DEBMSG1(DBG_INIT1,"\r\n[FindVRaidPartition] found starting at %lx",(PVOID)pstart);
+		break;
+
+	      case EXTENDED_PARTTYPE:
+		if( extstart == 0 )
+		{
+		    /* First EXT: calculate from there */
+
+		    extstart = mbr->PartitionTable[j].RelativeSectors;
+		    rc = FindVRaidPartition(phys,
+					    mbr->PartitionTable[j].RelativeSectors,
+					    extstart, pstart, psize);
+		}
+		else
+		{
+		    rc = FindVRaidPartition(phys,
+					    extstart
+					    + mbr->PartitionTable[j].RelativeSectors,
+					    extstart, pstart, psize);
+		}
+		break;
+
+	      default:
+		break;				/* ignore empty or other types */
+	    }
+	}
+d763 1
+a763 1
+ *	phys		describes device
+d766 3
+a768 3
+ *	0		OK
+ *	/0		really bad things happend.
+ *			Don't touch this device.
+d771 3
+a773 3
+ *	Do a first check whether this unit has been configured
+ *	for VRaid.flt
+ *	Builds VRDEVICE PHYSDEV if successfull.
+d776 1
+a776 1
+ *	Updates global 'apPDev', 'npInitData'.
+d781 1
+a781 1
+    USHORT	error;
+d788 1
+a788 1
+	USHORT		crc;
+d791 58
+a848 2
+	/* Search VRAID partition.  This works recursive starting from
+	 * sector 0 (the 'Master Boot Record'). */
+d850 6
+a855 62
+	error = FindVRaidPartition(phys, 0, 0, &phys->ulVRStart, &phys->ulVRSize);
+	if( error != 0 )
+	    break;
+	if( phys->ulVRStart == 0 )
+	{
+	    DEBMSG(DBG_INIT2,"\r\n[VerifyDiskData] no VRAID partition");
+	    error = ERR_NO_VRAIDPART;
+	    break;
+	}
+
+
+	/* Allocate resources (after FindVRaidPartition()). */
+
+	sec = MemAlloc(SECTOR_SIZE);
+	if( sec == NULL )
+	{
+	    DEBMSG(DBG_INIT1,"\r\n[VerifyDiskData] memory allocation failed");
+	    error = ERR_NO_MEM;
+	    break;
+	}
+
+
+	/* -------- Read 'PHYSDEVICE' sector -------- */
+
+	error = LocalReadSector(phys, phys->ulVRStart, FP_OFF(sec)+ppWorkMem);
+	if( error != 0 )
+	    break;
+
+
+	/* Analyse PHYSDEV sector.  That's really no big deal
+	 * as it contains nearly nothing. */
+
+	DEBMSG2(DBG_INIT4,"\r\n[VerifyDiskData] SEC_PHYSDEV\r\n%z",(PVOID)sec,512u);
+	crc = Crc16(sec, SECTOR_SIZE-2);
+	if( _fmemcmp(sec->sectype,"PHYSDEVICE      ",16) != 0  ||  crc != sec->crc )
+	{
+	    sprintk(szMsgBuffer, szBadPhysdevSector,
+		    (PSZ)szDriverName, phys->iAdapter, phys->iUnit);
+	    SaveMessage();
+	    error = ERR_BAD_PHYSDEV;		/* bad layout (?) */
+	    DBSTOP();
+	    break;
+	}
+
+
+	/* Create a PHYSDEVICE.
+	 * afterwards it's getting simpler because we can rely on PHYSDEVICE
+	 * to handle all that IORB stuff. */
+
+	sprintk(szMsgBuffer, szFoundPhysDevice, phys->iAdapter, phys->iUnit);
+	DEBMSG1(DBG_INIT1,"\r\n[VerifyDiskData] %s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_VERBOSE) )
+	    SaveMessage();
+	{
+	    USHORT	size;
+
+	    PhysdevCreate((PVRDEVHDR)npInitData, phys, sec, &size);
+
+	    apPDev[cPDev] = (PVOID)npInitData;
+	    npInitData += size;
+	    ++cPDev;				/* one more */
+	}
+d859 1
+a859 1
+    if( sec != NULL )	MemFree(sec);
+d870 2
+a871 2
+ *	phys
+ *	npUnitInfo
+d874 1
+a874 1
+ *	(nothing)
+d877 3
+a879 3
+ *	Create an entry in 'apBDisk[]' for this PHYSDEVICE.  The
+ *	entry will contain any data for allocation/deallocation and
+ *	device_table.
+d886 1
+a886 1
+    PBASEDISK		disk;
+d903 2
+a904 2
+    disk->info.FilterADDHandle = 0;		/* none so far */
+    disk->info.UnitSCSITargetID = 0;		/* remove SCSI infos */
+d920 1
+a920 1
+ *	SearchPhysDevices(void)
+d923 1
+a923 1
+ *	(none)
+d926 3
+a928 3
+ *	0		OK, install driver
+ *	<0		fatal error, loud abort
+ *	>0		no device found, be quiet
+d931 2
+a932 2
+ *	Scans all adapters on all ADDs for DASD and inserts
+ *	our DASD (OK, VRAID partition) into apPDev.
+d935 1
+a935 1
+ *	Updates global 'apPdev', 'npInitData' and 'fDriverFlags'.
+d940 4
+a943 4
+    USHORT	j, k;
+    USHORT	add_count;
+    USHORT	add_index;
+    USHORT	adapter_index;
+d945 1
+a945 1
+    void	(FAR _Cdecl * pADDBaseEP)(PIORB);
+d954 1
+a954 1
+	SaveMessage();
+d961 1
+a961 1
+	/* Should never happen.  What can we do? */
+d963 3
+a965 3
+	sprintk(szMsgBuffer, szNoDriverTab, (PSZ)szDriverName);
+	SaveMessage();
+	return -1;
+d976 1
+a976 1
+	 add_index < add_count; ++add_index, ++pDCE )
+d978 3
+a980 3
+	{
+	    PIORB_CONFIGURATION pIOCF = (PVOID)AllocateIorb(1);
+	    USHORT		rc;
+d982 1
+a982 1
+	    /* Get ADD's Device Table */
+d984 5
+a988 5
+	    _fmemset(pIOCF, 0, sizeof(IORB_CONFIGURATION));
+	    pIOCF->iorbh.Length =		sizeof(IORB_CONFIGURATION);
+	    pIOCF->iorbh.UnitHandle =		0;
+	    pIOCF->iorbh.CommandCode =		IOCC_CONFIGURATION;
+	    pIOCF->iorbh.CommandModifier =	IOCM_GET_DEVICE_TABLE;
+d990 2
+a991 2
+	    pIOCF->pDeviceTable =	(PDEVICETABLE)DeviceTable;
+	    pIOCF->DeviceTableLen =	sizeof(DeviceTable);
+d993 1
+a993 1
+	    pADDBaseEP = (PVOID)MAKEP(pDCE->DCSelector, pDCE->DCOffset);
+d995 24
+a1018 5
+	    if( (rc=LocalSendIORB((PIORB)pIOCF, pADDBaseEP)) != 0 )
+	    {
+		/* Error (?), could not get device table of installed
+		 * ADD.  Just ignore that ADD (which probably hasn't
+		 * any adapters/devices, either). */
+a1019 7
+		sprintk(szMsgBuffer, szNoDevTab, (PSZ)szDriverName, add_index, rc);
+		SaveMessage();
+		FreeIorb((PVOID)pIOCF);
+		continue;
+	    }
+	    FreeIorb((PVOID)pIOCF);
+	}
+d1021 2
+d1024 1
+a1024 1
+	/* -------- For each Adapter in ADD's Device Table -------- */
+d1026 2
+a1027 7
+	for( j = 0;
+	     j < ((PDEVICETABLE)DeviceTable)->TotalAdapters;
+	     ++j, ++adapter_index )
+        {
+	    NPADAPTERINFO const npAdapterInfo
+		= ((PDEVICETABLE)DeviceTable)->pAdapter[j];
+	    NPUNITINFO		npUnitInfo;
+d1029 3
+d1033 3
+a1035 2
+	    if( CheckAdapterInfo(adapter_index, npAdapterInfo) )
+		continue;
+d1037 3
+a1039 1
+	    /* -------- Access UNITINFO for each Device on adapter -------- */
+d1041 3
+a1043 2
+	    DEBMSG1(DBG_INIT2,"\r\n[SearchPhysDevices] looking for units on adapter %w",adapter_index);
+	    npUnitInfo = npAdapterInfo->UnitInfo;
+d1045 12
+a1056 3
+	    for( k = 0; k < npAdapterInfo->AdapterUnits; ++k, ++npUnitInfo )
+            {
+		PPHYSDEVICE	phys;
+d1058 5
+a1062 7
+		GETINITRAM(phys,PPHYSDEVICE,sizeof(PHYSDEVICE));
+		_fmemset(phys, 0, sizeof(PHYSDEVICE));
+		DEBMSG1(DBG_INIT2,"\r\n[SearchPhysDevices] new PHYSDEVICE: %p",phys);
+
+		/* If a Filter ADD has registered for this unit
+		 * then send subsequent requests to the Filter ADD
+		 * and not to the ADD. */
+d1064 1
+a1064 1
+		if( (phys->hdFilter=npUnitInfo->FilterADDHandle) != 0 )
+d1066 2
+a1067 1
+		    struct DevClassTableEntry FAR *pDCEFilter;
+d1069 2
+a1070 4
+		    DEBMSG(DBG_INIT3,"\r\n[SearchPhysDevices] found other filter for unit");
+		    pDCEFilter = &pDCT->DCTableEntries[phys->hdFilter-1];
+		    phys->pADDEntry = (PVOID)MAKEP(pDCEFilter->DCSelector,
+						   pDCEFilter->DCOffset);
+d1072 5
+a1076 1
+		else
+d1078 3
+a1080 1
+		    phys->pADDEntry = pADDBaseEP;
+a1081 41
+		phys->iAdapter = adapter_index;
+		phys->iUnit = npUnitInfo->UnitIndex;
+		phys->hdADDUnit = npUnitInfo->UnitHandle;
+
+		if( CheckUnitInfo(phys, npUnitInfo) )
+		{
+		    npInitData -= sizeof(PHYSDEVICE); /* release memory */
+		    continue;
+		}
+
+		if( LocalAllocateUnit(phys) )
+		{
+		    /* Couldn't allocate unit.	Release any data
+		     * allocated and continue with next device. */
+
+		    npInitData -= sizeof(PHYSDEVICE); /* free memory */
+		    continue;
+		}
+
+		/* Now read partition table to verify that this
+		 * is an unit managed by our filter. */
+
+		if( VerifyDiskData(phys) != 0 )
+		{
+		    LocalDeallocateUnit(phys);
+		    npInitData -= sizeof(PHYSDEVICE); /* free memory */
+		    continue;
+		}
+
+		/* Save some restrictions in global variables. */
+
+		if( npAdapterInfo->MaxHWSGList != 0
+		    &&  npAdapterInfo->MaxHWSGList < uADDMaxSGList )
+		    uADDMaxSGList = npAdapterInfo->MaxHWSGList;
+		if( npAdapterInfo->MaxCDBTransferLength != 0
+		    &&  npAdapterInfo->MaxCDBTransferLength < ulADDMaxTransfer )
+		    ulADDMaxTransfer = npAdapterInfo->MaxCDBTransferLength;
+		if( (npAdapterInfo->AdapterFlags & AF_16M) == 0 )
+		    fADDFlags |= AF_NOT16M;
+		if( (npAdapterInfo->AdapterFlags & AF_HW_SCATGAT) )
+		    fADDFlags |= AF_HWSCATGAT;
+d1083 15
+a1097 2
+		if( (fDriverFlags & DF_NOROUTER) == 0 )
+		    InstallRouter(phys, npUnitInfo);
+d1099 2
+a1100 2
+	    } /* for each unit */
+	} /* for each adapter */
+d1105 5
+a1109 5
+	sprintk(szMsgBuffer, szNoPhysDevices);
+	DEBMSG1(DBG_INIT1,"\r\n[SearchPhysDevices] %s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_VERBOSE) )
+	    SaveMessage();
+	return 1;				/* non-fatal error */
+d1115 1
+a1115 1
+	SaveMessage();
+d1131 1
+a1131 1
+ *	AddHostDrive(PVRDEVHDR vrd)
+d1133 1
+a1133 1
+ *	vrd		VRDEVICE to build HOSTDRIVE for
+d1135 1
+a1135 1
+ *	(nothing)
+d1137 1
+a1137 1
+ *	apHDrv
+d1139 2
+a1140 2
+ *	Builds an entry in 'apHDrv' for a VRDEVICE.  Called if a VRDEVICE
+ *	is top of structure (configuration sector marks it as HOSTDRIVE).
+d1153 1
+a1153 1
+	SaveMessage();
+d1166 1
+a1166 1
+ *	tab	table of FAR pointer
+d1169 1
+a1169 1
+ *	count of entries inside table
+d1172 1
+a1172 1
+ *	Compresses entries in 'tab' so that no holes (NULL pointers) appear.
+d1179 1
+a1179 1
+    int	j, i;
+d1183 2
+a1184 2
+	if( tab[i] != 0 )
+	    tab[j++] = tab[i];
+d1187 1
+a1187 1
+	tab[i] = 0;
+d1196 1
+a1196 1
+ *	AnalyseVRDev(sec,save_here,tab2[])
+d1199 3
+a1201 3
+ *	sec		sector to analyse
+ *	save_here	saves pointer to new VRDEVHDR here
+ *	tab2[]		drives to build from
+d1204 2
+a1205 2
+ *	0	OK, device created
+ *	/0	no device created, don't try again
+d1208 1
+a1208 1
+ *	Analyse VRDEVICE-description sector.
+d1215 3
+a1217 3
+    USHORT	size;
+    int		rc = 0;
+    int		i;
+d1224 20
+a1243 20
+	sprintk(szMsgBuffer, szSingleCreate);
+	DEBMSG1(DBG_INIT1,"\r\n[AnalyseVRDev] %s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_VERBOSE) )
+	    SaveMessage();
+	i = SingleCreate((PVRDEVHDR)npInitData, tab2, sec, &size);
+	if( i  == 0 )
+	{
+	    *save_here = (PVOID)npInitData;
+	    npInitData += size;
+	}
+	else
+	{
+	    if( i < 0 )
+	    {
+		sprintk(szMsgBuffer, szCreateFail, (PSZ)szDriverName);
+		SaveMessage();
+	    }
+	    rc = i;
+	}
+	break;
+d1246 20
+a1265 20
+	sprintk(szMsgBuffer, szStripeCreate);
+	DEBMSG1(DBG_INIT1,"\r\n[AnalyseVRDev] %s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_VERBOSE) )
+	    SaveMessage();
+	i = StripeCreate((PVRDEVHDR)npInitData, tab2, sec, &size);
+	if( i == 0 )
+	{
+	    *save_here = (PVOID)npInitData;
+	    npInitData += size;
+	}
+	else
+	{
+	    if( i < 0 )
+	    {
+		sprintk(szMsgBuffer, szCreateFail, (PSZ)szDriverName);
+		SaveMessage();
+	    }
+	    rc = i;
+	}
+	break;
+d1268 20
+a1287 20
+	sprintk(szMsgBuffer, szSpanCreate);
+	DEBMSG1(DBG_INIT1,"\r\n[AnalyseVRDev] %s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_VERBOSE) )
+	    SaveMessage();
+	i = SpanCreate((PVRDEVHDR)npInitData, tab2, sec, &size);
+	if( i == 0 )
+	{
+	    *save_here = (PVOID)npInitData;
+	    npInitData += size;
+	}
+	else
+	{
+	    if( i < 0 )
+	    {
+		sprintk(szMsgBuffer, szCreateFail, (PSZ)szDriverName);
+		SaveMessage();
+	    }
+	    rc = i;
+	}
+	break;
+d1290 4
+a1293 4
+	sprintk(szMsgBuffer, szUnknownRType, (PSZ)szDriverName, sec->u.s.type);
+	SaveMessage();
+	rc = ERR_UNKNOWN_RTYPE;
+	break;
+d1298 5
+a1302 5
+	if( (sec->u.s.flags & 0x80) )
+	{
+	    AddHostDrive(*save_here);		/*End of VRDEVICE: add as HostDrive*/
+	    *save_here = NULL;			/* and remove from list */
+	}
+d1311 1
+a1311 1
+ *	AnalyseVRDev2(sec,save_here,tab2[])
+d1314 3
+a1316 3
+ *	sec		sector to analyse
+ *	save_here	saves pointer to new VRDEVHDR here
+ *	tab2[]		drives to build from
+d1318 2
+a1319 2
+ *	0	OK, device created
+ *	/0	no device created, don't try again
+d1322 1
+a1322 1
+ *	Analyse VRDEVICE-description sector.
+d1329 3
+a1331 3
+    USHORT	size;
+    int		rc = 0;
+    int		i;
+d1337 28
+a1364 28
+	if( uRegLevel < 2 )
+	{
+	    sprintk(szMsgBuffer, szMirrorNotReg, (PSZ)szDriverName);
+	    SaveMessage();
+	    rc = ERR_BAD_REGLEVEL;
+	    break;
+	}
+
+	sprintk(szMsgBuffer, szMirrorCreate);
+	DEBMSG1(DBG_INIT1,"\r\n[AnalyseVRDev2] %s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_VERBOSE) )
+	    SaveMessage();
+	i = MirrorCreate((PVOID)npInitData, tab2, sec, &size);
+	if( i == 0 )
+	{
+	    *save_here = (PVOID)npInitData;
+	    npInitData += size;
+	}
+	else
+	{
+	    if( i < 0 )
+	    {
+		sprintk(szMsgBuffer, szCreateFail, (PSZ)szDriverName);
+		SaveMessage();
+	    }
+	    rc = i;
+	}
+	break;
+d1370 28
+a1397 28
+	if( uRegLevel < 3 )
+	{
+	    sprintk(szMsgBuffer, szRaidNotReg, (PSZ)szDriverName);
+	    SaveMessage();
+	    rc = ERR_BAD_REGLEVEL;
+	    break;
+	}
+
+	sprintk(szMsgBuffer, szRaid5Create);
+	DEBMSG1(DBG_INIT1,"\r\n[AnalyseVRDev2] %s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_VERBOSE) )
+	    SaveMessage();
+	i = Raid5Create((PVOID)npInitData, tab2, sec, &size);
+	if( i == 0 )
+	{
+	    *save_here = (PVOID)npInitData;
+	    npInitData += size;
+	}
+	else
+	{
+	    if( i < 0 )
+	    {
+		sprintk(szMsgBuffer, szCreateFail, (PSZ)szDriverName);
+		SaveMessage();
+	    }
+	    rc = i;
+	}
+	break;
+d1402 4
+a1405 4
+	sprintk(szMsgBuffer, szUnknownRType, (PSZ)szDriverName, sec->u.s.type);
+	SaveMessage();
+	rc = ERR_UNKNOWN_RTYPE;
+	break;
+d1410 5
+a1414 5
+	if( (sec->u.s.flags & 0x80) )
+	{
+	    AddHostDrive(*save_here);		/*End of VRDEVICE:add as HostDrive*/
+	    *save_here = NULL;			/* and remove from list */
+	}
+d1424 1
+a1424 1
+ *	BuildDevTree(void)
+d1426 2
+a1427 2
+ *	(none)
+ *	aPDev, cPDev	previously found PHYSDEVICEs
+d1430 2
+a1431 2
+ *	0		OK
+ *	/0		fatal error, don't install driver
+d1434 4
+a1437 4
+ *	Scans all previously found physical devices and does:
+ *	- add their ID to structure
+ *	- read next adminsector and build VRDEVICE
+ *	- ...
+d1447 1
+a1447 1
+    static PVRDEVHDR		tab1[2*MAX_PDEV];
+d1449 4
+a1452 4
+    PVOID const		secbuf = MemAlloc(SECTOR_SIZE);	/* allocated in MemPool*/
+    USHORT		rc = 0;
+    ULONG		adsecno;
+    int			i;
+d1457 1
+a1457 1
+	SaveMessage();
+d1462 3
+a1464 3
+	sprintk(szMsgBuffer, szMallocFailed, (PSZ)szDriverName);
+	SaveMessage();
+	return ERR_NO_MEM;
+d1478 11
+a1488 2
+	int const found = CompressTab(tab1, sizeof(tab1)/sizeof(tab1[0]));
+	int	j = found;
+d1490 68
+a1557 77
+	/* 'found' contains the count of non-empty entries in 'tab1',
+	 * starting from index 0 to 'found-1' (compressed).
+	 * 'j' is the index of the first free entry in 'tab1', new
+	 * device will be entered here and in later entries */
+
+	if( found == 0 )
+	    break;				/* nothing left in table = done */
+
+
+	/* Now read administrative sector 'adsecno' of every VRDEVICE
+	 * in 'tab1' and build entry in 'tab1' at index 'j'. */
+
+	for( i = 0; i < found; ++i )
+	{
+	    if( tab1[i] == NULL )
+	    {
+		DEBMSG1(DBG_INIT3,"\r\n[BuildDevTree] ignored empty index %w",i);
+		continue;
+	    }
+
+	    DEBMSG1(DBG_INIT2,"\r\n[BuildDevTree] reading index %w",i);
+	    rc = ProcessAdminIO(tab1[i], FALSE, 1, 1, FP_OFF(secbuf) + ppWorkMem);
+	    if( rc != 0 )
+	    {
+		sprintk(szMsgBuffer,szReadFailed2, (PSZ)szDriverName, i,adsecno,rc);
+		SaveMessage();
+		DBSTOP();
+		tab1[i] = NULL;
+		rc = 0;				/* no reason to unload driver... */
+		continue;			/* skip this device */
+	    }
+
+
+	    /* Verify VRDEVICE-description sector. */
+
+	    DEBMSG2(DBG_INIT4,"\r\n[BuildDevTree] SEC_???\r\n%z",(PVOID)secbuf,512u);
+	    if( _fmemcmp(secbuf, "VRAID", 5) != 0  &&  adsecno == 1 )
+	    {
+		DEBMSG1(DBG_INIT1,"\r\n[BuildDevTree] PHYSDEVICE-only (index %w)",i);
+		tab1[i] = NULL;			/* remove and ... */
+		continue;			/* skip this device */
+	    }
+
+	    if( Crc16(secbuf, SECTOR_SIZE-2)
+		!= ((PUSHORT)secbuf)[SECTOR_SIZE/2-1] )
+	    {
+		sprintk(szMsgBuffer,szAdminDestroyed, (PSZ)szDriverName, i, adsecno);
+		SaveMessage();
+		DEBMSG2(DBG_ALL,"\r\n[BuildDevTree] contents:\r\n%z",secbuf,SECTOR_SIZE);
+		DBSTOP();
+		tab1[i] = NULL;
+		continue;			/* skip this device */
+	    }
+
+
+	    /* Analyse sector data and build array structure. */
+
+	    if( _fmemcmp(secbuf, "VRAIDDEVICE     ", 16) == 0 )
+	    {
+		if( AnalyseVRDev(secbuf, &tab1[j++], tab1) < 0 )
+		    tab1[i] = NULL;		/* remove even this */
+	    }
+	    else if( _fmemcmp(secbuf, "VRAIDDEVICE2    ", 16) == 0 )
+	    {
+		if( AnalyseVRDev2(secbuf, &tab1[j++], tab1) < 0 )
+		    tab1[i] = NULL;		/* remove even this */
+	    }
+	    else
+	    {
+		sprintk(szMsgBuffer,szAdminUnknown, (PSZ)szDriverName, i, adsecno);
+		SaveMessage();
+		DEBMSG2(DBG_ALL,"\r\n[BuildDevTree] contents:\r\n%z",secbuf,SECTOR_SIZE);
+		DBSTOP();
+		tab1[i] = NULL;
+		continue;			/* skip this device */
+	    }
+	} /* end[for every found device] */
+d1563 4
+a1566 4
+	sprintk(szMsgBuffer, szHostDriveCount, cHDrv);
+	DEBMSG1(DBG_INIT2,"\r\n[BuildDevTree] %s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_VERBOSE) )
+	    SaveMessage();
+d1570 4
+a1573 4
+	sprintk(szMsgBuffer, szNoHostDrive);
+	DEBMSG1(DBG_INIT2,"\r\n[BuildDevTree] %s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_VERBOSE) )
+	    SaveMessage();
+d1590 1
+a1590 1
+ *	RegisterDriver(void)
+d1592 1
+a1592 1
+ *	(none)
+d1594 2
+a1595 2
+ *	0		OK
+ *	/0		registration failed
+d1597 1
+a1597 1
+ *	fDriverFlags
+d1599 1
+a1599 1
+ *	Add our filter driver to OS/2 internal tables.
+d1602 3
+a1604 3
+ *	Call DevHelp_RegisterDevClass() as late as possible.
+ *	A registered driver returning 'don't install' will
+ *	panic the kernel. :-(
+d1609 2
+a1610 2
+    BOOL	b;
+    int		rc = 0;				/* assume OK */
+d1614 4
+a1617 4
+				    (PFN)IorbEntry,
+				    (USHORT)DRIVERFLAGS,
+				    (USHORT)DRIVERCLASS_ADD,
+				    (PUSHORT)&hdThisDriver);
+d1620 3
+a1622 3
+	sprintk(szMsgBuffer, szRegDevClassFailed, (PSZ)szDriverName);
+	SaveMessage();
+	rc = 3;
+d1632 2
+a1633 2
+#define ENTRY_STATE	   0
+#define MAX_STATES	   2
+d1636 1
+a1636 1
+ *					opt.state[] initialization definitions
+d1638 8
+a1645 8
+ *						____ entry state
+ *						|		previous
+ *						v		  opt	|
+ *  ----Command Line Option --------		----- STATE TABLE ----- |
+ *  token id		string	type		0   1	2		|
+ *									|
+ *						*  /A:	/A:	 <-------
+ *							 plus
+d1647 2
+a1648 2
+#define TOK_ID_EF	100
+#define TOK_ID_DF	101
+d1651 1
+a1651 1
+    {TOK_ID_VERBOSE,0,	"/V", TYPE_0,		{0,  E,  E}};
+d1654 1
+a1654 1
+    {TOK_ID_DEBUG,0,	"/DEBUG:", TYPE_D,	{0,  E,  E}};
+d1657 1
+a1657 1
+    {TOK_ID_DEBUG,0,	"/DEBUG", TYPE_0,	{0,  E,  E}};
+d1660 1
+a1660 1
+    {TOK_ID_NOT_SHARE,0,"/!SHARE", TYPE_0,	{0,  E,  E}};
+d1663 1
+a1663 1
+    {TOK_ID_SHARE,0,	"/SHARE", TYPE_0,	{0,  E,  E}};
+d1666 1
+a1666 1
+    {TOK_ID_END,0,	"\0", TYPE_0,		{O,  O,  O}};
+d1677 6
+a1682 6
+	&OPT_VERBOSE,
+	&OPT_DEBUG_NO,
+	&OPT_DEBUG_DEFAULT,
+	&OPT_NSHARE,
+	&OPT_SHARE,
+	&OPT_END
+d1691 1
+a1691 1
+ *	AnalyseCmdLine(pszLine)
+d1693 1
+a1693 1
+ *	pszLine		pointer to command line
+d1695 1
+a1695 1
+ *	0		OK
+d1704 4
+a1707 4
+    CC		parse_rc;
+    PCHAR	tp;
+    UCHAR	TokenId;
+    USHORT	adapter = 0xFFFF;
+d1714 1
+a1714 1
+			      DeviceTable, MAX_DEVICETABLE_SIZE);
+d1723 3
+a1725 3
+	/* SYNTAX_ERR:
+	 *	General error in command line, no special handling
+	 */
+d1727 7
+a1733 7
+	sprintk(szMsgBuffer, szCmdLineSyntax, (PSZ)szDriverName);
+	SaveMessage();
+	break;
+
+	/* REQ_OPT_ERR:
+	 *	Required option is missing in command line (probably /A: )
+	 */
+d1735 7
+a1741 7
+	sprintk(szMsgBuffer, szMissingOption, (PSZ)szDriverName);
+	SaveMessage();
+	break;
+
+	/* INVALID_OPT_ERR:
+	 *	Bad format?
+	 */
+d1743 3
+a1745 3
+	sprintk(szMsgBuffer, szUnknownOption, (PSZ)szDriverName, (PBYTE)DeviceTable);
+	SaveMessage();
+	break;
+d1751 2
+a1752 2
+	sprintk(szMsgBuffer, szCmdLineError, (PSZ)szDriverName, parse_rc.ret_code);
+	SaveMessage();
+d1755 1
+a1755 1
+	break;
+d1761 1
+a1761 1
+	 tp += *(tp+TOKL_LEN) )
+d1763 48
+a1810 48
+	switch( TokenId )
+	{
+	  case TOK_ID_VERBOSE:
+	    DEBMSG(DBG_INIT2,"\r\n/VERBOSE");
+	    fDriverFlags |= DF_VERBOSE;
+	    break;
+
+	  case TOK_ID_DEBUG:
+	    DEBMSG(DBG_INIT2,"\r\n/DEBUG");
+	    fDriverFlags |= DF_VERBOSE;
+	    fDriverFlags |= DF_DEBUG;
+
+	    if( *(tp+TOKL_LEN) == TOK_MIN_LENGTH+1 )
+	    {
+		UCHAR code = *(tp+TOKL_VALUE);
+
+		switch( code )
+		{
+		  default:
+		    sprintk(szMsgBuffer, szUnknownOption, 
+			    (PSZ)szDriverName, (PBYTE)DeviceTable);
+		    SaveMessage();
+		    break;
+		}
+	    }
+	    break;
+
+	  case TOK_ID_SHARE:
+	    DEBMSG(DBG_INIT2,"\r\n/SHARE");
+	    fDriverFlags &= ~DF_NOROUTER;
+	    break;
+
+	  case TOK_ID_NOT_SHARE:
+	    DEBMSG(DBG_INIT2,"\r\n/!SHARE");
+	    fDriverFlags |= DF_NOROUTER;
+	    break;
+
+	  case TOK_ID_ADAPTER:
+	    adapter = *(tp+TOKL_VALUE);
+	    DEBMSG1(DBG_INIT2,"\r\n/A:%w",adapter);
+	    break;
+
+	  case TOK_ID_END:
+	    break;
+
+	  default:
+	    break;
+	}
+d1823 1
+a1823 1
+ *	(none)
+d1826 1
+a1826 1
+ *	(nothing)
+d1829 2
+a1830 2
+ *	Sets global 'uRegLevel' according to registration code and
+ *	display message (if requested or not registered).
+d1837 3
+a1839 3
+    UCHAR	code[REG_KEYLEN];
+    UCHAR	c;
+    int		i;
+d1841 1
+a1841 1
+    USHORT	try;
+d1845 4
+a1848 2
+	/* In case that some guy just patches the registration level
+	 * inside the binary file... */
+a1849 1
+	uRegLevel = 0;
+d1851 2
+d1854 2
+a1855 2
+	/* Now calculate registration key for level 'try' and
+	 * compare it with registration key inside our image. */
+d1857 18
+a1874 21
+	_fmemset(code, 0, REG_KEYLEN);
+	c = szProduct[0];			/* start value */
+
+	for( i = 0, p = RegData.szUser, k = szProduct;
+	     *p != '\0';
+	     ++p, ++i, k = (*(k+1) == '\0' ? szProduct : k+1) )
+	{
+	    c += (UCHAR)((*p & 0xf0) >> 2 ^ (*p & 0x0f));
+	    c *= *k + try;
+	    c += *k;
+	    code[i] = c;
+	}
+	if( i == 0 )
+	    break;				/* no user data found */
+
+	if( _fmemcmp(code, RegData.szRegCode, i) == 0 )
+	{
+	    uRegLevel = try;
+	    DEBMSG1(DBG_INIT1,"\r\n!!!Registration level %w detected!!!",uRegLevel);
+	    break;				/* end, only single level possible */
+	}
+d1881 1
+a1881 1
+	fDriverFlags |= DF_VERBOSE;
+d1884 1
+a1884 1
+	USHORT	year, month;
+d1886 1
+a1886 1
+	/* Demonstration key, timebombed. */
+d1888 19
+a1906 19
+	fDriverFlags |= DF_VERBOSE;		/* always verbose */
+	month = (RegData.szUser[0] - '0') * 10  +  (RegData.szUser[1] - '0');
+	year = (RegData.szUser[2] - '0') * 10  +  (RegData.szUser[3] - '0');
+	year += 2000;
+
+	sprintk(szMsgBuffer, szLogo, (PSZ)szProduct, VERSION, SUBVERSION);
+	SaveMessage();
+	sprintk(DeviceTable, szDemo, month, year);
+	sprintk(szMsgBuffer, szReg, (PSZ)DeviceTable, uRegLevel);
+	SaveMessage();
+
+	if( pGlobalInfoSeg->YrsDate > year
+	    ||  (pGlobalInfoSeg->YrsDate == year
+		 &&  pGlobalInfoSeg->MonDate > (UCHAR)month) )
+	{
+	    sprintk(szMsgBuffer, szTimeExpired);
+	    SaveMessage();
+	    uRegLevel = 0;
+	}
+d1910 12
+a1921 12
+	sprintk(szMsgBuffer, szLogo, (PSZ)szProduct, VERSION, SUBVERSION);
+	SaveMessage();
+	if( uRegLevel != 0 )
+	{
+	    sprintk(szMsgBuffer, szReg, (PSZ)RegData.szUser, uRegLevel);
+	    SaveMessage();
+	}
+	else
+	{
+	    sprintk(szMsgBuffer, szNoReg);
+	    SaveMessage();
+	}
+d1940 2
+a1941 2
+ *	child		child to validate
+ *	sec		configuration space of sibling
+d1944 2
+a1945 2
+ *	0		OK, use this child
+ *	/0		don't use it
+d1948 6
+a1953 6
+ *	This routine checks whether a VRDEV is a valid child as configured
+ *	in 'sec'.
+ *	Normally that means that 'child' contains the identical admin.
+ *	sector.  But whenever 'child' had problems during operation and
+ *	had to be deactivated those sectors may differ.  Certain combinations
+ *	are allowed, other not.  See below for details.
+d1956 1
+a1956 1
+ *	OBS: there is a goto!
+d1961 3
+a1963 3
+    int		result = 0;
+    USHORT	rc, i;
+    PVOID const	secbuf = MemAlloc(SECTOR_SIZE);	/* allocated in MemPool*/
+d1969 60
+a2028 70
+	++result;
+	if( secbuf == NULL )
+	{
+	    sprintk(szMsgBuffer, szMallocFailed, (PSZ)szDriverName);
+	    SaveMessage();
+	    break;
+	}
+
+	++result;
+	rc = ProcessAdminIO(child, FALSE, 1, 1, FP_OFF(secbuf) + ppWorkMem);
+	if( rc != 0 )
+	{
+	    sprintk(szMsgBuffer, szReadError, (PSZ)szDriverName, rc);
+	    SaveMessage();
+	    DBSTOP();
+	    MemFree(secbuf);
+	    break;
+	}
+
+	++result;
+	if( _fmemcmp(sec, secbuf, SECTOR_SIZE) != 0 )
+	{
+	    PSEC_VRDEV2 const	childsec = secbuf;
+
+	    if( _fmemcmp(childsec->sectype, "VRAIDDEVICE2    ", 16) != 0 )
+		break;
+
+	    ++result;
+	    if( Crc16(childsec, SECTOR_SIZE-2) != childsec->crc )
+		break;
+
+	    /* 'child' contains a valid admin. sector which *could* be an
+	     * old instance of 'child'.
+	     * To be true 'child's sector has to be older and from the same
+	     * machine.  It has to define the same RAID1 array, too. */
+
+	    ++result;
+	    if( childsec->timestamp > sec->timestamp )
+	    {
+		/* This is impossible to handle the current way: we detected
+		 * a sibling which is more uptodate than the one we are creating
+		 * an array now.  Better stop the current creation and repeat
+		 * this stuff when scanning reached this child. */
+
+		DEBMSG1(DBG_INIT1,dszVal2Newer,(PVOID)child);
+		DEBMSG2(DBG_INIT2,dszVal2AdminData,(PVOID)childsec,SECTOR_SIZE);
+		result = -1;
+		break;
+	    }
+
+	    if( _fmemcmp(childsec->u.s.id, sec->u.s.id, sizeof(DEVID)) != 0 )
+		break;
+
+	    ++result;
+	    if( childsec->u.s.type != sec->u.s.type )
+		break;
+
+	    ++result;
+	    if( childsec->u.s.children != sec->u.s.children )
+		break;
+
+	    ++result;
+	    for( i = 0; i < sec->u.s.children; ++i )
+	    {
+		if( _fmemcmp(childsec->u.s.child[i].id, sec->u.s.child[i].id, sizeof(DEVID)) != 0 )
+		    goto XABORT;
+		if( childsec->u.s.child[i].size != sec->u.s.child[i].size )
+		    goto XABORT;
+	    }
+	}
+d2030 12
+a2041 2
+	/* When we finally reached this point 'child' may be used
+	 * to build an array. */
+d2043 1
+a2043 1
+	result = 0;
+d2057 1
+a2057 1
+ *	InitBase
+d2059 1
+a2059 1
+ *	InitBase(pRPI)
+d2061 1
+a2061 1
+ *	pRPI		init request
+d2063 1
+a2063 1
+ *	error code as expected from the OS/2 device system
+d2065 4
+a2068 4
+ *	Device_Help
+ *	pGlobalInfoSeg
+ *	fDriverFlags
+ *	szDriverName, error messages
+d2070 1
+a2070 1
+ *	Process Base Initialization Request Packet
+d2072 1
+a2072 1
+ *	Uses IBM supplied command line parser.
+d2077 3
+a2079 3
+    PULONG		pInfoSegSel;
+    int			rc;
+    PRPINITOUT const	pRPO = (PRPINITOUT)pRPI;
+d2082 1
+a2082 1
+    PSZ			pCmdLine;
+d2091 1
+a2091 1
+    pCmdLine	= MK_FP(FP_SEL(pInitParms),pInitParms->cmd_line_args);
+d2095 4
+a2098 4
+	sprintk(szMsgBuffer, szErrorVAddr, (PSZ)szDriverName);
+	SaveMessage();
+	rc = ERR_XLATION_FAIL;
+	goto ERROR_EXIT;			/* !!! */
+d2105 2
+a2106 2
+    AnalyseCmdLine(pCmdLine);			/* parse command line args */
+    CheckRegistration();			/* analyse registration info */
+d2111 42
+a2152 2
+	/* Initialize memory routines, we need memory
+	 * to scan and analyse disks. */
+d2154 3
+a2156 43
+	CrcInit(0xA001);			/* CRC16 table */
+	rc = BuildWorkmem();
+	if( rc )
+	{
+	    sprintk(szMsgBuffer, szNoMem, (PSZ)szDriverName);
+	    SaveMessage();
+	    break;
+	}
+	DEBMSG1(DBG_ALL,"\r\nppWorkMem == %lx",(PVOID)&ppWorkMem);
+
+	rc = DevHelp_AllocateCtxHook(MemoryHook, &hdMemHook);
+	if( rc != 0 )
+	    break;
+	rc = DevHelp_AllocateCtxHook(BuildHook, &hdBuildHook);
+	if( rc != 0 )
+	    break;
+
+	rc = SearchPhysDevices();
+	if( rc )
+	    break;
+
+
+	/* We got some physical devices to install for.  So
+	 * allocate now all drive-independed resources. */
+
+	/* Install a timer handler so we can detect timeouts. */
+
+	DEBMSG(DBG_INIT1,"\r\n[InitBase] allocating timer");
+	rc = DevHelp_TickCount((NPFN)&AsmTimer, 
+			       TIMER_TMS/pGlobalInfoSeg->SIS_ClkIntrvl);
+	if( rc )
+	{
+	    sprintk(szMsgBuffer, szNoTimer, (PSZ)szDriverName);
+	    SaveMessage();
+	    break;
+	}
+
+
+	/* Analyse all physical devices found in the first run. */
+
+	rc = BuildDevTree();
+	if( rc )
+	    break;
+d2166 13
+a2178 13
+	rc = RegisterDriver();			/* very late! */
+	if( rc != 0 )
+	    goto ERROR_EXIT;			/* really sad */
+
+	/* Register host drives as units. */
+
+	pRPO->Unit    = (UCHAR)(cHDrv + cBDisk);
+	pRPO->CodeEnd = ((USHORT)Code_End & ~0x0F) + 0x10;
+	pRPO->DataEnd = ((USHORT)npInitData & ~0x0F) + 0x10;
+
+	DEBMSG2(DBG_INIT1,"\r\n[InitBase] driver installed (%w array, %w basedisks)",cHDrv,cBDisk);
+	fDriverFlags |= DF_INIT1DONE;
+	return STATUS_DONE;
+d2182 16
+a2197 16
+      ERROR_EXIT:				/* goto destination */
+	pRPO->Unit    = 0;
+	pRPO->CodeEnd = 0;
+	pRPO->DataEnd = 0;
+
+	DEBMSG(DBG_INIT1,"\r\n[InitBase] don't load driver");
+	ReleaseWorkmem();				/* !!! unlock memory !!! */
+	if( hdMemHook != 0 )
+	    DevHelp_FreeCtxHook(hdMemHook);
+	if( hdBuildHook != 0 )
+	    DevHelp_FreeCtxHook(hdBuildHook);
+
+	if( rc < 0 )
+	    return STERR | STDON | ERROR_I24_GEN_FAILURE;
+	else
+	    return STERR | STDON | ERROR_I24_QUIET_INIT_FAIL;
+@
+
+
+3.7
+log
+@- corrected setting of AF_NOT16M flag
+- calls Raid5Create()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 3.6 $
+ * $Date: 2001/08/03 02:19:03 $
+d12 4
+d111 1
+a111 1
+static char const id[]="$Id: init1.c,v 3.6 2001/08/03 02:19:03 vitus Exp vitus $";
+d1337 1
+d1368 1
+d1382 1
+a1382 1
+	    AddHostDrive(*save_here);		/*End of VRDEVICE: add as HostDrive*/
+@
+
+
+3.6
+log
+@- update fADDFlags with ADD specific restrictions
+@
+text
+@d3 2
+a4 2
+ * $Revision: 3.5 $
+ * $Date: 2001/07/22 00:32:01 $
+d12 3
+d107 1
+a107 1
+static char const id[]="$Id: init1.c,v 3.5 2001/07/22 00:32:01 vitus Exp vitus $";
+d199 1
+d1057 1
+a1057 1
+		if( (npAdapterInfo->AdapterFlags & AF_16M) )
+d1332 1
+d1342 22
+@
+
+
+3.5
+log
+@- allocates another context hook which executes UpdateBuilds()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 3.4 $
+ * $Date: 2001/06/25 00:28:38 $
+d12 3
+d104 1
+a104 1
+static char const id[]="$Id: init1.c,v 3.4 2001/06/25 00:28:38 vitus Exp vitus $";
+d1045 2
+d1053 4
+@
+
+
+3.4
+log
+@- allocates context hook which executes MemoryHook()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 3.3 $
+ * $Date: 2000/04/09 12:24:22 $
+d12 3
+d101 1
+a101 1
+static char const id[]="$Id: init1.c,v 3.3 2000/04/09 12:24:22 vitus Exp vitus $";
+d118 1
+d218 1
+a218 1
+"\r\nCopyright 1998-2000 by Vitus Jensen (2:2474/424)              " __DATE__ ;
+d2055 3
+d2117 4
+@
+
+
+3.3
+log
+@- handles VRAID partitions inside extended partitions
+- handles /[!]SHARE and doesn't install router if not requested
+@
+text
+@d3 2
+a4 2
+ * $Revision: 3.2 $
+ * $Date: 1999/12/14 00:35:49 $
+d12 4
+d93 1
+a93 1
+ * This code is Copyright Vitus Jensen 1997-2000
+d98 1
+a98 1
+static char const id[]="$Id: init1.c,v 3.2 1999/12/14 00:35:49 vitus Exp vitus $";
+d114 1
+d2038 1
+d2047 4
+a2050 1
+	CrcInit(0xA001);			/* CRC16 table */
+@
+
+
+3.2
+log
+@- added ValidateVSec2() from mirror.c
+@
+text
+@d3 2
+a4 2
+ * $Revision: 3.1 $
+ * $Date: 1999/09/23 23:06:47 $
+d12 3
+d88 2
+a89 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1997-99
+d94 1
+a94 1
+static char const id[]="$Id: init1.c,v 3.1 1999/09/23 23:06:47 vitus Exp vitus $";
+d112 13
+d209 1
+a209 1
+"\r\nCopyright 1998-99 by Vitus Jensen (2:2474/424)                " __DATE__ ;
+d452 1
+a452 2
+ * CALL
+ *	AllocateUnit(phys)
+d473 1
+d504 1
+a504 2
+ * CALL
+ *	LocalDeallocateUnit(phys)
+d525 1
+d557 1
+a557 1
+ * VerifyDiskData(phys)
+d560 3
+a562 1
+ *	phys		describes device
+d566 1
+d569 1
+a569 3
+ *	Do a first check whether this unit has been configured
+ *	for VRaid.flt
+ *	Builds VRDEVICE PHYSDEV if successfull.
+d572 3
+a574 4
+ *	Updates global 'apPDev', 'npInitData'.
+ */
+PRIVATE int NEAR
+VerifyDiskData(PPHYSDEVICE const phys)
+d576 8
+a583 11
+    PIORB_EXECUTEIO	iorb = AllocateIorb(1);
+    USHORT		error, crc;
+    PMBR const		mbr = MemAlloc(SECTOR_SIZE);
+    PSEC_PHYSDEV const	sec = (PVOID)mbr;
+
+    if( iorb == NULL  ||  mbr == 0 )
+    {
+	DEBMSG(DBG_INIT1,"\r\n[VerifyDiskData] memory allocation failed");
+	if( iorb != NULL )	FreeIorb(iorb);
+	if( mbr != NULL )	MemFree(mbr);
+	return -1;
+d586 21
+a606 1
+    do
+d608 8
+a615 3
+	/* -------- Read 'Master Boot Record' --------
+	 * Data buffer: have to supply a scatter/gather list
+	 * (1 entry) and a direction. */
+a616 3
+	iorb->cSGList = 1;
+	iorb->pSGList->ppXferBuf = (ULONG)(FP_OFF(mbr) + ppWorkMem);
+	iorb->pSGList->XferBufLen = SECTOR_SIZE;
+a617 4
+	iorb->iorbh.Length =		sizeof(IORB_EXECUTEIO);
+	iorb->iorbh.UnitHandle =	phys->hdADDUnit;
+	iorb->iorbh.CommandCode =	IOCC_EXECUTE_IO;
+	iorb->iorbh.CommandModifier =	IOCM_READ;
+a618 3
+	iorb->iorbh.RequestControl =	0;
+	iorb->iorbh.StatusBlockLen =	0;
+	iorb->iorbh.pStatusBlock =	0;
+d620 25
+a644 3
+	iorb->RBA = 0;				/* MBR! */
+	iorb->BlockCount = 1;			/* only this single sector */
+	iorb->BlockSize = SECTOR_SIZE;
+a645 2
+	DEBMSG2(DBG_INIT4,"\r\n[VerifyDiskData] IOCM_READ - iorb sc/ga\r\n%z",(PVOID)iorb,iorb->iorbh.Length);
+	DEBMSG2(DBG_LEVEL4,"\r\n%z",(PVOID)iorb->pSGList,sizeof(*iorb->pSGList));
+d647 16
+a662 7
+	if( (error=LocalSendIORB((PIORB)iorb, phys->pADDEntry)) )
+	{
+	    sprintk(szMsgBuffer, szReadFailed, (PSZ)szDriverName,
+		    phys->iAdapter, phys->iUnit, error);
+	    SaveMessage();
+	    FreeIorb(iorb);
+	    DO( iorb = NULL );
+a663 1
+	}
+a664 1
+	/* OK, we got our data.  Now analyse it (located at 'mbr'). */
+d666 1
+a666 2
+	error = 0xFFFE;				/* assume bad layout */
+	if( mbr->Signature == 0xAA55 )
+d668 7
+a674 1
+	    int	i;
+d676 2
+a677 3
+	    for( i = 0; i < 4; ++i )
+		if( mbr->PartitionTable[i].BootIndicator == 0
+		    &&  mbr->PartitionTable[i].SysIndicator == VRAID_PARTTYPE )
+d679 1
+a679 2
+		    phys->ulVRStart = mbr->PartitionTable[i].RelativeSectors;
+		    phys->ulVRSize = mbr->PartitionTable[i].NumSectors;
+d681 11
+a691 2
+		    error = 0;			/* found it! */
+		    break;
+d693 5
+d699 46
+d746 2
+d750 1
+d754 12
+d768 1
+a768 23
+	iorb->cSGList = 1;
+	iorb->pSGList->ppXferBuf = (ULONG)(FP_OFF(sec) + ppWorkMem);
+	iorb->pSGList->XferBufLen = SECTOR_SIZE;
+
+	iorb->iorbh.Length =		sizeof(IORB_EXECUTEIO);
+	iorb->iorbh.UnitHandle =	phys->hdADDUnit;
+	iorb->iorbh.CommandCode =	IOCC_EXECUTE_IO;
+	iorb->iorbh.CommandModifier =	IOCM_READ;
+
+	iorb->iorbh.RequestControl =	0;
+	iorb->iorbh.StatusBlockLen =	0;
+	iorb->iorbh.pStatusBlock =	0;
+
+	iorb->RBA = phys->ulVRStart;		/* first sector in partition */
+	iorb->BlockCount = 1;			/* only this single sector */
+	iorb->BlockSize = SECTOR_SIZE;
+
+	DEBMSG2(DBG_INIT4,"\r\n[VerifyDiskData] IOCM_READ - iorb sc/ga\r\n%z",(PIORB)iorb,iorb->iorbh.Length);
+	DEBMSG2(DBG_LEVEL4,"\r\n%z",(PVOID)iorb->pSGList,sizeof(*iorb->pSGList));
+
+	error = LocalSendIORB((PIORB)iorb, phys->pADDEntry);
+	FreeIorb(iorb);
+	DO( iorb = NULL );
+a769 4
+	{
+	    sprintk(szMsgBuffer, szReadFailed, (PSZ)szDriverName,
+		    phys->iAdapter, phys->iUnit, error);
+	    SaveMessage();
+d771 1
+a771 1
+	}
+d778 1
+a778 2
+	if( _fmemcmp(sec->sectype, "PHYSDEVICE      ", 16) != 0 
+	    ||  crc != sec->crc )
+d783 1
+a783 1
+	    error = 0xFFFE;			/* bad layout (?) */
+d804 1
+a804 1
+	    ++cPDev;			/* one more */
+a805 1
+	error = 0;
+d807 1
+a807 1
+    while(0);
+d809 1
+a809 1
+    MemFree(mbr);
+d843 1
+a843 1
+    /* LInk BASEDISK to PHYSDEVICE. */
+d1026 1
+a1026 1
+		if( VerifyDiskData(phys) )
+d1040 2
+a1041 2
+
+		InstallRouter(phys, npUnitInfo);
+d1236 1
+a1236 1
+	rc = -3;
+d1285 1
+a1285 1
+	    rc = -2;
+d1316 1
+a1316 1
+	    rc = -2;
+d1323 1
+a1323 1
+	rc = -3;
+d1383 1
+a1383 1
+	return -1;
+d1578 5
+a1582 2
+OPT OPT_ADAPTER =
+    {TOK_ID_ADAPTER,0,	"/A:", TYPE_D,		{1,  E,  1}};
+d1599 2
+a1600 1
+	&OPT_ADAPTER,
+d1709 10
+d2016 1
+a2016 1
+	rc = -1;
+d2088 1
+a2088 1
+	DEBMSG1(DBG_INIT1,"\r\n[InitBase] driver installed (%w RAID drives)",cHDrv);
+@
+
+
+3.1
+log
+@- defined all DBGMSG() strings as located in CONST segment
+- implemented InstallRouter(), installs a BASEDISK for every PHYSDEVICE found
+- all shortterm memory is now allocated via routines from memory.c.  We
+  had a memory-overwrite problem (in inter-release versions)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.5 $
+ * $Date: 1999/06/22 00:06:01 $
+d12 6
+d91 1
+a91 1
+static char const id[]="$Id: init1.c,v 2.5 1999/06/22 00:06:01 vitus Exp vitus $";
+d178 8
+d1735 118
+@
+
+
+2.5
+log
+@- calls ReleaseWorkmem() when initialization failed (hangs the machine w/o)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.4 $
+ * $Date: 1999/06/15 22:43:29 $
+d12 3
+d85 1
+a85 1
+static char const id[]="$Id: init1.c,v 2.4 1999/06/15 22:43:29 vitus Exp vitus $";
+d104 1
+a104 1
+ * Macro to allocate data from memory pool.
+d251 2
+a252 2
+ * CALL
+ *	SendIORB(iorb,addentry)
+d273 1
+a273 1
+    iorb->NotifyAddress = SendIORBNotify;	/* kind of hack */
+d283 1
+a283 1
+	rc = DevHelp_ProcBlock((ULONG)iorb, -1L, WAIT_IS_INTERRUPTABLE);
+d333 3
+a335 2
+ *	There is really no reason to reject a certain adapter but
+ *	we have to propagate a AF_16M flag!
+a435 1
+ *	Uses global 'hdThisDriver'
+d440 1
+a440 1
+    NPIORB_UNIT_CONTROL pIOUC = (NPVOID)npInitData;
+d449 1
+a449 1
+    memset(pIOUC, 0, MAX_IORB_SIZE);
+d465 1
+d492 1
+a492 1
+    NPIORB_UNIT_CONTROL pIOUC = (NPVOID)npInitData;
+d500 1
+a500 1
+    memset(pIOUC, 0, MAX_IORB_SIZE);
+d518 1
+d527 1
+a527 2
+ * CALL
+ *	VerifyDiskData(phys)
+d541 1
+a541 1
+ *	Updates global 'apPdev', 'npInitData' and 'fDriverFlags'.
+d548 2
+a549 2
+    PMBR		mbr = (PVOID)npInitData;
+    PSEC_PHYSDEV	sec = (PVOID)npInitData;
+d551 1
+a551 1
+    if( iorb == NULL )
+d553 3
+a555 1
+	DEBMSG(DBG_INIT1,"\r\n[VerifyDiskData] IORB allocation failed");
+d566 1
+a566 1
+	iorb->pSGList->ppXferBuf = (ULONG)(FP_OFF(mbr) + ppDiskDDHeader);
+d582 1
+a582 1
+	DEBMSG2(DBG_INIT3,"\r\n[VerifyDiskData] IOCM_READ - iorb sc/ga\r\n%z",(PVOID)iorb,iorb->iorbh.Length);
+d622 1
+a622 1
+	iorb->pSGList->ppXferBuf = (ULONG)(FP_OFF(sec) + ppDiskDDHeader);
+d638 1
+a638 1
+	DEBMSG2(DBG_INIT3,"\r\n[VerifyDiskData] IOCM_READ - iorb sc/ga\r\n%z",(PIORB)iorb,iorb->iorbh.Length);
+d655 1
+d674 1
+a674 1
+	DEBMSG1(DBG_INIT1,"\r\n[SearchPhysDevices] %s",(PSZ)szMsgBuffer);
+d690 1
+d698 52
+d776 1
+a776 1
+    void	(FAR _Cdecl * pADDBaseEP)();
+d790 1
+a790 1
+    if( DevHelp_GetDOSVar(DHGETDOSV_DEVICECLASSTABLE, DRIVERCLASS_ADD, &pDCT) )
+d810 1
+a810 1
+	    NPIORB_CONFIGURATION pIOCF = (NPVOID)npInitData;
+d815 1
+a815 1
+	    memset(pIOCF, 0, sizeof(IORB_CONFIGURATION));
+d834 1
+d837 1
+d921 3
+d1316 1
+d1833 1
+a1833 1
+	pRPO->Unit    = (UCHAR)cHDrv;
+@
+
+
+2.4
+log
+@- BuildDevTree: changed the way device pointers are temporaly saved.  It was
+  impossible to create a parent from child just created in the same loop.
+  Switching from two to a single table made it possible.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.3 $
+ * $Date: 1999/06/06 23:34:42 $
+d12 5
+d82 1
+a82 1
+static char const id[]="$Id: init1.c,v 2.3 1999/06/06 23:34:42 vitus Exp vitus $";
+d514 1
+a514 1
+    DEBMSG(DBG_INIT2,"\r\n[LocalDeallocateUnit] end");
+d804 1
+a804 1
+		DEBMSG1(DBG_INIT2,"\r\n[SearchPhysDevices] allocated PHYSDEVICE: %p",phys);
+d1716 1
+a1716 1
+	rc = InitWorkmem();
+d1736 1
+d1782 3
+d1790 1
+a1790 1
+}
+@
+
+
+2.3
+log
+@- changed key calculation to use XOR and include previous characters
+- checks and display demo keys
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.2 $
+ * $Date: 1999/05/26 00:40:22 $
+d12 4
+d77 1
+a77 1
+static char const id[]="$Id: init1.c,v 2.2 1999/05/26 00:40:22 vitus Exp vitus $";
+d918 2
+a919 2
+ * CALL
+ *	CompressTab(tab1,tab2)
+d921 2
+a922 2
+ *	tab1
+ *	tab2
+d924 2
+a925 3
+ *	count of entries copied
+ * GLOBAL
+ *	(none)
+d927 1
+a927 1
+ *	Copy all entries from 'tab1' to 'tab2'.
+a929 2
+ *	OBS: due to the fact that we need access to the physical device
+ *	during configuration analysis, DON'T compress the tables.
+d931 2
+a932 2
+PRIVATE INT NEAR
+CopyTab(PVRDEVHDR FAR * tab1,PVRDEVHDR FAR * tab2)
+d934 1
+a934 3
+    USHORT j, i;
+
+    /* Copy and compress tab1 to tab2. */
+d936 1
+a936 1
+    for( j = i = 0; i < cPDev; ++i )
+d938 2
+a939 2
+	tab2[j++] = tab1[i];
+	tab1[i] = NULL;
+d941 3
+d1174 2
+a1175 1
+    /* Temporary tables to hold pointers. */
+d1177 1
+a1177 2
+    static PVRDEVHDR		tab1[MAX_PDEV];
+    static PVRDEVHDR		tab2[MAX_PDEV];
+d1188 1
+d1196 3
+a1198 3
+    DEBMSG1(DBG_INIT3,"\r\n[BuildDevTree] sector buffer %p",secbuf);
+    _fmemset(tab2, 0, sizeof(tab2));
+    _fmemcpy(tab1, apPDev, sizeof(tab1));
+d1203 1
+a1203 1
+     * all physical devices.
+d1208 7
+a1214 2
+	int	found = CopyTab(tab1, tab2);	/* tab1 to tab2 */
+	int	j = 0;				/* index in tab1[] */
+d1217 1
+a1217 1
+	    break;				/* nothing left in tab2 = done */
+d1221 1
+a1221 3
+	 * copied to 'tab2' and build entry in 'tab1' at index 'j'.
+	 * OBS: please keep in mind to keep all holes in tab1 and tab2
+	 *	to keep the reference to 'apPDev'! */
+d1225 1
+a1225 3
+	    PVRDEVHDR const	pdev = apPDev[i];	/* see above */
+
+	    if( tab2[i] == NULL  ||  apPDev[i] == NULL )
+d1227 1
+a1227 1
+		DEBMSG1(DBG_LEVEL4,"\r\n[BuildDevTree] ignored empty index %w",i);
+d1232 1
+a1232 1
+	    rc = ProcessAdminIO(tab2[i], FALSE, 1, 1, FP_OFF(secbuf) + ppWorkMem);
+d1238 1
+a1238 1
+		tab2[i] = NULL;
+d1246 1
+a1246 1
+	    if( adsecno == 1  &&  _fmemcmp(secbuf, "VRAID", 5) != 0 )
+d1249 1
+a1249 1
+		tab2[i] = NULL;			/* remove and ... */
+a1252 1
+
+d1260 1
+a1260 1
+		tab2[i] = NULL;
+d1269 2
+a1270 2
+		if( AnalyseVRDev(secbuf, &tab1[j++], tab2) < 0 )
+		    tab2[i] = NULL;		/* remove even this */
+d1274 2
+a1275 2
+		if( AnalyseVRDev2(secbuf, &tab1[j++], tab2) < 0 )
+		    tab2[i] = NULL;		/* remove even this */
+d1283 1
+a1283 1
+		tab2[i] = NULL;
+a1285 1
+
+@
+
+
+2.2
+log
+@- BuildDevTee: AnalyseVRDev[2] and *Create() return/handle 0 (OK), >0 (creation
+  deferred) and <0 (error) values.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.1 $
+ * $Date: 1999/05/24 19:23:05 $
+d12 4
+d73 1
+a73 1
+static char const id[]="$Id: init1.c,v 2.1 1999/05/24 19:23:05 vitus Exp vitus $";
+d124 1
+d170 2
+a171 1
+INITMSG szReg[]=	"Registered to: %s";
+d189 2
+a190 4
+#if defined(TIMEBOMB_D)
+INITMSG szTimeBombed[]=	"Timebombed version (%2u.%2u.%4u)";
+INITMSG szTimeExpired[]= "Timebomb expired, install newer version!";
+#endif
+d973 1
+a993 1
+	    *save_here = NULL;
+a1015 1
+	    *save_here = NULL;
+a1037 1
+	    *save_here = NULL;
+d1043 2
+a1044 3
+	DEBMSG1(DBG_ALL,"\r\nUnknown RDTYPE %w\r\nIgnoring VRDEVICE",sec->u.s.type);
+	DBSTOP();
+	*save_here = NULL;
+d1086 1
+d1092 1
+a1092 1
+	    sprintk(szMsgBuffer, szMirrorNotReg);
+a1114 1
+	    *save_here = NULL;
+d1123 1
+a1123 1
+	    sprintk(szMsgBuffer, szRaidNotReg);
+d1130 2
+a1131 3
+	DEBMSG1(DBG_ALL,"\r\nUnknown RDTYPE %w\r\nIgnoring VRDEVICE",sec->u.s.type);
+	DBSTOP();
+	*save_here = NULL;
+d1533 2
+a1534 2
+ * CALL
+ *	CheckRegistration(void)
+d1542 2
+a1543 1
+ *	Sets global 'uRegLevel' according to registration code.
+a1549 4
+#if defined(DEBUG)
+    uRegLevel = 3;
+
+#else
+d1563 1
+d1568 2
+d1574 1
+a1574 1
+	    c = (UCHAR)((*p & 0xf0) >> 4 | (*p & 0x0f));
+d1589 47
+a1635 1
+#endif /* DEBUG */
+d1682 1
+a1702 17
+    if( uRegLevel == 0 )
+	fDriverFlags |= DF_VERBOSE;
+    if( (fDriverFlags & DF_VERBOSE) )
+    {
+	sprintk(szMsgBuffer, szLogo, (PSZ)szProduct, VERSION, SUBVERSION);
+	SaveMessage();
+	if( uRegLevel != 0 )
+	{
+	    sprintk(szMsgBuffer, szReg, (PSZ)RegData.szUser, uRegLevel);
+	    SaveMessage();
+	}
+	else
+	{
+	    sprintk(szMsgBuffer, szNoReg);
+	    SaveMessage();
+	}
+    }
+a1705 17
+#if defined(TIMEBOMB_D)
+	sprintk(szMsgBuffer, szTimeBombed, TIMEBOMB_D, TIMEBOMB_M, TIMEBOMB_Y);
+	SaveMessage();
+	if( pGlobalInfoSeg->YrsDate > TIMEBOMB_Y
+	    ||  (pGlobalInfoSeg->YrsDate == TIMEBOMB_Y
+		 &&  pGlobalInfoSeg->MonDate > TIMEBOMB_M)
+	    ||  (pGlobalInfoSeg->YrsDate == TIMEBOMB_Y
+		 &&  pGlobalInfoSeg->MonDate == TIMEBOMB_M
+		 &&  pGlobalInfoSeg->DayDate > TIMEBOMB_D) )
+	{
+	    sprintk(szMsgBuffer, szTimeExpired);
+	    SaveMessage();
+	    rc = -1;				/* loud fail */
+	    break;
+	}
+#endif
+
+d1746 1
+@
+
+
+2.1
+log
+@- *Create() may return 0 (OK), >0 (quiet fail) or <0 (load fail)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.12 $
+ * $Date: 1999/05/24 00:46:29 $
+d12 3
+d69 1
+a69 1
+static char const id[]="$Id: init1.c,v 1.12 1999/05/24 00:46:29 vitus Exp vitus $";
+d270 1
+a270 1
+	    DEBMSG1(DBG_LEVEL1,"\r\n[LocalSendIORB] ProcBlock - rc %w, ignored",rc);
+d282 2
+a283 2
+	DEBMSG1(DBG_LEVEL1,"\r\n[LocalSendIORB] IORB ERROR %w",iorb->ErrorCode);
+	DEBMSG2(DBG_LEVEL1,"\r\nIORB dump\r\n%z",(PVOID)iorb,iorb->Length);
+d326 1
+a326 1
+	DEBMSG1(DBG_LEVEL2,"\r\n[CheckAdapterInfo] %s",(PSZ)szMsgBuffer);
+d333 1
+a333 1
+	DEBMSG1(DBG_LEVEL2,"\r\n[CheckAdapterInfo] %s",(PSZ)szMsgBuffer);
+d370 1
+a370 1
+    DEBMSG2(DBG_LEVEL3,"\r\n[CheckUnitInfo] %w %w",phys->iAdapter,phys->iUnit);
+d374 1
+a374 1
+	DEBMSG1(DBG_LEVEL2,"\r\n[CheckUnitInfo] %s",(PSZ)szMsgBuffer);
+d383 1
+a383 1
+	DEBMSG1(DBG_LEVEL2,"\r\n[CheckUnitInfo] %s",(PSZ)szMsgBuffer);
+d392 1
+a392 1
+	DEBMSG1(DBG_LEVEL1,"\r\n[CheckUnitInfo] %s",(PSZ)szMsgBuffer);
+d428 1
+a428 1
+    DEBMSG1(DBG_LEVEL2,"\r\n[LocalAllocateUnit] PPHYSDEVICE %p",phys);
+d449 1
+a449 1
+    DEBMSG(DBG_LEVEL2,"\r\n[LocalAllocateUnit] end");
+d479 1
+a479 1
+    DEBMSG1(DBG_LEVEL2,"\r\n[LocalDeallocateUnit] PPHYSDEVICE %p",(PVOID)phys);
+d501 1
+a501 1
+    DEBMSG(DBG_LEVEL2,"\r\n[LocalDeallocateUnit] end");
+d536 1
+a536 1
+	DEBMSG(DBG_LEVEL1,"\r\n[VerifyDiskData] IORB allocation failed");
+d563 1
+a563 1
+	DEBMSG2(DBG_LEVEL3,"\r\n[VerifyDiskData] IOCM_READ - iorb sc/ga\r\n%z",(PVOID)iorb,iorb->iorbh.Length);
+d596 1
+a596 1
+	    DEBMSG(DBG_LEVEL2,"\r\n[VerifyDiskData] no VRAID partition");
+d619 1
+a619 1
+	DEBMSG2(DBG_LEVEL3,"\r\n[VerifyDiskData] IOCM_READ - iorb sc/ga\r\n%z",(PIORB)iorb,iorb->iorbh.Length);
+d654 1
+a654 1
+	DEBMSG1(DBG_LEVEL1,"\r\n[SearchPhysDevices] %s",(PSZ)szMsgBuffer);
+d710 1
+a710 1
+    DEBMSG1(DBG_LEVEL1,"\r\n[SearchPhysDevices] %s",(PSZ)szMsgBuffer);
+d729 1
+a729 1
+    DEBMSG(DBG_LEVEL1,"\r\n[SearchPhysDevices] looking for ADDs");
+d782 1
+a782 1
+	    DEBMSG1(DBG_LEVEL2,"\r\n[SearchPhysDevices] looking for units on adapter %w",adapter_index);
+d791 1
+a791 1
+		DEBMSG1(DBG_LEVEL2,"\r\n[SearchPhysDevices] allocated PHYSDEVICE: %p",phys);
+d801 1
+a801 1
+		    DEBMSG(DBG_LEVEL2,"\r\n[SearchPhysDevices] found other filter for unit");
+d853 1
+a853 1
+	DEBMSG1(DBG_LEVEL1,"\r\n[SearchPhysDevices] %s",(PSZ)szMsgBuffer);
+d860 1
+a860 1
+    DEBMSG1(DBG_LEVEL1,"\r\n[InitBase] %s",(PSZ)szMsgBuffer);
+d896 1
+a896 1
+    DEBMSG2(DBG_LEVEL1,"\r\n[AddHostDrive] creating at %p for %p",(PVOID)apHDrv[cHDrv],(PVOID)vrd);
+d898 1
+a898 1
+    DEBMSG1(DBG_LEVEL2,"\r\n[AddHostDrive] %s",(PSZ)szMsgBuffer);
+a944 1
+ * CALL
+d946 1
+d973 1
+a973 1
+	DEBMSG1(DBG_LEVEL1,"\r\n[AnalyseVRDev] %s",(PSZ)szMsgBuffer);
+d990 1
+a990 1
+	    rc = 1;
+d996 1
+a996 1
+	DEBMSG1(DBG_LEVEL1,"\r\n[AnalyseVRDev] %s",(PSZ)szMsgBuffer);
+d1013 1
+a1013 1
+	    rc = 1;
+d1019 1
+a1019 1
+	DEBMSG1(DBG_LEVEL1,"\r\n[AnalyseVRDev] %s",(PSZ)szMsgBuffer);
+d1036 1
+a1036 1
+	    rc = 1;
+d1044 1
+a1044 1
+	rc = 3;
+d1064 1
+d1092 1
+a1092 1
+	    rc = 2;
+d1097 1
+a1097 1
+	DEBMSG1(DBG_LEVEL1,"\r\n[AnalyseVRDev2] %s",(PSZ)szMsgBuffer);
+d1114 1
+a1114 1
+	    rc = 1;
+d1124 1
+a1124 1
+	    rc = 2;
+d1132 1
+a1132 1
+	rc = 3;
+d1183 1
+a1183 1
+    DEBMSG1(DBG_LEVEL1,"\r\n[BuildDevTree] %s",(PSZ)szMsgBuffer);
+d1193 1
+a1193 1
+    DEBMSG1(DBG_LEVEL2,"\r\n[BuildDevTree] sector buffer %p",secbuf);
+d1227 1
+a1227 1
+	    DEBMSG1(DBG_LEVEL2,"\r\n[BuildDevTree] reading index %w",i);
+d1244 1
+a1244 1
+		DEBMSG1(DBG_LEVEL1,"\r\n[BuildDevTree] PHYSDEVICE-only (index %w)",i);
+d1266 1
+a1266 1
+		if( AnalyseVRDev(secbuf, &tab1[j++], tab2) != 0 )
+d1271 1
+a1271 1
+		if( AnalyseVRDev2(secbuf, &tab1[j++], tab2) != 0 )
+d1291 1
+a1291 1
+	DEBMSG1(DBG_LEVEL2,"\r\n[BuildDevTree] %s",(PSZ)szMsgBuffer);
+d1298 1
+a1298 1
+	DEBMSG1(DBG_LEVEL2,"\r\n[BuildDevTree] %s",(PSZ)szMsgBuffer);
+d1339 1
+a1339 1
+    DEBMSG(DBG_LEVEL2,"\r\n[RegisterDriver] entry");
+d1489 1
+a1489 1
+	    DEBMSG(DBG_LEVEL2,"\r\n/VERBOSE");
+d1494 1
+a1494 1
+	    DEBMSG(DBG_LEVEL2,"\r\n/DEBUG");
+d1515 1
+a1515 1
+	    DEBMSG1(DBG_LEVEL2,"\r\n/A:%w",adapter);
+d1585 1
+a1585 1
+	    DEBMSG1(DBG_LEVEL1,"\r\n!!!Registration level %w detected!!!",uRegLevel);
+d1633 1
+a1633 1
+    DEBMSG(DBG_LEVEL2,"\r\n[InitBase] entry");
+d1749 1
+a1749 1
+	DEBMSG1(DBG_LEVEL1,"\r\n[InitBase] driver installed (%w RAID drives)",cHDrv);
+@
+
+
+1.12
+log
+@- ignore any disks which contain a VRAID partition but no PHYSDEVICE sector.  User
+  may try to destroy any VRAID traces of those drives.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.11 $
+ * $Date: 1999/05/11 23:48:19 $
+d12 4
+d66 1
+a66 1
+static char const id[]="$Id: init1.c,v 1.11 1999/05/11 23:48:19 vitus Exp vitus $";
+d70 1
+a108 1
+INITMSG	szMallocFailed[]=	"%s: internal memory allocation failed";
+d963 2
+d973 2
+a974 1
+	if( SingleCreate((PVRDEVHDR)npInitData, tab2, sec, &size) == 0 )
+d981 5
+a985 2
+	    sprintk(szMsgBuffer, szCreateFail, (PSZ)szDriverName);
+	    SaveMessage();
+d996 2
+a997 1
+	if( StripeCreate((PVRDEVHDR)npInitData, tab2, sec, &size) == 0 )
+d1004 5
+a1008 2
+	    sprintk(szMsgBuffer, szCreateFail, (PSZ)szDriverName);
+	    SaveMessage();
+d1019 2
+a1020 1
+	if( SpanCreate((PVRDEVHDR)npInitData, tab2, sec, &size) == 0 )
+d1027 5
+a1031 2
+	    sprintk(szMsgBuffer, szCreateFail, (PSZ)szDriverName);
+	    SaveMessage();
+d1079 1
+d1096 2
+a1097 1
+	if( MirrorCreate((PVOID)npInitData, tab2, sec, &size) == 0 )
+d1104 5
+a1108 2
+	    sprintk(szMsgBuffer, szCreateFail, (PSZ)szDriverName);
+	    SaveMessage();
+@
+
+
+1.11
+log
+@- moved CRC code to memory.c
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/04/21 00:29:16 $
+d12 3
+d62 1
+a62 1
+static char const id[]="$Id: init1.c,v 1.10 1999/04/21 00:29:16 vitus Exp vitus $";
+a87 2
+#define INITMSG		static char _ininit
+
+d110 1
+a110 1
+INITMSG szBadPhysdevSector[]=	"%s: adapter %u, unit %u, admin. sector 0 destroyed";
+d1215 8
+d1234 2
+@
+
+
+1.10
+log
+@- switched from PhysdevPartIO() and offset calculation
+  to ProcessAdminIO() and offset 1 (fix!)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/01/22 02:53:49 $
+d12 4
+d59 1
+a59 1
+static char const id[]="$Id: init1.c,v 1.9 1999/01/22 02:53:49 vitus Exp vitus $";
+a188 69
+
+
+
+/* **********************************************************************
+ * **** Small Helpers (CRC16 calculation, see setup/crc.c) **************
+ * ******************************************************************* */
+
+PRIVATE USHORT _ininit	CRCtable[256];
+
+
+PRIVATE USHORT
+CalcTable(USHORT data,USHORT genpoly,USHORT accum)
+{
+    int i;
+
+    for( i = 0; i < 8; ++i )
+    {
+	if( (accum^data) & 1 )
+	{
+	    accum >>=1;
+	    accum ^= genpoly;
+	}
+	else
+	    accum >>= 1;
+
+	data >>= 1;
+    }
+    return accum;
+}
+
+
+
+
+PRIVATE USHORT
+UpdateCRC(USHORT crc,UCHAR byte)
+{
+    /* bei MSB first: */
+    /* return( (crc << 8) ^ CRCtable[ (crc >> 8) ^ byte ] ); */
+
+    /* bei LSB first: */
+    return ((crc >> 8) ^ CRCtable[ (crc ^ byte) & 0xFF ]);
+}
+
+
+
+
+PUBLIC VOID
+CrcInit(USHORT uPOLYNOM)
+{
+    int i;
+
+    for( i = 0; i < 256; ++i )
+	CRCtable[i] = CalcTable(i, uPOLYNOM, 0);
+}
+
+
+
+
+PUBLIC USHORT
+Crc16(PVOID buffer,USHORT cb)
+{
+    USHORT	crc = 0;
+    PUCHAR	p = buffer;
+
+    for(; cb != 0; --cb, ++p )
+	crc = UpdateCRC(crc, *p);
+    return crc;
+}
+
+@
+
+
+1.9
+log
+@- added support if VRAIDEVICE2 sectors (preliminary)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1998/12/13 23:02:24 $
+d12 3
+d55 1
+a55 1
+static char const id[]="$Id: init1.c,v 1.8 1998/12/13 23:02:24 vitus Exp vitus $";
+d128 1
+d264 1
+a264 1
+/*
+d291 1
+a291 1
+/*
+d464 1
+d516 1
+d568 1
+d621 1
+a621 1
+	DEBMSG2(DBG_LEVEL3,"\r\n%z",(PVOID)iorb->pSGList,sizeof(*iorb->pSGList));
+d677 1
+a677 1
+	DEBMSG2(DBG_LEVEL3,"\r\n%z",(PVOID)iorb->pSGList,sizeof(*iorb->pSGList));
+d700 1
+d705 5
+d736 1
+d848 1
+a848 1
+		DEBMSG1(DBG_LEVEL1,"\r\n[SearchPhysDevices] allocated PHYSDEVICE: %p",phys);
+d858 1
+a858 1
+		    DEBMSG(DBG_LEVEL1,"\r\n[SearchPhysDevices] found other filter for unit");
+a859 1
+
+d922 1
+a922 1
+}
+d1008 1
+d1192 2
+d1196 2
+a1197 2
+ * GLOBAL
+ *	aPDev, cPDev
+d1203 1
+a1204 2
+ *	Use PhysSendIORB() from single.c to do I/Os.  For this purpose
+ *	we need a dummy VRDEVICE.
+d1248 1
+d1264 2
+a1265 2
+	    DEBMSG2(DBG_LEVEL2,"\r\n[BuildDevTree] phys %w, admin. sector %lx",i,(PVOID)&adsecno);
+	    rc = PhysdevPartIO(pdev, FALSE, adsecno, 1, FP_OFF(secbuf) + ppWorkMem);
+d1268 1
+a1268 1
+		sprintk(szMsgBuffer,szReadFailed2, (PSZ)szDriverName, i,adsecno, rc);
+d1272 1
+d1322 8
+d1737 1
+d1751 1
+@
+
+
+1.8
+log
+@- CheckReqistration: now sets global variable 'uRegLevel' (1-3)
+- changes for removed elements from HOSTDRIVE (flags, vrd, size)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1998/11/05 22:40:49 $
+d12 4
+d47 1
+a47 1
+ * This code is Copyright Vitus Jensen 1997-98
+d52 1
+a52 1
+static char const id[]="$Id: init1.c,v 1.7 1998/11/05 22:40:49 vitus Exp vitus $";
+d95 1
+d97 2
+d105 5
+d144 3
+a146 2
+INITMSG szLogo[]=	"\r\n%s                                            Version %u.%02u"
+"\r\nCopyright 1998 by Vitus Jensen (2:2474/424)                   " __DATE__ ;
+d626 1
+a626 1
+	/* OK, we got our data.  Now analyze it (located at 'mbr'). */
+d990 185
+a1240 2
+	    PSEC_VRDEV const	sec = secbuf;
+	    USHORT		size;
+d1252 1
+a1252 3
+		sprintk(szMsgBuffer,
+			"%s: phys %u, admin. sector %lu can't be read, error %#x",
+			(PSZ)szDriverName, i, adsecno, rc);
+d1259 1
+d1262 2
+a1263 2
+	    if( _fmemcmp(sec->sectype, "VRAIDDEVICE     ", 16) != 0 
+		||  Crc16(secbuf, SECTOR_SIZE-2) != sec->crc )
+d1265 1
+a1265 3
+		sprintk(szMsgBuffer,
+			"%s: phys %u, admin. sector %lu destroyed",
+			(PSZ)szDriverName, i, adsecno);
+d1267 1
+a1267 1
+		DEBMSG2(DBG_ALL,"\r\n[BuildDevTree] contents:\r\n%z",(PVOID)sec,SECTOR_SIZE);
+a1272 1
+	    /* Analyze VRDEVICE-description sector. */
+d1274 1
+a1274 1
+	    switch( sec->u.s.type )
+d1276 1
+a1276 15
+	      case RDTYPE_SINGLE:
+		sprintk(szMsgBuffer, szSingleCreate);
+		DEBMSG1(DBG_LEVEL1,"\r\n[BuildDevTree] %s",(PSZ)szMsgBuffer);
+		if( (fDriverFlags & DF_VERBOSE) )
+		    SaveMessage();
+		if( SingleCreate((PVRDEVHDR)npInitData, tab2, sec, &size) == 0 )
+		{
+		    tab1[j++] = (PVOID)npInitData;
+		    npInitData += size;
+		}
+		else
+		{
+		    sprintk(szMsgBuffer, szCreateFail, (PSZ)szDriverName);
+		    SaveMessage();
+		    tab1[j++] = NULL;
+d1278 4
+a1281 18
+		}
+		break;
+
+	      case RDTYPE_STRIPE:
+		sprintk(szMsgBuffer, szStripeCreate);
+		DEBMSG1(DBG_LEVEL1,"\r\n[BuildDevTree] %s",(PSZ)szMsgBuffer);
+		if( (fDriverFlags & DF_VERBOSE) )
+		    SaveMessage();
+		if( StripeCreate((PVRDEVHDR)npInitData, tab2, sec, &size) == 0 )
+		{
+		    tab1[j++] = (PVOID)npInitData;
+		    npInitData += size;
+		}
+		else
+		{
+		    sprintk(szMsgBuffer, szCreateFail, (PSZ)szDriverName);
+		    SaveMessage();
+		    tab1[j++] = NULL;
+d1283 6
+a1288 46
+		}
+		break;
+
+	      case RDTYPE_CHAIN:
+		sprintk(szMsgBuffer, szSpanCreate);
+		DEBMSG1(DBG_LEVEL1,"\r\n[BuildDevTree] %s",(PSZ)szMsgBuffer);
+		if( (fDriverFlags & DF_VERBOSE) )
+		    SaveMessage();
+		if( SpanCreate((PVRDEVHDR)npInitData, tab2, sec, &size) == 0 )
+		{
+		    tab1[j++] = (PVOID)npInitData;
+		    npInitData += size;
+		}
+		else
+		{
+		    sprintk(szMsgBuffer, szCreateFail, (PSZ)szDriverName);
+		    SaveMessage();
+		    tab1[j++] = NULL;
+		    tab2[i] = NULL;		/* remove even this */
+		}
+		break;
+
+	      case RDTYPE_MIRROR:
+		sprintk(szMsgBuffer, szMirrorCreate);
+		DEBMSG1(DBG_LEVEL1,"\r\n[BuildDevTree] %s",(PSZ)szMsgBuffer);
+		if( (fDriverFlags & DF_VERBOSE) )
+		    SaveMessage();
+		if( MirrorCreate((PVOID)npInitData, tab2, sec, &size) == 0 )
+		{
+		    tab1[j++] = (PVOID)npInitData;
+		    npInitData += size;
+		}
+		else
+		{
+		    sprintk(szMsgBuffer, szCreateFail, (PSZ)szDriverName);
+		    SaveMessage();
+		    tab1[j++] = NULL;
+		    tab2[i] = NULL;		/* remove even this */
+		}
+		break;
+
+	      case RDTYPE_RAID4:
+	      case RDTYPE_RAID5:
+	      default:
+		DEBMSG2(DBG_ALL,"\r\nUnknown RDTYPE %w"
+			"\r\nIgnoring VRDEVICE at %p",sec->u.s.type,tab2[i]);
+d1290 2
+a1291 3
+		tab1[j++] = NULL;
+		tab2[i] = NULL;			/* remove even this */
+		break;
+a1292 2
+	    if( tab1[j-1] == NULL )		/* nothing created: no host drive */
+		continue;
+a1293 5
+	    if( (sec->u.s.flags & 0x80) )
+	    {
+		AddHostDrive(tab1[j-1]);	/*End of VRDEVICE: add as HostDrive*/
+		tab1[j-1] = NULL;		/* end remove from list */
+	    }
+d1551 4
+d1591 1
+@
+
+
+1.7
+log
+@- addred registration code
+- LocalSendIORB: check ProcBlock return code
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1998/09/20 15:18:29 $
+d12 4
+d48 1
+a48 1
+static char const id[]="$Id: init1.c,v 1.6 1998/09/20 15:18:29 vitus Stab vitus $";
+d112 1
+a112 1
+INITMSG szHostDriveCount[] =	"Found %u array drives";
+d131 2
+a132 2
+INITMSG szProduct[]=	"Virtual RAID Filter";
+INITMSG szLogo[]=	"\r\n%s                                           Version %u.%02u"
+d340 1
+a340 1
+/*
+d346 1
+d350 1
+a350 1
+ * GLOBAL
+d384 1
+a384 1
+/*
+d390 1
+d394 2
+a395 2
+ * GLOBAL
+ *	fDriverFlags
+d402 1
+d444 1
+a444 1
+/*#
+d449 1
+d453 1
+a453 2
+ * GLOBAL
+ *	hdThisDriver
+d458 1
+d495 1
+a495 1
+/*
+d500 1
+d504 1
+a504 2
+ * GLOBAL
+ *	none
+d546 1
+a546 1
+/*#
+d551 1
+d554 1
+a554 4
+ * GLOBAL
+ *	apPDev[]
+ *	cPDev
+ *	npInitData
+d561 1
+d707 1
+a707 1
+/*
+d712 1
+d717 1
+a717 4
+ * GLOBAL
+ *	apPdev
+ *	npInitData
+ *	fDriverFlags
+d723 1
+d907 1
+a907 1
+/*#
+a932 1
+    apHDrv[cHDrv]->size = vrd->size;		/* same size as child */
+d940 1
+a940 1
+/*#
+d975 1
+a975 1
+/*#
+d1201 1
+a1201 1
+/*#
+d1298 1
+a1298 1
+/*
+d1418 1
+a1418 1
+/*
+d1422 2
+a1423 1
+ *	none
+d1425 2
+a1426 3
+ *	nothing
+ * GLOBAL
+ *	fDriverFlags updated
+d1428 2
+a1429 2
+ *	Sets DF_REGISTERED in fDriverFlags depending on
+ *	registration code.
+d1432 2
+a1433 2
+PRIVATE void NEAR
+CheckRegistration(void)
+d1435 3
+a1437 3
+    UCHAR code[REG_KEYLEN];
+    UCHAR c;
+    int i;
+d1439 1
+d1441 29
+a1469 9
+    _fmemset(code, 0, REG_KEYLEN);
+    for( c = 0, i = 0, p = RegData.szUser, k = szProduct;
+	 *p != '\0';
+	 ++p, ++i, k = (*(k+1) == '\0' ? szProduct : k+1) )
+    {
+	c = (UCHAR)((*p & 0xf0) >> 4 | (*p & 0x0f));
+	c *= *k;
+	c += *k;
+	code[i] = c;
+d1471 1
+a1471 2
+    if( i != 0	&&  _fmemcmp(code, RegData.szRegCode, i) == 0 )
+	fDriverFlags |= DF_REGISTERED;
+d1485 1
+a1485 1
+/*
+d1537 1
+a1537 1
+    if( !(fDriverFlags & DF_REGISTERED) )
+d1543 1
+a1543 1
+	if( (fDriverFlags & DF_REGISTERED) )
+d1545 1
+a1545 1
+	    sprintk(szMsgBuffer, szReg, (PSZ)RegData.szUser);
+a1644 1
+
+@
+
+
+1.6
+log
+@- modified for AllocateVrio(working_dev,mother)
+- added timebombed code
+- collects minimum of MaxHWSGList and MaxCDBTransferLength
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1998/06/26 22:33:14 $
+d7 2
+a8 2
+ * First step of initialization, executed at ring 0 in protected
+ * mode as the only running process.
+d12 5
+d44 1
+a44 1
+static char const id[]="$Id: init1.c,v 1.5 1998/06/26 22:33:14 vitus Exp vitus $";
+d82 2
+a83 2
+INITMSG	szNoDevTab[]=		"%s: error retrieving device table from ADD %u";
+INITMSG	szAllocFailed[]=	"%s: adapter %u, unit %u allocation failed (%#x)";
+d127 2
+a128 2
+INITMSG szProduct[]=	"Virtual RAID Filter            ";
+INITMSG szLogo[]=	"\r\n%s                               Version %u.%02u"
+d130 20
+d291 2
+d303 9
+a311 1
+	DevHelp_ProcBlock( (ULONG)iorb, -1L, WAIT_IS_NOT_INTERRUPTABLE );
+d316 8
+a323 1
+    return (iorb->Status & IORB_ERROR ? iorb->ErrorCode : 0);
+d762 1
+d777 1
+a777 1
+	    if( LocalSendIORB((PIORB)pIOCF, pADDBaseEP) )
+d783 1
+a783 1
+		sprintk(szMsgBuffer, szNoDevTab, (PSZ)szDriverName, add_index);
+a1293 2
+ * NAME
+ *	AnalyseCmdLine
+d1413 41
+d1509 2
+a1510 3
+    /* Parse Command Line Args */
+
+    AnalyseCmdLine(pCmdLine);
+d1512 2
+a1513 2
+    sprintk(szMsgBuffer, szLogo, (PSZ)szProduct, VERSION, SUBVERSION);
+    DEBMSG1(DBG_LEVEL1,"\r\n[InitBase] %s",(PSZ)szMsgBuffer);
+d1515 2
+d1518 11
+@
+
+
+1.5
+log
+@- switched to DDK macros (cli, sti, pushf)
+- first scanning now build PHYSDEVICE devices (VerifyDiskData checks
+  SEC_PHYSDEV) and BuildDevTree uses PhysdevPartIO() on that devices.
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/raid/RCS/init1.c,v $
+ * $Revision: 1.4 $
+ * $Date: 1998/05/29 01:42:58 $
+d12 5
+d36 7
+a42 4
+#pragma off (unreferenced)
+static char const id[]="$Id: init1.c,v 1.4 1998/05/29 01:42:58 vitus Exp vitus $";
+#pragma on (unreferenced)
+
+d124 6
+a129 1
+"\r\nCopyright Vitus Jensen (2:2474/424)                           " __DATE__ ;
+d517 1
+a517 1
+    PIORB_EXECUTEIO	iorb = AllocateIorb();
+d560 1
+d612 1
+d820 8
+d1438 17
+@
+
+
+1.4
+log
+@- changed all INFMSG to DEBMSG(DBG_LEVEL4,...)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1998/04/08 01:09:03 $
+d10 18
+a27 1
+ * History: see bottom of file
+d32 1
+a32 1
+static char const id[]="$Id: init1.c,v 1.3 1998/04/08 01:09:03 vitus Exp vitus $";
+a47 1
+
+d66 6
+a71 5
+INITMSG	szErrorVAddr[]= "%s: error converting virtual to physical address";
+INITMSG	szNoDriverTab[]="%s: error retrieving driver table";
+INITMSG	szNoDevTab[]=	"%s: error retrieving device table from ADD %u";
+INITMSG	szAllocFailed[]="%s: adapter %u, unit %u allocation failed (%#x)";
+INITMSG	szDeallocFailed[]="%s: adapter %u, unit %u, deallocation failed";
+d73 2
+a74 2
+INITMSG	szReadFailed[]=	"%s: adapter %u, unit %u READ failed (%04x)";
+INITMSG	szMallocFailed[]="%s: internal memory allocation failed";
+d77 3
+a79 2
+INITMSG szNoTimer[]=	"%s: error registrating timer routine";
+
+d81 1
+a81 3
+/*
+ * 2. Screen messages only displayed if '/V' or '/DEBUG' are used.
+ */
+d84 3
+a86 1
+INITMSG	szNoDevices[]=	"No devices found";
+d89 12
+a100 3
+INITMSG	szDiskette[]=	"Adapter %u, Unit %u: diskette drive";
+INITMSG	szDefective[]=	"Adapter %u, Unit %u: defect";
+INITMSG	szNoDiskType[]= "Adapter %u, unit %u: no disk device";
+a109 4
+INITMSG	szFoundDevice[]=   "Adapter %u, Unit %u: found VRAID device";
+
+
+
+d172 1
+a172 1
+PUBLIC void
+d253 1
+a253 5
+#if defined(_MSC_VER)
+    ULONG	dummy;				/* needed for SAVE_REGS() */
+#endif
+
+    iorb->NotifyAddress = (PVOID)SendIORBNotify; /* kind of hack */
+d258 1
+a258 3
+    SAVE_REGS();
+    (addentry)(iorb);
+    RESTORE_REGS();
+d260 1
+a260 1
+    DISABLE();
+d264 1
+a264 1
+	DISABLE();
+d266 1
+a266 1
+    ENABLE();
+d362 1
+a362 1
+	if( (fDriverFlags & DF_VERBOSE) )
+d487 1
+d489 1
+d491 3
+d497 1
+a499 1
+ *	Only checks partition table and record sizes.  OK?
+d505 3
+a507 2
+    USHORT		error;
+    PMBR		mbr = (PVOID)((PUCHAR)npInitData + sizeof(SCATGATENTRY));
+d515 58
+a572 2
+    /* Data buffer: have to supply a scatter/gather list
+     * (1 entry) and a direction. */
+d574 1
+a574 3
+    iorb->cSGList = 1;
+    iorb->pSGList->ppXferBuf = (ULONG)((USHORT)mbr + ppDiskDDHeader);
+    iorb->pSGList->XferBufLen = SECTOR_SIZE;
+d576 3
+a578 4
+    iorb->iorbh.Length =		sizeof(IORB_EXECUTEIO);
+    iorb->iorbh.UnitHandle =		phys->hdADDUnit;
+    iorb->iorbh.CommandCode =		IOCC_EXECUTE_IO;
+    iorb->iorbh.CommandModifier =	IOCM_READ;
+d580 8
+a587 3
+    iorb->iorbh.RequestControl =	0;
+    iorb->iorbh.StatusBlockLen =	0;
+    iorb->iorbh.pStatusBlock =		0;
+d589 3
+a591 3
+    iorb->RBA = 0;				/* MBR! */
+    iorb->BlockCount = 1;			/* only this single sector */
+    iorb->BlockSize = SECTOR_SIZE;
+d593 2
+a594 2
+    DEBMSG2(DBG_LEVEL3,"\r\n[VerifyDiskData] IOCM_READ - iorb sc/ga\r\n%z",(PIORB)iorb,iorb->iorbh.Length);
+    DEBMSG2(DBG_LEVEL3,"\r\n%z",(PVOID)iorb->pSGList,sizeof(*iorb->pSGList));
+d596 1
+a596 5
+    if( (error=LocalSendIORB((PIORB)iorb, phys->pADDEntry)) )
+    {
+	sprintk(szMsgBuffer, szReadFailed, (PSZ)szDriverName,
+		phys->iAdapter, phys->iUnit, error);
+	SaveMessage();
+d598 10
+a607 2
+	return error;
+    }
+d609 10
+a618 1
+    /* OK, we got our data.  Now analyze it (located at 'mbr'). */
+d620 6
+a625 4
+    error = 0xFFFE;				/* assume bad layout */
+    if( mbr->Signature == 0xAA55 )
+    {
+	int	i;
+d627 1
+a627 6
+	for( i = 0; i < 4; ++i )
+	    if( mbr->PartitionTable[i].BootIndicator == 0
+		&&  mbr->PartitionTable[i].SysIndicator == VRAID_PARTTYPE )
+	    {
+		phys->ulVRStart = mbr->PartitionTable[i].RelativeSectors;
+		phys->ulVRSize = mbr->PartitionTable[i].NumSectors;
+d629 5
+a633 3
+		error = 0;			/* found it! */
+		break;
+	    }
+d635 1
+a636 1
+    FreeIorb(iorb);
+d662 1
+a662 1
+PRIVATE int
+a665 2
+    int		fatal = 0;
+
+d678 1
+a678 1
+    if( (fDriverFlags & DF_VERBOSE) )
+a689 1
+	++fatal;
+d732 1
+a732 1
+	/* For each Adapter in ADD's Device Table */
+d746 1
+a746 1
+	    /* Access UNITINFO for each Device on adapter */
+d748 1
+a748 1
+	    DEBMSG(DBG_LEVEL2,"\r\n[SearchPhysDevices] looking for units on adapter");
+d753 5
+a757 3
+		GETINITRAM(apPDev[cPDev],PPHYSDEVICE,sizeof(PHYSDEVICE));
+		_fmemset(apPDev[cPDev], 0, sizeof(PHYSDEVICE));
+		DEBMSG1(DBG_LEVEL1,"\r\n[SearchPhysDevices] allocated unit structure: %p",apPDev[cPDev]);
+d763 1
+a763 1
+		if( (apPDev[cPDev]->hdFilter=npUnitInfo->FilterADDHandle) != 0 )
+d768 1
+a768 2
+		    pDCEFilter =
+			&pDCT->DCTableEntries[apPDev[cPDev]->hdFilter-1];
+d770 2
+a771 3
+		    apPDev[cPDev]->pADDEntry
+			= (PVOID)MAKEP(pDCEFilter->DCSelector,
+				       pDCEFilter->DCOffset);
+d775 1
+a775 1
+		    apPDev[cPDev]->pADDEntry = pADDBaseEP;
+d777 3
+a779 3
+		apPDev[cPDev]->iAdapter = adapter_index;
+		apPDev[cPDev]->iUnit = npUnitInfo->UnitIndex;
+		apPDev[cPDev]->hdADDUnit = npUnitInfo->UnitHandle;
+d781 1
+a781 1
+		if( CheckUnitInfo(apPDev[cPDev], npUnitInfo) )
+a782 1
+		    apPDev[cPDev] = 0;
+d787 1
+a787 1
+		if( LocalAllocateUnit(apPDev[cPDev]) )
+a791 1
+		    apPDev[cPDev] = 0;
+d799 1
+a799 1
+		if( VerifyDiskData(apPDev[cPDev]) )
+d801 1
+a801 2
+		    LocalDeallocateUnit(apPDev[cPDev]);
+		    apPDev[cPDev] = 0;
+a804 8
+
+		sprintk(szMsgBuffer, szFoundDevice,
+			apPDev[cPDev]->iAdapter, apPDev[cPDev]->iUnit);
+		DEBMSG1(DBG_LEVEL1,"\r\n[SearchPhysDevices] %s",(PSZ)szMsgBuffer);
+		if( (fDriverFlags & DF_VERBOSE) )
+		    SaveMessage();
+
+		++cPDev;			/* one more */
+a808 8
+    if( fatal )					/* errors occurred? */
+    {
+	int	i;
+
+	for( i = 0; i < cPDev; ++i )
+	    LocalDeallocateUnit(apPDev[i]);
+	return -1;				/* then display and wait */
+    }
+d811 1
+a811 1
+	sprintk(szMsgBuffer, szNoDevices);
+d817 6
+a836 72
+ * PARAMETER
+ * RETURNS
+ * GLOBAL
+ * DESCRIPTION
+ * REMARKS
+ *	OBS: single is different as the callback is called with
+ *	the 'single' VRDEVICE itself as first parameter!
+ */
+PRIVATE void NEAR
+LocalSingleNotify(PVRIO io)
+{
+    DEBMSG1(DBG_LEVEL1,"\r\n[LocalSingleNotify] got VRIO %p",(PVOID)io);
+    return;
+}
+
+
+
+
+/*#
+ * CALL
+ * PARAMETER
+ * RETURNS
+ * GLOBAL
+ * DESCRIPTION
+ *	Build a dummy VRIO for 'iorb' and pass 'iorb' to physical device
+ *	'dev'.  Be aware that 'iorb' will be freed by physical routines!
+ *
+ * REMARKS
+ *	We have to call PHYSDEVICEs directly as any VRDEVICE would add
+ *	ADMINSECTORS as offset.
+ */
+PRIVATE USHORT NEAR
+ExecuteDirectIo(PPHYSDEVICE const dev,PIORB_EXECUTEIO const iorb)
+{
+    USHORT		rc;
+    static VRIO volatile io = {0};
+    extern USHORT NEAR PhysSendIORB(PPHYSDEVICE pdev,PVRIO vrio,PIORB iorb);
+    void (*notify)(PVRIO io);
+
+    DEBMSG2(DBG_LEVEL3,"\r\n[ExecuteDirectIo] iorb sc/ga\r\n%z",(PIORB)iorb,iorb->iorbh.Length);
+    DEBMSG2(DBG_LEVEL3,"\r\n%z",(PVOID)iorb->pSGList,sizeof(*iorb->pSGList));
+
+    /* Switch to local notification routine.  Insert neccessary
+     * fields in 'io', too! */
+
+    notify = dev->parent->notify;
+    dev->parent->notify = LocalSingleNotify;
+    io.vrd = dev->parent;
+
+    io.oserr = 0xFFFF;
+    rc = PhysSendIORB(dev, &io, &iorb->iorbh);
+    if( rc != 0 )
+    {
+	DEBMSG1(DBG_LEVEL1,"\r\n[ExecuteDirectIo] PhysSendIORB - rc %w",rc);
+    }
+    else
+    {
+	while( io.oserr == 0xFFFF )
+	    DevHelp_Beep(25000, 3000);		/* wait some time */
+	rc = io.oserr;
+	DEBMSG1(DBG_LEVEL1,"\r\n[ExecuteDirectIo] I/O status %w",rc);
+    }
+
+    dev->parent->notify = notify;		/* restore previous routine */
+    return rc;
+}
+
+
+
+
+/*#
+ * CALL
+d856 4
+d889 1
+a889 1
+    int j, i;
+d927 2
+a928 1
+    PVRDEVHDR		tab1[MAX_PDEV], tab2[MAX_PDEV];
+d931 1
+a931 1
+    USHORT		rc;
+d935 5
+d946 1
+a946 1
+    _fmemset(tab1, 0, sizeof(tab1));
+d948 1
+d952 2
+a953 84
+    /* Now read VRAID block 0 from every PHYSDEVICE.
+     * There is currently nothing more as an ID to retrieve
+     * from this kind of sectors. */
+
+    for( i = 0; i < cPDev; ++i )
+    {
+	PIORB_EXECUTEIO		iorb = AllocateIorb();
+	PSEC_PHYSDEV const	sec0 = secbuf;
+	USHORT			size, crc;
+	VRDEVHDR		simple_parent;
+
+	if( iorb == NULL )
+	{
+	    sprintk(szMsgBuffer, szMallocFailed, (PSZ)szDriverName);
+	    SaveMessage();
+	    continue;
+	}
+
+	/* Build IORB to read single sectors. */
+
+	iorb->iorbh.Length = sizeof(IORB_EXECUTEIO);
+	iorb->iorbh.UnitHandle = apPDev[i]->hdADDUnit;
+	iorb->iorbh.CommandCode = IOCC_EXECUTE_IO;
+	iorb->iorbh.CommandModifier = IOCM_READ;
+	iorb->iorbh.RequestControl = IORB_DISABLE_RETRY;
+	iorb->BlockCount = 1;
+	iorb->BlockSize = SECTOR_SIZE;
+
+	/* S/G list is already allocated.  Fill with single entry. */
+
+	iorb->cSGList = 1;			/* minimum */
+	iorb->pSGList->XferBufLen = SECTOR_SIZE;
+	iorb->pSGList->ppXferBuf = FP_OFF(secbuf) + ppWorkMem;
+
+	iorb->RBA = apPDev[i]->ulVRStart;	/* start of PHYS */
+	apPDev[i]->parent = &simple_parent;
+
+	rc = ExecuteDirectIo(apPDev[i], iorb);
+	if( rc != 0 )
+	{
+	    DEBMSG1(DBG_ALL,"\r\nCan't read PHYSDEV sector from %p",apPDev[i]);
+	    DBSTOP();
+
+	    /* What do?
+	     * Either deallocate apPDev[i] and clear entry
+	     * OR keep this device allocated and it won't be analyzed
+	     * in next for() loop because tab1[] isn't filled. */
+
+	    continue;
+	}
+
+	/* Well, IORB has completed successfully.  Remember that
+	 * the IORB itself is lost now!
+	 * Analyse sector. */
+
+	crc = Crc16(secbuf, SECTOR_SIZE-2);
+	if( crc != sec0->crc )
+	{
+	    DEBMSG3(DBG_ALL,"\r\nCRC error in PHYSDEV sector (%p; %w, %w)",apPDev[i],crc,sec0->crc);
+	    DBSTOP();
+	    continue;				/* skip this device */
+	}
+	ASSERT( _fmemcmp(sec0->sectype, "PHYSDEVICE      ", 16) == 0 );
+
+
+	/* Build a VR device of type single for this PHYSDEVICE.
+	 * Allocated memory regions are never freed, they will become
+	 * part of our link structure. */
+
+	SingleCreate((PVRDEVHDR)npInitData, apPDev[i], sec0, &size);
+	tab1[i] = npInitData;
+	npInitData += size;
+
+	if( (sec0->u.s.flags & 0x80) != 0 )
+	{
+	    AddHostDrive(tab1[i]);	/* End of VRDEVICE: add as HostDrive */
+	    tab1[i] = NULL;
+	}
+    }
+
+
+    /* ------------------------------------------------------------ */
+    /* We read the first administrative sectors and installed already
+     * all RDTYPE_SINGLE.
+d967 1
+a967 1
+	 *	to keep the reference to 'apPDev'.*/
+d971 1
+a971 2
+	    PIORB_EXECUTEIO	iorb;
+	    PPHYSDEVICE		pdev = apPDev[i];	/* see above */
+a979 24
+	    if( (iorb=AllocateIorb()) == NULL )
+	    {
+		sprintk(szMsgBuffer, szMallocFailed, (PSZ)szDriverName);
+		SaveMessage();
+		continue;
+	    }
+
+	    /* Build IORB to read single sectors. */
+
+	    iorb->iorbh.Length = sizeof(IORB_EXECUTEIO);
+	    iorb->iorbh.UnitHandle = apPDev[i]->hdADDUnit;
+	    iorb->iorbh.CommandCode = IOCC_EXECUTE_IO;
+	    iorb->iorbh.CommandModifier = IOCM_READ;
+	    iorb->iorbh.RequestControl = IORB_DISABLE_RETRY;
+	    iorb->BlockCount = 1;
+	    iorb->BlockSize = SECTOR_SIZE;
+
+	    /* S/G list is already allocated.  Fill with single entry. */
+
+	    iorb->cSGList = 1;			/* minimum */
+	    iorb->pSGList->XferBufLen = SECTOR_SIZE;
+	    iorb->pSGList->ppXferBuf = FP_OFF(secbuf) + ppWorkMem;
+
+	    /* Start of PHYS plus something. */
+d981 2
+a982 2
+	    iorb->RBA = pdev->ulVRStart + adsecno;
+	    rc = ExecuteDirectIo(pdev, iorb);
+d985 4
+a988 1
+		DEBMSG2(DBG_ALL,"\r\nCan't read admin sector %lx from %p",&adsecno,tab2[i]);
+d996 2
+a997 1
+	    if( Crc16(secbuf, SECTOR_SIZE-2) != sec->crc )
+d999 5
+a1003 2
+		DEBMSG2(DBG_ALL,"\r\nCRC16 error in sector %lx"
+			"\r\nIgnoring VRDEVICE at %p",&adsecno,tab2[i]);
+a1007 1
+	    ASSERT( _fmemcmp(sec->sectype, "VRAIDDEVICE     ", 16) == 0 );
+d1013 19
+d1033 4
+d1039 1
+a1039 1
+		    tab1[j++] = npInitData;
+d1044 2
+d1052 4
+d1058 1
+a1058 1
+		    tab1[j++] = npInitData;
+d1063 2
+d1071 4
+d1077 1
+a1077 1
+		    tab1[j++] = npInitData;
+d1082 2
+d1099 1
+a1099 1
+	    if( tab1[j-1] == NULL )
+d1107 1
+a1107 1
+	}
+d1111 7
+d1151 1
+a1151 1
+    BOOL	bool;
+d1155 6
+a1160 6
+    bool = DevHelp_RegisterDeviceClass((NPSZ)szDriverName,
+				       (PFN)IorbEntry,
+				       (USHORT)DRIVERFLAGS,
+				       (USHORT)DRIVERCLASS_ADD,
+				       (PUSHORT)&hdThisDriver);
+    if( bool )
+d1246 1
+a1246 1
+    CHAR	TokenId;
+d1283 1
+a1283 2
+	sprintk(szMsgBuffer, szUnknownOption,
+		(PSZ)szDriverName, (PBYTE)DeviceTable);
+d1291 1
+a1291 2
+	sprintk(szMsgBuffer, szCmdLineError, 
+		(PSZ)szDriverName, parse_rc.ret_code);
+d1408 2
+a1410 2
+    {
+	sprintk(szMsgBuffer, szLogo, (PSZ)szProduct, VERSION, SUBVERSION);
+a1411 1
+    }
+d1420 3
+d1424 2
+a1430 1
+	DEBMSG1(DBG_LEVEL1,"\r\n[InitBase] found %w VRAID partitions ",cPDev);
+d1465 1
+a1465 1
+	pRPO->Unit    = cHDrv;
+a1486 19
+
+
+/* History:
+ *
+ * $Log: init1.c,v $
+ * Revision 1.3  1998/04/08 01:09:03  vitus
+ * - added CRC16 calculation
+ * - only excepts UIB_TYPE_DISK
+ * - corrected IORB handling when using created PHYSDEVICEs
+ * - corrected adapter index calculation
+ * - moved initialization of memory routines
+ * - test successfull (single, chain)
+ *
+ * Revision 1.2  1998/03/10 02:27:06  vitus
+ * - BuildDevTree: calls PUBLIC *Create() functions per device type
+ *
+ * Revision 1.1  1998/03/06 01:25:12  vitus
+ * Initial revision
+ */
+@
+
+
+1.3
+log
+@- added CRC16 calculation
+- only excepts UIB_TYPE_DISK
+- corrected IORB handling when using created PHYSDEVICEs
+- corrected adapter index calculation
+- moved initialization of memory routines
+- test successfull (single, chain)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1998/03/10 02:27:06 $
+d15 1
+a15 1
+static char const id[]="$Id: init1.c,v 1.2 1998/03/10 02:27:06 vitus Exp vitus $";
+d1044 1
+a1044 1
+		INFMSG1("\r\n[BuildDevTree] ignored empty index %w",i);
+d1532 8
+@
+
+
+1.2
+log
+@- BuildDevTree: calls PUBLIC *Create() functions per device type
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1998/03/06 01:25:12 $
+d15 1
+a15 1
+static char const id[]="$Id: init1.c,v 1.1 1998/03/06 01:25:12 vitus Exp vitus $";
+d53 1
+a53 1
+INITMSG	szAllocFailed[]="%s: adapter %u, unit %u allocation failed";
+d73 1
+d83 1
+a83 1
+INITMSG	szFoundDevice[]=   "Adapter %u, Unit %u: found";
+d107 1
+a107 1
+ * **** Small Helpers ***************************************************
+d110 3
+d114 37
+a150 1
+CRC16(PUCHAR p,USHORT length)
+d152 18
+a169 2
+/* xxx */
+    return 0;
+d175 2
+d289 1
+a289 1
+	DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+d296 1
+a296 1
+	DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+d329 1
+d331 1
+a331 1
+    DEBMSG2("\r\nCheckUnitInfo: %w %w",phys->iAdapter,phys->iUnit);
+d335 1
+a335 1
+	DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+d341 9
+d353 1
+a353 1
+	DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+d387 1
+a387 1
+    DEBMSG1("\r\n[LocalAllocateUnit] offset %w",phys);
+d403 1
+a403 1
+		phys->iAdapter, phys->iUnit);
+d408 1
+a408 1
+    DEBMSG("\r\n[LocalAllocateUnit] end");
+d437 1
+a437 1
+    DEBMSG1("\r\n[LocalDeallocateUnit] offset %w",phys);
+d459 1
+a459 1
+    DEBMSG("\r\n[LocalDeallocateUnit] end");
+a482 1
+    PSCATGATENTRY	scga = npInitData;
+d486 6
+d495 3
+a497 4
+    scga->ppXferBuf = (ULONG)((USHORT)mbr + ppDiskDDHeader);
+    scga->XferBufLen = SECTOR_SIZE;
+
+    _fmemset(iorb, 0, MAX_IORB_SIZE);
+d512 2
+a513 6
+    iorb->cSGList = 1;
+    iorb->pSGList = scga;
+    iorb->ppSGList = (ULONG)((USHORT)scga + ppDiskDDHeader);
+
+    DEBMSG2("\r\nIOCM_READ - iorb sc/ga\r\n%z",(PIORB)iorb,iorb->iorbh.Length);
+    DEBMSG2("\r\n%z",(PVOID)scga,sizeof(*scga));
+d520 1
+d527 1
+a527 1
+    if( mbr->Signature == 0x55AA )
+d543 1
+d577 1
+d586 1
+a586 1
+    DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+d599 1
+d606 1
+a606 1
+    DEBMSG("\r\nLooking for ADDs");
+d610 2
+a611 1
+    for( add_index = 0; add_index < add_count; ++add_index, ++pDCE )
+d644 3
+a646 1
+	for( j = 0; j < ((PDEVICETABLE)DeviceTable)->TotalAdapters; ++j )
+d653 1
+a653 1
+	    if( CheckAdapterInfo(add_index+j, npAdapterInfo) )
+d658 1
+a658 1
+	    DEBMSG("\r\nLooking for units on adapter");
+d665 1
+a665 1
+		DEBMSG1("\r\nallocated unit structure: %w",apPDev[cPDev]);
+d675 1
+a675 1
+		    DEBMSG("\r\nFound other filter for unit");
+d687 1
+a687 1
+		apPDev[cPDev]->iAdapter = add_index + j;
+d689 1
+a704 1
+		    ++fatal;			/* that may be fatal */
+a715 1
+		    ++fatal;			/* that may be fatal */
+d721 1
+a721 1
+		DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+d741 1
+a741 1
+	DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+d771 2
+a772 1
+    ASSERT( io == NULL );			/* there is none! */
+d784 2
+a785 2
+ *	Build VRIO for 'rdev' in 'io' directly correspondending to
+ *	'iorb' (0 offset, etc.).
+d799 2
+d802 2
+a803 1
+    /* Switch to local notification routine. */
+d807 1
+d813 1
+a813 1
+	DEBMSG1("\r\n[ExecuteDirectIo] PhysSendIORB - rc %w",rc);
+d820 1
+a820 1
+	DEBMSG1("\r\n[ExecuteDirectIo] IORB error %w",rc);
+d849 2
+a919 1
+    PIORB_EXECUTEIO	iorb = AllocateIorb();
+d925 1
+a925 1
+    if( iorb == NULL  ||  secbuf == NULL )
+a934 16
+    /* Build IORB to read single sectors. */
+
+    iorb->iorbh.Length = sizeof(IORB_EXECUTEIO);
+    iorb->iorbh.CommandCode = IOCC_EXECUTE_IO;
+    iorb->iorbh.CommandModifier = IOCM_READ;
+    iorb->iorbh.RequestControl = IORB_DISABLE_RETRY;
+    iorb->BlockCount = 1;
+    iorb->BlockSize = SECTOR_SIZE;
+
+    /* S/G list is already allocated.  Fill with single entry. */
+
+    iorb->cSGList = 1;				/* minimum */
+    iorb->pSGList->XferBufLen = SECTOR_SIZE;
+    iorb->pSGList->ppXferBuf = FP_OFF(secbuf) + ppMemPool;
+
+
+d936 1
+a936 1
+    /* Now read block 0 from every PHYSDEVICE.
+d942 1
+d944 25
+a968 1
+	USHORT			size;
+d971 2
+d976 9
+a984 2
+	    ERRMSG1("\r\nCan't create single for %p",apPDev[i]);
+	    continue;				/* skip this device */
+d987 3
+a989 1
+	/* Well, IORB has completed successfully.  Analyse sector. */
+d991 2
+a992 1
+	if( CRC16(secbuf, SECTOR_SIZE-2) != sec0->crc )
+d994 2
+a995 3
+	    ERRMSG1("\r\nCRC16 error in sector 0"
+		    "\r\nRemoving SINGLE at %p",tab1[i]);
+	    tab1[i] = NULL;
+d1009 1
+a1009 1
+	if( (sec0->flags & 0x80) )
+d1018 1
+a1018 1
+    /* We read the first two administrative sectors and installed already
+d1037 1
+d1042 28
+d1076 2
+a1077 1
+		ERRMSG1("\r\nIgnoring VRDEVICE at %p",tab2[i]);
+d1084 1
+a1084 1
+	    if( CRC16(secbuf, SECTOR_SIZE-2) != sec->crc )
+d1086 3
+a1088 2
+		ERRMSG2("\r\nCRC16 error in sector %w"
+			"\r\nIgnoring VRDEVICE at %p",adsecno,tab2[i]);
+d1096 1
+a1096 1
+	    switch( (sec->type & ~0x80) )
+d1111 1
+a1111 1
+	      case RDTYPE_SPAN:
+d1140 3
+a1142 2
+		ERRMSG2("\r\nUnknown RDTYPE %w"
+			"\r\nIgnoring VRDEVICE at %p",sec->type,tab2[i]);
+d1150 1
+a1150 1
+	    if( (sec->flags & 0x80) )
+a1158 1
+    FreeIorb(iorb);
+d1195 1
+a1195 1
+    DEBMSG("\r\nRegistering device class");
+d1349 1
+a1349 1
+	    DEBMSG("\r\n/VERBOSE");
+d1354 1
+a1354 1
+	    DEBMSG("\r\n/DEBUG");
+d1375 1
+a1375 1
+	    DEBMSG1("\r\n/A:%w",adapter);
+d1427 1
+a1427 1
+    DEBMSG("\r\nInitBase");
+d1459 8
+d1470 1
+a1474 4
+	rc = InitWorkmem();			/* initialize memory routines */
+	if( rc )
+	    break;
+
+d1486 2
+d1509 1
+a1509 1
+	DEBMSG("\r\nDriver installed");
+d1532 3
+a1536 1
+ *
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d15 1
+a15 1
+static char const id[]="$Id$";
+d695 1
+a695 1
+LocalSingleNotify(PVRDEVICE this,PVRIO io)
+d722 1
+a722 1
+    void (*notify)(PVRDEVICE child,PVRIO io);
+d751 17
+a767 3
+
+PRIVATE void
+AddHostDrive(PVRDEVICE * vrd,UCHAR type)
+d771 2
+a772 4
+    apHDrv[cHDrv]->type = type;
+    apHDrv[cHDrv]->size = (*vrd)->size;		/* same size as child */
+    apHDrv[cHDrv]->child = *vrd;
+    vrd = NULL;					/* remove from further proc. */
+d779 19
+a797 2
+int
+CompressTab(PVRDEVICE tab1,PVRDEVICE tab2)
+d805 2
+a806 6
+	if( tab1[i] != 0 )
+	{
+	    tab2[j++] = tab1[i];
+	    ++found;
+	}
+	tab1[i] = 0;
+d832 1
+a832 1
+PRIVATE int
+d837 1
+a837 1
+    PVRDEVICE		tab1[MAX_PDEV], tab2[MAX_PDEV];
+d842 1
+a850 5
+
+    /* Build a VRDEVICE of type RDTYPE_SINGLE for every PHYSDEVICE.
+     * Allocated memory regions are never freed, they will become
+     * part of our link structure. */
+
+d852 1
+a852 6
+    for( i = 0; i < cPDev; ++i )
+    {
+	GETINITRAM(tab1[i],PVRDEVICE,sizeof(VRDEVICE));
+	_fmemset(tab1[i], 0, sizeof(VRDEVICE));
+
+	/* Initialize structure as far as already possible. */
+a853 17
+	tab1[i]->type = RDTYPE_SINGLE;
+	tab1[i]->flags = 0;
+	tab1[i]->size = apPDev[i]->ulVRSize;	/* same as partition */
+	tab1[i]->phys = apPDev[i];
+
+	tab1[i]->worker = SingleWorker;
+	tab1[i]->notify = SingleNotify;
+
+	/* Still not possible to set:
+	 * tab1[i]->id		ADMIN sector 1
+	 * tab1[i]->parent	[ADMIN sector 2]
+	 */
+
+	/* Update PHYSDEVICE structure. */
+
+	apPDev[i]->parent = tab1[i];
+    }
+d879 1
+a879 1
+	PSEC_VRDEV const	sec1 = secbuf;
+d885 1
+a885 2
+	    ERRMSG1("\r\nRemoving SINGLE at %p",tab1[i]);
+	    tab1[i] = NULL;
+d901 7
+a907 13
+	/* Well, there is nothing usefull to get from that sector.
+	 * Continue by reading next (SINGLE) sector. */
+
+	iorb->RBA = apPDev[i]->ulVRStart + 1;	/* start of PHYS plus 1 */
+	rc = ExecuteDirectIo(apPDev[i], iorb);
+	if( rc != 0 )
+	{
+	    ERRMSG1("\r\nRemoving SINGLE at %p",tab1[i]);
+	    tab1[i] = NULL;
+	    continue;				/* skip this device */
+	}
+
+	/* Analyse first VRDEVICE-description sector. */
+d909 1
+a909 1
+	if( CRC16(secbuf, SECTOR_SIZE-2) != sec1->crc )
+d911 1
+a911 2
+	    ERRMSG1("\r\nCRC16 error in sector 1"
+		    "\r\nRemoving SINGLE at %p",tab1[i]);
+a912 1
+	    continue;				/* skip this device */
+a913 7
+	ASSERT( _fmemcmp(sec1->sectype, "VRAIDDEVICE     ", 16) == 0 );
+
+	_fmemcpy(tab1[i]->id, sec1->id, sizeof(tab1[i]->id));
+
+	if( (sec1->type & 0x80) )
+	    AddHostDrive(&tab1[i], sec1->type & ~0x80);	/* End of VRDEVICE:
+							   add to HostDrive table */
+d922 1
+a922 1
+    for( adsecno = 2; adsecno < VRAID_ADMINSECTORS; ++adsecno )
+d924 2
+a925 1
+	int	found = CompressTab(tab1, tab2); /* tab1 to tab2, clearing tab1 */
+d928 1
+a928 1
+	    break;				/* nothing left = done */
+d931 3
+a933 1
+	 * copied to tab2 and build entry in tab1. */
+d937 1
+a937 1
+	    PPYSDEVICE pdev = VRDev2PDev(tab2[i]);
+d939 1
+d947 2
+a948 2
+		ERRMSG1("\r\nIgnoring VRDEVICE at %p",tab1[i]);
+		tab1[i] = NULL;
+d957 2
+a958 2
+			"\r\nIgnoring VRDEVICE at %p",adsecno,tab1[i]);
+		tab1[i] = NULL;
+a964 3
+	    BuildVrDevice(&tab1, tab2, sec);
+
+
+d967 12
+a978 3
+	      case RDTYPE_SINGLE:
+		BuildSingleVrd(tab1, tab2)
+		break;				/* nothing to do */
+a979 1
+	      case RDTYPE_STRIPE:
+d981 12
+d994 10
+a1003 1
+		xxx;
+d1010 3
+a1012 2
+			"\r\nIgnoring VRDEVICE at %p",sec->type,tab1[i]);
+		tab1[i] = NULL;
+d1015 1
+a1015 1
+	    if( tab1[i] == NULL )
+d1018 7
+a1024 7
+	_fmemcpy(tab1[i]->id, sec1->id, sizeof(tab1[i]->id));
+
+	if( (sec->type & 0x80) )
+	    AddHostDrive(&tab1[i], sec1->type & ~0x80);	/* End of VRDEVICE:
+							   add to HostDrive table */
+	
+    }
+d1393 4
+a1396 1
+ * $Log$
+@

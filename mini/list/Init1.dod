@@ -1,0 +1,138 @@
+;	Static Name Aliases
+;
+;	$S170_id	EQU	id
+;	$S1854_szAPIError	EQU	szAPIError
+	TITLE   Init1.c
+	.286p
+	.287
+_TEXT	SEGMENT  WORD PUBLIC 'CODE'
+_TEXT	ENDS
+_DATA	SEGMENT  WORD PUBLIC 'DATA'
+_DATA	ENDS
+CONST	SEGMENT  WORD PUBLIC 'CONST'
+CONST	ENDS
+_BSS	SEGMENT  WORD PUBLIC 'BSS'
+_BSS	ENDS
+$$SYMBOLS	SEGMENT  BYTE PUBLIC 'DEBSYM'
+$$SYMBOLS	ENDS
+$$TYPES	SEGMENT  BYTE PUBLIC 'DEBTYP'
+$$TYPES	ENDS
+INITDATA	SEGMENT  WORD PUBLIC 'FAR_DATA'
+INITDATA	ENDS
+DGROUP	GROUP	CONST, _BSS, _DATA
+	ASSUME DS: DGROUP
+	ASSUME  SS: NOTHING
+EXTRN	_dprintf:NEAR
+EXTRN	_Device_Help:DWORD
+EXTRN	_fDriverFlags:WORD
+EXTRN	_uDebugLevel:WORD
+EXTRN	_npInitData:WORD
+_DATA      SEGMENT
+	ORG	$+61
+$SG1862	DB	0dH,  0aH, 'InitBase',  00H
+$SG1864	DB	0dH,  0aH, 'Driver installed',  00H
+	ORG	$-91
+$S170_id	DB	'$Id: init1.c,v 1.2.1.1 2001/06/26 01:59:16 vitus Exp vitus $'
+	DB	00H
+_DATA      ENDS
+INITDATA      SEGMENT
+$S1854_szAPIError	DB	'%s: error %u from Dos* API',  00H
+INITDATA      ENDS
+_TEXT      SEGMENT
+	ASSUME	CS: _TEXT
+	PUBLIC	_Code_End
+_Code_End	PROC NEAR
+; Line 67
+	*** 000000	c3 			ret	
+	*** 000001	90 			nop	
+
+_Code_End	ENDP
+	PUBLIC	_Init
+_Init	PROC NEAR
+; Line 93
+	*** 000002	c8 06 00 00 		enter	6,0
+;	pRPO = -4
+;	rc = -6
+;	pRPI = 4
+; Line 94
+	*** 000006	8b 46 04 		mov	ax,WORD PTR [bp+4]	;pRPI
+	*** 000009	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 00000c	89 46 fc 		mov	WORD PTR [bp-4],ax	;pRPO
+	*** 00000f	89 56 fe 		mov	WORD PTR [bp-2],dx
+; Line 95
+	*** 000012	c7 46 fa 00 00 		mov	WORD PTR [bp-6],0	;rc
+; Line 98
+	*** 000017	83 3e 00 00 00 		cmp	WORD PTR _uDebugLevel,0
+	*** 00001c	74 0a 			je	$L1868
+	*** 00001e	1e 			push	ds
+	*** 00001f	68 3d 00 		push	OFFSET DGROUP:$SG1862
+	*** 000022	e8 00 00 		call	_dprintf
+	*** 000025	83 c4 04 		add	sp,4
+					$L1868:
+; Line 99
+	*** 000028	cc 			int	3
+; Line 103
+	*** 000029	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;pRPI
+	*** 00002c	26 8b 47 0e 		mov	ax,WORD PTR es:[bx+14]
+	*** 000030	26 8b 57 10 		mov	dx,WORD PTR es:[bx+16]
+	*** 000034	a3 00 00 		mov	WORD PTR _Device_Help,ax
+	*** 000037	89 16 02 00 		mov	WORD PTR _Device_Help+2,dx
+; Line 150
+	*** 00003b	83 7e fa 00 		cmp	WORD PTR [bp-6],0	;rc
+	*** 00003f	75 3b 			jne	$I1863
+; Line 151
+; Line 155
+	*** 000041	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;pRPO
+	*** 000044	26 c6 47 0d 00 		mov	BYTE PTR es:[bx+13],0
+; Line 156
+	*** 000049	b8 00 00 		mov	ax,OFFSET _Code_End
+	*** 00004c	24 f0 			and	al,240	;00f0H
+	*** 00004e	05 10 00 		add	ax,16	;0010H
+	*** 000051	26 89 47 0e 		mov	WORD PTR es:[bx+14],ax
+; Line 157
+	*** 000055	a1 00 00 		mov	ax,WORD PTR _npInitData
+	*** 000058	24 f0 			and	al,240	;00f0H
+	*** 00005a	05 10 00 		add	ax,16	;0010H
+	*** 00005d	26 89 47 10 		mov	WORD PTR es:[bx+16],ax
+; Line 159
+	*** 000061	83 3e 00 00 00 		cmp	WORD PTR _uDebugLevel,0
+	*** 000066	74 0a 			je	$L1870
+	*** 000068	1e 			push	ds
+	*** 000069	68 48 00 		push	OFFSET DGROUP:$SG1864
+	*** 00006c	e8 00 00 		call	_dprintf
+	*** 00006f	83 c4 04 		add	sp,4
+					$L1870:
+; Line 160
+	*** 000072	80 0e 01 00 01 		or	BYTE PTR _fDriverFlags+1,1
+; Line 161
+	*** 000077	b8 00 01 		mov	ax,256	;0100H
+	*** 00007a	eb 1f 			jmp	SHORT $EX1859
+					$I1863:
+; Line 164
+; Line 165
+	*** 00007c	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;pRPO
+	*** 00007f	33 c0 			xor	ax,ax
+	*** 000081	26 88 47 0d 		mov	BYTE PTR es:[bx+13],al
+; Line 167
+	*** 000085	26 89 47 0e 		mov	WORD PTR es:[bx+14],ax
+	*** 000089	26 89 47 10 		mov	WORD PTR es:[bx+16],ax
+; Line 169
+	*** 00008d	39 46 fa 		cmp	WORD PTR [bp-6],ax	;rc
+	*** 000090	7d 06 			jge	$I1866
+; Line 170
+	*** 000092	b8 0c 81 		mov	ax,-32500	;810cH
+	*** 000095	eb 04 			jmp	SHORT $EX1859
+	*** 000097	90 			nop	
+					$I1866:
+; Line 172
+	*** 000098	b8 15 81 		mov	ax,-32491	;8115H
+; Line 173
+; Line 174
+					$EX1859:
+	*** 00009b	c9 			leave	
+	*** 00009c	c3 			ret	
+	*** 00009d	90 			nop	
+
+_Init	ENDP
+_TEXT	ENDS
+END

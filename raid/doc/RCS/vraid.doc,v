@@ -1,0 +1,605 @@
+head	1.6;
+access;
+symbols
+	VRAID_REL23:1.6
+	REL22:1.6
+	VRAIDv0_70:1.6
+	VRAIDv0_60:1.5
+	VRAIDv0_51:1.3
+	VRAIDv0_50:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.6
+date	99.06.07.01.57.39;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	98.12.22.00.57.20;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	98.12.22.00.25.38;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.11.05.23.16.37;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.10.08.00.34.57;	author vitus;	state Stab;
+branches;
+next	1.1;
+
+1.1
+date	98.09.28.00.52.34;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@VRAID Filter - Driver Dokumentation
+@
+
+
+1.6
+log
+@- demo key
+- source code
+@
+text
+@-*- Mode: indented-text -*-
+--- $Id: vraid.doc,v 1.5 1998/12/22 00:57:20 vitus Exp vitus $
+
+    VRAID Filter - Driver Dokumentation
+
+Description
+
+    VRAID.FLT is a filter driver to build array drives out of standard
+    OS/2 devices.
+
+    This means you have to do the following steps:
+
+    - Connect disks to any [SCSI or IDE  or ...]  controller supported
+      by OS/2
+
+    - Install VRAID.FLT
+
+    - Let VSETUP.EXE  create a VRAID partition  on  some disks.
+
+    - Define drive arrays (using disk space inside VRAID partitions)
+      via VSETUP.EXE.
+
+    - Restart OS/2
+
+    - VRAID.FLT will hide drives with a VRAID partition from OS/2 and
+      will instead report your defined drive arrays to OS/2.
+
+    - Use your larger, faster or safer disks and enjoy!
+
+
+    As this is work in process only some  RAID levels are implemented.
+    However, it's intention is to supply all major  RAID levels to the
+    average OS/2 user.  One day.
+
+    Currently  implemented:  Single, Chaining,   Striping (RAID 0) and
+    Mirroring (RAID 1). See RAID.DOC for details.
+
+
+
+Legal stuff (we need this, don't we?)
+
+    The author  disclaims all warranties  as to this software, whether
+    express  or  implied,  including  without limitation  any  implied
+    warranties of  merchantability, fitness for  a particular purpose,
+    functionality,  data  integrity  or   protection,   in so  far  as
+    permitted by applicable legislation.
+
+    All trademarks are property of their respective owners and appear
+    for identification purposes only.
+
+
+
+Archive Contents
+
+    VRAID.doc		this text
+    VRAID.flt		the filter itself
+    VRAID.ddp		installation script
+    VRAID.history	version history
+    VSetup.exe		setup program
+    VSetup.doc		documentation of VSetup.exe
+    raid.doc		short explaination of RAID and RAID levels
+    regme.exe		to insert your registration code into VRAID.flt
+    vraidpub.h		public interface to VRAID.FLT (for programmers)
+    dsklayout.h		dito
+    VRAID.sym		symbol file, to help debugging
+    file_id.diz		short description for BBS
+
+
+
+Installation
+
+    Make a backup of your  system.  You should not  need it but better
+    safe than sorry...
+
+    It is recommended that  you have an OS/2 boot  disk ready, just in
+    case the system locks  up during the boot  process and you want to
+    remove the driver.  On Warp you may use use ALT-F1, C for the same
+    purpose (to  boot   to   command line-only)  with    your  orginal
+    Config.Sys   (this  "original"    Config.sys     is  located    in
+    C:\os2\boot\Config.x, make sure it's bootable!).
+
+    Execute DDINSTAL from a  OS/2  command prompt or double-click  the
+    Device Driver Install object  (located in the System Setup folder)
+    if your system is Warp.  Change the source directory if neccessary
+    and  a selection list  will open asking you  to install the 'VRAID
+    Filter'.  Mark that line and click on OK.  Reboot your machine.
+
+    Installation by hand is easy:
+
+	Copy  VRAID.FLT to C:\ or  C:\os2\boot, assuming C: is your
+	boot drive.
+
+	Edit  your  C:\Config.Sys file (i.e.  using  the  OS/2 "System
+	Editor"):
+
+	Add the following line to your Config.Sys:
+	BASEDEV=VRAID.FLT /V		(no subdirectory name!)
+
+    The position  of 'BASEDEV=VRAID.FLT' in  Config.Sys doesn't matter
+    for VRAID operation.  But  it may affect  other filters (i.e. load
+    DSKSLEEP.FLT before   VRAID.FLT!).    If, however,   you encounter
+    problems try putting   BASEDEV=VRAID.FLT to top of Config.Sys  (if
+    this  solves  your problems please report  with  a listing of your
+    Config.Sys).
+
+
+
+Options
+
+    /V
+	Verbose, display some usefull and unusefull information (this
+	switch is always enabled in the unregistered version)
+
+    /DEBUG
+	Displays even more messages.  Not generally usefull.
+
+
+
+Configuration
+
+    Configuration is  done   via   VSETUP.EXE.  See   VSETUP.DOC   for
+    documentation.
+
+
+
+Security, Redundancy
+
+    RAID generally  means increased security.  But  as the only secure
+    RAID level this  driver  currently implements  is RAID 1  security
+    isn't  completely tested with  all   RAID levels.
+
+    On non-RAID  1 drives  all drive errors  are directly  reported to
+    OS/2 (which may or may not survive this situation).
+
+    On RAID 1 drive errors aren't reported to OS/2 as long as there is
+    one part  of the array still  working.   However, VRAID will start
+    beeping  every 10 seconds if it  detects a drive error.  Once this
+    happens  you  may either start  VSetup and  remove the failed part
+    from the  array or -- if the  failure is temporarly --  correct it
+    and reboot the machine.   VRAID  will detect  a failed part  of an
+    array when rebooting and will update it until it contains the same
+    data as the rest of the array.
+
+    If you ever intend to simulate  a drive failure *DON'T* remove the
+    SCSI cable but remove  the power instead.  Or --  good idea -- use
+    some hot-swappable  drive bay.  If you  remove the  SCSI cable you
+    may end up with a blown up SCSI controller.  You have been warned!
+
+
+
+Registration
+
+    This package is  shareware meaning you  may test before  buy.  The
+    archive you  are   looking at contains   a  non-crippled 'level 1'
+    filter driver with the exception  of the startup message which may
+    only be  disabled in the registrated version.    Test period is 60
+    days, after that time I expect you to remove this software package
+    from your system or register it.
+
+    You are encouraged to copy and pass on the unregistered version of
+    this driver, if  the archive is  distributed in  its original form
+    (complete and unmodified).  Please don't charge any money for the
+    distribution itself exceeding the costs of media, etc.
+
+    On registration you will receive a key based  on your name and the
+    requested   operation level of  the driver.    This key  has to be
+    passed to the regme.exe program to change the  startup logo and --
+    if you bought more than level 1  -- allow operation of higher RAID
+    levels.  You will NOT receive a new archive.  Your key will remain
+    valid for all versions of the driver.
+
+	The following keys are available
+
+	Level 1		Spanning, Striping (RAID 0)	    40,- EUR
+	Level 2		Level 1 plus Mirroring (RAID 1)	    70,- EUR
+	Level 3		Level 2 plus RAID 4 and 5	   100,- EUR
+
+    If you want to upgrade  your registration to  a higher level: just
+    pay the difference and you will receive  a new key for that level.
+    I.e. if you own level 1  and want to upgrade to  level 2 the price
+    will be 30,- EUR or the equivalent in another currency.
+
+    Payment may  be made through  Eurocheque (europe) or  postal money
+    order or transfer to my bank account.  If  you decide to send this
+    money inside a simple  envelope (I'm fair but  the postman may not
+    ;-) use DM, DKR or SEK as I travel those countries regulary.
+
+    Response will be  through Fidonet  crashmail (strongly preferred),
+    Fidonet netmail, EMail or FAX.
+
+    If you cannot  be reached electronically  and don't  have a friend
+    who can, you may request an answer by  snail mail.  Please add the
+    estimated  costs for the letter  to the  registration fee.  German
+    users: simply include  a self-addressed  envelope (with stamps  on
+    it).  I will NOT return  a key without  at least some afford  from
+    your side to account for the costs of the reply mail!
+
+    For  all orders: please  WRITE YOUR NAME CLEAR as  the key will be
+    based on it and  supply a way  to return the  key back to you.  It
+    may  be best to  first test  an  electronic channel before sending
+    money in any way.  If you want the key to belong  to a firm, state
+    this in  your mailing (if  you use corporate paper  you may end up
+    with a key registrated to  "Obscore Software GmbH" when you wanted
+    a private license).
+
+
+
+Demonstration Key
+
+    If you are of the opinion that you  won't buy VRAID when you never
+    tested RAID 1 support, I do understand this.   Feel free to ask me
+    for a demo key and I  will mail you a key  which will stop working
+    after some time (usually 3 month).
+
+    To get started you may use the following key (it won't work after
+    january 2000):
+
+	User Name: 0100DEMO
+	Code:	   065A11F0ED488AC6
+
+    Change to the directory where you copied VRAID.FLT to and enter:
+
+	regme "0100DEMO" 065A11F0ED488AC6
+
+
+
+ToDo List
+
+    - allow parallel use of a disk by OS/2 and VRAID
+    - support logical drives as VRAID partition (i.e. a partition
+      inside an "extended" partition)
+    - Resource Manager Calls (plug n' pray <g>)
+    - RAID levels 4,5
+    - More?  IOCtls?  Documentation?  Netmail any ideas.
+
+
+
+Source Code
+
+    Source code isn't available for this  product.  Having said this I
+    realize that having the source of a vital  product is important to
+    many people nowerdays.  I  understand this (especially when seeing
+    the unclear marketing directions of  IBM's OS/2 folks) and you may
+    contact me if  your policy tends  toward this idea.   We will most
+    certainly work something out.
+
+
+
+Author
+
+    Vitus Jensen, Dipl.-Ing. techn. inf.
+
+    Address: Tischlerstr. 8, D-30916 Isernhagen, Germany
+    Fidonet: 2:2474/424
+    OS2Net: 81:491/3035
+    EMail: Vitus_Jensen@@gmx.de
+    FAX: +49-5136-893003 (thanks to Harald Pollack's FRec)
+    BBS: +49-5136-893003 (V34+, X75)
+
+    Music: Louis Armstrong's Greatest Hits, Big T and Mighty Max
+
+    Written for VRAID.FLT Version: 0.70
+    $Date: 1998/12/22 00:57:20 $
+
+
+    BTW, if ever wondered about the  name (Visual RAID Filter) of this
+    thing: it's as visual as many products which use this attribute in
+    their names.  Frankly, I couldn't make sense to it, either.
+
+=== The End ===
+@
+
+
+1.5
+log
+@- added RAID.DOC to archive contents
+@
+text
+@d2 1
+a2 1
+--- $Id: vraid.doc,v 1.4 1998/12/22 00:25:38 vitus Exp vitus $
+a7 4
+    BTW, if ever wondered about the name of this thing: it's as visual
+    as many products which use this attibute in their names.  Frankly,
+    I couldn't make sense to it, either.
+
+d13 2
+a14 2
+    - Connect disks to a [SCSI or IDE or ...]  controller supported by
+      OS/2
+d28 1
+a28 1
+    - Use your larger, faster or safer disk and enjoy!
+d31 3
+a33 3
+    As this is work in  process only the  very simpliest "RAID" levels
+    are  implemented.  However, it's intention is  to supply all major
+    RAID levels to the average OS/2 user.  One day.
+d35 2
+a36 2
+    Currently  implemented: Single,  Chaining,   Striping (RAID0). See
+    RAID.DOC for details.
+d75 6
+a80 4
+    It is recommended you  have an OS/2  boot disk ready, just in case
+    the system locks up during the boot process and you want to remove
+    the  driver.   On Warp you  may  use use   ALT-F1, C for  the same
+    purpose to boot to a command line with your orginal Config.Sys.
+d114 3
+d128 20
+a147 7
+    RAID  means increased  security.   But  as  this driver  currently
+    doesn't support  "real" RAID levels security isn't  an issue.  All
+    drive errors are directly reported to OS/2.
+
+    If you ever intend to simulate a drive  failure *DON'T* remove the
+    SCSI cable but remove the power instead.  Or --- good idea --- use
+    some hot-swappable drive bay.
+d153 6
+a158 6
+    This  package is shareware meaning you  may test  before buy.  The
+    archive   you are looking  at   contains a non-crippled 'level  1'
+    filter driver with the exception of the  startup message which may
+    be disabled  in the registrated version.   Test period is 60 days,
+    after that time I expect you  to remove this software package from
+    your system or register it.
+d174 3
+a176 3
+	Level 1		Spanning, Striping (RAID 0)	    75,- DM
+	Level 2		Level 1 plus Mirroring (RAID 1)	   135,- DM
+	Level 3		Level 2 plus RAID 4 and 5	   195,- DM
+d181 1
+a181 1
+    will be 60,- DM or the equivalent in a foreign currency.
+d183 1
+a183 1
+    Payment may  be made through Eurocheque  (europe) or  postal money
+d185 2
+a186 6
+    money inside a  simple envelope (I'm fair but  the postman may not
+    ;-) use DM or danish or swedish crowns as I travel those countries
+    regulary.  The above values are in german marks (DM) which will be
+    obsoleted by the    "Euro" and if  you  only  find the  Euro  when
+    calculating the amount in  your local currency: current expections
+    of DM <-> Euro conversion are 2:1 (level 1 gives 37 EUR).
+d191 5
+a195 5
+    If you cannot be reached elecronically and don't have a friend who
+    can, you  may  request an answer   by snail mail.   Please add the
+    estimated costs for the  letter to the  registration  fee.  German
+    users: simply include   a self-addressed envelope  (with stamps on
+    it).  I will NOT  return a key  without at least some  afford from
+d198 26
+a223 4
+    For all  orders: please WRITE YOUR  NAME CLEAR as  the key will be
+    based on it  and supply a  way to return the  key back to you.  It
+    may be best to  first test an   electronic channel before  sending
+    money in any way.
+d229 3
+d233 1
+a233 1
+    - RAID levels 1,4,5
+d237 12
+d254 1
+a254 1
+    Fidonet: 2:2474/424 (V32bis, X75)
+d256 1
+a256 1
+    EMail: Vitus_Jensen@@teaparty.fido.de
+d258 1
+a258 1
+    BBS: +49-5136-893003 (V32bis, X75)
+d262 7
+a268 2
+    Written for VRAID.FLT Version: 0.60
+    $Date: 1998/12/22 00:25:38 $
+@
+
+
+1.4
+log
+@- remove beta parts
+- added registration text
+@
+text
+@d2 1
+a2 1
+--- $Id: vraid.doc,v 1.3 1998/11/05 23:16:37 vitus Exp vitus $
+d59 1
+a61 1
+    VRAID.doc		this text
+d65 1
+d216 1
+a216 1
+    $Date: 1998/11/05 23:16:37 $
+@
+
+
+1.3
+log
+@- removed "timebombed" description
+- removed "locked arrays", this is no longer possible
+@
+text
+@d2 1
+a2 1
+--- $Id: vraid.doc,v 1.2 1998/10/08 00:34:57 vitus Stab vitus $
+d8 4
+d17 4
+a20 2
+    - Connect drives to a  [SCSI or IDE  or ...]  controller supported
+      by OS/2
+d22 1
+a22 2
+    - Start OS/2  and let VSETUP.EXE create a  VRAID partition on each
+      of them.  Those partition coexist with other partitions.
+d25 1
+d32 1
+a32 1
+    - Use you larger, faster or safer disk and enjoy!
+d35 3
+a37 1
+    --- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+d39 2
+a40 5
+    As  this  is a beta  package  only the   simpliest RAID levels are
+    implemented.  However, it's intention is to  supply all major RAID
+    levels to the average OS/2 user.  One day.
+
+    --- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+a54 13
+    --- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+
+    This software is still at beta level.  This shouldn't be noticable
+    in stability but in the following restrictions:
+
+    - you can't create new PHYSDEVICEs as long as VRAID.FLT is
+      installed.  See VSETUP.DOC.
+    - only spanning and striping (RAID 0) are implemented (so "real"
+      RAID levels are still missing but RAID 1 and 5 are to be
+      implemented if customers accept this package at all)
+
+    --- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+
+d67 1
+d72 1
+a74 7
+    --- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+
+    In this   beta you should  run   VSETUP.EXE before  rebooting with
+    VRAID.FLT installed!  To run VSETUP.EXE see VSETUP.DOC.
+
+    --- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+
+d126 7
+a132 11
+    --- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+
+    RAID means increased security.   But as  this beta driver  doesn't
+    support  "real" RAID  levels  security isn't an  issue.  All drive
+    errors are directly reported to OS/2.
+
+    --- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+
+    If you ever intend to simulate  a drive failure *DON'T* remove the
+    SCSI cable but remove the power instead.  Or  --- good idea --- by
+    some hot-swappable drive bays.
+d138 53
+a190 2
+    To  be  defined (I   expect this  piece   of  software  to  become
+    shareware when it leaves beta state).
+a196 1
+    - VSETUP.EXE via VRAID.FLT (includes OS2DASD.DMD analysis)
+d214 2
+a215 2
+    Written for VRAID.FLT Version: 0.51
+    $Date: 1998/10/08 00:34:57 $
+@
+
+
+1.2
+log
+@- added section "Security, Redundancy"
+- "beta, beta!" comments
+@
+text
+@d2 1
+a2 1
+--- $Id: vraid.doc,v 1.1 1998/09/28 00:52:34 vitus Exp vitus $
+d55 2
+a56 2
+    - drives captured/generated by VRAID.FLT can't be modified by
+      VSETUP.EXE.  See VSETUP.DOC
+a59 3
+    - timebombed, this version refuses to load after 31/3-1999.  I
+      expect a new version to be available by then (hopefully far
+      earlier).
+d83 1
+a83 1
+    In  this beta  you  need to run  VSETUP.EXE  before rebooting with
+d156 2
+a157 2
+    shareware, timebombed  versions  are free to  use   until the bomb
+    explodes).
+d181 2
+a182 2
+    Written for VRAID.FLT Version: 0.50
+    $Date$
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 1
+a2 1
+--- $Id$
+d9 19
+a27 2
+    OS/2  devices.  It's intention is to  supply all major RAID levels
+    to the average OS/2 user.
+d31 3
+a33 2
+    As this is a beta package only the simplies RAID levels are
+    implemented.
+d38 1
+d59 4
+a62 3
+      implemented if customer accept this package)
+    - timebombed, this version refuses to load after 1/1-1999.  I
+      expect a new version to be available by then.
+d118 1
+a118 1
+    DSKSLEEP.FLT before   VARID.FLT!).    If, however,   you encounter
+d124 1
+d132 1
+d139 17
+d168 1
+a168 1
+    - More?  IOCtls?  Netmail any ideas.
+d182 1
+a182 1
+    Music: Louis Armstrong's Greatest Hits, Miami Sound Machine
+d184 2
+a185 2
+    Written for VRAID.FLT Version: 0.40
+    Date: 27/09-1998
+@

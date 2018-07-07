@@ -1,0 +1,1024 @@
+head	2.5;
+access;
+symbols
+	VSETUPv0_84:2.5
+	VSETUP_82:2.3
+	VSETUPv0_80:1.8
+	VSETUPv0_71:1.7
+	VSETUPv0_70:1.7
+	VSETUPv0_60:1.4
+	VSETUPv0_52:1.3
+	VSETUPv0_51:1.3
+	VSETUPv0_50:1.2
+	VSETUPv0_20:1.2;
+locks; strict;
+comment	@ * @;
+
+
+2.5
+date	2000.06.12.20.31.00;	author vitus;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2000.05.28.17.36.17;	author vitus;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2000.04.10.01.40.51;	author vitus;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2000.03.17.02.09.48;	author vitus;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.01.24.02.25.53;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2000.01.07.00.07.14;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.06.20.17.03.13;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.03.24.23.44.10;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.03.01.02.19.36;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	99.02.09.02.50.44;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	98.12.13.23.32.23;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.11.03.03.00.30;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.06.09.01.30.36;	author vitus;	state Stab;
+branches;
+next	1.1;
+
+1.1
+date	98.05.27.01.51.33;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Process dialog to select area on disk
+@
+
+
+2.5
+log
+@- changes to use QWL_USER constant as window word
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/dskarea.cpp,v $
+ * $Revision: 2.4 $
+ * $Date: 2000/05/28 17:36:17 $
+ * $Locker: vitus $
+ *
+ *	Process dialog to select area on disk.
+ *
+ * $Log: dskarea.cpp,v $
+ * Revision 2.4  2000/05/28 17:36:17  vitus
+ * - uses pcreate.h
+ * - added calls to PPSubClassWindow()
+ *
+ * Revision 2.3  2000/04/10 01:40:51  vitus
+ * - Verbose() uses key 'DskArea'
+ * - hides 'Help' button, no functionality yet
+ * - updates text area in dialog with currently selected area size
+ * - prohibits area sizes below 1MB
+ * - list box contains 'MB' instead of 'MByte'
+ *
+ * Revision 2.2  2000/03/17 02:09:48  vitus
+ * - corrected size calculation
+ *
+ * Revision 2.1  2000/01/24 02:25:53  vitus
+ * - QueryDlgItems: space calculation uses floating point.  Better results!
+ *
+ * Revision 1.9  2000/01/07 00:07:14  vitus
+ * - QueryDlgItems: adjusted selected space calculation so that
+ *   no 32bit overflow occurs.  See mail to Knud.
+ *
+ * Revision 1.8  1999/06/20 17:03:13  vitus
+ * - minor corrections to keep compiler happy
+ *
+ * Revision 1.7  1999/03/24 23:44:10  vitus
+ * - expanded debugging messages
+ *
+ * Revision 1.6  1999/03/01 02:19:36  vitus
+ * - include dskinfo.hpp for drvbuild.h
+ *
+ * Revision 1.5  1999/02/09 02:50:44  vitus
+ * - switched to C++
+ *
+ * Revision 1.4  1998/12/13 23:32:23  vitus
+ * - changed as global headers moved to /source/Lib
+ *
+ * Revision 1.3  1998/11/03 03:00:30  vitus
+ * - QueryDlgItems: return /0 and display message box if user forgot to
+ *   select a disk area.  dialog will remain on screen.
+ *
+ * Revision 1.2  1998/06/09 01:30:36  vitus
+ * - corrected percent calculation
+ *
+ * Revision 1.1  1998/05/27 01:51:33  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-2000
+ */
+static char const vcid[]="$Id: dskarea.cpp,v 2.4 2000/05/28 17:36:17 vitus Exp vitus $";
+static char const modname[]="DskArea";
+
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define __IBMC__	0
+#define INCL_DOSDEVIOCTL
+#define INCL_WIN
+#define INCL_GPI
+#include <os2.h>
+
+extern "C" {
+#include "../../../Lib/defines.h"
+#include "../../../Lib/verbose.h"
+#include "../../../Lib/pphnd.h"			/* presparam handling */
+}
+#include "vsetup.h"
+#include "resources.h"
+
+#include "../dsklayout.h"
+#include "dskinfo.hpp"
+#include "drvbuild.h"
+#include "pcreate.h"
+
+
+
+
+
+
+PRIVATE ULONG
+CalcArea(HWND hwndDlg, DSKAREA const * const p, SHORT idx)
+{
+    assert( idx <= p->cnt );
+
+    ULONG ul = (ULONG)WinSendDlgItemMsg(hwndDlg, SL_AREAPERCENT,
+					SLM_QUERYSLIDERINFO,
+					MPFROM2SHORT(SMA_SLIDERARMPOSITION,
+						     SMA_RANGEVALUE), 0);
+    ULONG const		freerange = p->area[idx].size;
+    USHORT const 	total =  HIUSHORT(ul);
+    USHORT const 	selected = (USHORT)(LOUSHORT(ul)+1);
+    double const 	percent = 100.0 * selected / total;
+
+    Verbose(2, modname, "%u of %u gives %.2lf percent",
+	    selected, total, percent);
+    ULONG const 	size = freerange * percent / 100.0;
+    Verbose(2, modname, "gives %lu sectors (of %lu)", size, freerange);
+    return size;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * InitDlgItems(hwndDlg,p)
+ *
+ * PARAMETER
+ *	hwndDlg		window handle of dialoge
+ *	p		pointer to dialog parameters
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		couldn't configure dialog
+ *
+ * DESPRIPTION
+ *	Configures some controls which can't from dialog template.
+ *
+ * REMARKS
+ *	Uses global 'apcszRaidType'.
+ * ------------------------------------------------------------------- #*/
+static int
+InitDlgItems(HWND const hwndDlg,PDSKAREA const p)
+{
+    BOOL	bool;
+    HWND	hwndItem;
+    LONG	l;
+
+
+    Verbose(3, modname, "InitDlg (parameter %#x)", p);
+
+    /* Store caller pointer */
+
+    if( (bool = WinSetWindowPtr(hwndDlg, QWL_USER, (PVOID)p)) == FALSE )
+    {
+	Verbose(0, modname, "WinSetWindowPtr failed");
+	return 1;				/* can't continue */
+    }
+
+    /* Store area sizes in list-box. */
+
+    hwndItem = WinWindowFromID(hwndDlg, LB_AREASIZE);
+    Verbose(4, modname, "hwnd(LB_AREASIZE): %#x", hwndItem);
+    PPSubclassWindow(hwndItem, modname);
+    for( l = 0; l < p->cnt; ++l )
+    {
+	char	s[50];
+
+	sprintf(s, "%lu MB", p->area[l].size / 2 / 1024);
+	WinSendMsg(hwndItem, LM_INSERTITEM, MPFROMLONG(l), s);
+    }
+
+    /* Disable slider (enabled on area select) */
+
+    hwndItem = WinWindowFromID(hwndDlg, SL_AREAPERCENT);
+    Verbose(4, modname, "hwnd(SL_AREAPERCENT): %#x", hwndItem);
+    PPSubclassWindow(hwndItem, modname);
+
+    WinSendMsg(hwndItem, SLM_SETTICKSIZE, MPFROM2SHORT(SMA_SETALLTICKS,6), NULL);
+    WinEnableWindow(hwndItem, FALSE);
+
+    /* Hide static text saying how much is selected. */
+
+    hwndItem = WinWindowFromID(hwndDlg, ST_AREASIZE);
+    Verbose(4, modname, "hwnd(ST_AREASIZE): %#x", hwndItem);
+    PPSubclassWindow(hwndItem, modname);
+    WinShowWindow(hwndItem, FALSE);
+
+    hwndItem = WinWindowFromID(hwndDlg, DID_HELP);
+    PPSubclassWindow(hwndItem, modname);
+    WinShowWindow(hwndItem, FALSE);
+
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * QueryDlgItems(hwndDlg,p)
+ *
+ * PARAMETER
+ *	hwndDlg		window handle of dialog
+ *	p		insert values here
+ *
+ * RETURNS
+ *	0		OK, do start test
+ *	/0		some value missing, don't start
+ *
+ * DESPRIPTION
+ *	Asks all controls inside the dialog box for current values
+ *	and fills them into structure 'p' points to.
+ *
+ * REMARKS
+ *	Sets focus to control with invalid data to allow user
+ *	to complete input.
+ * ------------------------------------------------------------------- #*/
+static int
+QueryDlgItems(HWND hwndDlg,PDSKAREA const p)
+{
+    MRESULT	mresult;
+    SHORT	idx;
+
+    Verbose(4, modname, "QueryDlgItems(parameter %#x)", p);
+
+    /* Query drive type selected by user. */
+
+    mresult = WinSendDlgItemMsg(hwndDlg, LB_AREASIZE, LM_QUERYSELECTION,
+				MPFROMLONG(LIT_FIRST), 0);
+    idx = SHORT1FROMMR(mresult);
+    if( LIT_NONE == idx )
+    {
+	Verbose(1, modname, "No disk area selected!");
+	MyMessageBox(1, hwndDlg, "You forgot to select an area...");
+	return 1;
+    }
+
+    Verbose(2, modname, "selected area %d", idx);
+    ULONG	size = CalcArea(hwndDlg, p, idx);
+    if( size < 2048 )
+    {
+	Verbose(1, modname, "Area too small!");
+	MyMessageBox(1, hwndDlg, "Please select a reasonable size...");
+	return 2;
+    }
+
+    p->cnt = idx;				/* move selected area to 'cnt' */
+    p->area[idx].size = size;
+
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DrvtypeDlgProc(hwnd,msg,mp1,mp2)
+ *
+ * PARAMETER
+ *	hwnd,msg,mp1,mp2	see PM reference
+ *
+ * RETURNS
+ *	MRESULT			see PM reference
+ *
+ * DESCRIPTION
+ *	Dialog window procedure for partition generation.
+ *
+ * REMARKS
+ * ------------------------------------------------------------------- #*/
+PUBLIC MRESULT EXPENTRY
+AreaDlgProc(HWND hwnd,ULONG msg,MPARAM mp1,MPARAM mp2)
+{
+    switch( msg )
+    {
+	/* WM_INITDLG:
+	 *	Save caller parameter in window words and
+	 *	initialize all control inside the dialog. */
+      case WM_INITDLG:
+        {
+	    PDSKAREA	p = (PDSKAREA)PVOIDFROMMP(mp2);
+
+	    if( InitDlgItems(hwnd, p) )
+	    {
+		WinDismissDlg(hwnd, DID_ERROR); /* abort dialog */
+		return FALSE;
+	    }
+	}
+        break;
+
+	/* ============================================================
+	 * WM_COMMAND:
+	 *	Button control sends.
+	 *	Should return 0 (reserved value). */
+      case WM_COMMAND:
+	switch( SHORT1FROMMP(mp1) )
+	{
+	    /* DID_OK:
+	     *	User pressed OK, query all controls about
+	     *	actual values, check these, fill them in caller 
+	     *	structure and return OK to caller. */
+	  case DID_OK:
+	    {
+		PDSKAREA p = (PDSKAREA)WinQueryWindowPtr(hwnd, QWL_USER);
+
+		if( 0 != QueryDlgItems(hwnd, p) )
+		    return 0;			/* restart from beginning */
+
+		WinDismissDlg(hwnd, DID_OK);
+	    }
+	    return 0;
+
+	  case DID_CANCEL:
+	    WinDismissDlg(hwnd, DID_CANCEL);
+	    return 0;
+	}
+	break;
+
+
+	/* ============================================================
+	 * WM_CONTROL:
+	 *	Notifications from the elements of our dialog.
+	 */
+      case WM_CONTROL:
+	Verbose(5, modname, "WM_CONTROL");
+	{
+	    USHORT const	id = SHORT1FROMMP(mp1);
+	    USHORT const	ncode = SHORT2FROMMP(mp1);
+	    HWND const	hwndSlider = WinWindowFromID(hwnd, SL_AREAPERCENT);
+	    HWND const	hwndLB = WinWindowFromID(hwnd, LB_AREASIZE);
+	    HWND const	hwndText = WinWindowFromID(hwnd, ST_AREASIZE);
+	    char	str[20];
+
+	    Verbose(4, modname,"WM_CONTROL, id %#x, code %#x", id, ncode);
+	    switch( id )
+	    {
+		MRESULT		mresult;
+		ULONG		ul;
+		SHORT		idx;
+
+		/* LB_AREASIZE
+		 *	Things the list-box wants to tell us. */
+	      case LB_AREASIZE:
+		switch( ncode )
+		{
+
+		  case LN_SELECT:
+		    mresult = WinSendMsg(hwndLB, LM_QUERYSELECTION,
+					 MPFROMLONG(LIT_FIRST), 0);
+		    idx = SHORT1FROMMR(mresult);
+		    if( LIT_NONE != idx )
+		    {
+			PDSKAREA p = (PDSKAREA)WinQueryWindowPtr(hwnd, QWL_USER);
+
+			Verbose(3, modname, "LN_SELECT area %d", idx);
+			WinEnableWindow(hwndSlider, TRUE);
+			WinSendMsg(hwndSlider, SLM_SETSLIDERINFO,
+				   MPFROM2SHORT(SMA_SLIDERARMPOSITION,
+						SMA_INCREMENTVALUE),
+				   MPFROMLONG(4));
+
+			sprintf(str, "Size:\t%lu MByte",
+				p->area[idx].size / 2ul / 1024);
+			WinSetWindowText(hwndText, str);
+			WinShowWindow(hwndText, TRUE);
+		    }
+		    return 0;
+
+		  default:
+		    break;
+		}
+		break;
+
+		/* SL_AREAPERCENT:
+		 *	Things the slider wants to tell us. */
+	      case SL_AREAPERCENT:
+		switch( ncode )
+		{
+		    /* SLN_CHANGE
+		     *	The slider was moved to a new position.  Update
+		     * 	static text with new size of selected part. */
+		  case SLN_CHANGE:
+		    mresult = WinSendMsg(hwndSlider, LM_QUERYSELECTION,
+					 MPFROMLONG(LIT_FIRST), 0);
+		    ul = CalcArea(hwnd,
+				  (PDSKAREA)WinQueryWindowPtr(hwnd, QWL_USER),
+				  SHORT1FROMMR(mresult));
+		    sprintf(str, "Size:\t%lu MByte", ul / 2ul / 1024);
+		    WinSetWindowText(hwndText, str);
+		    break;
+
+		  default:
+		    break;
+		}
+		break;
+	    }
+	} /* WM_CONTROL */
+	break;
+
+	/* default: let WinDefDlgProc() handle all others. */
+      default:
+	break;
+    }
+    return WinDefDlgProc(hwnd, msg, mp1, mp2);
+}
+@
+
+
+2.4
+log
+@- uses pcreate.h
+- added calls to PPSubClassWindow()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.3 $
+ * $Date: 2000/04/10 01:40:51 $
+d10 4
+d58 1
+a58 1
+static char const vcid[]="$Id: dskarea.cpp,v 2.3 2000/04/10 01:40:51 vitus Exp vitus $";
+d143 1
+a143 1
+    if( (bool = WinSetWindowPtr(hwndDlg, 0, (PVOID)p)) == FALSE )
+d292 1
+a292 1
+		PDSKAREA p = (PDSKAREA)WinQueryWindowPtr(hwnd, 0);
+d341 1
+a341 1
+			PDSKAREA	p = (PDSKAREA)WinQueryWindowPtr(hwnd, 0);
+d374 1
+a374 1
+				  (PDSKAREA)WinQueryWindowPtr(hwnd, 0),
+@
+
+
+2.3
+log
+@- Verbose() uses key 'DskArea'
+- hides 'Help' button, no functionality yet
+- updates text area in dialog with currently selected area size
+- prohibits area sizes below 1MB
+- list box contains 'MB' instead of 'MByte'
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.2 $
+ * $Date: 2000/03/17 02:09:48 $
+d10 7
+d54 2
+a55 1
+static char const vcid[]="$Id: dskarea.cpp,v 2.2 2000/03/17 02:09:48 vitus Exp vitus $";
+d71 1
+a71 1
+#include "../../../Lib/profile.h"		/* profile handling */
+d79 1
+d100 1
+a100 1
+    Verbose(2, "DskArea", "%u of %u gives %.2lf percent",
+d103 1
+a103 1
+    Verbose(2, "DskArea", "gives %lu sectors (of %lu)", size, freerange);
+d134 2
+a135 1
+    Verbose(3, "DskArea", "InitDlg (parameter %#x)", p);
+d141 1
+a141 1
+	Verbose(0, "DskArea", "WinSetWindowPtr failed");
+d148 2
+a149 1
+    Verbose(3, "DskArea", "hwnd(LB_AREASIZE): %#x", hwndItem);
+d161 2
+a162 1
+    Verbose(3, "DskArea", "hwnd(SL_AREAPERCENT): %#x", hwndItem);
+d170 2
+a171 1
+    Verbose(3, "DskArea", "hwnd(ST_AREASIZE): %#x", hwndItem);
+d175 1
+d209 1
+a209 1
+    Verbose(3, "DskArea", "QueryDlgItems(parameter %#x)", p);
+d218 1
+a218 1
+	Verbose(1, "DskArea", "No disk area selected!");
+d223 1
+a223 1
+    Verbose(2, "DskArea", "selected area %d", idx);
+d227 1
+a227 1
+	Verbose(1, "DskArea", "Area too small!");
+d309 1
+a309 1
+	Verbose(5, "DskArea", "WM_CONTROL");
+d318 1
+a318 1
+	    Verbose(3, "DskArea","WM_CONTROL, id %#x, code %#x", id, ncode);
+d339 1
+a339 1
+			Verbose(3, "DskArea", "LN_SELECT area %d", idx);
+@
+
+
+2.2
+log
+@- corrected size calculation
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.1 $
+ * $Date: 2000/01/24 02:25:53 $
+d10 3
+d47 1
+a47 1
+static char const vcid[]="$Id: dskarea.cpp,v 2.1 2000/01/24 02:25:53 vitus Exp vitus $";
+d77 24
+d125 1
+a125 1
+    Verbose(3, "DrvSetup", "InitDlg (parameter %#x)", p);
+d131 1
+a131 1
+	Verbose(0, "DrvSetup", "WinSetWindowPtr failed");
+d138 1
+a138 1
+    Verbose(3, "DrvSetup", "hwnd(LB_AREASIZE): %#x", hwndItem);
+d143 1
+a143 1
+	sprintf(s, "%lu MBytes", p->area[l].size / 2 / 1024);
+d150 1
+a150 1
+    Verbose(3, "DrvSetup", "hwnd(SL_AREAPERCENT): %#x", hwndItem);
+d155 9
+d195 1
+a195 1
+    Verbose(3, "DrvSetup", "QueryDlgItems(parameter %#x)", p);
+d204 2
+a205 4
+	Verbose(1, "DrvSetup", "No disk area selected!");
+	WinMessageBox(HWND_DESKTOP, hwndDlg,
+		      "You forgot to select an area...",
+		      NULL, -1ul, MB_CANCEL|MB_ERROR|MB_MOVEABLE);
+d208 4
+a211 1
+    else
+d213 4
+a216 2
+	ULONG	ul;
+
+d218 2
+a219 18
+	Verbose(2, "DrvSetup", "selected area %d", idx);
+	p->cnt = idx;				/* move selected area to 'cnt' */
+
+	ul = (ULONG)WinSendDlgItemMsg(hwndDlg, SL_AREAPERCENT, SLM_QUERYSLIDERINFO,
+				      MPFROM2SHORT(SMA_SLIDERARMPOSITION,
+						   SMA_RANGEVALUE), 0);
+
+	ULONG const	freerange = p->area[p->cnt].size;
+	USHORT const	total =  HIUSHORT(ul);
+	USHORT const	selected = (USHORT)(LOUSHORT(ul)+1);
+	double const	percent = 100.0 * selected / total;
+
+	Verbose(2, "DrvSetup", "%u of %u gives %.2lf percent",
+		selected, total, percent);
+	p->area[p->cnt].size = freerange * percent / 100.0;
+	Verbose(2, "DrvSetup", "gives %lu sectors (of %lu)",
+		p->area[p->cnt].size, freerange);
+    }
+d289 1
+d292 2
+a293 1
+	 *	Things the list-box wants to tell us. */
+d295 1
+a295 1
+	Verbose(3, "DrvSetup", "DrvType.WM_CONTROL");
+d297 3
+a299 1
+	    HWND	hwndItem = HWNDFROMMP(mp2);
+d301 2
+a302 1
+	    HWND const	hwndSlider = WinWindowFromID(hwnd, SL_AREAPERCENT);
+d304 2
+a305 1
+	    if( hwndItem == hwndLB )
+a306 2
+		/*PDSKAREA	p = (PDSKAREA)WinQueryWindowPtr(hwnd, 0);*/
+		USHORT const	code = SHORT2FROMMP(mp1);
+d308 1
+d311 4
+a314 1
+		switch( code )
+d316 1
+d318 1
+a318 1
+		    mresult = WinSendMsg(hwndItem, LM_QUERYSELECTION,
+d323 3
+a325 1
+			Verbose(3, "DrvSetup", "LN_SELECT area %d", idx);
+d331 5
+d342 24
+d367 1
+a367 3
+	    else
+		;				/* slider?  Not interested! */
+	}
+@
+
+
+2.1
+log
+@- QueryDlgItems: space calculation uses floating point.  Better results!
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 2000/01/07 00:07:14 $
+d10 3
+d44 1
+a44 1
+static char const vcid[]="$Id: dskarea.cpp,v 1.9 2000/01/07 00:07:14 vitus Exp vitus $";
+d191 1
+a191 1
+	Verbose(2, "DrvSetup", "%u of %u gives %lf percent",
+d193 1
+a193 1
+	p->area[p->cnt].size = freerange / 100.0 * percent;
+@
+
+
+1.9
+log
+@- QueryDlgItems: adjusted selected space calculation so that
+  no 32bit overflow occurs.  See mail to Knud.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/06/20 17:03:13 $
+d10 4
+d41 1
+a41 1
+static char const vcid[]="$Id: dskarea.cpp,v 1.8 1999/06/20 17:03:13 vitus Exp vitus $";
+d186 1
+a186 1
+	USHORT const	percent = (USHORT)(100 * selected / total);
+d188 1
+a188 2
+	p->area[p->cnt].size = freerange / total * selected;
+	Verbose(2, "DrvSetup", "%u of %u gives %u percent",
+d190 1
+d288 1
+a288 1
+			Verbose(2, "DrvSetup", "LN_SELECT area %d", idx);
+@
+
+
+1.8
+log
+@- minor corrections to keep compiler happy
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/03/24 23:44:10 $
+d10 3
+d34 2
+a35 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+d37 1
+a37 1
+static char const vcid[]="$Id: dskarea.cpp,v 1.7 1999/03/24 23:44:10 vitus Exp vitus $";
+d68 2
+a69 2
+ * CALL
+ *	InitDlgItems(hwndDlg,p)
+d83 1
+a83 1
+ */
+d128 2
+a129 2
+ * CALL
+ *	QueryDlgItems(hwndDlg,p)
+d145 1
+a145 1
+ */
+d171 1
+d184 1
+a184 1
+	p->area[p->cnt].size = freerange * selected / total;
+d198 2
+a199 2
+ * CALL
+ *	DrvtypeDlgProc(hwnd,msg,mp1,mp2)
+d210 1
+a210 1
+ */
+@
+
+
+1.7
+log
+@- expanded debugging messages
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1999/03/01 02:19:36 $
+d10 3
+d34 1
+a34 1
+static char const id[]="$Id: dskarea.cpp,v 1.6 1999/03/01 02:19:36 vitus Exp vitus $";
+d86 1
+a86 1
+    LONG	l, idx;
+d161 1
+a161 1
+		      NULL, -1, MB_CANCEL|MB_ERROR|MB_MOVEABLE);
+d177 2
+a178 2
+	USHORT const	selected = (LOUSHORT(ul)+1);
+	USHORT const	percent = 100 * selected / total;
+d267 1
+a267 1
+		PDSKAREA	p = (PDSKAREA)WinQueryWindowPtr(hwnd, 0);
+@
+
+
+1.6
+log
+@- include dskinfo.hpp for drvbuild.h
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1999/02/09 02:50:44 $
+d10 3
+d31 1
+a31 1
+static char const id[]="$Id: dskarea.cpp,v 1.5 1999/02/09 02:50:44 vitus Exp vitus $";
+a163 1
+	USHORT	us;
+d172 6
+a177 3
+	us = 100 * (LOUSHORT(ul)+1) / HIUSHORT(ul);
+	p->area[p->cnt].size
+	    = p->area[p->cnt].size * (LOUSHORT(ul)+1) / HIUSHORT(ul);
+d179 3
+a181 2
+		LOUSHORT(ul)+1, HIUSHORT(ul), us);
+	Verbose(2, "DrvSetup", "gives %lu sectors", p->area[p->cnt].size);
+@
+
+
+1.5
+log
+@- switched to C++
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1998/12/13 23:32:23 $
+d10 3
+d28 1
+a28 1
+static char const id[]="$Id: dskarea.cpp,v 1.4 1998/12/13 23:32:23 vitus Exp vitus $";
+d48 1
+d50 1
+d52 2
+@
+
+
+1.4
+log
+@- changed as global headers moved to /source/Lib
+@
+text
+@d2 3
+a4 3
+ * $Source: r:/source/driver/raid/setup/RCS/dskarea.c,v $
+ * $Revision: 1.3 $
+ * $Date: 1998/11/03 03:00:30 $
+d9 4
+a12 1
+ * $Log: dskarea.c,v $
+d22 2
+a23 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+d25 1
+a25 1
+static char const id[]="$Id: dskarea.c,v 1.3 1998/11/03 03:00:30 vitus Exp vitus $";
+d32 1
+d38 1
+d42 1
+d133 1
+d140 3
+a142 2
+    idx = (SHORT)WinSendDlgItemMsg(hwndDlg, LB_AREASIZE, LM_QUERYSELECTION,
+				   MPFROMLONG(LIT_FIRST), 0);
+d201 1
+a201 1
+	    PDSKAREA	p = PVOIDFROMMP(mp2);
+d224 1
+a224 1
+		PDSKAREA p = WinQueryWindowPtr(hwnd, 0);
+d251 1
+a251 1
+		PDSKAREA	p = WinQueryWindowPtr(hwnd, 0);
+d253 1
+d259 3
+a261 2
+		    idx = (SHORT)WinSendMsg(hwndItem, LM_QUERYSELECTION,
+					    MPFROMLONG(LIT_FIRST), 0);
+@
+
+
+1.3
+log
+@- QueryDlgItems: return /0 and display message box if user forgot to
+  select a disk area.  dialog will remain on screen.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1998/06/09 01:30:36 $
+d7 1
+a7 1
+ * Process dialog to select area on disk.
+d10 4
+d22 1
+a22 1
+static char const id[]="$Id: dskarea.c,v 1.2 1998/06/09 01:30:36 vitus Stab vitus $";
+d34 3
+a36 3
+#include "../../../tools/defines.h"
+#include "../../../tools/verbose.h"
+#include "../../../tools/profile.h"		/* profile handling */
+d39 1
+d44 2
+a45 1
+/*
+d51 1
+d55 1
+a55 2
+ * GLOBAL
+ *	apcszRaidType
+d58 1
+d60 1
+d105 1
+a105 1
+/*
+d111 1
+d115 1
+a115 2
+ * GLOBAL
+ *	aulIoSize[]
+d119 1
+d169 1
+a169 1
+/*#
+d173 2
+d176 2
+a177 1
+ * GLOBAL
+d179 2
+@
+
+
+1.2
+log
+@- corrected percent calculation
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/raid/setup/RCS/dskarea.c,v $
+ * $Revision: 1.1 $
+ * $Date: 1998/05/27 01:51:33 $
+d10 3
+d18 1
+a18 1
+static char const id[]="$Id: dskarea.c,v 1.1 1998/05/27 01:51:33 vitus Exp vitus $";
+a97 2
+ * NAME
+ *	QueryDlgItems
+d126 1
+a126 1
+    if( idx == LIT_NONE )
+d129 4
+a132 1
+	p->cnt = 0xFFFF;
+d204 1
+a204 1
+		if( QueryDlgItems(hwnd, p) != 0 )
+d230 1
+a230 1
+		USHORT		code = SHORT2FROMMP(mp1);
+d238 1
+a238 1
+		    if( idx != LIT_NONE )
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 3
+a11 1
+ * $Log$
+d15 1
+a15 1
+static char const id[]="$Id$";
+d142 3
+a144 2
+	us = 100 * LOUSHORT(ul) / HIUSHORT(ul);
+	p->area[p->cnt].size = p->area[p->cnt].size * LOUSHORT(ul) / HIUSHORT(ul);
+d146 1
+a146 1
+		LOUSHORT(ul), HIUSHORT(ul), us);
+@

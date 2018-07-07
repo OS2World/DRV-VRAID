@@ -1,0 +1,36 @@
+head	1.1;
+access;
+symbols
+	VRAID_REL23:1.1
+	REL22:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	99.10.23.19.14.55;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@HyperMake Project file VRAID.INF
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@;HyperMake Project file
+
+source files = vraid.txt
+ini file = vraid.ini
+target = IPF
+
+compile = YES
+view = YES
+ipf compiler = IPFC.EXE /inf
+;graphic path = ..\Buttons\OS2BMP;
+@

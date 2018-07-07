@@ -1,0 +1,168 @@
+ * moved by Sqed/32 1.13c3 @2:2474/424
+
+From: "R.J. Koester" <rj.koester@kassel.netsurf.de>
+To: "vitus@warpnet.de" <vitus@warpnet.de>
+
+
+--_=_=_=IMA.BOUNDARY.EBKZ33138764=_=_=_
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+
+Hi, Vitus Jensen!
+
+Vermutlich hat dich meine mail vom 01.06.97 im Fidonet nicht erreicht,
+deshalb sende ich sie dir noch einmal forwarded. Das Gesagte gilt auch fr
+die aktuelle v0.91 deines Filters.
+
+Gruá,
+       Rodya J”rn
+
+
+
+==================BEGIN FORWARDED MESSAGE==================
+>From: "R.J. Koester" <rj.koester@kassel.netsurf.de>
+>To: "vitus.jensen@p0.f424.n2474.z2.fidonet.org"
+> <vitus.jensen@p0.f424.n2474.z2.fidonet.org>
+>Date: Sun, 01 Jun 97 15:02:11 +0200
+>Reply-To: "R.J. Koester" <rj.koester@kassel.netsurf.de>
+>Priority: Normal
+>Return-Receipt-To: rj.koester@kassel.netsurf.de
+>X-Mailer: PMMail 1.92 For OS/2
+>MIME-Version: 1.0
+>Content-Type: multipart/mixed; boundary="_=_=_=IMA.BOUNDARY.EB427N138764=_=_=_"
+>Subject: Test des  SCSI Disk Sleeper Filters
+
+
+
+Hallo, Vitus Jensen!
+
+Der Einfachheit halber setze ich einmal zweierlei voraus:
+
+       1. Es macht dir nichts aus, wenn ich dich duze
+       2. Als Isernhagener Buerger mit skandinavisch klingendem Namen bist
+du
+          deutschsprachig, auch wenn du deine Doku englisch abgefasst hast
+:)
+
+
+Ich hoffe, diese mail findet ihren Weg ins Fidonet -- ich hab' noch nie da
+rein gemailt ...
+
+
+Als mail-attachment -- und vorsichtshalber auch als normales Textanhaengsel
+-- findest du meinen ausfuehrlichen Testbericht ebenfalls auf englisch und in
+dem Format abgefasst, das die beiden aehnlichen Berichte in deiner aktuellen
+Doku aufweisen. Dort findest du auch Details zur Hard- + Software in meinem
+System.
+
+Zur Sache: Weil mein Rechner praktisch nonstop laeuft, ist dein DSKSLEEP.FLT
+*genau* das, was ich seit Anfang '97 gesucht habe und seit Maerz selbst zu
+programmieren beginnen wollte; letzteres waere mir wohl etwas schwer
+gefallen, weil ich a) noch nie OS/2-Treiber geschrieben habe und b)
+DDK-maessig auch noch nicht entsprechend ausgestattet bin.
+
+Die Sache hat nur leider einen maechtigen Haken! Zwar stoppt meine Harddisk
+wie gewuenscht nach der eingestellten Zeit, aber ich musste deinen tollen
+Filter dennoch wieder aus meinem System werfen.
+Grund: Auf allen drei logischen FAT-Partitions (fuer DOS-Programme,
+DOS-Daten, DOS-Spiele), die ich mit den Warp-eigenen FDISK/FORMAT
+eingerichtet habe, sind willkuerliche DOS-.EXE-Files nicht mehr ausfuehrbar
+(OS/2-Meldung SYS3011: Die .EXE-Datei, mit der das gewuenschte Programm
+gestartet wird, enthaelt einen Fehler. ERKLAERUNG: Das Format der .EXE-Datei
+enthaelt einen internen Fehler. Das Programm kann im momentanen Format nicht
+ausgefuehrt werden. KORREKTUR: Den Haendler, bei dem die Anwendung erworben
+wurde, benachrichtigen.)
+Diese Meldung ist allerdings irrefuehrend, denn das entsprechende .EXE-File
+ist nicht nur nicht ausfuehrbar, sondern es ist *ueberhaupt* nicht mehr zu
+oeffnen! Man kann es nicht ausfuehren, nicht lesen (Hex-Editor), nicht
+kopieren und auch sonst nicht mehr allzuviel damit anfangen. Loeschen wollte
+ich allerdings nicht ausprobieren ...
+Zunaechst dachte ich an einen Seiteneffekt deines Filters mit anderen
+Treibern -- insbesondere dem VDM ASPI Manager. Aber selbst, nachdem ich mit
+praktisch nackter CONFIG.SYS bootete und DOS-Programme ohne AUTOEXEC.BAT
+startete, trat der Fehler weiterhin auf.
+Unerklaerlicherweise werden nicht *generell* immer dieselben .EXEs davon
+heimgesucht, sondern nach dem jeweils naechsten Booten kann ein neues
+.EXE-File betroffen sein, waehrend ein zuvor nicht startbares wieder
+funktioniert!
+Nehme ich deinen Filter aus der CONFIG.SYS, funktionieren wieder *alle*
+DOS-.EXEs! Nach allem, was ich herausfinden konnte, ist es lediglich dein
+Filter in Verbindung mit meinem SCSI Host Adapter und/oder der IBM-Platte,
+was den Fehler ausloest.
+Uebrigens ist auch Virenbefall mit 99,999%iger Wahrscheinlichkeit
+auszuschliessen (laut McAfee, Thunderbyte, F-Prot mit jeweils neuesten
+Virusdatenbanken).
+
+Hast du irgendeine Idee, woran's liegen koennte?
+
+
+Eine andere Sache ist, dass das DSL.EXE Utility sich hartnaeckig weigert,
+einen anderen Timeout-Wert einzustellen (immer Fehler Nr. 65299).
+
+
+Falls du interessiert bist, auf die Fehlersuche zu gehen, stehe ich dir gern
+zur Verfuegung. Nur leider habe ich -- noch! -- keine Moeglichkeit fuer
+professionelles Debugging. Programmieren tue ich naemlich eher unter Linux
+und DOS. Allerdings werde ich mir demnaechst den GNU-C++-Complier fuer OS/2
+besorgen ...
+
+
+Fuer jetzt soll's erstmal genug sein.
+
+Einen freundlichen Gruss aus Kassel sendet dir
+
+       Rodya Joern.
+
+
+Hier kommt der "offizielle Testbericht":
+
+    --------------------------------------------------
+    Tester      Rodya Joern Koester <rj.koester@kassel.netsurf.de>
+
+    Version     0.85
+
+    Hardware
+        Board/CPU: Pentium-100, 64 MB RAM, 256 KB PB-Cache
+        Video: Spea Mirage P64
+        SCSI HA: Symbios Logic SYM8750 SP [SYM538XX]; SYM8XX.ADD v4.01
+        HD: IBM DCAS-34330: 4.0 GB ANSI SCSI-2, Fast-20 (="Ultra-SCSI")
+        CD-R: MediaVision CDR-H93MV, ANSI SCSI-2 (2x Speed)
+        Other: Iomega ZipDrive on Enhanced Parallel Port 1 (OAD v2.34)
+
+    Software
+        OS/2 Warp 3 (incl. Win-OS/2, but rarely used)
+
+    Remarks
+        Just to mention it -- DSKSLEEP *does* fine what it's been
+        developed to: my DCAS-34330 stops spinning after the
+        appropriated timeout interval and it restarts on any access,
+
+                             * B U T *
+
+        I've encountered at least one severe problem in connection
+        with my Logical FAT Partitions which were prepared by Warp's
+        FDISK and FORMAT: On these Partitions some of the *DOS* .EXE
+        files seem to be corrupt while DSKSLEEP.FLT is active.
+        However, they are *not* really corrupt -- that's only what the
+        message of the corresponding Error Number SYS3011 declares --,
+        but they can't be opened in any way! There's no way to
+        copy/execute/read them, or whatsoever. Just to complicate this
+        phenomenon: the error is a sporadic one, 'cause after the next
+        boot completely different files may be "haunted" (I haven't
+        tested all of them, yet).
+        First I thought of a coincidence with the VDM ASPI Manager (it
+        was not!), then I tried out the old OS2DASD.DMD (the one without
+        support of Removable Disk Drives), since I don't really need the
+        new one (it was not!) ...
+        Ok, in short words: even with a *stripped* CONFIG.SYS the error
+        still occurs! What a pity!
+        I won't run the risk of ruin my FAT Partitions, therefore I
+        REMed out DSKSLEEP.FLT by now.
+
+        Another -- yet secondary -- problem: DSL.EXE refuses any cooperation.
+        Whatever I try to change the Sleeper Timeout: there's an error
+        #65299 regarding the setting of the new Timeout.
+
+    --------------------------------------------------
+

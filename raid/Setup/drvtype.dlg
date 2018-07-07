@@ -1,0 +1,20 @@
+#ifndef OS2_INCLUDED
+   #include <os2.h>
+#endif
+DLGINCLUDE 4 "resources.h"
+
+DLGTEMPLATE IDW_DRVTYPE LOADONCALL MOVEABLE DISCARDABLE
+BEGIN
+    DIALOG  "Select type of drive", IDW_DRVTYPE, 141, 120, 183, 75, 
+            WS_VISIBLE, FCF_SYSMENU | FCF_TITLEBAR
+    BEGIN
+        CONTROL         "", CB_DRVTYPE, 91, 32, 84, 35, WC_COMBOBOX, 
+			CBS_DROPDOWNLIST | WS_GROUP | WS_TABSTOP | WS_VISIBLE
+        PUSHBUTTON      "OK", DID_OK, 6, 4, 40, 14
+        PUSHBUTTON      "Cancel", DID_CANCEL, 49, 4, 40, 14
+        PUSHBUTTON      "Help", -1, 92, 4, 40, 14
+        LTEXT           "Select type", -1, 13, 58, 78, 8
+        LTEXT           "Drive size", -1, 13, 37, 78, 8
+        LTEXT           "", SC_DRVSIZE, 91, 33, 84, 13
+    END
+END

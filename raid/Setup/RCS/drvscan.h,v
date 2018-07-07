@@ -1,0 +1,96 @@
+head	1.1;
+access;
+symbols
+	VSETUPv0_84:1.1
+	VSETUP_82:1.1
+	VSETUPv0_80:1.1
+	VSETUPv0_60:1.1
+	VSETUPv0_51:1.1
+	VSETUPv0_50:1.1
+	VSETUPv0_20:1.1;
+locks; strict;
+comment	@ * @;
+
+
+1.1
+date	98.05.11.00.32.08;	author vitus;	state Stab;
+branches;
+next	;
+
+
+desc
+@Interface to drvscan.c
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@/*
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+ *
+ * Interface to drvscan.c
+ *
+ * $Log$
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+ */
+
+#define MAXCHILDS	32
+
+typedef struct {
+    HWND	parent;				/* post devices here */
+} THR_DRVSCAN, * PTHR_DRVSCAN;
+
+
+
+typedef struct _DSKINFO {
+    UCHAR	acc;
+    UCHAR	type;
+
+    union {
+	struct {
+	    int			idx;
+	    int			avail;
+	    ULONG		hd;
+	    DEVICEPARAMETERBLOCK dp;
+	} os2;
+    } access;
+
+    union {
+	struct {
+	    ULONG		partstart;
+	    ULONG		partsize;
+	} physical;
+	struct {
+	    USHORT		childs;
+	    struct _DSKINFO *	child[MAXCHILDS];
+	} virtual;
+    } kind;
+
+    ULONG	size;
+    DEVID	id;
+    struct _DSKINFO *	parent;
+} DSKINFO, * PDSKINFO;
+
+#define DSKACC_NONE	0			/* non-physical, virtual drive */
+#define DSKACC_OS2	1
+#define DSKACC_RAID	2
+
+#define DSKTYPE_NONE	0			/* simple OS/2 device */
+#define DSKTYPE_PDEV	99
+
+#define DSKTYPE_SINGLE	1
+#define DSKTYPE_STRIPE	2			/* from here on consistent with */
+#define DSKTYPE_CHAIN	3			/* driver defines! */
+#define DSKTYPE_MIRROR	4
+#define DSKTYPE_RAID4	5
+#define DSKTYPE_RAID5	6
+
+extern void	DrvscanThread(void *dummy);
+@

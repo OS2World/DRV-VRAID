@@ -1,0 +1,1517 @@
+head	2.3;
+access;
+symbols
+	vrflt031113:2.3
+	vrflt010903:2.3
+	PREV010803:2.3
+	VRAIDv0_85:2.2
+	VRAIDv0_84:2.2
+	VRAIDv0_82:1.15
+	VRAIDv0_70:1.13
+	VRAIDv0_60:1.8
+	VRAIDv0_51:1.8
+	VRAIDv0_50:1.8
+	VRAIDv0_40:1.8
+	VRAIDv0_30:1.7
+	ALPHA1:1.5;
+locks; strict;
+comment	@ * @;
+
+
+2.3
+date	2001.07.12.02.20.35;	author vitus;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.02.11.01.17.26;	author vitus;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.06.13.01.43.47;	author vitus;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	99.09.26.00.21.22;	author vitus;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	99.08.09.23.18.07;	author vitus;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	99.06.21.02.26.43;	author vitus;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	99.05.26.00.47.47;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	99.05.12.01.48.25;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.04.28.01.46.56;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.02.07.17.53.08;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	98.09.20.14.24.37;	author vitus;	state Stab;
+branches;
+next	1.7;
+
+1.7
+date	98.06.26.23.03.24;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	98.06.15.02.08.18;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	98.05.29.01.56.02;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	98.04.08.00.59.51;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.03.10.02.06.47;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.03.06.01.21.37;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.02.12.00.58.41;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@How to do I/O to a RDTYPE_SINGLE.
+@
+
+
+2.3
+log
+@- SingleCreate: more debugging output for created array
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/RCS/single.c,v $
+ * $Revision: 2.2 $
+ * $Date: 2001/02/11 01:17:26 $
+ * $Locker: vitus $
+ *
+ *
+ *	How to do I/O to a RDTYPE_SINGLE.
+ *
+ *	Remember that all retries are up to ADDs.  Any error
+ *	is fatal (strictly spoken).
+ *
+ *
+ * $Log: single.c,v $
+ * Revision 2.2  2001/02/11 01:17:26  vitus
+ * - changed SingleCtrl() to return DRVSTATUS
+ *
+ * Revision 2.1  2000/06/13 01:43:47  vitus
+ * - implemented ioctl method (VRDIOCTL_QUERY_CHILDREN, VRDIOCTL_INFO)
+ *
+ * Revision 1.15  1999/09/26 00:21:22  vitus
+ * - defined all DBGMSG() strings as located in CONST segment
+ *
+ * Revision 1.14  1999/08/09 23:18:07  vitus
+ * - SingleCreate: initialize new VRDSINGLE structure with 0
+ *
+ * Revision 1.13  1999/06/21 02:26:43  vitus
+ * - corrected english spelling
+ *
+ * Revision 1.12  1999/05/26 00:47:47  vitus
+ * - SingleCreate: return value now 'int', but as it is always 0...
+ *
+ * Revision 1.11  1999/05/12 01:48:25  vitus
+ * - dummy SingleUpdate() implemented
+ *
+ * Revision 1.10  1999/04/28 01:46:56  vitus
+ * - merged SingleAdmin() code with Worker/Notify, IOCMD_A* commands
+ * - SingleNotify() uses CompleteVrio()
+ *
+ * Revision 1.9  1999/02/07 17:53:08  vitus
+ * - implemented SingleAdmin() method
+ * - changed for iorb -> vrio transition
+ *
+ * Revision 1.8  1998/09/20 14:24:37  vitus
+ * - modified for AllocateVrio(working_dev,mother)
+ *
+ * Revision 1.7  1998/06/26 23:03:24  vitus
+ * - switched to DDK macros (cli, sti, pushf)
+ * - worker,notify get const pointers and become _Cdecl
+ *
+ * Revision 1.6  1998/06/15 02:08:18  vitus
+ * - moved all PHYSDEVICE handling to physdev.c.  Now single.c only handles
+ *   the minimum VRAID device: RDTYPE_SINGLE
+ *
+ * Revision 1.5  1998/05/29 01:56:02  vitus
+ * - fine tuning of DEBMSG macro calls
+ * - corrected (again) block offset things
+ *
+ * Revision 1.4  1998/04/08 00:59:51  vitus
+ * - corrected VRIO handling
+ * - corrected some block offset things
+ * - test (single, chain drive) successfull
+ *
+ * Revision 1.3  1998/03/10 02:06:47  vitus
+ * - changed to PUBLIC *Create() function and PRIVATE workers
+ *
+ * Revision 1.2  1998/03/06 01:21:37  vitus
+ * - entries now public (needed?)
+ *
+ * Revision 1.1  1998/02/12 00:58:41  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-2001
+ */
+#if defined(__WATCOMC__)
+# pragma off (unreferenced)
+#endif
+static char const vcid[]="$Id: single.c,v 2.2 2001/02/11 01:17:26 vitus Exp vitus $";
+#if defined(__WATCOMC__)
+# pragma on (unreferenced)
+#endif
+
+#include <string.h>
+
+#define INCL_NOBASEAPI
+#define INCL_INITRP_ONLY
+#include "os2intf.h"
+
+#include "vraid.h"
+#include "proto.h"
+#include "extern.h"
+#include "vraidpub.h"
+
+
+
+
+/*
+ * Our object: the single drive.
+ */
+typedef struct _VRDSINGLE {
+
+    VRDEVHDR	header;				/* ALWAYS FIRST! */
+    PVRDEVHDR	child;
+
+} VRDSINGLE, FAR * PVRDSINGLE;
+
+
+
+
+PRIVATE USHORT NEAR _Cdecl	SingleWorker(PVRDEVHDR const self,PVRIO const myio);
+PRIVATE USHORT NEAR _Cdecl	SingleUpdate(PVRDEVHDR const self,PVOID const sec);
+PRIVATE DRVSTATUS NEAR _Cdecl	SingleCtrl(PVRDEVHDR const self, USHORT const cmd,
+					   PVOID const param, PVOID const data);
+
+
+
+
+#if defined(DEBUG)
+CONSTMSG dszSingleNotify[]=	"\r\n[SingleNotify] io %p, myio %p, error %w";
+CONSTMSG dszSingleWorker[]=	"\r\n[SingleWorker] %p";
+CONSTMSG dszSWorkerAlloc[]=	"\r\n[SingleWorker] couldn't allocate VRIO";
+CONSTMSG dszSCreateAdminData[]=	"\r\n[SingleCreate] admin data\r\n%z";
+CONSTMSG dszSingleCreate[]=	"\r\n[SingleCreate] at %p"
+				"\r\n               ID %z"
+				"\r\n               Size 0x%lx";
+#endif
+
+
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * SingleNotify(vrio)
+ *
+ * PARAMETER
+ *	io		VRIO chich completed
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESPRIPTION
+ *	Used by a child to report that it's I/O has completed.
+ *	Ends own VRIO as all children have processed.
+ *
+ * REMARKS
+ */
+PRIVATE void NEAR _Cdecl
+SingleNotify(PVRIO const io)
+{
+    PVRIO const		myio = io->mother;
+    /*PVRDSINGLE const	single = (PVRDSINGLE)myio->vrd;*/
+
+    DEBMSG3(DBG_PATH,dszSingleNotify,io,myio,io->oserr);
+
+    ASSERT( io->bcnt != 0 );
+    ASSERT( io->link == NULL );
+    ASSERT( myio->link == NULL );
+    ASSERT( myio->bcnt != 0 );
+    ASSERT( myio->vrd->size != 0 );
+    ASSERT( myio->vrd->notify == SingleNotify );
+    ASSERT( myio->vrd->worker == SingleWorker );
+
+    pushf();
+    cli();
+
+    /* Process errors!  (Nothing to do?) */
+
+    myio->oserr = io->oserr;			/* propagate error */
+
+    CompleteVrio(myio);
+
+    popf();
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * SingleWorker(self,io)
+ *
+ * PARAMETER
+ *	self		our single device
+ *	io		VRIO describing I/O
+ *
+ * RETURNS
+ *	0		OK, I/O started
+ *	/0		please queue I/O for later processing
+ *
+ * DESPRIPTION
+ *	Pass iorb to underlying physical device.  Nothing more.
+ *
+ * REMARKS
+ */
+PRIVATE USHORT NEAR _Cdecl
+SingleWorker(PVRDEVHDR const self,PVRIO const myio)
+{
+    PVRDSINGLE const	single = (PVRDSINGLE)self;
+    PVRIO const		newio = AllocateVrio(single->child, myio);
+    USHORT		rc;
+
+    DEBMSG1(DBG_PATH,dszSingleWorker,(PVOID)myio);
+
+    ASSERT( myio->vrd == self );
+    ASSERT( myio->link == NULL );
+    ASSERT( myio->bcnt != 0 );
+    ASSERT( single->header.size != 0 );
+    ASSERT( single->header.notify == SingleNotify );
+    ASSERT( single->header.worker == SingleWorker );
+    ASSERT( single->header.update == SingleUpdate );
+    ASSERT( single->header.ioctl == SingleCtrl );
+
+    ++self->iocnt;
+    if( newio == 0 )
+    {
+	DEBMSG(DBG_ALL,dszSWorkerAlloc);
+	++self->busycnt;
+	return !0;
+    }
+
+    newio->iorb = myio->iorb;
+    newio->iocmd = myio->iocmd;
+    newio->cSGList = myio->cSGList;
+    newio->pSGList = myio->pSGList;
+    newio->ppSGList = myio->ppSGList;
+
+    switch( myio->iocmd )
+    {
+      case IOCMD_READ:
+      case IOCMD_WRITE:
+	newio->offset = myio->offset;
+	newio->blk = myio->blk;
+	newio->bcnt = myio->bcnt;
+
+      case IOCMD_AREAD:
+      case IOCMD_AWRITE:
+	newio->offset = myio->offset;
+	newio->blk = myio->blk + 1;		/* our configuration sector lies
+						   behind our child's sector */
+	newio->bcnt = myio->bcnt;
+	break;
+    }
+
+
+    newio->oserr = 0xFFFF;
+    newio->link = NULL;
+    rc = newio->vrd->worker(newio->vrd, newio);
+    if( rc )
+	QueueVrio(newio);
+
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * SingleUpdate(self,sec)
+ *
+ * PARAMETER
+ *	mirror		a VRD which forms an array
+ *	sec		sector contains configuration
+ *
+ * RETURNS
+ *	0		don't write back, nothing changed
+ *
+ * DESCRIPTION
+ *	Do nothing.
+ *
+ * REMARKS
+ */
+PRIVATE USHORT NEAR _Cdecl
+SingleUpdate(PVRDEVHDR const self,PVOID const sec)
+{
+    PVRDSINGLE const	single = (PVRDSINGLE)self;
+
+    ASSERT( single->header.size != 0 );
+    ASSERT( single->header.notify == SingleNotify );
+    ASSERT( single->header.worker == SingleWorker );
+    ASSERT( single->header.update == SingleUpdate );
+    ASSERT( single->header.ioctl == SingleCtrl );
+
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * SingleCtrl(self,cmd.data)
+ *
+ * PARAMETER
+ *	self		a VRD which forms a single device
+ *	cmd		I/O Control Code
+ *	data		data buffer
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		error (driver status code)
+ *
+ * DESCRIPTION
+ *	Special function interface
+ *
+ * REMARKS
+ */
+PRIVATE DRVSTATUS NEAR _Cdecl
+SingleCtrl(PVRDEVHDR const self, USHORT const cmd,
+	   PVOID const param, PVOID const data)
+{
+    PVRDSINGLE const	single = (PVRDSINGLE)self;
+    DRVSTATUS		result = STATUS_ERR_UNKCMD;
+
+
+    ASSERT( single->header.size != 0 );
+    ASSERT( single->header.notify == SingleNotify );
+    ASSERT( single->header.worker == SingleWorker );
+    ASSERT( single->header.update == SingleUpdate );
+    ASSERT( single->header.ioctl == SingleCtrl );
+
+    switch( cmd )
+    {
+      case VRDIOCTL_QUERY_CHILDREN:
+	*(PUSHORT)data = 1;
+	result = 0;
+	break;
+
+      case VRDIOCTL_INFO:
+	DEBMSG(DBG_PATH, "VRDIOCTL_INFO");
+	{
+	    PVRAID_ARRAYINFO_DATA	d = data;
+
+	    _fmemcpy(d->id, single->header.id, sizeof(d->id));
+	    d->reqcnt = single->header.iocnt;
+	    d->size = single->header.size;
+
+	    d->children = 1;
+	    d->flags = single->header.flags;
+	    d->reserved = 0;
+	}
+	result = 0;
+	break;
+
+      default:
+	break;
+    }
+
+    return result;
+} /* end[SingleCtrl] */
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Public Entries **************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * SingleCreate(pVrh,pPhys,sec,pSize)
+ *
+ * PARAMETER
+ *	pVrh		room to create device structure
+ *	pPhys		physical device to create for
+ *	sec		contents of configuration sector
+ *	pSize		return: size used at '*pVrh'
+ * RETURNS
+ *	0		OK
+ *	/0		couldn't create
+ * GLOBAL
+ * DESCRIPTION
+ * REMARKS
+ */
+PUBLIC int NEAR _Cdecl
+SingleCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,PSEC_VRDEV sec,PUSHORT pSize)
+{
+    PVRDSINGLE const	single = (PVRDSINGLE)pVrh;
+    USHORT		j;
+
+
+    DEBMSG2(DBG_INIT3,dszSCreateAdminData,(PVOID)sec,SECTOR_SIZE);
+    _fmemset(single, 0, sizeof(*single));
+
+
+    /* Initialize header elements */
+
+    single->header.worker = SingleWorker;	/* required */
+    single->header.notify = SingleNotify;
+    single->header.update = SingleUpdate;
+    single->header.ioctl = SingleCtrl;
+    single->header.size = 0;			/* initialize, wil be modified */
+    single->header.flags = 0;
+    _fmemcpy(single->header.id, sec->u.s.id, sizeof(single->header.id));
+
+    /* Build linking by looking up all parts in 'tab'. */
+
+    single->child = NULL;
+    for( j = 0; j < MAX_PDEV; ++j )
+    {
+	if( tab[j] == NULL )
+	    continue;				/* ignore empty entries */
+
+	if( _fmemcmp(tab[j]->id, sec->u.s.child[0].id, sizeof(tab[j]->id)) == 0 )
+	{
+	    single->header.size = sec->u.s.child[0].size;
+	    single->child = tab[j];
+	    tab[j] = NULL;
+	    break;				/* stop scan, no next child */
+	}
+    }
+
+    *pSize = sizeof(*single);
+
+    DEBMSG4(DBG_INIT1,dszSingleCreate,(PVOID)pVrh,(PVOID)sec->u.s.id,6,(PVOID)&single->header.size);
+    return 0;
+} /* end[SingleCreate] */
+@
+
+
+2.2
+log
+@- changed SingleCtrl() to return DRVSTATUS
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.1 $
+ * $Date: 2000/06/13 01:43:47 $
+d15 3
+d72 2
+a73 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+d78 1
+a78 1
+static char const vcid[]="$Id: single.c,v 2.1 2000/06/13 01:43:47 vitus Exp vitus $";
+d122 4
+a125 1
+CONSTMSG dszSingleCreate[]=	"\r\n[SingleCreate] at %p";
+d381 2
+a382 1
+    DEBMSG1(DBG_INIT1,dszSingleCreate,(PVOID)pVrh);
+d414 2
+@
+
+
+2.1
+log
+@- implemented ioctl method (VRDIOCTL_QUERY_CHILDREN, VRDIOCTL_INFO)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.15 $
+ * $Date: 1999/09/26 00:21:22 $
+d7 1
+d13 1
+d15 3
+d75 1
+a75 1
+static char const vcid[]="$Id: single.c,v 1.15 1999/09/26 00:21:22 vitus Exp vitus $";
+d109 1
+a109 1
+PRIVATE USHORT NEAR _Cdecl	SingleCtrl(PVRDEVHDR const self, USHORT const cmd,
+d301 1
+a301 1
+PRIVATE USHORT NEAR _Cdecl
+d306 2
+a307 1
+    USHORT		result = STATUS_ERR_UNKCMD;
+@
+
+
+1.15
+log
+@- defined all DBGMSG() strings as located in CONST segment
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.14 $
+ * $Date: 1999/08/09 23:18:07 $
+d13 3
+d70 1
+a70 1
+static char const vcid[]="$Id: single.c,v 1.14 1999/08/09 23:18:07 vitus Exp vitus $";
+d84 1
+d104 2
+d201 1
+d265 8
+d279 63
+d378 1
+@
+
+
+1.14
+log
+@- SingleCreate: initialize new VRDSINGLE structure with 0
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.13 $
+ * $Date: 1999/06/21 02:26:43 $
+d13 3
+d67 1
+a67 1
+static char const vcid[]="$Id: single.c,v 1.13 1999/06/21 02:26:43 vitus Exp vitus $";
+d104 12
+d137 1
+a137 1
+    DEBMSG3(DBG_PATH,"\r\n[SingleNotify] io %p, myio %p, error %w",io,myio,io->oserr);
+d186 1
+a186 1
+    DEBMSG1(DBG_PATH,"\r\n[SingleWorker] %p",(PVOID)myio);
+d196 1
+d199 2
+a200 1
+	DEBMSG(DBG_ALL,"\r\n[SingleWorker] couldn't allocate VRIO");
+d291 1
+a291 1
+    DEBMSG1(DBG_INIT1,"\r\n[SingleCreate] at %p",(PVOID)pVrh);
+@
+
+
+1.13
+log
+@- corrected english spelling
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.12 $
+ * $Date: 1999/05/26 00:47:47 $
+d13 3
+d64 1
+a64 1
+static char const vcid[]="$Id: single.c,v 1.12 1999/05/26 00:47:47 vitus Exp vitus $";
+d275 4
+d306 1
+a306 2
+}
+
+@
+
+
+1.12
+log
+@- SingleCreate: return value now 'int', but as it is always 0...
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.11 $
+ * $Date: 1999/05/12 01:48:25 $
+d13 3
+d61 1
+a61 1
+static char const vcid[]="$Id: single.c,v 1.11 1999/05/12 01:48:25 vitus Exp vitus $";
+d109 1
+a109 1
+ *	Ends own VRIO as all childs have processed.
+d202 1
+a202 1
+						   behind our childs sector */
+@
+
+
+1.11
+log
+@- dummy SingleUpdate() implemented
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/04/28 01:46:56 $
+d13 3
+d58 1
+a58 1
+static char const vcid[]="$Id: single.c,v 1.10 1999/04/28 01:46:56 vitus Exp vitus $";
+d96 1
+a96 2
+ * CALL
+ *	SingleNotify(vrio)
+d143 1
+a143 2
+ * CALL
+ *	SingleWorker(self,io)
+d218 1
+a218 2
+ * CALL
+ *	SingleUpdate(self,sec)
+d247 3
+a249 3
+/*#
+ * CALL
+ *	SingleCreate(pVrh,pPhys,sec,pSize)
+d262 1
+a262 1
+PUBLIC USHORT NEAR _Cdecl
+d268 1
+a268 1
+    DEBMSG1(DBG_LEVEL1,"\r\n[SingleCreate] at %p",(PVOID)pVrh);
+@
+
+
+1.10
+log
+@- merged SingleAdmin() code with Worker/Notify, IOCMD_A* commands
+- SingleNotify() uses CompleteVrio()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/02/07 17:53:08 $
+d13 4
+d49 2
+a50 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+d55 1
+a55 1
+static char const vcid[]="$Id: single.c,v 1.9 1999/02/07 17:53:08 vitus Exp vitus $";
+d87 1
+d172 1
+d216 25
+d272 1
+@
+
+
+1.9
+log
+@- implemented SingleAdmin() method
+- changed for iorb -> vrio transition
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1998/09/20 14:24:37 $
+d13 4
+d51 1
+a51 1
+static char const vcid[]="$Id: single.c,v 1.8 1998/09/20 14:24:37 vitus Stab vitus $";
+d126 1
+a126 23
+    if( myio->mother != NULL )
+    {
+	PVRDEVHDR const	parent = myio->mother->vrd;
+
+	/* Call parent's notification (I/O to child has completed). */
+
+	DEBMSG2(DBG_LEVEL3,"\r\n[SingleNotify] calling parent %p, mother I/O %p",parent,myio->mother);
+	parent->notify(myio);
+	FreeVrio(myio);				/* don't need this anymore */
+    }
+    else if( myio->iorb != NULL )
+    {
+	DEBMSG(DBG_LEVEL3,"\r\n[SingleNotify] iorb != 0 -> Host Drive");
+	HostdriveNotify(myio);
+	FreeVrio(myio);				/* don't need this anymore */
+    }
+    else
+    {
+	USHORT	awoken;
+
+	DEBMSG(DBG_LEVEL2,"\r\n[SingleNotify] nothing -> IOCtl");
+	DevHelp_ProcRun((ULONG)myio, &awoken);	/* *nicht* freigeben! */
+    }
+a136 63
+ *	SingleAdmin(self,io)
+ *
+ * PARAMETER
+ *	self		our single device
+ *	io		VRIO describing I/O
+ *
+ * RETURNS
+ *	0		OK, I/O started
+ *	/0		please queue I/O for later processing
+ *
+ * DESPRIPTION
+ *	Pass iorb to underlying device.  Nothing more.
+ *
+ * REMARKS
+ */
+PRIVATE USHORT NEAR _Cdecl
+SingleAdmin(PVRDEVHDR const self,PVRIO const myio)
+{
+    PVRDSINGLE const	single = (PVRDSINGLE)self;
+    PVRIO const		newio = AllocateVrio(single->child, myio);
+    USHORT		rc;
+
+    DEBMSG1(DBG_PATH,"\r\n[SingleAdmin] %p",(PVOID)myio);
+
+    ASSERT( myio->vrd == self );
+    ASSERT( myio->link == NULL );
+    ASSERT( myio->bcnt != 0 );
+    ASSERT( single->header.size != 0 );
+    ASSERT( single->header.notify == SingleNotify );
+    ASSERT( single->header.admin == SingleAdmin );
+    ASSERT( single->header.worker == SingleWorker );
+
+    if( newio == 0 )
+    {
+	DEBMSG(DBG_ALL,"\r\n[SingleAdmin] couldn't allocate VRIO");
+	return !0;
+    }
+
+    newio->iorb = myio->iorb;
+    newio->iocmd = myio->iocmd;
+    newio->cSGList = myio->cSGList;
+    newio->pSGList = myio->pSGList;
+    newio->ppSGList = myio->ppSGList;
+
+    newio->offset = myio->offset;
+    newio->blk = myio->blk + 1;			/* our configuration sector lies
+						   behind our childs sector */
+    newio->bcnt = myio->bcnt;
+    newio->oserr = 0xFFFF;
+
+    newio->link = NULL;
+    rc = newio->vrd->admin(newio->vrd, newio);
+    if( rc )
+	QueueVrio(newio);
+
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+a165 1
+    ASSERT( single->header.admin == SingleAdmin );
+d180 18
+a197 3
+    newio->offset = myio->offset;
+    newio->blk = myio->blk;
+    newio->bcnt = myio->bcnt;
+a198 1
+
+@
+
+
+1.8
+log
+@- modified for AllocateVrio(working_dev,mother)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1998/06/26 23:03:24 $
+d7 1
+a7 1
+ * How to do I/O to a RDTYPE_SINGLE.
+d9 2
+a10 2
+ * Remember that all retries are up to ADDs.  Any error
+ * is fatal (strictly spoken).
+d13 3
+d47 1
+a47 1
+static char const vcid[]="$Id: single.c,v 1.7 1998/06/26 23:03:24 vitus Exp vitus $";
+d83 1
+a83 1
+/*#
+d86 1
+d89 1
+d92 1
+a92 2
+ * GLOBAL
+ *	(none)
+d99 1
+a99 1
+PRIVATE VOID NEAR _Cdecl
+a109 1
+    ASSERT( myio->request != NULL );
+d130 1
+d132 1
+a132 1
+    else
+d134 1
+a134 1
+	DEBMSG(DBG_LEVEL3,"\r\n[SingleNotify] no mother I/O -> Host Drive");
+d136 1
+d138 3
+d142 3
+a144 1
+    FreeVrio(myio);				/* don't need this anymore */
+d153 64
+a216 1
+/*#
+d219 1
+d223 1
+d227 1
+a227 1
+ * GLOBAL
+a243 1
+    ASSERT( myio->request != NULL );
+d247 1
+d256 6
+a261 1
+    newio->request = myio->request;
+@
+
+
+1.7
+log
+@- switched to DDK macros (cli, sti, pushf)
+- worker,notify get const pointers and become _Cdecl
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1998/06/15 02:08:18 $
+d13 4
+d41 7
+a47 3
+#pragma off (unreferenced)
+static char const vcid[]="$Id: single.c,v 1.6 1998/06/15 02:08:18 vitus Exp vitus $";
+#pragma on (unreferenced)
+d75 5
+d101 10
+a110 1
+    DEBMSG3(DBG_LEVEL3,"\r\n[SingleNotify] io %p, myio %p, error %w",io,myio,io->oserr);
+d162 1
+a162 1
+    PVRIO const		newio = AllocateVrio(myio);
+d165 10
+a174 1
+    DEBMSG1(DBG_LEVEL3,"\r\n[SingleWorker] entry (%p)",(PVOID)myio);
+a181 1
+    newio->vrd = single->child;
+@
+
+
+1.6
+log
+@- moved all PHYSDEVICE handling to physdev.c.  Now single.c only handles
+  the minimum VRAID device: RDTYPE_SINGLE
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/raid/RCS/single.c,v $
+ * $Revision: 1.5 $
+ * $Date: 1998/05/29 01:56:02 $
+d13 4
+d38 1
+a38 1
+static char const vcid[]="$Id: single.c,v 1.5 1998/05/29 01:56:02 vitus Exp vitus $";
+d75 1
+d82 2
+a83 2
+PRIVATE VOID NEAR
+SingleNotify(PVRIO io)
+d88 1
+a88 1
+    DEBMSG1(DBG_LEVEL2,"\r\n[SingleNotify] entry (%p)",(PVOID)io);
+d90 2
+a91 2
+    SAVE_IF();
+    DISABLE();
+d97 1
+a97 1
+    if( io->mother != NULL )
+d99 1
+a99 1
+	PVRDEVHDR	parent = io->mother->vrd;
+d103 2
+a104 2
+	DEBMSG2(DBG_LEVEL2,"\r\n[SingleNotify] mother %p, parent %p",(PVOID)io->mother,(PVOID)parent);
+	parent->notify(io);
+d108 2
+a109 4
+	extern void	HostdriveNotify(PVRIO io);
+
+	DEBMSG(DBG_LEVEL2,"\r\n[SingleNotify] no mother -> Host Drive");
+	HostdriveNotify(io);
+d112 1
+a112 1
+    FreeVrio(io);				/* don't need this anymore */
+d114 1
+a114 1
+    RESTORE_IF();
+d136 2
+a137 2
+PRIVATE USHORT NEAR
+SingleWorker(PVRDEVHDR self,PVRIO myio)
+d139 3
+a141 3
+    PVRDSINGLE	single = (PVRDSINGLE)self;
+    PVRIO	newio = AllocateVrio(myio);
+    USHORT	rc;
+d143 1
+a143 1
+    DEBMSG1(DBG_LEVEL2,"\r\n[SingleWorker] entry (%p)",(PVOID)myio);
+@
+
+
+1.5
+log
+@- fine tuning of DEBMSG macro calls
+- corrected (again) block offset things
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1998/04/08 00:59:51 $
+d13 4
+d34 1
+a34 1
+static char const id[]="$Id: single.c,v 1.4 1998/04/08 00:59:51 vitus Exp vitus $";
+d56 1
+a56 1
+    PPHYSDEVICE	phys;
+a57 1
+    USHORT	offset;				/* offset in PHYSDEVICE */
+a62 179
+/*
+ * On commands to lower level drivers we have to link back to out VRIOs.  As
+ * those commands don't have a DMD the workspace is free.
+ */
+typedef union _VRAID_LOWER_DMDSPACE {
+    char	dummy[DM_WORKSPACE_SIZE];
+    struct {
+	PPHYSDEVICE	self;
+	PVRIO		vrio;
+
+
+	PIORB	pOS2Request;			/* generated on behalf of
+						   this OS/2 IORB */
+    };
+} VRAID_LOWER_DMDSPACE, FAR * PVRAID_LOWER_DMDSPACE;
+
+
+
+
+
+
+/*#
+ * CALL
+ *	NotifyIORB(iorb)
+ * PARAMETER
+ *	iorb
+ * RETURNS
+ *	(nothing)
+ * GLOBAL
+ * DESCRIPTION
+ *	Notification routine to be called from ADD to signal that
+ *	an IORB has completed.
+ *	Converts information to VRIO format, frees IORB and calls
+ *	VRIO notification routine.
+ *
+ * REMARKS
+ *	This functions should do any special error handling, that's
+ *	up to VRDEVICE devices.  PHYSDEVICEs should always be
+ *	responsive to callers, no matter how badly broken the hardware is.
+ */
+PRIVATE void FAR _saveregs _loadds _Cdecl
+NotifyIORB(PIORB iorb)
+{
+    PVRAID_LOWER_DMDSPACE ws = (PVRAID_LOWER_DMDSPACE)iorb->DMWorkSpace;
+    PVRIO		vrio = ws->vrio;
+    /*PPHYSDEVICE		self = ws->self;*/
+
+    ASSERT( (iorb->Status & IORB_DONE) != 0 );	/* HAS to be complete! */
+    if( (iorb->Status & IORB_ERROR) )
+	vrio->oserr = iorb->ErrorCode;
+    else
+	vrio->oserr = 0;
+    FreeIorb((PVOID)iorb);			/* don't need it anymore */
+
+    vrio->vrd->notify(vrio);
+    return;
+}
+
+
+
+
+/*#
+ * CALL
+ *	PhysSendIORB(pdev,io,iorb)
+ * PARAMETER
+ *	pdev		PPHYSDEVICE
+ *	io		PVRIO
+ *	iorb		IORB to send to ADD
+ * RETURNS
+ *	0		OK
+ * GLOBAL
+ * DESCRIPTION
+ *	Initializes DMWorkSpace and other administrative fileds
+ *	in IORB and calls ADD.
+ *
+ * REMARKS
+ *	Only PUBLIC as we want to use this routine from initialization
+ *	code (do not create any special code there).
+ */
+PUBLIC USHORT NEAR
+PhysSendIORB(PPHYSDEVICE pdev,PVRIO vrio,PIORB iorb)
+{
+    PVRAID_LOWER_DMDSPACE ws = (PVRAID_LOWER_DMDSPACE)iorb->DMWorkSpace;
+
+    iorb->NotifyAddress = (PVOID)NotifyIORB;
+    iorb->RequestControl |= IORB_ASYNC_POST;
+    iorb->ErrorCode =	0;
+    iorb->Status =	0;
+
+    /* Initialize WorkSpace. */
+
+    ws->self = pdev;				/* link back to device */
+    ws->vrio = vrio;				/* link to active VRIO */
+
+    SAVE_REGS();
+    (pdev->pADDEntry)(iorb);
+    RESTORE_REGS();
+
+    return 0;
+}
+
+
+
+
+/*#
+ * CALL
+ *	BuildSGList(out,in,offset)
+ * PARAMETER
+ *	out		output S/G list
+ *	in		input S/G list
+ *	offset		byte offset in 'in' to start at
+ * RETURNS
+ *	(nothing)
+ * GLOBAL
+ * DESCRIPTION
+ *	Take S/G list from 'in' and build a new list in 'out' starting
+ *	'offset' * 512 bytes into 'in'.
+ *	Length of I/O is out->BlockCount.
+ *
+ * REMARKS
+ */
+PRIVATE void
+BuildSGList(PIORB_EXECUTEIO out,PIORB_EXECUTEIO in,USHORT offset)
+{
+    ULONG const	start = offset * SECTOR_SIZE;		/* byte offset in 'in' I/O */
+    ULONG const	cb = out->BlockCount * SECTOR_SIZE;	/* bytes to copy */
+    ULONG	copied = 0;			/* bytes in S/G already copied */
+    ULONG	current = 0;			/* current byte offset in I/O */
+    int		i;
+
+    DEBMSG2(DBG_LEVEL2,"\r\n[BSGL] (%p, offset %w)",(PVOID)in->pSGList,start);
+    DEBMSG2(DBG_LEVEL3,"\r\n%z",(PVOID)in->pSGList,in->cSGList*sizeof(*in->pSGList));
+    out->cSGList = 0;				/* no entry so far */
+
+    /* Scan S/G list for first entry containing 'start' offset. */
+
+    for( i = 0; i < in->cSGList; ++i )
+    {
+	ULONG const	ul = in->pSGList[i].XferBufLen;
+
+	if( current+ul > start )
+	    break;
+	DEBMSG1(DBG_LEVEL2,"\r\n[BSGL] skipping %lx",(PVOID)&ul);
+	current += ul;
+    }
+
+    /* Now copy entries from S/G list until we got enough bytes
+     * to satisfy our 'out' list. */
+
+    for(; copied != cb; ++i )
+    {
+	ASSERT( i < in->cSGList );
+
+	if( current < start )
+	    out->pSGList[out->cSGList].ppXferBuf
+		= in->pSGList[i].ppXferBuf + start - current;
+	else
+	    out->pSGList[out->cSGList].ppXferBuf = in->pSGList[i].ppXferBuf;
+
+	if( in->pSGList[i].XferBufLen + copied > out->BlockCount * SECTOR_SIZE )
+	{
+	    out->pSGList[out->cSGList].XferBufLen
+		= out->BlockCount * SECTOR_SIZE - copied;
+	}
+	else
+	{
+	    out->pSGList[out->cSGList].XferBufLen = in->pSGList[i].XferBufLen;
+	}
+	DEBMSG2(DBG_LEVEL2,"\r\n[BSGL] added %lx from %lx",(PVOID)&out->pSGList[out->cSGList].XferBufLen,(PVOID)&out->pSGList[out->cSGList].ppXferBuf);
+
+	copied += out->pSGList[out->cSGList].XferBufLen;
+	current += in->pSGList[i].XferBufLen;
+	++out->cSGList;
+    }
+}
+
+
+
+
+d67 1
+a67 2
+ *	dummy		there is no child!
+ *	io		from DMWorkSpace
+d72 2
+a73 3
+ *	A PHYSDEVICE notifies it's SINGLE VRDEVICE of completion
+ *	of an I/O.
+ *	Process errors (?) and call parent.
+d80 7
+a86 1
+    DEBMSG1(DBG_LEVEL2,"\r\n[SngNotify] entry (%p)",(PVOID)io);
+d88 3
+a90 2
+    /* Process errors!
+     * (Nothing to do?) */
+d98 1
+a98 1
+	DEBMSG2(DBG_LEVEL2,"\r\n[SngNotify] mother %p, parent %p",(PVOID)io->mother,(PVOID)parent);
+d105 1
+a105 1
+	DEBMSG(DBG_LEVEL2,"\r\n[SngNotify] no mother -> Host Drive");
+d110 2
+d134 1
+a134 1
+SingleWorker(PVRDEVHDR self,PVRIO io)
+d136 3
+a138 2
+    PVRDSINGLE		single = (PVRDSINGLE)self;
+    PIORB_EXECUTEIO	iorb = AllocateIorb();
+d140 2
+a141 2
+    DEBMSG1(DBG_LEVEL2,"\r\n[SngWork] entry (%p)",(PVOID)io);
+    if( iorb == 0 )
+d143 1
+a143 1
+	DEBMSG(DBG_ALL,"\r\n[SngWork] couldn't allocate IORB");
+d147 11
+a157 11
+    /* Only things != 0 */
+
+    iorb->iorbh.Length = sizeof(IORB_EXECUTEIO);
+    iorb->iorbh.UnitHandle = single->phys->hdADDUnit;
+    iorb->iorbh.CommandCode = io->request->iorbh.CommandCode;
+    iorb->iorbh.CommandModifier = io->request->iorbh.CommandModifier;
+
+    iorb->RBA = io->blk + single->offset;	/* add size of VRAID sectors */
+    iorb->RBA += single->phys->ulVRStart;	/* add start of partition */
+    iorb->BlockCount = io->bcnt;
+    iorb->BlockSize = SECTOR_SIZE;
+a158 4
+    BuildSGList(iorb, io->request, io->offset);
+
+    DEBMSG2(DBG_LEVEL2,"\r\n[SngWork] %w blocks from/to %lx",iorb->BlockCount,(PVOID)&iorb->RBA);
+    PhysSendIORB(single->phys, io, &iorb->iorbh);
+d187 1
+a187 1
+SingleCreate(PVRDEVHDR pVrh,PPHYSDEVICE pPhys,PSEC_PHYSDEV sec,PUSHORT pSize)
+d189 2
+a190 1
+    PVRDSINGLE single = (PVRDSINGLE)pVrh;
+d192 1
+a192 1
+    DEBMSG2(DBG_LEVEL1,"\r\n[SingleCreate] at %p for phys %p",(PVOID)pVrh,(PVOID)pPhys);
+d196 5
+d202 5
+a206 2
+    single->phys = pPhys;			/* linking */
+    pPhys->parent = &single->header;
+d208 8
+a215 3
+    _fmemcpy(single->header.id, sec->u.s.id, sizeof(single->header.id));
+    single->offset = sec->u.s.adminspace;	/* reserved for VRAID */
+    single->header.size = sec->u.s.size;
+d220 1
+@
+
+
+1.4
+log
+@- corrected VRIO handling
+- corrected some block offset things
+- test (single, chain drive) successfull
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1998/03/10 02:06:47 $
+d13 5
+d30 1
+a30 1
+static char const id[]="$Id: single.c,v 1.3 1998/03/10 02:06:47 vitus Exp vitus $";
+d190 2
+a191 2
+    DEBMSG1(DBG_LEVEL1,"\r\n[BuildSGList] entry (io offset %w)",start);
+    DEBMSG2(DBG_LEVEL1,"\r\n[BuildSGList] input S/G list %z",(PVOID)in->pSGList,in->cSGList*sizeof(*in->pSGList));
+d198 3
+a200 1
+	if( current+in->pSGList[i].XferBufLen >= start )
+d202 2
+a203 2
+	DEBMSG1(DBG_LEVEL1,"\r\n[BuildSGList] skipping %lx",(PVOID)&in->pSGList[i].XferBufLen);
+	current += in->pSGList[i].XferBufLen;
+d212 1
+d228 1
+a228 1
+	DEBMSG2(DBG_LEVEL1,"\r\n[BuildSGList] added %lx from %lx",(PVOID)&out->pSGList[out->cSGList].XferBufLen,(PVOID)&out->pSGList[out->cSGList].ppXferBuf);
+d258 1
+a258 1
+    DEBMSG(DBG_LEVEL1,"\r\n[SingleNotify] entry");
+d269 1
+a269 1
+	DEBMSG2(DBG_LEVEL1,"\r\n[SingleNotify] mother %p, parent %p",(PVOID)io->mother,(PVOID)parent);
+d276 1
+a276 1
+	DEBMSG(DBG_LEVEL1,"\r\n[SingleNotify] no mother -> Host Drive");
+d308 1
+a308 1
+    DEBMSG(DBG_LEVEL2,"\r\n[SingleWorker] entry");
+d311 1
+a311 1
+	DEBMSG(DBG_ALL,"\r\n[SingleWorker] couldn't allocate IORB");
+d329 1
+a329 1
+    DEBMSG2(DBG_LEVEL1,"\r\n[SingleWorker] %w blocks from/to %lx",iorb->BlockCount,(PVOID)&iorb->RBA);
+@
+
+
+1.3
+log
+@- changed to PUBLIC *Create() function and PRIVATE workers
+@
+text
+@d3 3
+a5 3
+ * $Revision: 1.2 $
+ * $Date: 1998/03/06 01:21:37 $
+ * $Locker$
+d13 3
+d25 1
+a25 1
+static char const id[]="$Id: single.c,v 1.2 1998/03/06 01:21:37 vitus Exp vitus $";
+d49 1
+d55 20
+d102 1
+a102 1
+    ASSERT( (iorb->Status & IORB_DONE) );	/* HAS to be complete! */
+d179 2
+a180 2
+    ULONG const	start = offset * SECTOR_SIZE;	/* byte offset in 'in' I/O */
+    ULONG const	end = start + out->BlockCount * SECTOR_SIZE;
+d185 4
+d195 1
+d202 1
+a202 1
+    for(; copied != end - start; ++i )
+d204 1
+d220 2
+d250 1
+a250 1
+    PVRDEVHDR	parent = io->father->vrd;
+d255 16
+a270 2
+    /* Propagate error to father_io
+       and call it's notification (fast_io has completed). */
+a271 1
+    parent->notify(io);
+d300 1
+d302 2
+d305 1
+d314 2
+a315 1
+    iorb->RBA = io->blk + single->phys->ulVRStart;
+a318 2
+    iorb->pSGList = (PVOID)(iorb + 1);
+    iorb->ppSGList = FP_OFF(iorb->pSGList) + ppMemPool;
+d321 1
+d350 1
+a350 1
+PUBLIC USHORT NEAR
+d355 2
+d363 3
+a365 2
+    _fmemcpy(single->header.id, sec->id, sizeof(single->header.id));
+    single->header.size = pPhys->ulVRSize;
+@
+
+
+1.2
+log
+@- entries now public (needed?)
+@
+text
+@d3 3
+a5 3
+ * $Revision: 1.1 $
+ * $Date: 1998/02/12 00:58:41 $
+ * $Author: vitus $
+d13 3
+d22 1
+a22 1
+static char const id[]="$Id: single.c,v 1.1 1998/02/12 00:58:41 vitus Exp vitus $";
+d25 2
+d38 14
+d76 1
+a76 1
+    PPHYSDEVICE		self = ws->self;
+d85 1
+a85 1
+    self->parent->notify(self->parent, vrio);
+d201 1
+a201 1
+ *	SingleNotify(dummy,vrio)
+d215 2
+a216 2
+PUBLIC VOID NEAR
+SingleNotify(PVRDEVICE self,PVRIO io)
+d218 4
+a221 1
+    /* Process errors! */
+d223 2
+a224 1
+    /* Call parent device. */
+d226 2
+a227 1
+    self->parent->notify(self, io);	
+d249 2
+a250 2
+PUBLIC USHORT NEAR
+SingleWorker(PVRDEVICE self,PVRIO io)
+d252 2
+a253 1
+    PIORB_EXECUTEIO iorb = AllocateIorb();
+d261 1
+a261 1
+    iorb->iorbh.UnitHandle = self->phys->hdADDUnit;
+d265 1
+a265 1
+    iorb->RBA = io->blk + self->phys->ulVRStart;
+d273 43
+a315 1
+    PhysSendIORB(self->phys, io, &iorb->iorbh);
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Author$
+d12 3
+a14 1
+ * $Log$
+d19 1
+a19 1
+static char const id[]="$Id$";
+d59 1
+a59 1
+    assert( (iorb->Status & IORB_DONE) );	/* HAS to be complete! */
+d64 1
+a64 1
+    FreeIorb(iorb);				/* don't need it anymore */
+d75 1
+a75 1
+ *	SendIORB(pdev,io,iorb)
+d88 2
+d91 2
+a92 2
+PRIVATE USHORT NEAR
+SendIORB(PPHYSDEVICE pdev,PVRIO vrio,PIORB iorb)
+d196 1
+a196 1
+PRIVATE void FAR _saveregs _loadds _Cdecl
+d212 1
+a212 1
+ *	SingleIo(self,io)
+d225 2
+a226 2
+PUBLIC USHORT
+SingleIo(PVRDEVICE self,PVRIO io)
+d248 1
+a248 1
+    SendIORB(self->phys, io, &iorb->iorbh);
+@

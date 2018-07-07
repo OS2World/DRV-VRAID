@@ -1,0 +1,306 @@
+head	1.5;
+access;
+symbols;
+locks; strict;
+comment	@ * @;
+
+
+1.5
+date	98.03.04.01.59.16;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	97.12.06.00.45.49;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	97.11.10.01.04.05;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	97.10.28.01.55.59;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	97.06.04.23.19.11;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Defines structures to access SCSI mode pages
+@
+
+
+1.5
+log
+@- added SCSI_MODEPAGE_D
+@
+text
+@/*
+ * $Source: d:/source/driver/perf/RCS/modepages.h,v $
+ * $Revision: 1.4 $
+ * $Date: 1997/12/06 00:45:49 $
+ * $Locker: vitus $
+ *
+ * Defines structures to access SCSI mode pages.
+ * Refer to SCSI-II
+ *
+ * $Log: modepages.h,v $
+ * Revision 1.4  1997/12/06 00:45:49  vitus
+ * - WatCom detected duplicate typedef
+ *
+ * Revision 1.3  1997/11/10 01:04:05  vitus
+ * - corrected SCSI_MODEPAGE_2
+ *
+ * Revision 1.2  1997/10/28 01:55:59  vitus
+ * - switched from bitfields to complete bytes
+ * - named structures after page number
+ *
+ * Revision 1.1  1997/06/04 23:19:11  vitus
+ * Initial revision
+ * ----------------------------------------
+ * Author: Vitus Jensen, 2:2474/424
+ */
+
+#if !defined(_MODEPAGES_H)
+#define _MODEPAGES_H
+#pragma pack(1)
+
+
+/* Missing in my DDK... */
+#define SCSI_MODE_SELECT_10	0x55
+#define SCSI_MODE_SENSE_10	0x5A
+/* end */
+
+
+typedef struct _SCSI_MODEPAGE_HDR {
+
+    UCHAR	len;
+    UCHAR	medium;
+    UCHAR	specific;
+    UCHAR	descrlen;
+
+} SCSI_MODEPAGE_HDR, * PSCSI_MODEPAGE_HDR, NEAR * NPSCSI_MODEPAGE_HDR;
+
+
+typedef struct _SCSI_MODEPAGE_DESCR {
+
+    UCHAR	density;
+    UCHAR	blocks[3];
+    UCHAR	reserved;
+    UCHAR	blklen[3];
+
+} SCSI_MODEPAGE_DESCR, * PSCSI_MODEPAGE_DESCR, NEAR * NPSCSI_MODEPAGE_DESCR;
+
+
+
+typedef struct _SCSI_MODEPAGE_2 {		/* disconnect-reconnect */
+
+    UCHAR	pcode;				/* <0:5> page code
+						   <7>   page is savable */
+    UCHAR	plength;			/* excluding this field */
+    UCHAR	bfull;				/* reads: x/256 before device
+						   reconnects */
+    UCHAR	bempty;				/* write: x/256 before device
+						   reconnects */
+    UCHAR	businactive[2];			/* max time in 100us */
+    UCHAR	disconnect[2];			/* max time in 100us */
+    UCHAR	connect[2];			/* max time in 100us */
+    UCHAR	burst[2];			/* max sectors per data burst */
+    UCHAR	dtdc;				/* disable/enable disconnect
+						   in data transfers */
+    UCHAR	reserved[3];
+
+} SCSI_MODEPAGE_2, * PSCSI_MODEPAGE_2, NEAR * NPSCSI_MODEPAGE_2;
+
+
+typedef struct _SCSI_MODEPAGE_8 {		/* caching */
+
+    UCHAR	pcode;				/* s.a. */
+    UCHAR	plength;			/* s.a. */
+    UCHAR	cache;				/* <0>  read cache disable
+						   <2>  write cache enable */
+    UCHAR	priority;			/* pre-fetch priority */
+    UCHAR	disprefetch[2];			/* disable pre-fetch on long
+						   transfers */
+    UCHAR	minprefetch[2];			/* minimum pre-fetch done */
+    UCHAR	maxprefetch[2];			/* maximum pre-fetch done */
+    UCHAR	prefetchceiling[2];		/* maximum pre-fetch done */
+
+} SCSI_MODEPAGE_8, * PSCSI_MODEPAGE_8, NEAR * NPSCSI_MODEPAGE_8;
+
+
+typedef struct _SCSI_MODEPAGE_A {		/* control */
+
+    UCHAR	pcode;				/* s.a. */
+    UCHAR	plength;			/* s.a. */
+    UCHAR	reserved1;
+    UCHAR	queuing;			/* <0>   disable tagged queuing
+						   <4:7> queue algorithm */
+    UCHAR	events;				/* enable asynchr. events */
+    UCHAR	reserved2;
+    UCHAR	aenholdoff[2];			/* related to asynchr. events */
+
+} SCSI_MODEPAGE_A, * PSCSI_MODEPAGE_A, NEAR * NPSCSI_MODEPAGE_A;
+
+
+typedef struct _SCSI_MODEPAGE_D {		/* CD-ROM */
+
+    UCHAR	pcode;				/* s.a. */
+    UCHAR	plength;			/* s.a. */
+    UCHAR	reserved1;
+    UCHAR	multiplier;			/* timeout code (see SCSI-II) */
+    UCHAR	s_units[2];			/* ??? */
+    UCHAR	f_units[2];			/* ??? */
+
+} SCSI_MODEPAGE_D, * PSCSI_MODEPAGE_D, NEAR * NPSCSI_MODEPAGE_D;
+
+
+
+#pragma pack()
+#endif /* _MODEPAGES_H */
+@
+
+
+1.4
+log
+@- WatCom detected duplicate typedef
+@
+text
+@d2 3
+a4 3
+ * $Source: e:/source/driver/perf/RCS/modepages.h,v $
+ * $Revision: 1.3 $
+ * $Date: 1997/11/10 01:04:05 $
+d11 3
+d107 13
+@
+
+
+1.3
+log
+@- corrected SCSI_MODEPAGE_2
+@
+text
+@d3 3
+a5 3
+ * $Revision: 1.2 $
+ * $Date: 1997/10/28 01:55:59 $
+ * $Locker$
+d11 3
+d52 1
+a52 1
+} SCSI_MODEPAGE_DESCR, * PSCSI_MODEPAGE_DESCR, NEAR * PSCSI_MODEPAGE_DESCR;
+@
+
+
+1.2
+log
+@- switched from bitfields to complete bytes
+- named structures after page number
+@
+text
+@d3 3
+a5 3
+ * $Revision: 1.1 $
+ * $Date: 1997/06/04 23:19:11 $
+ * $Author: vitus $
+d11 4
+d18 1
+a18 1
+ * This code is Copyleft Vitus Jensen 1997
+d70 1
+a70 1
+} SCSI_MODEPAGE_2, * PSCSI_MODEPAGE_2, NEAR * PSCSI_MODEPAGE_2;
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Author$
+d10 3
+a12 1
+ * $Log$
+d14 1
+a14 1
+ * This code is Copyright Vitus Jensen 1997
+d28 1
+a28 8
+typedef struct _SCSIMPAGE_HEADER {
+    struct {
+	UCHAR	psavable : 1;			/* page savable */
+	UCHAR	reserved : 1;
+	UCHAR	pcode : 6;			/* page code */
+    };
+    UCHAR	plength;			/* length of page */
+} SCSIMPAGE_HEADER, NEAR * NPSCSIMPAGE_HEADER;
+d30 4
+d35 1
+a35 2
+typedef struct _SCSIMPAGE_CONTROL {		/* page 0x0A */
+    SCSIMPAGE_HEADER	header;
+d37 46
+a82 19
+    UCHAR	reserved1;
+    struct {
+	UCHAR	queue_algo : 4;			/* queue algorithm
+						 . 0: restricted
+						 . 1: unrestricted */
+	UCHAR	reserved2 : 2;
+	UCHAR	qerr : 1;
+	UCHAR	dqueue : 1;			/* 1: disable tagged queuing */
+    };
+    struct {
+	UCHAR	eeca : 1;
+	UCHAR	reserved3 : 4;
+	UCHAR	raenp : 1;			/* for asynchr. event notif. */
+	UCHAR	uaaenp : 1;			/* for asynchr. event notif. */
+	UCHAR	eaenp : 1;			/* for asynchr. event notif. */
+    };
+    UCHAR	reserved4;
+    UCHAR	aen[2];
+} SCSIMPAGE_CONTROL, NEAR * NPSCSIMPAGE_CONTROL;
+d85 1
+d87 8
+a94 22
+typedef struct _SCSIMPAGE_CACHE {		/* page 0x08 (direct/cd-rom)*/
+    SCSIMPAGE_HEADER	header;
+
+    struct {
+	UCHAR	reserved : 5;
+	UCHAR	wce : 1;			/* 1: write cache enabled */
+	UCHAR	mf : 1;				/* modifies prefetch values */
+	UCHAR	rcd : 1;			/* 1: read cache disabled */
+    };
+    struct {
+	UCHAR	read_prio : 4;			/* 0: don't diff. read/prefetch
+						 . 1: read lower than prefetch
+						 . F: keep read ALAP */
+	UCHAR	write_prio : 4;			/* 0: don't diff. write/prefetch
+						 . 1: write lower than prefetch
+						 . F: keep write ALAP */
+    };
+    UCHAR	dis_pf_len;
+    UCHAR	min_pf;
+    UCHAR	max_pf;
+    UCHAR	max_pf_ceil;
+} SCSIMPAGE_CACHE, NEAR * NPSCSIMPAGE_CACHE;
+d96 1
+a97 3
+/* To be defined:
+ *	Page Code 5	Flexible Disk Page (stepping rate)
+ */
+@

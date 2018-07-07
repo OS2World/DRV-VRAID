@@ -1,0 +1,77 @@
+head	1.2;
+access;
+symbols
+	VSETUPv0_84:1.2;
+locks; strict;
+comment	@ * @;
+
+
+1.2
+date	2000.08.17.02.07.44;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.06.06.01.06.39;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Interface to drverify.cpp
+@
+
+
+1.2
+log
+@- removed flthd from parameter structure of DrvVerifyThread().  This
+  info is already in VDriveWithRedundancy *.
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/drverify.h,v $
+ * $Revision: 1.1 $
+ * $Date: 2000/06/06 01:06:39 $
+ * $Locker: vitus $
+ *
+ *	Interface to drverify.cpp
+ *
+ * $Log: drverify.h,v $
+ * Revision 1.1  2000/06/06 01:06:39  vitus
+ * Initial revision
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 2000
+ */
+
+
+typedef struct {
+    HWND		parent;			/* post devices here */
+    VDriveWithRedundancy * drv;
+} THR_VERIFY, * PTHR_VERIFY;			/* parameter to DrvVerifyThread*/
+
+
+
+extern void _Optlink	DrvVerifyThread(void *dummy);
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 3
+a11 1
+ * $Log$
+d18 2
+a19 3
+    HWND	parent;				/* post devices here */
+    VRDrive *	drv;
+    USHORT	flthd;
+@

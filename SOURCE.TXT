@@ -1,0 +1,161 @@
+-= Some notes about the sourcecode for my OS/2 drivers =-
+
+
+1. DRIVERS
+
+1.1. dbuffer
+
+    Filter driver doing double buffering like used by AHA154X.ADD
+    /DBUFFER.  Those ISA busmasters could only address 16 MByte and
+    dbuffer was designed to those controllers usable in systems with
+    more RAM.  Never released.
+
+
+1.2. mini
+
+    Sourcecode for a minimal driver.  Used to test features (or find
+    missing features) of the OS/2 kernel.  Just playground.
+
+
+1.3. perf
+
+    Filter driver to modify SCSI mode pages during system mode.	 Most
+    notable write cache and tag queue reordering.  This driver was
+    released two times to the general public as Public Domain.
+
+    scsiopt.doc contains instructions how to compile this code and
+    which tools and compiler versions are needed/supported.  That text
+    can be applied to all of my drivers, they all use the same
+    tools/compilers (best supported are Microsoft C/C++ 7.0 and DMake
+    4.0).
+
+1.3.1. RCS tags
+
+    None :-(  There should have been some as the driver was released
+    but unfortunately I forgot to do this.
+
+    See scsiopt.history for histoy.
+
+
+1.4. sleep
+
+    A driver to stop SCSI disks when they weren't accessed for some
+    time and to automatically restart them on next access.  Released
+    as shareware, free for private use.
+
+1.4.1 RCS tags
+
+    Some.  See dsksleep.history for all released versions, RCS tags
+    directly relate to them:
+
+	DSLEEPv0_98	dsksleep 0.98
+	DSLEEPv0_95	dsksleep 0.95
+	DSLEEPv0_93	etc
+	DSLEEPv0_92
+	DSLEEPv0_91
+	DSLEEPv0_80
+	DSLEEPv0_70
+	DSLEEPv0_60
+
+    There are some changes after DSLEEPv0_98 but those are only
+    related to DDK changes, nothing functionally.  The latest
+    sourcecode revision is compilable.
+
+
+1.5. raid
+
+    vraid, software raid for OS/2.  Implements RAID 0, 1 and chaining
+    as a Filter Driver. The latest sourcecode is not buildable as it
+    contains very incomplete work to add RAID 5.  Maybe reading an
+    exiting array in non-error mode would work but there is no build
+    (easy: just write), error state or fault state support.
+
+    To compile you have to checkout a tagged version, here are tags:
+    
+	vrflt031113	fix released 13/11-2003
+	vrflt010903	fix released 03/09-2001
+	PREV010803
+	VRAIDv0_85
+	VRAIDv0_84	published in VRAID23.ZIP
+	VRAIDv0_82	published in VRAID22.ZIP
+	VRAIDv0_70
+	VRAIDv0_60
+	VRAIDv0_51
+	VRAIDv0_50
+	VRAIDv0_40
+	VRAIDv0_30
+	ALPHA1
+
+1.6. raid/doc
+
+    IPF sourcecode for online documentation.  Needs ipfpp.exe and
+    ipfc.exe.  There are some internal docs, too.  The online
+    documentation cotains list which driver and setup program were
+    published together.
+
+	VRAID_REL23	published in VRAID23.ZIP
+	REL22		published in VRAID22.ZIP
+	VRAIDv0_70
+	VRAIDv0_60
+	VRAIDv0_51
+	VRAIDv0_50
+	VRAIDv0_40
+	VRAIDv0_30
+	ALPHA1
+
+
+1.7. raid/Setup
+
+    Graphical setup program to create or administrate arrays.  Write
+    in C++ directly to the Presentation Manager API.  The latest
+    sourcecode should not be used as it contains (possible incomplete)
+    changes for RAID 5.  Try one of those tags:
+
+	VSETUPv0_84
+        VSETUP_82
+        VSETUPv0_80
+        VSETUPv0_71
+        VSETUPv0_70
+        VSETUPv0_60
+        VSETUPv0_52
+        VSETUPv0_51
+        VSETUPv0_50
+        VSETUPv0_20
+
+
+2. Support
+
+    ... None.  Well, I will try to answer questions raised about the
+    sourcecode but would prefer to do this in a public manner,
+    searchable by google etc.  This rules out private messages.	 I
+    hate web forums, so don't ask about commtalk or similar.  The best
+    solution for me would be usenet, comp.os.os2.setup.storage is
+    pretty low in traffik so this could be the place.
+
+
+3. LAYOUT
+
+    Sourceode uses TABs, a TAB being the move to the next tabstop,
+    tabstops are 0 8 16 24 and so on.  Just like any console would
+    display the text (type file.c)
+
+    If you want to preserve the layout and are using emacs you could
+    use the following snippet.	It's not totally correct as "case"
+    labels should be positioned like normal "goto" labels, 2 left
+    from labelled code but I never got around to fix whatever emacs
+    19.26 changed in that compartment.
+
+; --- I prefer a certain style in all C dialects (C, C++, Obj-C).  Similar
+; --- to Stroustrups but more like Emacs 19.25...
+; --- cc-mode.el version
+(defun my-c-mode-common-hook ()
+  (c-set-style "stroustrup")			; bsd | stroustrup | whitesmith
+  ;; other customizations can go here
+;  (c-set-offset 'case-label '*)
+;  (c-set-offset 'statement-case-intro '*)
+;  (c-set-offset 'label '*)
+  (setq comment-column 48)
+  (setq c-tab-always-indent nil)
+  )
+(add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
+(setq c-electric-pound-behavior '(alignleft))

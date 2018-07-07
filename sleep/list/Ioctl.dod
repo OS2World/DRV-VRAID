@@ -1,0 +1,1477 @@
+;	Static Name Aliases
+;
+;	$S170_id	EQU	id
+	TITLE   Ioctl.c
+	.286p
+	.287
+_TEXT	SEGMENT  WORD PUBLIC 'CODE'
+_TEXT	ENDS
+_DATA	SEGMENT  WORD PUBLIC 'DATA'
+_DATA	ENDS
+CONST	SEGMENT  WORD PUBLIC 'CONST'
+CONST	ENDS
+_BSS	SEGMENT  WORD PUBLIC 'BSS'
+_BSS	ENDS
+$$SYMBOLS	SEGMENT  BYTE PUBLIC 'DEBSYM'
+$$SYMBOLS	ENDS
+$$TYPES	SEGMENT  BYTE PUBLIC 'DEBTYP'
+$$TYPES	ENDS
+SwapData	SEGMENT  WORD PUBLIC 'FAR_DATA'
+SwapData	ENDS
+DGROUP	GROUP	CONST, _BSS, _DATA
+	ASSUME DS: DGROUP
+	ASSUME  SS: NOTHING
+PUBLIC  _iNextString
+PUBLIC  _DisplayBuffer
+EXTRN	DEVHELP_VERIFYACCESS:FAR
+EXTRN	_dprintf:NEAR
+EXTRN	DEVHELP_SAVE_MESSAGE:FAR
+EXTRN	_cUnit:WORD
+EXTRN	_anpUnit:BYTE
+EXTRN	_fDriverFlags:WORD
+EXTRN	_szMsgBuffer:BYTE
+EXTRN	_msgBuffer:QWORD
+_DATA      SEGMENT
+$S170_id	DB	'$Id: ioctl.c,v 1.11 1999/11/29 00:38:33 vitus Exp $',  00H
+_DATA      ENDS
+SwapData      SEGMENT
+	ORG	$+3072
+_iNextString	DW	00H
+	ORG	$-3074
+_DisplayBuffer	DW 0600H DUP (?)
+SwapData      ENDS
+_TEXT      SEGMENT
+	ASSUME	CS: _TEXT
+	PUBLIC	_DriverVersion
+_DriverVersion	PROC NEAR
+; Line 111
+	*** 000000	c8 0e 00 00 		enter	14,0
+	*** 000004	56 			push	si
+;	parmsize = -4
+;	datasize = -8
+;	dsize = -10
+;	data = -14
+;	rp = 4
+; Line 112
+	*** 000005	8b 46 04 		mov	ax,WORD PTR [bp+4]	;rp
+	*** 000008	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 00000b	05 19 00 		add	ax,25	;0019H
+	*** 00000e	89 46 fc 		mov	WORD PTR [bp-4],ax	;parmsize
+	*** 000011	89 56 fe 		mov	WORD PTR [bp-2],dx
+; Line 113
+	*** 000014	8b 46 04 		mov	ax,WORD PTR [bp+4]	;rp
+	*** 000017	05 1b 00 		add	ax,27	;001bH
+	*** 00001a	89 46 f8 		mov	WORD PTR [bp-8],ax	;datasize
+	*** 00001d	89 56 fa 		mov	WORD PTR [bp-6],dx
+; Line 114
+	*** 000020	8e c2 			mov	es,dx
+	*** 000022	8b d8 			mov	bx,ax
+	*** 000024	26 83 3f 00 		cmp	WORD PTR es:[bx],0
+	*** 000028	75 06 			jne	$L1371
+	*** 00002a	b8 ff ff 		mov	ax,-1	;ffffH
+	*** 00002d	eb 07 			jmp	SHORT $L1372
+	*** 00002f	90 			nop	
+					$L1371:
+	*** 000030	8e 46 fa 		mov	es,WORD PTR [bp-6]
+	*** 000033	26 8b 07 		mov	ax,WORD PTR es:[bx]
+					$L1372:
+	*** 000036	89 46 f6 		mov	WORD PTR [bp-10],ax	;dsize
+; Line 115
+	*** 000039	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rp
+	*** 00003c	26 8b 47 13 		mov	ax,WORD PTR es:[bx+19]
+	*** 000040	26 8b 57 15 		mov	dx,WORD PTR es:[bx+21]
+	*** 000044	89 46 f2 		mov	WORD PTR [bp-14],ax	;data
+	*** 000047	89 56 f4 		mov	WORD PTR [bp-12],dx
+; Line 117
+	*** 00004a	c4 76 f8 		les	si,DWORD PTR [bp-8]	;datasize
+	*** 00004d	26 c7 04 04 00 		mov	WORD PTR es:[si],4
+; Line 118
+	*** 000052	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;parmsize
+	*** 000055	26 c7 07 00 00 		mov	WORD PTR es:[bx],0
+; Line 120
+	*** 00005a	83 7e f6 02 		cmp	WORD PTR [bp-10],2	;dsize
+	*** 00005e	72 18 			jb	$I1211
+	*** 000060	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rp
+	*** 000063	26 ff 77 15 		push	WORD PTR es:[bx+21]
+	*** 000067	6a 02 			push	2
+	*** 000069	26 ff 77 13 		push	WORD PTR es:[bx+19]
+	*** 00006d	6a 01 			push	1
+	*** 00006f	9a 00 00 00 00 		call	FAR PTR DEVHELP_VERIFYACCESS
+	*** 000074	0b c0 			or	ax,ax
+	*** 000076	74 06 			je	$I1210
+					$I1211:
+; Line 121
+	*** 000078	b8 13 81 		mov	ax,-32493	;8113H
+	*** 00007b	eb 3e 			jmp	SHORT $EX1205
+	*** 00007d	90 			nop	
+; Line 123
+					$I1210:
+	*** 00007e	c4 5e f2 		les	bx,DWORD PTR [bp-14]	;data
+	*** 000081	26 c7 07 63 00 		mov	WORD PTR es:[bx],99	;0063H
+; Line 125
+	*** 000086	83 7e f6 04 		cmp	WORD PTR [bp-10],4	;dsize
+	*** 00008a	72 2c 			jb	$I1213
+	*** 00008c	c4 76 04 		les	si,DWORD PTR [bp+4]	;rp
+	*** 00008f	26 ff 74 15 		push	WORD PTR es:[si+21]
+	*** 000093	6a 04 			push	4
+	*** 000095	26 ff 74 13 		push	WORD PTR es:[si+19]
+	*** 000099	6a 01 			push	1
+	*** 00009b	9a 00 00 00 00 		call	FAR PTR DEVHELP_VERIFYACCESS
+	*** 0000a0	0b c0 			or	ax,ax
+	*** 0000a2	75 14 			jne	$I1213
+; Line 126
+; Line 127
+	*** 0000a4	c4 5e f2 		les	bx,DWORD PTR [bp-14]	;data
+	*** 0000a7	26 89 47 02 		mov	WORD PTR es:[bx+2],ax
+; Line 128
+	*** 0000ab	f6 06 00 00 80 		test	BYTE PTR _fDriverFlags,128	;0080H
+	*** 0000b0	74 06 			je	$I1213
+; Line 129
+	*** 0000b2	26 c7 47 02 01 00 	mov	WORD PTR es:[bx+2],1
+; Line 130
+					$I1213:
+; Line 132
+	*** 0000b8	b8 00 01 		mov	ax,256	;0100H
+; Line 133
+					$EX1205:
+	*** 0000bb	5e 			pop	si
+	*** 0000bc	c9 			leave	
+	*** 0000bd	c3 			ret	
+
+_DriverVersion	ENDP
+	PUBLIC	_DeviceList
+_DeviceList	PROC NEAR
+; Line 153
+	*** 0000be	c8 14 00 00 		enter	20,0
+	*** 0000c2	56 			push	si
+;	parmsize = -4
+;	datasize = -8
+;	dsize = -10
+;	data = -14
+;	i = -16
+;	rp = 4
+; Line 154
+	*** 0000c3	8b 46 04 		mov	ax,WORD PTR [bp+4]	;rp
+	*** 0000c6	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 0000c9	05 19 00 		add	ax,25	;0019H
+	*** 0000cc	89 46 fc 		mov	WORD PTR [bp-4],ax	;parmsize
+	*** 0000cf	89 56 fe 		mov	WORD PTR [bp-2],dx
+; Line 155
+	*** 0000d2	8b 46 04 		mov	ax,WORD PTR [bp+4]	;rp
+	*** 0000d5	05 1b 00 		add	ax,27	;001bH
+	*** 0000d8	89 46 f8 		mov	WORD PTR [bp-8],ax	;datasize
+	*** 0000db	89 56 fa 		mov	WORD PTR [bp-6],dx
+; Line 156
+	*** 0000de	8e c2 			mov	es,dx
+	*** 0000e0	8b d8 			mov	bx,ax
+	*** 0000e2	26 83 3f 00 		cmp	WORD PTR es:[bx],0
+	*** 0000e6	75 06 			jne	$L1373
+	*** 0000e8	b8 ff ff 		mov	ax,-1	;ffffH
+	*** 0000eb	eb 07 			jmp	SHORT $L1374
+	*** 0000ed	90 			nop	
+					$L1373:
+	*** 0000ee	8e 46 fa 		mov	es,WORD PTR [bp-6]
+	*** 0000f1	26 8b 07 		mov	ax,WORD PTR es:[bx]
+					$L1374:
+	*** 0000f4	89 46 f6 		mov	WORD PTR [bp-10],ax	;dsize
+; Line 157
+	*** 0000f7	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rp
+	*** 0000fa	26 8b 47 13 		mov	ax,WORD PTR es:[bx+19]
+	*** 0000fe	26 8b 57 15 		mov	dx,WORD PTR es:[bx+21]
+	*** 000102	89 46 f2 		mov	WORD PTR [bp-14],ax	;data
+	*** 000105	89 56 f4 		mov	WORD PTR [bp-12],dx
+; Line 160
+	*** 000108	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;parmsize
+	*** 00010b	26 c7 07 00 00 		mov	WORD PTR es:[bx],0
+; Line 161
+	*** 000110	a1 00 00 		mov	ax,WORD PTR _cUnit
+	*** 000113	c1 e0 03 		shl	ax,3
+	*** 000116	05 04 00 		add	ax,4
+	*** 000119	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;datasize
+	*** 00011c	26 89 07 		mov	WORD PTR es:[bx],ax
+; Line 164
+	*** 00011f	83 7e f6 04 		cmp	WORD PTR [bp-10],4	;dsize
+	*** 000123	72 13 			jb	$I1224
+	*** 000125	ff 76 f4 		push	WORD PTR [bp-12]
+	*** 000128	6a 04 			push	4
+	*** 00012a	ff 76 f2 		push	WORD PTR [bp-14]	;data
+	*** 00012d	6a 01 			push	1
+	*** 00012f	9a 00 00 00 00 		call	FAR PTR DEVHELP_VERIFYACCESS
+	*** 000134	0b c0 			or	ax,ax
+	*** 000136	74 06 			je	$I1223
+					$I1224:
+; Line 165
+; Line 166
+	*** 000138	b8 13 81 		mov	ax,-32493	;8113H
+	*** 00013b	e9 b2 00 		jmp	$EX1217
+; Line 167
+; Line 169
+					$I1223:
+	*** 00013e	c4 5e f2 		les	bx,DWORD PTR [bp-14]	;data
+	*** 000141	26 c6 47 03 00 		mov	BYTE PTR es:[bx+3],0
+	*** 000146	c4 5e f2 		les	bx,DWORD PTR [bp-14]	;data
+	*** 000149	26 8a 47 03 		mov	al,BYTE PTR es:[bx+3]
+	*** 00014d	26 88 47 02 		mov	BYTE PTR es:[bx+2],al
+; Line 170
+	*** 000151	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;datasize
+	*** 000154	26 8b 07 		mov	ax,WORD PTR es:[bx]
+	*** 000157	c4 5e f2 		les	bx,DWORD PTR [bp-14]	;data
+	*** 00015a	26 89 07 		mov	WORD PTR es:[bx],ax
+; Line 171
+	*** 00015d	c7 46 f0 00 00 		mov	WORD PTR [bp-16],0	;i
+	*** 000162	eb 7e 			jmp	SHORT $F1225
+	*** 000164	90 			nop	
+	*** 000165	90 			nop	
+					$FC1226:
+	*** 000166	8b 46 f6 		mov	ax,WORD PTR [bp-10]	;dsize
+	*** 000169	c1 e8 03 		shr	ax,3
+	*** 00016c	3b 46 f0 		cmp	ax,WORD PTR [bp-16]	;i
+	*** 00016f	76 7c 			jbe	$FB1227
+; Line 172
+;	p = -20
+; Line 173
+	*** 000171	8b 46 f0 		mov	ax,WORD PTR [bp-16]	;i
+	*** 000174	c1 e0 03 		shl	ax,3
+	*** 000177	03 46 f2 		add	ax,WORD PTR [bp-14]	;data
+	*** 00017a	8b 56 f4 		mov	dx,WORD PTR [bp-12]
+	*** 00017d	05 04 00 		add	ax,4
+	*** 000180	89 46 ec 		mov	WORD PTR [bp-20],ax	;p
+	*** 000183	89 56 ee 		mov	WORD PTR [bp-18],dx
+; Line 175
+	*** 000186	52 			push	dx
+	*** 000187	6a 08 			push	8
+	*** 000189	50 			push	ax
+	*** 00018a	6a 01 			push	1
+	*** 00018c	9a 00 00 00 00 		call	FAR PTR DEVHELP_VERIFYACCESS
+	*** 000191	0b c0 			or	ax,ax
+	*** 000193	75 a3 			jne	$I1224
+; Line 178
+; Line 180
+	*** 000195	8b 5e f0 		mov	bx,WORD PTR [bp-16]	;i
+	*** 000198	d1 e3 			shl	bx,1
+	*** 00019a	8b b7 00 00 		mov	si,WORD PTR _anpUnit[bx]
+	*** 00019e	8a 84 9e 00 		mov	al,BYTE PTR [si+158]
+	*** 0001a2	c4 76 ec 		les	si,DWORD PTR [bp-20]	;p
+	*** 0001a5	26 88 04 		mov	BYTE PTR es:[si],al
+; Line 181
+	*** 0001a8	8b b7 00 00 		mov	si,WORD PTR _anpUnit[bx]
+	*** 0001ac	8a 84 a0 00 		mov	al,BYTE PTR [si+160]
+	*** 0001b0	c4 76 ec 		les	si,DWORD PTR [bp-20]	;p
+	*** 0001b3	26 88 44 01 		mov	BYTE PTR es:[si+1],al
+; Line 182
+	*** 0001b7	c4 76 ec 		les	si,DWORD PTR [bp-20]	;p
+	*** 0001ba	26 c6 44 03 00 		mov	BYTE PTR es:[si+3],0
+	*** 0001bf	c4 76 ec 		les	si,DWORD PTR [bp-20]	;p
+	*** 0001c2	26 8a 44 03 		mov	al,BYTE PTR es:[si+3]
+	*** 0001c6	26 88 44 02 		mov	BYTE PTR es:[si+2],al
+; Line 183
+	*** 0001ca	8b 9f 00 00 		mov	bx,WORD PTR _anpUnit[bx]
+	*** 0001ce	8b 87 a2 00 		mov	ax,WORD PTR [bx+162]
+	*** 0001d2	c4 5e ec 		les	bx,DWORD PTR [bp-20]	;p
+	*** 0001d5	26 89 47 04 		mov	WORD PTR es:[bx+4],ax
+	*** 0001d9	26 c7 47 06 00 00 	mov	WORD PTR es:[bx+6],0
+; Line 184
+	*** 0001df	ff 46 f0 		inc	WORD PTR [bp-16]	;i
+					$F1225:
+	*** 0001e2	a1 00 00 		mov	ax,WORD PTR _cUnit
+	*** 0001e5	39 46 f0 		cmp	WORD PTR [bp-16],ax	;i
+	*** 0001e8	73 03 			jae	$JCC488
+	*** 0001ea	e9 79 ff 		jmp	$FC1226
+					$JCC488:
+					$FB1227:
+; Line 186
+	*** 0001ed	b8 00 01 		mov	ax,256	;0100H
+; Line 187
+					$EX1217:
+	*** 0001f0	5e 			pop	si
+	*** 0001f1	c9 			leave	
+	*** 0001f2	c3 			ret	
+	*** 0001f3	90 			nop	
+
+_DeviceList	ENDP
+	PUBLIC	_ChangeList
+_ChangeList	PROC NEAR
+; Line 208
+	*** 0001f4	c8 1a 00 00 		enter	26,0
+	*** 0001f8	57 			push	di
+	*** 0001f9	56 			push	si
+;	parmsize = -4
+;	datasize = -8
+;	psize = -10
+;	parm = -14
+;	i = -16
+;	cnt = -18
+;	rc = -20
+;	rp = 4
+; Line 210
+	*** 0001fa	8b 46 04 		mov	ax,WORD PTR [bp+4]	;rp
+	*** 0001fd	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 000200	05 1b 00 		add	ax,27	;001bH
+	*** 000203	89 46 f8 		mov	WORD PTR [bp-8],ax	;datasize
+	*** 000206	89 56 fa 		mov	WORD PTR [bp-6],dx
+; Line 211
+	*** 000209	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rp
+	*** 00020c	83 c3 19 		add	bx,25	;0019H
+	*** 00020f	89 5e fc 		mov	WORD PTR [bp-4],bx	;parmsize
+	*** 000212	8c 46 fe 		mov	WORD PTR [bp-2],es
+	*** 000215	26 83 3f 00 		cmp	WORD PTR es:[bx],0
+	*** 000219	75 05 			jne	$L1375
+	*** 00021b	b8 ff ff 		mov	ax,-1	;ffffH
+	*** 00021e	eb 06 			jmp	SHORT $L1376
+					$L1375:
+	*** 000220	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 000223	26 8b 07 		mov	ax,WORD PTR es:[bx]
+					$L1376:
+	*** 000226	89 46 f6 		mov	WORD PTR [bp-10],ax	;psize
+; Line 212
+	*** 000229	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rp
+	*** 00022c	26 8b 47 0f 		mov	ax,WORD PTR es:[bx+15]
+	*** 000230	26 8b 57 11 		mov	dx,WORD PTR es:[bx+17]
+	*** 000234	89 46 f2 		mov	WORD PTR [bp-14],ax	;parm
+	*** 000237	89 56 f4 		mov	WORD PTR [bp-12],dx
+; Line 214
+	*** 00023a	c7 46 ec 00 01 		mov	WORD PTR [bp-20],256	;0100H	;rc
+; Line 216
+	*** 00023f	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;datasize
+	*** 000242	26 c7 07 00 00 		mov	WORD PTR es:[bx],0
+; Line 217
+	*** 000247	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;parmsize
+	*** 00024a	26 c7 07 04 00 		mov	WORD PTR es:[bx],4
+; Line 220
+	*** 00024f	83 7e f6 04 		cmp	WORD PTR [bp-10],4	;psize
+	*** 000253	72 13 			jb	$I1242
+	*** 000255	ff 76 f4 		push	WORD PTR [bp-12]
+	*** 000258	6a 04 			push	4
+	*** 00025a	ff 76 f2 		push	WORD PTR [bp-14]	;parm
+	*** 00025d	6a 00 			push	0
+	*** 00025f	9a 00 00 00 00 		call	FAR PTR DEVHELP_VERIFYACCESS
+	*** 000264	0b c0 			or	ax,ax
+	*** 000266	74 06 			je	$I1241
+					$I1242:
+; Line 221
+; Line 222
+	*** 000268	b8 13 81 		mov	ax,-32493	;8113H
+	*** 00026b	e9 df 00 		jmp	$EX1233
+; Line 223
+; Line 224
+					$I1241:
+	*** 00026e	c4 5e f2 		les	bx,DWORD PTR [bp-14]	;parm
+	*** 000271	26 80 7f 02 00 		cmp	BYTE PTR es:[bx+2],0
+	*** 000276	75 f0 			jne	$I1242
+	*** 000278	26 80 7f 03 00 		cmp	BYTE PTR es:[bx+3],0
+	*** 00027d	75 e9 			jne	$I1242
+; Line 226
+	*** 00027f	8b 46 f6 		mov	ax,WORD PTR [bp-10]	;psize
+	*** 000282	26 39 07 		cmp	WORD PTR es:[bx],ax
+	*** 000285	77 10 			ja	$I1246
+	*** 000287	06 			push	es
+	*** 000288	26 ff 37 		push	WORD PTR es:[bx]
+	*** 00028b	53 			push	bx
+	*** 00028c	6a 00 			push	0
+	*** 00028e	9a 00 00 00 00 		call	FAR PTR DEVHELP_VERIFYACCESS
+	*** 000293	0b c0 			or	ax,ax
+	*** 000295	74 0f 			je	$I1245
+					$I1246:
+; Line 227
+; Line 228
+	*** 000297	c4 5e f2 		les	bx,DWORD PTR [bp-14]	;parm
+	*** 00029a	26 8b 07 		mov	ax,WORD PTR es:[bx]
+	*** 00029d	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;parmsize
+	*** 0002a0	26 89 07 		mov	WORD PTR es:[bx],ax
+	*** 0002a3	eb c3 			jmp	SHORT $I1242
+; Line 230
+	*** 0002a5	90 			nop	
+; Line 232
+					$I1245:
+; Line 233
+	*** 0002a6	c4 5e f2 		les	bx,DWORD PTR [bp-14]	;parm
+	*** 0002a9	26 8b 07 		mov	ax,WORD PTR es:[bx]
+	*** 0002ac	2d 04 00 		sub	ax,4
+	*** 0002af	c1 e8 03 		shr	ax,3
+	*** 0002b2	89 46 ee 		mov	WORD PTR [bp-18],ax	;cnt
+; Line 235
+	*** 0002b5	c7 46 f0 00 00 		mov	WORD PTR [bp-16],0	;i
+	*** 0002ba	eb 5f 			jmp	SHORT $F1247
+; Line 244
+; Line 246
+					$I1252:
+	*** 0002bc	c7 46 ec 13 81 		mov	WORD PTR [bp-20],-32493	;8113H	;rc
+; Line 247
+	*** 0002c1	c7 46 e6 00 00 		mov	WORD PTR [bp-26],0	;u
+	*** 0002c6	eb 03 			jmp	SHORT $F1254
+; Line 262
+; Line 263
+					$FC1255:
+	*** 0002c8	ff 46 e6 		inc	WORD PTR [bp-26]	;u
+					$F1254:
+	*** 0002cb	a1 00 00 		mov	ax,WORD PTR _cUnit
+	*** 0002ce	39 46 e6 		cmp	WORD PTR [bp-26],ax	;u
+	*** 0002d1	73 3e 			jae	$FB1256
+; Line 248
+; Line 250
+	*** 0002d3	8e 46 ea 		mov	es,WORD PTR [bp-22]
+	*** 0002d6	26 8a 07 		mov	al,BYTE PTR es:[bx]
+	*** 0002d9	8b 76 e6 		mov	si,WORD PTR [bp-26]	;u
+	*** 0002dc	d1 e6 			shl	si,1
+	*** 0002de	8b bc 00 00 		mov	di,WORD PTR _anpUnit[si]
+	*** 0002e2	38 85 9e 00 		cmp	BYTE PTR [di+158],al
+	*** 0002e6	75 e0 			jne	$FC1255
+	*** 0002e8	26 8a 47 01 		mov	al,BYTE PTR es:[bx+1]
+	*** 0002ec	38 85 a0 00 		cmp	BYTE PTR [di+160],al
+	*** 0002f0	75 d6 			jne	$FC1255
+; Line 251
+; Line 255
+	*** 0002f2	fa 			cli	
+; Line 256
+	*** 0002f3	26 8b 47 04 		mov	ax,WORD PTR es:[bx+4]
+	*** 0002f7	89 85 a2 00 		mov	WORD PTR [di+162],ax
+; Line 257
+	*** 0002fb	8b 9c 00 00 		mov	bx,WORD PTR _anpUnit[si]
+	*** 0002ff	8b 87 a2 00 		mov	ax,WORD PTR [bx+162]
+	*** 000303	39 47 02 		cmp	WORD PTR [bx+2],ax
+	*** 000306	76 03 			jbe	$I1258
+; Line 258
+	*** 000308	89 47 02 		mov	WORD PTR [bx+2],ax
+; Line 259
+					$I1258:
+	*** 00030b	fb 			sti	
+; Line 260
+	*** 00030c	c7 46 ec 00 01 		mov	WORD PTR [bp-20],256	;0100H	;rc
+; Line 261
+					$FB1256:
+; Line 264
+	*** 000311	81 7e ec 00 01 		cmp	WORD PTR [bp-20],256	;0100H	;rc
+	*** 000316	75 32 			jne	$FB1249
+; Line 266
+	*** 000318	ff 46 f0 		inc	WORD PTR [bp-16]	;i
+					$F1247:
+	*** 00031b	8b 46 f0 		mov	ax,WORD PTR [bp-16]	;i
+	*** 00031e	39 46 ee 		cmp	WORD PTR [bp-18],ax	;cnt
+	*** 000321	76 27 			jbe	$FB1249
+; Line 236
+;	p = -24
+;	u = -26
+; Line 240
+	*** 000323	8b d8 			mov	bx,ax
+	*** 000325	c1 e3 03 		shl	bx,3
+	*** 000328	8e 46 f4 		mov	es,WORD PTR [bp-12]
+	*** 00032b	03 5e f2 		add	bx,WORD PTR [bp-14]	;parm
+	*** 00032e	83 c3 04 		add	bx,4
+	*** 000331	8c 46 ea 		mov	WORD PTR [bp-22],es
+	*** 000334	26 80 7f 02 00 		cmp	BYTE PTR es:[bx+2],0
+	*** 000339	75 0a 			jne	$I1253
+	*** 00033b	26 80 7f 03 00 		cmp	BYTE PTR es:[bx+3],0
+	*** 000340	75 03 			jne	$JCC832
+	*** 000342	e9 77 ff 		jmp	$I1252
+					$JCC832:
+					$I1253:
+; Line 241
+; Line 242
+	*** 000345	c7 46 ec 13 81 		mov	WORD PTR [bp-20],-32493	;8113H	;rc
+; Line 243
+					$FB1249:
+; Line 268
+	*** 00034a	8b 46 ec 		mov	ax,WORD PTR [bp-20]	;rc
+; Line 269
+					$EX1233:
+	*** 00034d	5e 			pop	si
+	*** 00034e	5f 			pop	di
+	*** 00034f	c9 			leave	
+	*** 000350	c3 			ret	
+	*** 000351	90 			nop	
+
+_ChangeList	ENDP
+	PUBLIC	_QueryDeviceState
+_QueryDeviceState	PROC NEAR
+; Line 289
+	*** 000352	c8 1a 00 00 		enter	26,0
+	*** 000356	57 			push	di
+	*** 000357	56 			push	si
+;	parmsize = -4
+;	datasize = -8
+;	psize = -10
+;	dsize = -12
+;	parm = -16
+;	data = -20
+;	u = -22
+;	rc = -24
+;	rp = 4
+; Line 291
+	*** 000358	8b 46 04 		mov	ax,WORD PTR [bp+4]	;rp
+	*** 00035b	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 00035e	05 1b 00 		add	ax,27	;001bH
+	*** 000361	89 46 f8 		mov	WORD PTR [bp-8],ax	;datasize
+	*** 000364	89 56 fa 		mov	WORD PTR [bp-6],dx
+; Line 292
+	*** 000367	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rp
+	*** 00036a	83 c3 19 		add	bx,25	;0019H
+	*** 00036d	89 5e fc 		mov	WORD PTR [bp-4],bx	;parmsize
+	*** 000370	8c 46 fe 		mov	WORD PTR [bp-2],es
+	*** 000373	26 83 3f 00 		cmp	WORD PTR es:[bx],0
+	*** 000377	75 05 			jne	$L1377
+	*** 000379	b8 ff ff 		mov	ax,-1	;ffffH
+	*** 00037c	eb 06 			jmp	SHORT $L1378
+					$L1377:
+	*** 00037e	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 000381	26 8b 07 		mov	ax,WORD PTR es:[bx]
+					$L1378:
+	*** 000384	89 46 f6 		mov	WORD PTR [bp-10],ax	;psize
+; Line 293
+	*** 000387	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;datasize
+	*** 00038a	26 83 3f 00 		cmp	WORD PTR es:[bx],0
+	*** 00038e	75 06 			jne	$L1379
+	*** 000390	b8 ff ff 		mov	ax,-1	;ffffH
+	*** 000393	eb 04 			jmp	SHORT $L1380
+	*** 000395	90 			nop	
+					$L1379:
+	*** 000396	26 8b 07 		mov	ax,WORD PTR es:[bx]
+					$L1380:
+	*** 000399	89 46 f4 		mov	WORD PTR [bp-12],ax	;dsize
+; Line 294
+	*** 00039c	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rp
+	*** 00039f	26 8b 47 0f 		mov	ax,WORD PTR es:[bx+15]
+	*** 0003a3	26 8b 57 11 		mov	dx,WORD PTR es:[bx+17]
+	*** 0003a7	89 46 f0 		mov	WORD PTR [bp-16],ax	;parm
+	*** 0003aa	89 56 f2 		mov	WORD PTR [bp-14],dx
+; Line 295
+	*** 0003ad	26 8b 47 13 		mov	ax,WORD PTR es:[bx+19]
+	*** 0003b1	26 8b 57 15 		mov	dx,WORD PTR es:[bx+21]
+	*** 0003b5	89 46 ec 		mov	WORD PTR [bp-20],ax	;data
+	*** 0003b8	89 56 ee 		mov	WORD PTR [bp-18],dx
+; Line 297
+	*** 0003bb	c7 46 e8 13 81 		mov	WORD PTR [bp-24],-32493	;8113H	;rc
+; Line 299
+	*** 0003c0	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;parmsize
+	*** 0003c3	26 c7 07 02 00 		mov	WORD PTR es:[bx],2
+; Line 300
+	*** 0003c8	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;datasize
+	*** 0003cb	26 c7 07 05 00 		mov	WORD PTR es:[bx],5
+; Line 303
+	*** 0003d0	83 7e f6 02 		cmp	WORD PTR [bp-10],2	;psize
+	*** 0003d4	72 13 			jb	$I1273
+	*** 0003d6	ff 76 f2 		push	WORD PTR [bp-14]
+	*** 0003d9	6a 02 			push	2
+	*** 0003db	ff 76 f0 		push	WORD PTR [bp-16]	;parm
+	*** 0003de	6a 00 			push	0
+	*** 0003e0	9a 00 00 00 00 		call	FAR PTR DEVHELP_VERIFYACCESS
+	*** 0003e5	0b c0 			or	ax,ax
+	*** 0003e7	74 07 			je	$I1272
+					$I1273:
+; Line 304
+; Line 305
+	*** 0003e9	8b 46 e8 		mov	ax,WORD PTR [bp-24]	;rc
+	*** 0003ec	e9 b7 00 		jmp	$EX1263
+; Line 306
+	*** 0003ef	90 			nop	
+; Line 307
+					$I1272:
+	*** 0003f0	83 7e f4 04 		cmp	WORD PTR [bp-12],4	;dsize
+	*** 0003f4	72 f3 			jb	$I1273
+	*** 0003f6	ff 76 ee 		push	WORD PTR [bp-18]
+	*** 0003f9	ff 76 f4 		push	WORD PTR [bp-12]	;dsize
+	*** 0003fc	ff 76 ec 		push	WORD PTR [bp-20]	;data
+	*** 0003ff	6a 01 			push	1
+	*** 000401	9a 00 00 00 00 		call	FAR PTR DEVHELP_VERIFYACCESS
+	*** 000406	0b c0 			or	ax,ax
+	*** 000408	75 df 			jne	$I1273
+; Line 310
+; Line 312
+	*** 00040a	89 46 ea 		mov	WORD PTR [bp-22],ax	;u
+	*** 00040d	eb 58 			jmp	SHORT $F1276
+	*** 00040f	90 			nop	
+					$I1280:
+; Line 320
+	*** 000410	8b 5e ea 		mov	bx,WORD PTR [bp-22]	;u
+	*** 000413	d1 e3 			shl	bx,1
+	*** 000415	8b 9f 00 00 		mov	bx,WORD PTR _anpUnit[bx]
+	*** 000419	8b 87 a2 00 		mov	ax,WORD PTR [bx+162]
+	*** 00041d	2b 47 02 		sub	ax,WORD PTR [bx+2]
+	*** 000420	c4 5e ec 		les	bx,DWORD PTR [bp-20]	;data
+	*** 000423	26 89 07 		mov	WORD PTR es:[bx],ax
+					$L1397:
+	*** 000426	26 c7 47 02 00 00 	mov	WORD PTR es:[bx+2],0
+; Line 322
+	*** 00042c	83 7e f4 05 		cmp	WORD PTR [bp-12],5	;dsize
+	*** 000430	72 2b 			jb	$I1282
+; Line 324
+	*** 000432	8b 46 f4 		mov	ax,WORD PTR [bp-12]	;dsize
+	*** 000435	2d 80 00 		sub	ax,128	;0080H
+	*** 000438	1b c9 			sbb	cx,cx
+	*** 00043a	23 c1 			and	ax,cx
+	*** 00043c	05 80 00 		add	ax,128	;0080H
+	*** 00043f	c4 5e ec 		les	bx,DWORD PTR [bp-20]	;data
+	*** 000442	8b 76 ea 		mov	si,WORD PTR [bp-22]	;u
+	*** 000445	d1 e6 			shl	si,1
+	*** 000447	8b 94 00 00 		mov	dx,WORD PTR _anpUnit[si]
+	*** 00044b	83 c2 04 		add	dx,4
+	*** 00044e	8b c8 			mov	cx,ax
+	*** 000450	8d 7f 04 		lea	di,WORD PTR [bx+4]
+	*** 000453	8b f2 			mov	si,dx
+	*** 000455	d1 e9 			shr	cx,1
+	*** 000457	f3 			rep
+	*** 000458	a5 			movsw
+	*** 000459	13 c9 			adc	cx,cx
+	*** 00045b	f3 			rep
+	*** 00045c	a4 			movsb
+; Line 325
+					$I1282:
+	*** 00045d	c7 46 e8 00 01 		mov	WORD PTR [bp-24],256	;0100H	;rc
+; Line 326
+	*** 000462	eb 85 			jmp	SHORT $I1273
+; Line 327
+; Line 328
+					$FC1277:
+	*** 000464	ff 46 ea 		inc	WORD PTR [bp-22]	;u
+					$F1276:
+	*** 000467	a1 00 00 		mov	ax,WORD PTR _cUnit
+	*** 00046a	39 46 ea 		cmp	WORD PTR [bp-22],ax	;u
+	*** 00046d	72 03 			jb	$JCC1133
+	*** 00046f	e9 77 ff 		jmp	$I1273
+					$JCC1133:
+; Line 313
+; Line 315
+	*** 000472	c4 5e f0 		les	bx,DWORD PTR [bp-16]	;parm
+	*** 000475	26 8a 07 		mov	al,BYTE PTR es:[bx]
+	*** 000478	8b 76 ea 		mov	si,WORD PTR [bp-22]	;u
+	*** 00047b	d1 e6 			shl	si,1
+	*** 00047d	8b b4 00 00 		mov	si,WORD PTR _anpUnit[si]
+	*** 000481	38 84 9e 00 		cmp	BYTE PTR [si+158],al
+	*** 000485	75 dd 			jne	$FC1277
+	*** 000487	26 8a 47 01 		mov	al,BYTE PTR es:[bx+1]
+	*** 00048b	38 84 a0 00 		cmp	BYTE PTR [si+160],al
+	*** 00048f	75 d3 			jne	$FC1277
+; Line 316
+; Line 317
+	*** 000491	83 bc a2 00 00 		cmp	WORD PTR [si+162],0
+	*** 000496	74 03 			je	$JCC1174
+	*** 000498	e9 75 ff 		jmp	$I1280
+					$JCC1174:
+; Line 318
+	*** 00049b	c4 5e ec 		les	bx,DWORD PTR [bp-20]	;data
+	*** 00049e	26 c7 07 ff ff 		mov	WORD PTR es:[bx],-1	;ffffH
+	*** 0004a3	eb 81 			jmp	SHORT $L1397
+; Line 331
+	*** 0004a5	90 			nop	
+					$EX1263:
+	*** 0004a6	5e 			pop	si
+	*** 0004a7	5f 			pop	di
+	*** 0004a8	c9 			leave	
+	*** 0004a9	c3 			ret	
+
+_QueryDeviceState	ENDP
+	PUBLIC	_SetDeviceState
+_SetDeviceState	PROC NEAR
+; Line 351
+	*** 0004aa	c8 1c 00 00 		enter	28,0
+	*** 0004ae	56 			push	si
+;	parmsize = -4
+;	datasize = -8
+;	psize = -10
+;	dsize = -12
+;	parm = -16
+;	data = -20
+;	u = -22
+;	rc = -24
+;	rp = 4
+; Line 353
+	*** 0004af	8b 46 04 		mov	ax,WORD PTR [bp+4]	;rp
+	*** 0004b2	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 0004b5	05 1b 00 		add	ax,27	;001bH
+	*** 0004b8	89 46 f8 		mov	WORD PTR [bp-8],ax	;datasize
+	*** 0004bb	89 56 fa 		mov	WORD PTR [bp-6],dx
+; Line 354
+	*** 0004be	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rp
+	*** 0004c1	83 c3 19 		add	bx,25	;0019H
+	*** 0004c4	89 5e fc 		mov	WORD PTR [bp-4],bx	;parmsize
+	*** 0004c7	8c 46 fe 		mov	WORD PTR [bp-2],es
+	*** 0004ca	26 83 3f 00 		cmp	WORD PTR es:[bx],0
+	*** 0004ce	75 06 			jne	$L1381
+	*** 0004d0	b8 ff ff 		mov	ax,-1	;ffffH
+	*** 0004d3	eb 07 			jmp	SHORT $L1382
+	*** 0004d5	90 			nop	
+					$L1381:
+	*** 0004d6	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 0004d9	26 8b 07 		mov	ax,WORD PTR es:[bx]
+					$L1382:
+	*** 0004dc	89 46 f6 		mov	WORD PTR [bp-10],ax	;psize
+; Line 355
+	*** 0004df	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;datasize
+	*** 0004e2	26 83 3f 00 		cmp	WORD PTR es:[bx],0
+	*** 0004e6	75 06 			jne	$L1383
+	*** 0004e8	b8 ff ff 		mov	ax,-1	;ffffH
+	*** 0004eb	eb 04 			jmp	SHORT $L1384
+	*** 0004ed	90 			nop	
+					$L1383:
+	*** 0004ee	26 8b 07 		mov	ax,WORD PTR es:[bx]
+					$L1384:
+	*** 0004f1	89 46 f4 		mov	WORD PTR [bp-12],ax	;dsize
+; Line 356
+	*** 0004f4	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rp
+	*** 0004f7	26 8b 47 0f 		mov	ax,WORD PTR es:[bx+15]
+	*** 0004fb	26 8b 57 11 		mov	dx,WORD PTR es:[bx+17]
+	*** 0004ff	89 46 f0 		mov	WORD PTR [bp-16],ax	;parm
+	*** 000502	89 56 f2 		mov	WORD PTR [bp-14],dx
+; Line 357
+	*** 000505	26 8b 47 13 		mov	ax,WORD PTR es:[bx+19]
+	*** 000509	26 8b 57 15 		mov	dx,WORD PTR es:[bx+21]
+	*** 00050d	89 46 ec 		mov	WORD PTR [bp-20],ax	;data
+	*** 000510	89 56 ee 		mov	WORD PTR [bp-18],dx
+; Line 359
+	*** 000513	c7 46 e8 13 81 		mov	WORD PTR [bp-24],-32493	;8113H	;rc
+; Line 361
+	*** 000518	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;parmsize
+	*** 00051b	26 c7 07 02 00 		mov	WORD PTR es:[bx],2
+; Line 362
+	*** 000520	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;datasize
+	*** 000523	26 c7 07 05 00 		mov	WORD PTR es:[bx],5
+; Line 365
+	*** 000528	83 7e f6 02 		cmp	WORD PTR [bp-10],2	;psize
+	*** 00052c	72 13 			jb	$I1296
+	*** 00052e	ff 76 f2 		push	WORD PTR [bp-14]
+	*** 000531	6a 02 			push	2
+	*** 000533	ff 76 f0 		push	WORD PTR [bp-16]	;parm
+	*** 000536	6a 00 			push	0
+	*** 000538	9a 00 00 00 00 		call	FAR PTR DEVHELP_VERIFYACCESS
+	*** 00053d	0b c0 			or	ax,ax
+	*** 00053f	74 07 			je	$I1295
+					$I1296:
+; Line 366
+; Line 367
+	*** 000541	8b 46 e8 		mov	ax,WORD PTR [bp-24]	;rc
+	*** 000544	e9 85 00 		jmp	$EX1286
+; Line 368
+	*** 000547	90 			nop	
+; Line 369
+					$I1295:
+; Line 370
+	*** 000548	83 7e f4 05 		cmp	WORD PTR [bp-12],5	;dsize
+	*** 00054c	72 f3 			jb	$I1296
+	*** 00054e	ff 76 ee 		push	WORD PTR [bp-18]
+	*** 000551	6a 05 			push	5
+	*** 000553	ff 76 ec 		push	WORD PTR [bp-20]	;data
+	*** 000556	6a 01 			push	1
+	*** 000558	9a 00 00 00 00 		call	FAR PTR DEVHELP_VERIFYACCESS
+	*** 00055d	0b c0 			or	ax,ax
+	*** 00055f	75 e0 			jne	$I1296
+; Line 373
+; Line 375
+	*** 000561	89 46 ea 		mov	WORD PTR [bp-22],ax	;u
+	*** 000564	eb 1d 			jmp	SHORT $F1299
+					$I1304:
+; Line 385
+	*** 000566	8b 5e ea 		mov	bx,WORD PTR [bp-22]	;u
+	*** 000569	d1 e3 			shl	bx,1
+	*** 00056b	8b 9f 00 00 		mov	bx,WORD PTR _anpUnit[bx]
+	*** 00056f	8b 87 a2 00 		mov	ax,WORD PTR [bx+162]
+	*** 000573	2b 46 e4 		sub	ax,WORD PTR [bp-28]	;ul
+	*** 000576	89 47 02 		mov	WORD PTR [bx+2],ax
+					$I1305:
+; Line 386
+	*** 000579	c7 46 e8 00 01 		mov	WORD PTR [bp-24],256	;0100H	;rc
+; Line 387
+	*** 00057e	eb c1 			jmp	SHORT $I1296
+; Line 388
+; Line 389
+					$FC1300:
+	*** 000580	ff 46 ea 		inc	WORD PTR [bp-22]	;u
+					$F1299:
+	*** 000583	a1 00 00 		mov	ax,WORD PTR _cUnit
+	*** 000586	39 46 ea 		cmp	WORD PTR [bp-22],ax	;u
+	*** 000589	73 b6 			jae	$I1296
+; Line 376
+; Line 378
+	*** 00058b	c4 5e f0 		les	bx,DWORD PTR [bp-16]	;parm
+	*** 00058e	26 8a 07 		mov	al,BYTE PTR es:[bx]
+	*** 000591	8b 76 ea 		mov	si,WORD PTR [bp-22]	;u
+	*** 000594	d1 e6 			shl	si,1
+	*** 000596	8b b4 00 00 		mov	si,WORD PTR _anpUnit[si]
+	*** 00059a	38 84 9e 00 		cmp	BYTE PTR [si+158],al
+	*** 00059e	75 e0 			jne	$FC1300
+	*** 0005a0	26 8a 47 01 		mov	al,BYTE PTR es:[bx+1]
+	*** 0005a4	38 84 a0 00 		cmp	BYTE PTR [si+160],al
+	*** 0005a8	75 d6 			jne	$FC1300
+; Line 379
+;	ul = -28
+; Line 380
+	*** 0005aa	c4 5e ec 		les	bx,DWORD PTR [bp-20]	;data
+	*** 0005ad	26 8b 07 		mov	ax,WORD PTR es:[bx]
+	*** 0005b0	26 8b 57 02 		mov	dx,WORD PTR es:[bx+2]
+	*** 0005b4	89 46 e4 		mov	WORD PTR [bp-28],ax	;ul
+; Line 382
+	*** 0005b7	8b 8c a2 00 		mov	cx,WORD PTR [si+162]
+	*** 0005bb	2b db 			sub	bx,bx
+	*** 0005bd	3b da 			cmp	bx,dx
+	*** 0005bf	77 a5 			ja	$I1304
+	*** 0005c1	72 04 			jb	$L1385
+	*** 0005c3	3b c8 			cmp	cx,ax
+	*** 0005c5	77 9f 			ja	$I1304
+					$L1385:
+; Line 383
+	*** 0005c7	89 5c 02 		mov	WORD PTR [si+2],bx
+; Line 384
+	*** 0005ca	eb ad 			jmp	SHORT $I1305
+; Line 392
+					$EX1286:
+	*** 0005cc	5e 			pop	si
+	*** 0005cd	c9 			leave	
+	*** 0005ce	c3 			ret	
+	*** 0005cf	90 			nop	
+
+_SetDeviceState	ENDP
+	PUBLIC	_ReadMessages
+_ReadMessages	PROC NEAR
+; Line 413
+	*** 0005d0	c8 16 00 00 		enter	22,0
+	*** 0005d4	57 			push	di
+	*** 0005d5	56 			push	si
+;	datasize = -4
+;	dsize = -6
+;	data = -10
+;	pcbMsg = -14
+;	pMsg = -18
+;	rc = -20
+;	rp = 4
+; Line 414
+	*** 0005d6	8b 46 04 		mov	ax,WORD PTR [bp+4]	;rp
+	*** 0005d9	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 0005dc	05 1b 00 		add	ax,27	;001bH
+	*** 0005df	89 46 fc 		mov	WORD PTR [bp-4],ax	;datasize
+	*** 0005e2	89 56 fe 		mov	WORD PTR [bp-2],dx
+; Line 415
+	*** 0005e5	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;datasize
+	*** 0005e8	26 83 3f 00 		cmp	WORD PTR es:[bx],0
+	*** 0005ec	74 03 			je	$JCC1516
+	*** 0005ee	e9 06 00 		jmp	$L1386
+					$JCC1516:
+	*** 0005f1	b8 ff ff 		mov	ax,-1	;ffffH
+	*** 0005f4	e9 06 00 		jmp	$L1387
+					$L1386:
+	*** 0005f7	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;datasize
+	*** 0005fa	26 8b 07 		mov	ax,WORD PTR es:[bx]
+					$L1387:
+	*** 0005fd	89 46 fa 		mov	WORD PTR [bp-6],ax	;dsize
+; Line 416
+	*** 000600	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rp
+	*** 000603	26 8b 47 13 		mov	ax,WORD PTR es:[bx+19]
+	*** 000607	26 8b 57 15 		mov	dx,WORD PTR es:[bx+21]
+	*** 00060b	89 46 f6 		mov	WORD PTR [bp-10],ax	;data
+	*** 00060e	89 56 f8 		mov	WORD PTR [bp-8],dx
+; Line 417
+	*** 000611	c7 46 f2 00 0c 		mov	WORD PTR [bp-14],OFFSET _iNextString	;pcbMsg
+	*** 000616	c7 46 f4 00 00 		mov	WORD PTR [bp-12],SwapData
+; Line 418
+	*** 00061b	c7 46 ee 00 00 		mov	WORD PTR [bp-18],OFFSET _DisplayBuffer	;pMsg
+	*** 000620	c7 46 f0 00 00 		mov	WORD PTR [bp-16],SwapData
+; Line 419
+	*** 000625	c7 46 ec 13 81 		mov	WORD PTR [bp-20],-32493	;8113H	;rc
+; Line 421
+	*** 00062a	c4 5e f2 		les	bx,DWORD PTR [bp-14]	;pcbMsg
+	*** 00062d	26 8b 07 		mov	ax,WORD PTR es:[bx]
+	*** 000630	05 02 00 		add	ax,2
+	*** 000633	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;datasize
+	*** 000636	26 89 07 		mov	WORD PTR es:[bx],ax
+; Line 424
+	*** 000639	83 7e fa 02 		cmp	WORD PTR [bp-6],2	;dsize
+	*** 00063d	73 03 			jae	$JCC1597
+	*** 00063f	e9 17 00 		jmp	$I1317
+					$JCC1597:
+	*** 000642	ff 76 f8 		push	WORD PTR [bp-8]
+	*** 000645	6a 02 			push	2
+	*** 000647	ff 76 f6 		push	WORD PTR [bp-10]	;data
+	*** 00064a	6a 01 			push	1
+	*** 00064c	9a 00 00 00 00 		call	FAR PTR DEVHELP_VERIFYACCESS
+	*** 000651	3d 00 00 		cmp	ax,0
+	*** 000654	75 03 			jne	$JCC1620
+	*** 000656	e9 06 00 		jmp	$I1316
+					$JCC1620:
+					$I1317:
+; Line 425
+	*** 000659	8b 46 ec 		mov	ax,WORD PTR [bp-20]	;rc
+	*** 00065c	e9 81 00 		jmp	$EX1309
+; Line 426
+					$I1316:
+	*** 00065f	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;datasize
+	*** 000662	26 8b 07 		mov	ax,WORD PTR es:[bx]
+	*** 000665	c4 5e f6 		les	bx,DWORD PTR [bp-10]	;data
+	*** 000668	26 89 07 		mov	WORD PTR es:[bx],ax
+; Line 428
+	*** 00066b	c4 5e f2 		les	bx,DWORD PTR [bp-14]	;pcbMsg
+	*** 00066e	26 8b 07 		mov	ax,WORD PTR es:[bx]
+	*** 000671	05 02 00 		add	ax,2
+	*** 000674	3b 46 fa 		cmp	ax,WORD PTR [bp-6]	;dsize
+	*** 000677	72 03 			jb	$JCC1655
+	*** 000679	e9 0c 00 		jmp	$I1318
+					$JCC1655:
+; Line 429
+	*** 00067c	c4 5e f2 		les	bx,DWORD PTR [bp-14]	;pcbMsg
+	*** 00067f	26 8b 07 		mov	ax,WORD PTR es:[bx]
+	*** 000682	05 02 00 		add	ax,2
+	*** 000685	89 46 fa 		mov	WORD PTR [bp-6],ax	;dsize
+; Line 430
+					$I1318:
+	*** 000688	ff 76 f8 		push	WORD PTR [bp-8]
+	*** 00068b	ff 76 fa 		push	WORD PTR [bp-6]	;dsize
+	*** 00068e	ff 76 f6 		push	WORD PTR [bp-10]	;data
+	*** 000691	6a 01 			push	1
+	*** 000693	9a 00 00 00 00 		call	FAR PTR DEVHELP_VERIFYACCESS
+	*** 000698	3d 00 00 		cmp	ax,0
+	*** 00069b	75 03 			jne	$JCC1691
+	*** 00069d	e9 06 00 		jmp	$I1319
+					$JCC1691:
+; Line 431
+	*** 0006a0	8b 46 ec 		mov	ax,WORD PTR [bp-20]	;rc
+	*** 0006a3	e9 3a 00 		jmp	$EX1309
+; Line 436
+					$I1319:
+	*** 0006a6	8b 46 fa 		mov	ax,WORD PTR [bp-6]	;dsize
+	*** 0006a9	2d 02 00 		sub	ax,2
+	*** 0006ac	3d 00 00 		cmp	ax,0
+	*** 0006af	77 03 			ja	$JCC1711
+	*** 0006b1	e9 26 00 		jmp	$I1320
+					$JCC1711:
+; Line 437
+; Line 438
+	*** 0006b4	8b 46 fa 		mov	ax,WORD PTR [bp-6]	;dsize
+	*** 0006b7	2d 02 00 		sub	ax,2
+	*** 0006ba	89 46 ea 		mov	WORD PTR [bp-22],ax
+	*** 0006bd	c4 5e f6 		les	bx,DWORD PTR [bp-10]	;data
+	*** 0006c0	8b 46 ee 		mov	ax,WORD PTR [bp-18]	;pMsg
+	*** 0006c3	8b 56 f0 		mov	dx,WORD PTR [bp-16]
+	*** 0006c6	8b 4e ea 		mov	cx,WORD PTR [bp-22]
+	*** 0006c9	1e 			push	ds
+	*** 0006ca	8d 7f 02 		lea	di,WORD PTR [bx+2]
+	*** 0006cd	8b f0 			mov	si,ax
+	*** 0006cf	8e da 			mov	ds,dx
+	ASSUME DS: NOTHING
+	*** 0006d1	d1 e9 			shr	cx,1
+	*** 0006d3	f3 			rep
+	*** 0006d4	a5 			movsw
+	*** 0006d5	13 c9 			adc	cx,cx
+	*** 0006d7	f3 			rep
+	*** 0006d8	a4 			movsb
+	*** 0006d9	1f 			pop	ds
+	ASSUME DS: DGROUP
+; Line 439
+; Line 441
+					$I1320:
+	*** 0006da	b8 00 01 		mov	ax,256	;0100H
+	*** 0006dd	e9 00 00 		jmp	$EX1309
+; Line 442
+					$EX1309:
+	*** 0006e0	5e 			pop	si
+	*** 0006e1	5f 			pop	di
+	*** 0006e2	c9 			leave	
+	*** 0006e3	c3 			ret	
+
+_ReadMessages	ENDP
+	PUBLIC	_ClearMessages
+_ClearMessages	PROC NEAR
+; Line 464
+	*** 0006e4	c8 0e 00 00 		enter	14,0
+	*** 0006e8	57 			push	di
+	*** 0006e9	56 			push	si
+;	parmsize = -4
+;	datasize = -8
+;	pi = -12
+;	rc = -14
+;	rp = 4
+; Line 465
+	*** 0006ea	8b 46 04 		mov	ax,WORD PTR [bp+4]	;rp
+	*** 0006ed	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 0006f0	05 19 00 		add	ax,25	;0019H
+	*** 0006f3	89 46 fc 		mov	WORD PTR [bp-4],ax	;parmsize
+	*** 0006f6	89 56 fe 		mov	WORD PTR [bp-2],dx
+; Line 466
+	*** 0006f9	8b 46 04 		mov	ax,WORD PTR [bp+4]	;rp
+	*** 0006fc	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 0006ff	05 1b 00 		add	ax,27	;001bH
+	*** 000702	89 46 f8 		mov	WORD PTR [bp-8],ax	;datasize
+	*** 000705	89 56 fa 		mov	WORD PTR [bp-6],dx
+; Line 468
+	*** 000708	c7 46 f4 00 0c 		mov	WORD PTR [bp-12],OFFSET _iNextString	;pi
+	*** 00070d	c7 46 f6 00 00 		mov	WORD PTR [bp-10],SwapData
+; Line 469
+	*** 000712	c7 46 f2 00 01 		mov	WORD PTR [bp-14],256	;0100H	;rc
+; Line 471
+	*** 000717	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;parmsize
+	*** 00071a	26 c7 07 00 00 		mov	WORD PTR es:[bx],0
+; Line 472
+	*** 00071f	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;datasize
+	*** 000722	26 c7 07 00 00 		mov	WORD PTR es:[bx],0
+; Line 474
+	*** 000727	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;pi
+	*** 00072a	26 c7 07 00 00 		mov	WORD PTR es:[bx],0
+; Line 475
+	*** 00072f	8b 46 f2 		mov	ax,WORD PTR [bp-14]	;rc
+	*** 000732	e9 00 00 		jmp	$EX1324
+; Line 476
+					$EX1324:
+	*** 000735	5e 			pop	si
+	*** 000736	5f 			pop	di
+	*** 000737	c9 			leave	
+	*** 000738	c3 			ret	
+
+_ClearMessages	ENDP
+	PUBLIC	_GetLaststatus
+_GetLaststatus	PROC NEAR
+; Line 498
+	*** 000739	c8 18 00 00 		enter	24,0
+	*** 00073d	57 			push	di
+	*** 00073e	56 			push	si
+;	parmsize = -4
+;	datasize = -8
+;	psize = -10
+;	dsize = -12
+;	data = -16
+;	parm = -20
+;	u = -22
+;	rc = -24
+;	rp = 4
+; Line 499
+	*** 00073f	8b 46 04 		mov	ax,WORD PTR [bp+4]	;rp
+	*** 000742	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 000745	05 19 00 		add	ax,25	;0019H
+	*** 000748	89 46 fc 		mov	WORD PTR [bp-4],ax	;parmsize
+	*** 00074b	89 56 fe 		mov	WORD PTR [bp-2],dx
+; Line 500
+	*** 00074e	8b 46 04 		mov	ax,WORD PTR [bp+4]	;rp
+	*** 000751	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 000754	05 1b 00 		add	ax,27	;001bH
+	*** 000757	89 46 f8 		mov	WORD PTR [bp-8],ax	;datasize
+	*** 00075a	89 56 fa 		mov	WORD PTR [bp-6],dx
+; Line 501
+	*** 00075d	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;parmsize
+	*** 000760	26 83 3f 00 		cmp	WORD PTR es:[bx],0
+	*** 000764	74 03 			je	$JCC1892
+	*** 000766	e9 06 00 		jmp	$L1388
+					$JCC1892:
+	*** 000769	b8 ff ff 		mov	ax,-1	;ffffH
+	*** 00076c	e9 06 00 		jmp	$L1389
+					$L1388:
+	*** 00076f	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;parmsize
+	*** 000772	26 8b 07 		mov	ax,WORD PTR es:[bx]
+					$L1389:
+	*** 000775	89 46 f6 		mov	WORD PTR [bp-10],ax	;psize
+; Line 502
+	*** 000778	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;datasize
+	*** 00077b	26 83 3f 00 		cmp	WORD PTR es:[bx],0
+	*** 00077f	74 03 			je	$JCC1919
+	*** 000781	e9 06 00 		jmp	$L1390
+					$JCC1919:
+	*** 000784	b8 ff ff 		mov	ax,-1	;ffffH
+	*** 000787	e9 06 00 		jmp	$L1391
+					$L1390:
+	*** 00078a	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;datasize
+	*** 00078d	26 8b 07 		mov	ax,WORD PTR es:[bx]
+					$L1391:
+	*** 000790	89 46 f4 		mov	WORD PTR [bp-12],ax	;dsize
+; Line 503
+	*** 000793	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rp
+	*** 000796	26 8b 47 13 		mov	ax,WORD PTR es:[bx+19]
+	*** 00079a	26 8b 57 15 		mov	dx,WORD PTR es:[bx+21]
+	*** 00079e	89 46 f0 		mov	WORD PTR [bp-16],ax	;data
+	*** 0007a1	89 56 f2 		mov	WORD PTR [bp-14],dx
+; Line 504
+	*** 0007a4	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rp
+	*** 0007a7	26 8b 47 0f 		mov	ax,WORD PTR es:[bx+15]
+	*** 0007ab	26 8b 57 11 		mov	dx,WORD PTR es:[bx+17]
+	*** 0007af	89 46 ec 		mov	WORD PTR [bp-20],ax	;parm
+	*** 0007b2	89 56 ee 		mov	WORD PTR [bp-18],dx
+; Line 506
+	*** 0007b5	c7 46 e8 13 81 		mov	WORD PTR [bp-24],-32493	;8113H	;rc
+; Line 508
+	*** 0007ba	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;parmsize
+	*** 0007bd	26 c7 07 02 00 		mov	WORD PTR es:[bx],2
+; Line 509
+	*** 0007c2	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;datasize
+	*** 0007c5	26 c7 07 2f 00 		mov	WORD PTR es:[bx],47	;002fH
+; Line 512
+	*** 0007ca	83 7e f6 02 		cmp	WORD PTR [bp-10],2	;psize
+	*** 0007ce	73 03 			jae	$JCC1998
+	*** 0007d0	e9 17 00 		jmp	$I1342
+					$JCC1998:
+	*** 0007d3	ff 76 ee 		push	WORD PTR [bp-18]
+	*** 0007d6	6a 02 			push	2
+	*** 0007d8	ff 76 ec 		push	WORD PTR [bp-20]	;parm
+	*** 0007db	6a 00 			push	0
+	*** 0007dd	9a 00 00 00 00 		call	FAR PTR DEVHELP_VERIFYACCESS
+	*** 0007e2	3d 00 00 		cmp	ax,0
+	*** 0007e5	75 03 			jne	$JCC2021
+	*** 0007e7	e9 06 00 		jmp	$I1341
+					$JCC2021:
+					$I1342:
+; Line 513
+; Line 514
+	*** 0007ea	8b 46 e8 		mov	ax,WORD PTR [bp-24]	;rc
+	*** 0007ed	e9 d7 00 		jmp	$EX1332
+; Line 515
+; Line 516
+					$I1341:
+; Line 517
+	*** 0007f0	83 7e f4 2f 		cmp	WORD PTR [bp-12],47	;002fH	;dsize
+	*** 0007f4	73 03 			jae	$JCC2036
+	*** 0007f6	e9 17 00 		jmp	$I1344
+					$JCC2036:
+	*** 0007f9	ff 76 f2 		push	WORD PTR [bp-14]
+	*** 0007fc	6a 2f 			push	47	;002fH
+	*** 0007fe	ff 76 f0 		push	WORD PTR [bp-16]	;data
+	*** 000801	6a 01 			push	1
+	*** 000803	9a 00 00 00 00 		call	FAR PTR DEVHELP_VERIFYACCESS
+	*** 000808	3d 00 00 		cmp	ax,0
+	*** 00080b	75 03 			jne	$JCC2059
+	*** 00080d	e9 06 00 		jmp	$I1343
+					$JCC2059:
+					$I1344:
+; Line 518
+	*** 000810	8b 46 e8 		mov	ax,WORD PTR [bp-24]	;rc
+	*** 000813	e9 b1 00 		jmp	$EX1332
+; Line 520
+					$I1343:
+	*** 000816	c7 46 ea 00 00 		mov	WORD PTR [bp-22],0	;u
+	*** 00081b	e9 03 00 		jmp	$F1345
+					$FC1346:
+	*** 00081e	ff 46 ea 		inc	WORD PTR [bp-22]	;u
+					$F1345:
+	*** 000821	a1 00 00 		mov	ax,WORD PTR _cUnit
+	*** 000824	39 46 ea 		cmp	WORD PTR [bp-22],ax	;u
+	*** 000827	72 03 			jb	$JCC2087
+	*** 000829	e9 95 00 		jmp	$FB1347
+					$JCC2087:
+; Line 521
+; Line 523
+	*** 00082c	c4 5e ec 		les	bx,DWORD PTR [bp-20]	;parm
+	*** 00082f	26 8a 07 		mov	al,BYTE PTR es:[bx]
+	*** 000832	8b 5e ea 		mov	bx,WORD PTR [bp-22]	;u
+	*** 000835	d1 e3 			shl	bx,1
+	*** 000837	8b 9f 00 00 		mov	bx,WORD PTR _anpUnit[bx]
+	*** 00083b	38 87 9e 00 		cmp	BYTE PTR [bx+158],al
+	*** 00083f	74 03 			je	$JCC2111
+	*** 000841	e9 7a 00 		jmp	$I1348
+					$JCC2111:
+	*** 000844	c4 5e ec 		les	bx,DWORD PTR [bp-20]	;parm
+	*** 000847	26 8a 47 01 		mov	al,BYTE PTR es:[bx+1]
+	*** 00084b	8b 5e ea 		mov	bx,WORD PTR [bp-22]	;u
+	*** 00084e	d1 e3 			shl	bx,1
+	*** 000850	8b 9f 00 00 		mov	bx,WORD PTR _anpUnit[bx]
+	*** 000854	38 87 a0 00 		cmp	BYTE PTR [bx+160],al
+	*** 000858	74 03 			je	$JCC2136
+	*** 00085a	e9 61 00 		jmp	$I1348
+					$JCC2136:
+; Line 524
+; Line 525
+	*** 00085d	8b 5e ea 		mov	bx,WORD PTR [bp-22]	;u
+	*** 000860	d1 e3 			shl	bx,1
+	*** 000862	8b 9f 00 00 		mov	bx,WORD PTR _anpUnit[bx]
+	*** 000866	8b 87 b8 00 		mov	ax,WORD PTR [bx+184]
+	*** 00086a	c4 5e f0 		les	bx,DWORD PTR [bp-16]	;data
+	*** 00086d	26 89 47 02 		mov	WORD PTR es:[bx+2],ax
+; Line 526
+	*** 000871	8b 5e ea 		mov	bx,WORD PTR [bp-22]	;u
+	*** 000874	d1 e3 			shl	bx,1
+	*** 000876	8b 9f 00 00 		mov	bx,WORD PTR _anpUnit[bx]
+	*** 00087a	8b 87 ba 00 		mov	ax,WORD PTR [bx+186]
+	*** 00087e	c4 5e f0 		les	bx,DWORD PTR [bp-16]	;data
+	*** 000881	26 89 47 04 		mov	WORD PTR es:[bx+4],ax
+; Line 527
+	*** 000885	c4 5e f0 		les	bx,DWORD PTR [bp-16]	;data
+	*** 000888	8b 76 ea 		mov	si,WORD PTR [bp-22]	;u
+	*** 00088b	d1 e6 			shl	si,1
+	*** 00088d	8b b4 00 00 		mov	si,WORD PTR _anpUnit[si]
+	*** 000891	8d 7f 06 		lea	di,WORD PTR [bx+6]
+	*** 000894	8d b4 bc 00 		lea	si,WORD PTR [si+188]
+	*** 000898	b9 0b 00 		mov	cx,11	;000bH
+	*** 00089b	f3 			rep
+	*** 00089c	a5 			movsw
+	*** 00089d	a4 			movsb
+; Line 528
+	*** 00089e	c4 5e f0 		les	bx,DWORD PTR [bp-16]	;data
+	*** 0008a1	8b 76 ea 		mov	si,WORD PTR [bp-22]	;u
+	*** 0008a4	d1 e6 			shl	si,1
+	*** 0008a6	8b b4 00 00 		mov	si,WORD PTR _anpUnit[si]
+	*** 0008aa	8d 7f 1d 		lea	di,WORD PTR [bx+29]
+	*** 0008ad	8d b4 d3 00 		lea	si,WORD PTR [si+211]
+	*** 0008b1	b9 09 00 		mov	cx,9
+	*** 0008b4	f3 			rep
+	*** 0008b5	a5 			movsw
+; Line 529
+	*** 0008b6	c7 46 e8 00 01 		mov	WORD PTR [bp-24],256	;0100H	;rc
+; Line 530
+	*** 0008bb	e9 03 00 		jmp	$FB1347
+; Line 531
+; Line 532
+					$I1348:
+	*** 0008be	e9 5d ff 		jmp	$FC1346
+					$FB1347:
+; Line 534
+	*** 0008c1	8b 46 e8 		mov	ax,WORD PTR [bp-24]	;rc
+	*** 0008c4	e9 00 00 		jmp	$EX1332
+; Line 535
+					$EX1332:
+	*** 0008c7	5e 			pop	si
+	*** 0008c8	5f 			pop	di
+	*** 0008c9	c9 			leave	
+	*** 0008ca	c3 			ret	
+
+_GetLaststatus	ENDP
+	PUBLIC	_SaveMessage
+_SaveMessage	PROC NEAR
+; Line 564
+	*** 0008cb	c8 04 00 00 		enter	4,0
+	*** 0008cf	57 			push	di
+	*** 0008d0	56 			push	si
+;	pi = -4
+; Line 565
+	*** 0008d1	c7 46 fc 00 0c 		mov	WORD PTR [bp-4],OFFSET _iNextString	;pi
+	*** 0008d6	c7 46 fe 00 00 		mov	WORD PTR [bp-2],SwapData
+; Line 567
+	*** 0008db	fa 			cli	
+; Line 568
+	*** 0008dc	bf 00 00 		mov	di,OFFSET _szMsgBuffer
+	*** 0008df	8c d8 			mov	ax,ds
+	*** 0008e1	8e c0 			mov	es,ax
+	*** 0008e3	b9 ff ff 		mov	cx,-1	;ffffH
+	*** 0008e6	33 c0 			xor	ax,ax
+	*** 0008e8	f2 			repnz
+	*** 0008e9	ae 			scasb
+	*** 0008ea	f7 d1 			not	cx
+	*** 0008ec	49 			dec	cx
+	*** 0008ed	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;pi
+	*** 0008f0	26 03 0f 		add	cx,WORD PTR es:[bx]
+	*** 0008f3	81 f9 00 0c 		cmp	cx,3072	;0c00H
+	*** 0008f7	72 03 			jb	$JCC2295
+	*** 0008f9	e9 4b 00 		jmp	$I1351
+					$JCC2295:
+; Line 569
+; Line 570
+	*** 0008fc	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;pi
+	*** 0008ff	26 8b 37 		mov	si,WORD PTR es:[bx]
+	*** 000902	81 c6 00 00 		add	si,OFFSET _DisplayBuffer
+	*** 000906	b8 00 00 		mov	ax,SwapData
+	*** 000909	8b d0 			mov	dx,ax
+	*** 00090b	1e 			push	ds
+	*** 00090c	bf 00 00 		mov	di,OFFSET _szMsgBuffer
+	*** 00090f	8c d9 			mov	cx,ds
+	*** 000911	8e c1 			mov	es,cx
+	*** 000913	8e da 			mov	ds,dx
+	ASSUME DS: NOTHING
+	*** 000915	b9 ff ff 		mov	cx,-1	;ffffH
+	*** 000918	33 c0 			xor	ax,ax
+	*** 00091a	f2 			repnz
+	*** 00091b	ae 			scasb
+	*** 00091c	f7 d1 			not	cx
+	*** 00091e	2b f9 			sub	di,cx
+	*** 000920	87 fe 			xchg	di,si
+	*** 000922	1e 			push	ds
+	*** 000923	06 			push	es
+	*** 000924	1f 			pop	ds
+	ASSUME DS: DGROUP
+	*** 000925	07 			pop	es
+	*** 000926	d1 e9 			shr	cx,1
+	*** 000928	f3 			rep
+	*** 000929	a5 			movsw
+	*** 00092a	13 c9 			adc	cx,cx
+	*** 00092c	f3 			rep
+	*** 00092d	a4 			movsb
+	*** 00092e	1f 			pop	ds
+	ASSUME DS: DGROUP
+; Line 571
+	*** 00092f	bf 00 00 		mov	di,OFFSET _szMsgBuffer
+	*** 000932	8c d8 			mov	ax,ds
+	*** 000934	8e c0 			mov	es,ax
+	*** 000936	b9 ff ff 		mov	cx,-1	;ffffH
+	*** 000939	33 c0 			xor	ax,ax
+	*** 00093b	f2 			repnz
+	*** 00093c	ae 			scasb
+	*** 00093d	f7 d1 			not	cx
+	*** 00093f	49 			dec	cx
+	*** 000940	41 			inc	cx
+	*** 000941	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;pi
+	*** 000944	26 01 0f 		add	WORD PTR es:[bx],cx
+; Line 572
+; Line 573
+					$I1351:
+	*** 000947	fb 			sti	
+; Line 574
+	*** 000948	1e 			push	ds
+	*** 000949	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 00094c	e8 00 00 		call	_dprintf
+	*** 00094f	83 c4 04 		add	sp,4
+; Line 575
+	*** 000952	f6 06 01 00 01 		test	BYTE PTR _fDriverFlags+1,1
+	*** 000957	74 03 			je	$JCC2391
+	*** 000959	e9 08 00 		jmp	$I1352
+					$JCC2391:
+; Line 576
+	*** 00095c	68 00 00 		push	OFFSET _msgBuffer
+	*** 00095f	9a 00 00 00 00 		call	FAR PTR DEVHELP_SAVE_MESSAGE
+; Line 577
+					$I1352:
+	*** 000964	e9 00 00 		jmp	$EX1349
+; Line 578
+					$EX1349:
+	*** 000967	5e 			pop	si
+	*** 000968	5f 			pop	di
+	*** 000969	c9 			leave	
+	*** 00096a	c3 			ret	
+
+_SaveMessage	ENDP
+	PUBLIC	_GenIOCtl
+_GenIOCtl	PROC NEAR
+; Line 599
+	*** 00096b	c8 02 00 00 		enter	2,0
+	*** 00096f	57 			push	di
+	*** 000970	56 			push	si
+;	rc = -2
+;	rp = 4
+; Line 600
+	*** 000971	c7 46 fe 03 81 		mov	WORD PTR [bp-2],-32509	;8103H	;rc
+; Line 602
+	*** 000976	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rp
+	*** 000979	26 80 7f 0d c0 		cmp	BYTE PTR es:[bx+13],192	;00c0H
+	*** 00097e	74 03 			je	$JCC2430
+	*** 000980	e9 e0 00 		jmp	$I1358
+					$JCC2430:
+; Line 603
+; Line 604
+	*** 000983	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rp
+	*** 000986	26 8a 47 0e 		mov	al,BYTE PTR es:[bx+14]
+	*** 00098a	2a e4 			sub	ah,ah
+	*** 00098c	e9 93 00 		jmp	$S1359
+; Line 605
+; Line 606
+					$SC1363:
+; Line 607
+	*** 00098f	ff 76 06 		push	WORD PTR [bp+6]
+	*** 000992	ff 76 04 		push	WORD PTR [bp+4]	;rp
+	*** 000995	e8 68 f6 		call	_DriverVersion
+	*** 000998	83 c4 04 		add	sp,4
+	*** 00099b	89 46 fe 		mov	WORD PTR [bp-2],ax	;rc
+; Line 608
+	*** 00099e	e9 c2 00 		jmp	$SB1360
+; Line 610
+					$SC1364:
+; Line 611
+	*** 0009a1	ff 76 06 		push	WORD PTR [bp+6]
+	*** 0009a4	ff 76 04 		push	WORD PTR [bp+4]	;rp
+	*** 0009a7	e8 14 f7 		call	_DeviceList
+	*** 0009aa	83 c4 04 		add	sp,4
+	*** 0009ad	89 46 fe 		mov	WORD PTR [bp-2],ax	;rc
+; Line 612
+	*** 0009b0	e9 b0 00 		jmp	$SB1360
+; Line 614
+					$SC1365:
+; Line 615
+	*** 0009b3	ff 76 06 		push	WORD PTR [bp+6]
+	*** 0009b6	ff 76 04 		push	WORD PTR [bp+4]	;rp
+	*** 0009b9	e8 38 f8 		call	_ChangeList
+	*** 0009bc	83 c4 04 		add	sp,4
+	*** 0009bf	89 46 fe 		mov	WORD PTR [bp-2],ax	;rc
+; Line 616
+	*** 0009c2	e9 9e 00 		jmp	$SB1360
+; Line 618
+					$SC1366:
+; Line 619
+	*** 0009c5	ff 76 06 		push	WORD PTR [bp+6]
+	*** 0009c8	ff 76 04 		push	WORD PTR [bp+4]	;rp
+	*** 0009cb	e8 84 f9 		call	_QueryDeviceState
+	*** 0009ce	83 c4 04 		add	sp,4
+	*** 0009d1	89 46 fe 		mov	WORD PTR [bp-2],ax	;rc
+; Line 620
+	*** 0009d4	e9 8c 00 		jmp	$SB1360
+; Line 622
+					$SC1367:
+; Line 623
+	*** 0009d7	ff 76 06 		push	WORD PTR [bp+6]
+	*** 0009da	ff 76 04 		push	WORD PTR [bp+4]	;rp
+	*** 0009dd	e8 ca fa 		call	_SetDeviceState
+	*** 0009e0	83 c4 04 		add	sp,4
+	*** 0009e3	89 46 fe 		mov	WORD PTR [bp-2],ax	;rc
+; Line 624
+	*** 0009e6	e9 7a 00 		jmp	$SB1360
+; Line 626
+					$SC1368:
+; Line 627
+	*** 0009e9	ff 76 06 		push	WORD PTR [bp+6]
+	*** 0009ec	ff 76 04 		push	WORD PTR [bp+4]	;rp
+	*** 0009ef	e8 de fb 		call	_ReadMessages
+	*** 0009f2	83 c4 04 		add	sp,4
+	*** 0009f5	89 46 fe 		mov	WORD PTR [bp-2],ax	;rc
+; Line 628
+	*** 0009f8	e9 68 00 		jmp	$SB1360
+; Line 630
+					$SC1369:
+; Line 631
+	*** 0009fb	ff 76 06 		push	WORD PTR [bp+6]
+	*** 0009fe	ff 76 04 		push	WORD PTR [bp+4]	;rp
+	*** 000a01	e8 e0 fc 		call	_ClearMessages
+	*** 000a04	83 c4 04 		add	sp,4
+	*** 000a07	89 46 fe 		mov	WORD PTR [bp-2],ax	;rc
+; Line 632
+	*** 000a0a	e9 56 00 		jmp	$SB1360
+; Line 634
+					$SC1370:
+; Line 635
+	*** 000a0d	ff 76 06 		push	WORD PTR [bp+6]
+	*** 000a10	ff 76 04 		push	WORD PTR [bp+4]	;rp
+	*** 000a13	e8 23 fd 		call	_GetLaststatus
+	*** 000a16	83 c4 04 		add	sp,4
+	*** 000a19	89 46 fe 		mov	WORD PTR [bp-2],ax	;rc
+; Line 636
+	*** 000a1c	e9 44 00 		jmp	$SB1360
+; Line 637
+	*** 000a1f	e9 41 00 		jmp	$SB1360
+					$S1359:
+	*** 000a22	3d 60 00 		cmp	ax,96	;0060H
+	*** 000a25	75 03 			jne	$JCC2597
+	*** 000a27	e9 65 ff 		jmp	$SC1363
+					$JCC2597:
+	*** 000a2a	7e 03 			jle	$JCC2602
+	*** 000a2c	e9 17 00 		jmp	$L1392
+					$JCC2602:
+	*** 000a2f	2d 41 00 		sub	ax,65	;0041H
+	*** 000a32	75 03 			jne	$JCC2610
+	*** 000a34	e9 7c ff 		jmp	$SC1365
+					$JCC2610:
+	*** 000a37	48 			dec	ax
+	*** 000a38	75 03 			jne	$JCC2616
+	*** 000a3a	e9 9a ff 		jmp	$SC1367
+					$JCC2616:
+	*** 000a3d	48 			dec	ax
+	*** 000a3e	75 03 			jne	$JCC2622
+	*** 000a40	e9 b8 ff 		jmp	$SC1369
+					$JCC2622:
+	*** 000a43	e9 1d 00 		jmp	$SB1360
+					$L1392:
+	*** 000a46	2d 61 00 		sub	ax,97	;0061H
+	*** 000a49	75 03 			jne	$JCC2633
+	*** 000a4b	e9 53 ff 		jmp	$SC1364
+					$JCC2633:
+	*** 000a4e	48 			dec	ax
+	*** 000a4f	75 03 			jne	$JCC2639
+	*** 000a51	e9 71 ff 		jmp	$SC1366
+					$JCC2639:
+	*** 000a54	48 			dec	ax
+	*** 000a55	75 03 			jne	$JCC2645
+	*** 000a57	e9 8f ff 		jmp	$SC1368
+					$JCC2645:
+	*** 000a5a	48 			dec	ax
+	*** 000a5b	75 03 			jne	$JCC2651
+	*** 000a5d	e9 ad ff 		jmp	$SC1370
+					$JCC2651:
+	*** 000a60	e9 00 00 		jmp	$SB1360
+					$SB1360:
+; Line 638
+; Line 640
+					$I1358:
+	*** 000a63	8b 46 fe 		mov	ax,WORD PTR [bp-2]	;rc
+	*** 000a66	e9 00 00 		jmp	$EX1356
+; Line 641
+					$EX1356:
+	*** 000a69	5e 			pop	si
+	*** 000a6a	5f 			pop	di
+	*** 000a6b	c9 			leave	
+	*** 000a6c	c3 			ret	
+
+_GenIOCtl	ENDP
+_TEXT	ENDS
+END

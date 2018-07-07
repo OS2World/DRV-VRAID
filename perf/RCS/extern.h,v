@@ -1,0 +1,118 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@ * @;
+
+
+1.2
+date	97.12.08.23.04.14;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	97.10.28.02.09.09;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Data extern declarations
+@
+
+
+1.2
+log
+@- commented
+@
+text
+@/*
+ * $Source: e:/source/driver/perf/RCS/extern.h,v $
+ * $Revision: 1.1 $
+ * $Date: 1997/10/28 02:09:09 $
+ * $Locker$
+ *
+ * Data extern declarations
+ * (keep in sync with data.c)
+ *
+ * $Log: extern.h,v $
+ * Revision 1.1  1997/10/28 02:09:09  vitus
+ * Initial revision
+ * ----------------------------------------
+ * Author: Vitus Jensen, 2:2474/424
+ */
+
+extern DDHDR		DiskDDHeader;		/* device header, located
+						   at start of first segment*/
+extern ULONG		ppDiskDDHeader;		/* physical address of above */
+
+extern PFN		Device_Help;		/* entry to header routines */
+extern struct InfoSegGDT FAR	*pGlobalInfoSeg; /* nice to know */
+
+extern USHORT		hdThisDriver;		/* if filter: our handle */
+
+extern USHORT		fDriverFlags;
+#define DF_VERBOSE	0x0001			/* logo, some messages */
+#define DF_DEBUG	0x0002			/* many messages */
+#define DF_KEEP		0x0004			/* keep filter in memory */
+#define DF_INITDONE	0x0100			/* INIT stage 1 done, no more
+						   screen messages possible */
+
+
+extern char	szDriverName[];			/* my name "DPERF$" */
+
+
+
+/* Initialization Data */
+
+extern NPUCHAR	npInitData;			/* allocate memory here */
+
+extern UCHAR	DeviceTable[MAX_DEVICETABLE_SIZE]; /* if filter: */
+extern SCATGATENTRY	ScGaEntry;		/* needed to transfer data */
+
+
+extern UCHAR	szMsgBuffer[];		/* put ASCII messages in this buffer */
+extern MSGTABLE msgBuffer;		/* and use this to display */
+
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Author$
+d10 3
+a12 1
+ * $Log$
+d14 1
+d17 3
+a19 2
+extern DDHDR		DiskDDHeader;
+extern ULONG		ppDiskDDHeader;
+d21 2
+a22 2
+extern PFN		Device_Help;
+extern struct InfoSegGDT FAR	*pGlobalInfoSeg;
+d24 1
+a24 1
+extern USHORT		hdThisDriver;
+d27 5
+a31 3
+#define DF_VERBOSE	0x0001
+#define DF_DEBUG	0x0002
+#define DF_INITDONE	0x0100
+d34 1
+a34 1
+extern char		szDriverName[];
+d42 2
+a43 2
+extern UCHAR		DeviceTable[MAX_DEVICETABLE_SIZE];
+extern SCATGATENTRY	ScGaEntry;
+@

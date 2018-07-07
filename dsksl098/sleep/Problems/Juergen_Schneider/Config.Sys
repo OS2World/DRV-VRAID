@@ -1,0 +1,256 @@
+컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴
+[NETMAIL]
+Fr냣:      Juergen Schneider, 2:244/1172
+Till:        Vitus Jensen, 2:2474/400.8
+럐ne:   Dsksleep 0.70
+Datum:      11.46.01 46:97
+컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴
+Hallo Vitus!
+
+19 Dec 96 01:43, Vitus Jensen wrote to Juergen Schneider:
+
+ VJ> Moin Juergen,
+
+ VJ> 15.12.96 23:28, you wrote a message to Vitus Jensen:
+
+ JS>> Von Deinem Filter bin ich ganz begeistert, sowas habe ich schon
+ JS>> lange gesucht.
+
+ VJ> Oh, eine Rueckmeldung! Freu!!
+
+ JS>> Leider funktioniert er noch nicht immer so wie er sollte.
+
+ VJ> Aber keine ganz positive. :-(
+
+ JS>> Mit einer IBM-Platte (DFRS 4,5Gb) laeuft er eigentlich ganz gut,
+ JS>> nur ein Programm (Premaster fuer CD-Erstellung, IBM Inernal)
+ JS>> laeuft nicht damit. Eine aeltere Micropolis-Platte laeuft
+ JS>> ueberhaupt nicht wenn der Treiber aktiv ist (Schreibzugriffe
+ JS>> hinterlassen fuerchterliches..)
+
+ VJ> DskSleep traegt sich nur bei nicht-wechselbaren, nicht-defekten
+ VJ> Festplatten an SCSI-Controllern bei denen weder OS2SCSI.DMD- noch
+ VJ> OS2DASD.DMD-Zugriff verboten wurde als Filter ein.  Deshalb verstehe
+ VJ> ich nicht ganz, was diese Premaster-Software fuer Probleme haben
+ VJ> sollte.
+
+ JS>> Wenn Du mehr Informationen brauchst, melde Dich.
+
+ VJ> "laeuft nicht" ist ein wenig wage.
+ VJ> Am besten waere die ganze Maschine ;-), aber zumindest solltest Du den
+ VJ> Controller plus .ADD erwaehnen.
+
+Das ist ein NCR-Controller, vornedran ist eine IDE-Platte.
+
+ VJ> Die Aussagen ueber IBM- und die Micropolis-Platte betreffen die
+ VJ> gleiche
+ VJ>  Maschine? Wann treten Probleme auf, gleich nach dem Booten oder wenn
+ VJ> die Platten einmal gestoppt wurden? Was genau passiert?  Kein Zugriff
+ VJ> mehr moeglich, SCSI-Lampe dauernd an, kein Flush mehr bei CAD?  Platte
+ VJ> faehrt beim ersten Zugriff nach dem Stoppen wieder hoch: ja/nein, ...
+
+Muss ich nochmal testen.
+
+ VJ> Froehliche Weihnachten
+ VJ>     Vitus [Team OS/2 Germany #835]
+
+ VJ> PS: am Freitag fahre ich nach Hause und bin dann bis zum 7/1-97 nicht
+ VJ> mehr im Lande.  Du darfst Dir also Zeit lassen mit den Antworten.  Und
+ VJ> alle, die auf 0.80 (mit IOCtl-Doku und dsl.exe) warten, muessen sich
+ VJ> auch gedulden...
+
+Nun, ich hab mir auch Zeit genommen...
+
+Ich schick dir mal meine Confi:
+
+
+=== Cut ===
+*********** Systeminformationen -  ***********
+*********** Datei CONFIG.SYS - Informationen ***********
+Datum     Uhrzeit   Groesse   CONFIG.SYS Zeilen
+30.12.96  19.40.29  7915    CONFIG.SYS
+Nicht vorhanden             basedev=dsksleep.flt /t:15
+                            rem device=g:\sys\pause.sys
+26.03.96  13.36.15  58368   PROTSHELL=F:\CADCMDR\CADCMDR.EXE /DIR=F:\CADCMDR
+25.01.95  04.00.00  65570   DEVICE=C:\STACKER\STACKER.DMD
+25.01.95  04.00.00  7103    DEVICE=C:\STACKER\SSWAP2.SYS
+25.01.95  04.00.00  51726   RUN=C:\STACKER\FATMGR.EXE
+25.01.95  04.00.00  84493   CALL=C:\STACKER\SYNC2.EXE /A
+01.12.94  12.45.00  8928    device=f:\os2\mdos\vaspi.sys
+22.02.95  10.39.21  40790   device=d:\os2\backmast\ftdvr.sys
+                            rem device=d:\os2\bm20\ftdvr.sys
+17.09.95  16.03.05  3869    device=d:\os2\bm20\msraspi.sys
+26.01.96  18.42.00  144450  IFS=F:\OS2\HPFS.IFS /CACHE:2048 /CRECL:4 
+/AUTOCHECK:FGIHJ
+26.04.95  14.59.00  2198    DEVICE=F:\IBMCOM\PROTOCOL\LANPDD.OS2
+26.04.95  14.59.01  36912   DEVICE=F:\IBMCOM\PROTOCOL\LANVDD.OS2
+10.01.97  18.47.24  578792  SET USER_INI=F:\OS2\OS2.INI
+10.01.97  17.42.22  313468  SET SYSTEM_INI=F:\OS2\OS2SYS.INI
+26.01.96  18.58.00  80896   SET OS2_SHELL=F:\OS2\CMD.EXE
+                            SET AUTOSTART=PROGRAMS,TASKLIST,FOLDERS,LAUNCHPAD
+                            SET RESTARTOBJECTS=STARTUPFOLDERSONLY
+21.04.95  14.00.05  3650    SET RUNWORKPLACE=F:\OS2\PMSHELL.EXE
+26.01.96  18.58.00  80896   SET COMSPEC=F:\OS2\CMD.EXE
+                            LIBPATH=F:\MPTN\DLL;F:\IBMCOM\DLL;F:\IBMLAN\NETLIB; 
+F:\MUGLIB\DLL;.;F:\OS2\DLL;F:\OS2\MDOS;F:\;F:\OS2\APPS\DLL;F:\MMOS2\DLL;F:\GRPW 
+ARE;F:\NSC\DLL;D:\OS2\DLL;G:\EMX\DLL;G:\BCOS2\BIN;G:\CDWFS;G:\READIBM2;;g:\WATC 
+OM\BINP\DLL
+                            SET 
+PATH=F:\MPTN\BIN;F:\IBMCOM;G:\WATCOM\BINB;D:\OS2\UTIL;F:\IBMLAN\NETPROG;F:\MUGL 
+IB;F:\OS2;F:\OS2\SYSTEM;F:\OS2\INSTALL;F:\;F:\OS2\MDOS;F:\OS2\APPS;F:\MMOS2;F:\ 
+NSC;D:\WIN31;G:\BCOS2\BIN;D:\OS2\SVDISK;G:\CDWFS;G:\READIBM2;;g:\WATCOM\BINP;g: 
+\WATCOM\BINW
+                            SET 
+DPATH=F:\IBMCOM;F:\IBMLAN\NETPROG;F:\IBMLAN;F:\MUGLIB;F:\OS2;F:\OS2\SYSTEM;F:\O 
+S2\INSTALL;F:\;F:\OS2\BITMAP;F:\OS2\MDOS;F:\OS2\APPS;F:\MMOS2;F:\MMOS2\INSTALL; 
+F:\GRPWARE;F:\NSC;D:\WIN31;d:\os2\svdisk;
+Nicht vorhanden             BASEDEV=DETNE2.SYS
+                            SET PROMPT=$I[$P]
+                            SET 
+HELP=D:\OS2\HELP;F:\OS2\HELP;F:\OS2\HELP\TUTORIAL;F:\MMOS2\HELP;G:\BCOS2\BIN;G: 
+\READIBM2;;g:\WATCOM\BINP\HELP;
+                            SET GLOSSARY=F:\OS2\HELP\GLOSS;
+                            SET IPF_KEYS=SBCS
+                            PRIORITY_DISK_IO=NO
+                            FILES=20
+Nicht vorhanden             BASEDEV=IBMKBD.SYS
+21.04.95  14.35.12  9514    DEVICE=F:\OS2\LOG.SYS
+26.04.95  14.58.13  3572    DEVICE=F:\IBMCOM\LANMSGDD.OS2 /I:F:\IBMCOM
+26.04.95  14.55.25  20212   DEVICE=F:\IBMCOM\PROTMAN.OS2 /I:F:\IBMCOM
+30.10.95  15.33.00  5434    DEVICE=F:\OS2\BOOT\TESTCFG.SYS
+08.12.94  19.38.00  1142    DEVICE=F:\OS2\BOOT\DOS.SYS
+10.11.94  01.59.00  5403    DEVICE=F:\OS2\BOOT\PMDD.SYS
+                            BUFFERS=90
+                            IOPL=YES
+                            REM DISKCACHE=D,LW
+                            DISKCACHE=2048,LW,AC:CDH
+                            MAXWAIT=3
+                            MEMMAN=SWAP,PROTECT
+                            SWAPPATH=F:\OS2\SYSTEM 2048 2048
+                            BREAK=OFF
+                            THREADS=256
+                            PRINTMONBUFSIZE=134,134,134
+12.12.94  21.03.00  25610   COUNTRY=049,F:\OS2\SYSTEM\COUNTRY.SYS
+                            SET KEYS=ON
+                            SET 
+BOOKSHELF=d:\os2\help;F:\IBMLAN\BOOK;F:\OS2\BOOK;F:\MMOS2;G:\BCOS2\BIN;F:\CADCM 
+DR;g:\WATCOM\BINP\HELP;
+                            SET SOMIR=
+                            SET SOMDDIR=F:\OS2\ETC\DSOM
+Nicht vorhanden             BASEDEV=PRINT01.SYS
+Nicht vorhanden             BASEDEV=IBM1FLPY.ADD
+                            rem BASEDEV=IBM1S506.ADD /V
+                            rem BASEDEV=TRIOS2.ADD /V
+Nicht vorhanden             BASEDEV=PIIXIDE.ADD /V
+                            REM BASEDEV=XDFLOPPY.FLT
+Nicht vorhanden             BASEDEV=OS2DASD.DMD
+                            SET EPMPATH=F:\OS2\APPS;
+                            PROTECTONLY=NO
+26.01.96  19.09.00  60070   SHELL=F:\OS2\MDOS\COMMAND.COM F:\OS2\MDOS
+                            FCBS=16,8
+                            RMSIZE=640
+08.12.94  19.54.16  20064   DEVICE=F:\OS2\MDOS\VEMM.SYS
+                            REM DOS=LOW,NOUMB
+                            DOS=HIGH,UMB
+08.12.94  19.55.27  9792    DEVICE=F:\OS2\MDOS\VXMS.SYS /UMB
+05.12.95  00.11.00  22337   DEVICE=F:\OS2\MDOS\VDPMI.SYS
+04.12.95  23.56.00  25857   DEVICE=F:\OS2\MDOS\VDPX.SYS
+30.10.95  15.16.00  6704    DEVICE=F:\OS2\BOOT\APM.SYS
+08.12.94  20.02.10  1120    DEVICE=F:\OS2\MDOS\VAPM.SYS
+30.10.95  15.05.00  26580   DEVICE=F:\OS2\BOOT\OS2CDROM.DMD /V
+26.01.96  18.10.00  41795   IFS=F:\OS2\BOOT\CDFS.IFS /V /C:20 /M:8
+08.12.94  19.47.07  6704    DEVICE=F:\OS2\MDOS\VCDROM.SYS
+08.12.94  19.55.13  16864   DEVICE=F:\OS2\MDOS\VMOUSE.SYS
+09.08.95  16.23.00  1811    DEVICE=F:\OS2\BOOT\POINTDD.SYS
+30.10.95  15.15.00  18169   DEVICE=F:\OS2\BOOT\MOUSE.SYS
+                            rem DEVICE=F:\OS2\BOOT\COM.SYS
+                            rem DEVICE=F:\OS2\MDOS\VCOM.SYS
+15.12.94  23.43.14  52736   device=f:\sio\sio.sys
+15.12.94  23.43.14  15360   device=f:\sio\vsio.sys
+                            CODEPAGE=437,850
+04.12.95  23.36.00  157804  DEVINFO=KBD,GR,F:\OS2\KEYBOARD.DCP
+                            SET VIDEO_DEVICES=VIO_SVGA
+14.03.95  18.19.27  136028  DEVICE=F:\OS2\MDOS\VSVGA.SYS
+15.02.95  02.37.00  61354   DEVICE=F:\MMOS2\SB16D2.SYS 1 1 5 5 220 4 330 
+/N:SBAUD1$ /Q
+28.06.94  15.08.29  5648    DEVICE=F:\MMOS2\AUDIOVDD.SYS SBAUD1$
+                            SET MMBASE=F:\MMOS2;
+                            SET DSPPATH=F:\MMOS2\DSP;
+                            SET NCDEBUG=4000
+11.10.94  21.25.11  33048   DEVICE=F:\MMOS2\SSMDD.SYS
+30.01.95  16.59.15  8370    DEVICE=F:\MMOS2\R0STUB.SYS
+04.06.94  14.07.08  8127    RUN=F:\OS2\EPW.EXE
+26.04.95  14.55.24  13657   CALL=F:\IBMCOM\PROTOCOL\NETBIND.EXE
+26.04.95  14.58.13  1099    RUN=F:\IBMCOM\LANMSGEX.EXE
+21.04.95  14.35.26  15360   RUN=F:\OS2\SYSTEM\LOGDAEM.EXE
+                            SET ETC=F:\MPTN\ETC
+23.03.95  18.27.13  56571   DEVICE=F:\MPTN\PROTOCOL\SOCKETS.SYS
+23.03.95  18.27.13  8418    DEVICE=F:\MPTN\PROTOCOL\AFOS2.SYS
+26.04.95  14.27.07  36183   DEVICE=F:\MPTN\PROTOCOL\AFNB.SYS
+23.03.95  18.19.09  11587   RUN=F:\MPTN\BIN\CNTRL.EXE
+26.01.96  18.58.00  80896   CALL=F:\OS2\CMD.EXE /Q /C F:\MPTN\BIN\MPTSTART.CMD
+26.04.95  14.34.19  114244  DEVICE=F:\IBMCOM\PROTOCOL\NETBEUI.OS2
+24.04.95  10.37.10  1957    DEVICE=F:\IBMLAN\NETPROG\RDRHELP.200
+24.04.95  10.37.06  181584  IFS=F:\IBMLAN\NETPROG\NETWKSTA.200 /I:F:\IBMLAN /N
+26.04.95  14.37.17  15860   DEVICE=F:\IBMCOM\PROTOCOL\NETBIOS.OS2
+23.03.95  16.49.21  22923   DEVICE=F:\IBMCOM\MACS\ELNK3.OS2
+                            rem BASEDEV=OS2CAM.ADD /!DM:4 /!SM:4 /V
+Nicht vorhanden             BASEDEV=SYM8XX.ADD /!DM<0:6> /!SM<0:6> /V
+                            rem basedev=os2aspi.dmd /share
+Nicht vorhanden             BASEDEV=OS2ASPI.DMD /ALL
+Nicht vorhanden             BASEDEV=OS2SCSI.DMD
+                            rem basedev=tapeos2.dmd /v
+24.04.95  08.50.12  1009    RUN=F:\IBMLAN\NETPROG\LSDAEMON.EXE
+13.04.95  09.21.16  35840   DEVICE=F:\IBMLAN\NETPROG\VNETAPI.OS2
+16.02.95  21.34.22  9216    RUN=F:\IBMLAN\NETPROG\VNRMINIT.EXE
+                            SET NWDBPATH=F:\IBMLAN\NETPROG
+26.04.94  11.36.07  2121    device=d:\os2\novaback\novaspi.sys
+                            SET em=c:\em
+05.12.95  00.18.00  24592   DEVICE=F:\OS2\MDOS\VWIN.SYS
+08.12.94  19.12.29  11537   DEVICE=F:\OS2\MDOS\VW32S.SYS
+                            SET VIO_SVGA=DEVICE(BVHVGA,BVHSVGA)
+08.12.94  19.32.11  124708  DEVINFO=SCR,VGA,F:\OS2\BOOT\VIOTBL.DCP
+                            REM FaxFaxFaxFaxFax -- Bitte diese Zeilengruppe 
+nicht veraendern.
+                            IOPL=FxPrint
+06.10.94  12.00.00  10267   DEVICE=G:\FaxWorks\Fmd.sys L
+                            REM FaxFaxFaxFaxFax -- FaxWorks fuer OS/2
+                            REM === BC 2.0 ===
+                            SET IPFC=G:\BCOS2\IPFC;g:\WATCOM\TOOLKT2X\IPFC
+                            SET INCLUDE=g:\WATCOM\H\OS2;g:\WATCOM\H
+                            SET 
+PMREF=PMFUN.INF+PMGPI.INF+PMHOK.INF+PMMSG.INF+PMREL.INF+PMWIN.INF+PMWKP.INF
+                            SET PROGREF20=GUIREF20.INF
+                            SET WATCOM=g:\WATCOM
+                            SET EDPATH=g:\WATCOM\EDDAT
+29.02.96  10.06.00  15094   RUN=g:\WATCOM\BINP\BATSERV.EXE
+29.02.96  10.06.00  10214   RUN=g:\WATCOM\BINP\NMPBIND.EXE
+06.10.94  15.14.17  6520    DEVICE=F:\OS2\APPS\SYSIOS2.SYS
+24.02.95  08.13.07  22786   ifs=d:\os2\tvfs\tvfs.ifs
+28.05.95  01.17.00  7160    DEVICE=d:\os2\svdisk\SVDisk.sys
+                            SET BOOKMGR=.;K:\BOOKS;K:\SHELVES;
+                            SET READIBM=.;K:\BOOKS;K:\SHELVES;
+03.11.94  01.03.20  10339   RUN=F:\OS2\INSTALL\IBMCSFLK.EXE 
+F:\OS2\INSTALL\IBMCSFLK.LST
+                            SET PM_ASYNC_FOCUS_CHANGE=ON
+                            REM PCS Ctrl-Alt-Del Commander Update Program
+26.01.96  18.58.00  80896          CALL      =     F:\OS2\CMD.EXE /C 
+F:\CADCMDR\CADUPDT.CMD F: F:
+                            SET SMINCLUDE=
+
+19.09.96  03.00.00  149792  DEVICE=g:\QBOS2\DRVOPPQT.SYS
+19.09.96  03.00.00  53840   DEVICE=g:\QBOS2\DRVOQ117.SYS
+19.09.96  03.00.00  42096   DEVICE=g:\QBOS2\DRVOCDB.SYS
+*********** Systeminformationen -  ***********
+=== Cut ===
+
+ VJ> -+-
+
+Bye,
+
+Juergen
+
+--- GoldED/2 2.50.A0715+
+
+컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴
+

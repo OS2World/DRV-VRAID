@@ -1,0 +1,445 @@
+-*- Mode: indented-text -*-
+--- $Id: dsksleep.doc,v 1.13 2001/02/27 22:37:45 vitus Exp $
+
+    Disk Sleeper Filter - Driver Documentation
+
+Description
+
+    Disk Sleeper Filter is a filter driver to stop your _SCSI_ disks
+    while you're doing something else than working with your computer.
+
+
+
+Legal stuff (we need this, don't we?)
+
+    The author disclaims all warranties as to this software, whether
+    express or implied, including without limitation any implied
+    warranties of merchantability, fitness for a particular purpose,
+    functionality, data integrity or protection, in so far as permitted
+    by applicable legislation.
+
+    All trademarks are property of their respective owners and appear
+    for identification purposes only.
+
+
+
+Archive Contents
+
+    DSKsleep.flt        the filter itself
+    DSKsleep.ddp        installation script
+    DSKSleep.doc        this text
+    DSKSleep.history    version history
+    dsl.exe             small utility to change timeouts
+    regme.exe           to insert your registration code into DSKSleep.flt
+    DSKSlpub.h          public interface for programmers
+    dsl.c               sample application, source of dsl.exe
+    DSKSleep.sym        symbol file, to help debugging
+    file_id.diz         short description for BBS
+
+
+
+Installation
+
+    Make a backup of your system.  You should not need it, but better
+    safe than sorry...
+
+    It is recommended you have an OS/2 boot disk ready, just in case the
+    system locks up during the boot process and you want to remove the
+    driver.  On Warp you may use use ALT-F1, C for the same purpose to
+    boot to a command line with your original Config.Sys.
+
+    Execute DDINSTAL from a OS/2 command prompt or double-click the
+    Device Driver Install object (located in the System Setup folder) if
+    your system is Warp.  Change the source directory if necessary and a
+    selection list will open asking you to install the 'SCSI Disk
+    Sleeper'.  Mark that line and click on OK.  Reboot your machine.
+
+    Installation by hand is easy:
+
+        Copy DSKSLEEP.FLT to c:\ or c:\os2\boot, assuming c: is your
+        boot drive.
+
+        Edit your C:\Config.Sys file (i.e. using the OS/2 "System
+        Editor"):
+
+        Add the following line to your Config.Sys:  
+        BASEDEV=DSKSLEEP.FLT /V  (no subdirectory name!)
+
+    The position of 'BASEDEV=DSKSLEEP.FLT' in Config.Sys doesn't matter.
+    If, however, you encounter problems try top of file (if this solves
+    your problems please report with a listing of your Config.Sys).
+
+    WARNING:  as this piece of software accesses vital parts of your
+    system (without disks there is not much to do :), it is recommended
+    to use the '/DEBUG:1' (see below) switch at least once.  If this
+    succeeds, use 'dsl' to set a really short timeout (i.e. 3 minutes),
+    let the disks be stopped, and do any access to restart them (click 
+    on WPS, open folders, etc.).
+
+    If both test complete successfully you should regard DSKSleep as a
+    working piece of software on your computer.
+
+    If the first try to restart a disk isn't successful, DSKSleep will
+    beep and do a retry.  If that retry fails, DSKSleep will beep and do
+    a retry.  If that retry fails, ...  If your beeping machine hangs on
+    disk restart, you know where it comes from.  <g>
+
+
+
+Advanced Power Management (APM)
+
+    Beginning with version 0.98, DSKSleep is APM aware.  This means that
+    whenever your machine goes into APM Suspend, DSKSleep will
+    immediately stop all disks.
+
+    For this APM support, you need the following prerequisites:
+
+    - a BIOS with APM support enabled
+    - a timeout defined for Suspend mode in the BIOS
+    - APM.SYS loaded in C:\Config.Sys
+
+    If you encounter problems you may disable APM support via option
+    '/!APM'.  If you don't like the timeout feature and want to totally
+    rely on APM, set a very long timeout value via the '/T:<min>'
+    option.
+
+
+
+Options
+
+    /V
+        Verbose, display some useful and non usefull information (this
+        switch is always enabled in the unregistered version)
+
+    /SR
+        Shutdown Restart:  some BIOSes may not be able to handle a
+        stopped device when they do their initial scan.  They may have a
+        'Send START command' setting to solve this problem, but if they
+        don't, try '/SR'.  It will stop DSKSleep from stopping a disk
+        once the shutdown started and restart any disk still sleeping
+        when shutdown ended.
+
+    /DEBUG
+        Debugging display
+
+    /DEBUG:1
+        Debugging display and start/stop all devices once when driver is
+        loading.  Devices excluded with /!UT aren't tested.
+
+        This option requires certain support from the installed ADDs and
+        may not work with all of them.  Mostly know that trying this
+        option in systems with SYM8XX.ADD before version 4.09 may hang.
+        If you encounter this hang and want to do a test:  modify
+        installation or utility disks to include DSKSleep, boot from
+        those disks, wait a disk to get stopped and try a 'dir x:'  to
+        restart it.
+
+    /UT:(a1,u1,min1),(a2,u2,min2)
+        List of disks with special timeout needs.  You may exclude the
+        'min' value (or set it zero), in this case, the default
+        (possibly changed via '/T:') is used.
+
+    /!UT:(a1,u1),(a2,u2)
+        List of disks to exclude from sleeping.  They are added to
+        internal tables, but never stopped.  Use IOCtl (as in dsl.exe)
+        to enable sleeping on these disks.
+
+    /T:<min>
+        Set sleeping time to <min> minutes.  Default:  30 minutes.
+        Remember that starting a disk drive means stress for its
+        mechanical parts and do not set this time too low.  Maximum time
+        to set via '/T:<min>' is 1092 minutes (about 18 hours).
+
+    /!APM
+        Disable APM support
+
+
+    The 'a' and 'u' values in above options are indices.  'a' depends on
+    the ADD order in Config.Sys and numbers all adapters (including
+    floppy controllers, etc.).  'u' is an unit index which the ADD
+    determines.  BTW:  these are the same values as dsl.exe displays if
+    executed without parameters.
+
+    Examples:
+
+        Stop first disk on adapter 1 after 20 minutes, second disk on
+        that adapter after 15 minutes.  All other disks will be stopped
+        after 30 minutes (the default value):
+
+        BASEDEV=dsksleep.flt /UT:(1,0,20),(1,1,15)
+
+
+        Don't stop first disk on adapter 2, all other disks shall be
+        stopped after 60 minutes:
+
+        BASEDEV=dsksleep.flt /!UT:(2,0) /T:60
+
+
+        Using an explicit list of devices, specify default timeout for
+        all of them.  Note that this command line does nothing usefull:
+
+        BASEDEV=dsksleep.flt /UT:(1,0),(1,2),(1,3)
+
+
+    One word about screen output:  BASEDEV drivers cannot display
+    anything on the console immediately, they queue messages to be
+    displayed later by the system initialization.  Due to this fact, you
+    might not see any messages at all (if system hangs/traps before they
+    are yanked to console).
+
+    The best chance to see anything is to copy this driver to the second
+    of your "utility disks" (or installation disks if you don't run
+    Warp), change the Config.Sys there, (BASEDEV=dsksleep.flt /DEBUG:1),
+    and boot from them.  Now you don't rely on any hard disk.
+
+    Another way is to use 'dsl -m' to display all messages long after
+    the boot completed.  But this implies that DSKSleep can be loaded
+    without traps or hangs.
+
+
+
+DSL Utility, IOCtl Interface
+
+    To change the timeout values on a running system, a small utility
+    named DSL is included.  This thing started as a debugging tool and
+    is totally command line based.
+
+    Calling DSL without any options will display a list of devices and
+    their timeout values.  The following options may change DSL's
+    behavior:
+
+    -?
+        Display help screen and exit.
+
+    -c <a1>,<u1>,<m1> [<a2>,<u2>,<m2>]
+        Change timeout of unit <u1> at adapter <a1> to <m1> minutes and
+        unit <u2> at adapter <a2> to <m2> minutes.  Supply simple
+        numeric values for all <> parameters (values from output of DSL
+        w/o parameter), insert a comma between adapter, unit and timeout
+        parameter (no blank!)  and at least a single blank between the
+        first and the second adapter-unit-timeout triple.
+
+        Example, on my system DSL<return> says:
+
+          Current settings:
+           Adapter Unit   Minutes
+             1       0       40
+             1       1       30
+
+        To change the first device to 10 minutes and the second to 15, I
+        would use:
+
+        	 DSL -c 1,0,10 1,1,15
+
+        Got the point?  If you find this difficult to understand netmail
+        me a better description and I will it include in this file.  :-)
+
+    -q
+        Display seconds left until a device will be stopped.  That's a
+        value which is resetted to your configured timeout value on
+        every I/O.
+
+    -i <a1>,<u2>,<s1>
+        Change timer value for unit <u1> on adapter <a1> to <s1>
+        seconds.  Same syntax as '-c' parameter.  If you set <s1> to 0
+        the device will be stopped immediately (nearly).  However,
+        remember that any I/O will reset a timer to it's maximum.
+
+    -m
+        Displays boot time messages.  Output will be something like:
+
+
+            SCSI Disk Sleeper
+            Copyright 1996-97 by Vitus Jensen (2:2474/424)
+            Not registered for commercial use
+            Adapter 1, Unit 0 installed (40 min)
+            Adapter 1, Unit 1 installed (30 min)
+
+
+    Now, if you do not like DSL at all, feel free to modify it.  Source
+    code and a header how to access DSKSleep's IOCtl is provided.
+    Perhaps it will be nice to have a PM version of DSL?  DSL is enough
+    for me, but if you write (or are thinking to write) such a beast as
+    Share-/Freeware, netmail me and I will place a notice about it here.
+
+    BTW:  there is a 'hidden' option '-v' in DSL (as in most of my
+    programs) it may help to insert it in front of any other option...
+
+
+
+Tested Equipment
+
+    DSKSleep should work on any computer running OS/2 2.0 or higher.  It
+    should work with any SCSI-related software you may think of.  That,
+    at least, is the theory...
+
+    Please mail tested combinations (successful or failed) so I can try
+    to figure out where problems reside and make DSKSleep better.
+    Especially useful would be information from machines running more
+    than simple HPFS and/or FAT drives (i.e.  HPFS386, tapes, cd writer,
+    ...).
+
+    Any report should include at least CPU, RAM, OS/2 Version, FixPak,
+    File system, SCSI Controller, ADD Driver (incl.  Version), SCSI
+    Disks, other SCSI Devices.
+
+    If '/DEBUG:1' fails, a list of screen messages would be greatly
+    appreciated.  If the driver loads, please include the output of 'dsl
+    -m'.
+
+
+    I have discontinued to publish all equipment/tester combinations as
+    this started to be too much stuff to write <g>.  Thanks for the
+    feedback!
+
+
+    Successfully tested equipment includes:
+
+    486DX, Pentium, Pentium Pro and compatibles at different speeds
+    equipped with 16 to 64 MByte RAM.
+
+    Controllers:  
+        AHA1542B, AHA1520, AHA2940, AHA2940UW, AIC7860, AIC6360,NCR810,
+        NCR8150
+
+    Disks: 
+        Conner  CFA 540S
+        HP      C3325A
+        IBM     DFHS S2F, DORS 32160S, DPES 31080,
+        Quantum LPS 540, 730
+        Seagate Wren Runner 7
+        WD      SP4200
+
+
+    Beta testers included (but are most certainly not limited to):
+
+        Petric Frank, Jochen SchnÅrle, Thomas Waldmann, Stefan Milcke,
+        Herwig Bauernfeind, Thorsten Kowalski, Murat Kenger, GÅnter
+        Bartmann, Markus Noller, Stephan Bieker, Nicolai Dufva and a lot
+        more I probably forgot or who didn't write any comments.
+
+
+    DSKSleep was written (and tested before release) on the following
+    machines:
+
+        486DX4-133, 32 MB RAM, 256 KB Cache, ATI Mach32 VL
+        AHA6360 (Adaptec VL)
+        Western Digital Piranha SP4200 (200MB SCSI-II)
+        IBM DORS (2.1GB SCSI-II)
+        TEAK CD-ROM 516SK
+        Tandberg TDC 3600 (250MB SCSI-I, QIC)
+        OS/2 Warp 3 c/w WinOS2 (FP#17, CHKDSK32, NEWDASD, protectonly)
+
+        486DX-40, 20 MB RAM, 128 KB Cache, ATI Mach8
+        AHA1542B
+        Seagate Wren Runner 7 (1GB SCSI-I, by Imprimis)
+        AppleCD 150 (Sony CDU-8002 Apple-SCSI + CD800X.FLT)
+        OS/2 Warp 3 plus Warp Server Advanced (HPFS386, protectonly)
+
+        Remarks:
+            Wren Runner still cannot be  stopped.  SCB completes w/o
+            errors but device continues to turn.
+
+
+Registration
+
+    In general, this driver is a freeware program for noncommercial
+    users.  If you are a noncommercial user, there is no charge and you
+    should better spend your money on something else from the large
+    shareware market for OS/2.  However, I would like to hear from you 
+    on which software/hardware combinations this driver was used
+    successfully.  Just write a netmail or a nice postcard (see
+    addresses below).  This will tell my girlfriend the spent time
+    wasn't totally useless.  <g>
+
+    The unregistered version isn't crippled in any way.  The only
+    difference is that the registered version won't display a logo if
+    not told so via '/V'.
+
+    You are encouraged to copy and pass on the unregistered version of
+    this driver, as long as the archive is distributed in its original
+    form (complete and unmodified).  Please don't charge any money for
+    the distribution itself, exceeding the costs of media, etc.
+
+    You are a commercial user if your machine is being run by (or for) a
+    corporation, government, company, foundation, or any other
+    organization.  In this case, I expect you to register this software
+    after a reasonable testing period (60 days).
+
+    On registration you will receive a key based on your name to feed in
+    the regme.exe program to change the startup logo and remove the '/V
+    always' mode.  You will NOT receive a new archive.  This key will be
+    valid for all versions of the driver.
+
+    Registration fee is DM 25 per key, or the equivalent in a foreign
+    currency.  Payment may be made through Eurocheque (Europe) or postal
+    money order or transfer to my bank account.  If you decide to send
+    this money inside a simple envelope, (I'm honest, but the postman
+    may not be ;-) use DM or Danish or Swedish crowns, as I travel to
+    those countries regularly.
+
+    Response will be through fidonet crashmail (strongly preferred),
+    fidonet netmail, FAX or EMail.
+
+    If you cannot be reached electronically and don't have a friend who
+    can be, you may request an answer by snail mail.  Please add the
+    estimated costs for the letter to the registration fee.  German
+    users:  simply include a self-addressed envelope (with stamps on
+    it).  I will NOT return a key without at least some effort from your
+    side to account for the costs of the reply mail!
+
+    For all orders:  please WRITE YOUR NAME CLEARLY, as the key will be
+    based on it and supply a way to return the key back to you.  It may
+    be best to first test an electronic channel before sending money in
+    any way.
+
+
+
+Source Code Availability
+
+    What do you need it for?
+    As an example?  It's written using Microsoft C 6.0 and the OS/2 DDK.
+    If you already own the DDK you have many examples how to write
+    filter drivers.  If you don't, you get nothing useful from my source
+    code.
+
+    Additions:  the OS/2 DDK is available for download at no cost via
+    http://service.boulder.ibm.com/ddk.  I am releasing a simpler filter
+    driver including source code.  Look for dskprf??.zip (modifies SCSI
+    mode pages).
+
+    If your policy is to have any program you use in source code, you
+    may contact me, explain your reasons and we will handle this on a
+    personal basis.
+
+
+
+ToDo List
+
+    - Resource Manager Calls (plug n' pray <g>)
+    - Show system activity if a disk is stopped?  Flash keyboard LEDs,
+      activate SCSI LED, beep, humm, dance?
+    - More?  IOCtls?  Netmail any ideas.
+
+
+
+Author
+
+    Vitus Jensen (under assistance of Liesbeth who mostly talks about
+    cows(moo!) and tractors)
+
+    Address: Tischlerstr. 8, D-30916 Isernhagen, Germany
+    Bank Account: Kto 476861-203, Postbank Hamburg, BLZ 20010020
+    Fidonet: 2:2474/424 (V90S, X75), request DSKSL for newest version
+    EMail: Vitus_Jensen@gmx.de
+ 
+   FAX: +49-5136-893003 (thanks to Harald Pollack's FRec)
+    BBS: +49-5136-893003 (V90S, X75)
+
+    Music: Chet Baker, Dinah Washington, Antonio Carlos Jobim, ...
+
+    Written for Version: 0.98
+    Date: 23/02-2001
+
+
+=== The End ===

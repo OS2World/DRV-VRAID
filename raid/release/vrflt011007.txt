@@ -1,0 +1,27 @@
+                          Upload Information Template for Hobbes.nmsu.edu
+                          ===============================================
+
+        Archive Filename: vrflt011007.zip
+       Short Description: Updated VRAID.FLT for VRAID23.ZIP package.  Features faster rebuild.
+        Long Description: (none)
+
+      Proposed directory
+           for placement: /pub/os2/system/drivers/storage
+
+               Your name: Vitus Jensen
+           Email address: vraid@gmx.de
+    Program contact name: (same)
+   Program contact email: (same)
+             Program URL: (none) 
+
+      Would you like the
+   contact email address
+    included in listings? yes
+
+Operating System/Version: OS/2 Warp 3+
+ Additional requirements: VRAID23.ZIP
+
+                Replaces: (none)
+
+
+

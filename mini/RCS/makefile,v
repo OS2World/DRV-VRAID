@@ -1,0 +1,379 @@
+head	1.4;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2001.06.26.02.02.19;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.06.26.01.54.59;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.06.26.01.43.38;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.06.12.02.04.03;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Mini.sys - minimal character driver
+@
+
+
+1.4
+log
+@- removed ioctl.c
+@
+text
+@# -*- Mode: makefile -*-
+# $Source: r:/source/driver/mini/RCS/makefile,v $
+#
+# $Revision: 1.3 $
+# $Date: 2001/06/26 01:54:59 $
+# $Locker: vitus $
+#
+# 	Driver Name: Mini.sys - minimal character driver
+#
+# 	Usage: DMake [debug] [all]
+#
+# $Log: makefile,v $
+# Revision 1.3  2001/06/26 01:54:59  vitus
+# - moved compiler OBJs and dprintf.asm to ..
+#
+# Revision 1.2  2001/06/26 01:43:38  vitus
+# - moved DDK to R:\DEV\DDK
+#
+# Revision 1.1  2000/06/12 02:04:03  vitus
+# Initial revision
+#
+
+
+# Set defaults if not passed on commandline
+#
+LIST *= 0
+
+VERSION = 0
+SUBVERSION = 01
+
+
+
+
+# Locations w/ includes, libs and tools
+#
+DDK = R:\Dev\Ddk
+DDKTOOLS = D:\Dev\Ddk\Tools
+
+
+INC    = $(DDK)\Inc
+H      = $(DDK)\H
+DDKLIB = $(DDK)\Lib
+DISKH  = $(DDK)\Src\Dev\dasd\Diskh
+DHLIB  = $(DDK)\Src\Dev\Dasd\Devhelp
+ADDLIB = $(DDK)\Src\Dev\Dasd\Addcalls
+HFLAGS= -d -f -w -s
+
+
+# Compiler and other tools
+# Compiler are assumed to be installed so that they can
+# compile applications (header, libraries, etc).  Special
+# settings for driver development will be accounted for.
+# If environment variable WATCOM isn't set we assume MicroSoft C 5.1
+# or higher (tested with 6.0).
+
+.IF $(WATCOM) == $(NULL)
+CC = cl -nologo -c
+AS = ml -nologo -c
+.ELSE
+CC = wcc -zq
+AS =  $(DDKTOOLS)\Alp -Mb
+.ENDIF
+LINK = $(DDK)\Tools\Link /ba
+MAPSYM = mapsym
+H2INC = h2inc
+
+
+# Compiler and Linker Options
+
+.IF $(WATCOM) == $(NULL)
+AINC	= -I$(INC)
+AFLAGS	= -Cp
+ADFLAGS	= -Zm -Cp -Zi -DDEBUG
+CINC	= -I$(H) -I$(DISKH)
+CDEF	=  -DVERSION=$(VERSION) -DSUBVERSION=$(SUBVERSION)
+CFLAGS	= -Zelp1 -ASw -G2s -W3 -Orx
+CDFLAGS	= -Zelp1 -ASw -G2s -W3 -Ori -Zi -DDEBUG
+
+LIBS	= $(DHLIB)\Dhcalls.lib
+
+.ELSE
+AINC	= -I:$(INC)
+AFLAGS	= -D:WATCOMC
+ADFLAGS	= -D:WATCOMC -D:DEBUG
+CINC	= -i=$(H) -i=$(DISKH)
+CDEF	= -dVERSION=$(VERSION) -dSUBVERSION=$(SUBVERSION)
+CFLAGS	= -ms -zu -zdp -zff -zgf -5 -oxs -s -wx -zl -zp1 -d1+
+CDFLAGS	= -ms -zu -zdp -zff -zgf -zc -3 -oi -s -wx -zl -zp1 -hc -d1+ -DDEBUG
+
+LIBS	= 
+
+.ENDIF
+
+LFLAGS	= /map /nod /exepack /packd /a:16 /far
+RFLAGS	= -r
+
+
+
+
+#****************************************************************************
+# Set up Macros that will contain all the different dependencies for the
+# executables and dlls etc. that are generated.
+#****************************************************************************
+
+
+# OBJ files
+#
+OBJ1 =  o\Startup.obj o\data.obj o\Str1.obj
+OBJ2 =  o\Init1.obj
+OBJ3 =  o\Printk.obj
+
+#       Debug files
+#
+DBJ1 =	$(OBJ1:s/obj/dbj/) o\Dprintf.dbj
+DBJ2 =	$(OBJ2:s/obj/dbj/)
+DBJ3 =	$(OBJ3:s/obj/dbj/)
+
+# Complete lists
+#
+OBJS =	$(OBJ1) $(OBJ2) $(OBJ3)
+DBJS =	$(DBJ1) $(DBJ2) $(DBJ3)
+
+.IF $(WATCOM) == $(NULL)
+CLIB =	..\ANULREM.obj ..\ANFAULDI.obj ..\ANULDIV.obj
+.ELSE
+CLIB =	..\I4D.obj
+.ENDIF
+
+
+
+
+#****************************************************************************
+#   Setup the inference rules for compiling and assembling source code to
+#   obejct code.
+#****************************************************************************
+
+
+.IF $(WATCOM) == $(NULL)
+o\%.dbj : ..\%.asm
+	$(AS) $(ADFLAGS) $(AINC) -Fllist\$*.dod -Fo$@@ ..\$*.asm
+
+o\%.obj : %.asm
+	$(AS) $(AFLAGS) $(AINC) -Fllist\$*.cod -Fo$@@ $*.asm
+
+o\%.dbj : %.asm
+	$(AS) $(ADFLAGS) $(AINC) -Fllist\$*.dod -Fo$@@ $*.asm
+
+o\%.obj : %.c 'mini.h'
+	$(CC) $(CFLAGS) $(CINC) -Fllist\$*.cod -Fo$@@ $*.c
+
+o\%.dbj : %.c 'mini.h'
+	$(CC) $(CDFLAGS) $(CINC) -Fllist\$*.dod -Fo$@@ $*.c
+
+.ELSE
+
+o\%.obj : %.asm
+	$(AS) $(AFLAGS) $(AINC) $*.asm -Fl:list\$*.cod -Fo:$@@
+
+o\%.dbj : %.asm
+	$(AS) $(ADFLAGS) $(AINC) $*.asm -Fl:list\$*.dod -Fo:$@@
+
+o\%.obj : %.c 'mini.h'
+	$(CC) $(CFLAGS) $(CINC) $(CDEF) -fo=$@@ $*.c
+	wdisasm -b -l=list\$*.cod -s=$*.c $@@
+
+o\%.dbj : %.c 'mini.h'
+	$(CC) $(CDFLAGS) $(CINC) $(CDEF) -fo=$@@ $*.c
+	wdisasm -b -l=list\$*.dod -s=$*.c $@@
+.ENDIF
+
+%.inc : %.h
+	$(H2INC) $(HFLAGS) $*.h -o $*.inc
+
+
+
+
+#****************************************************************************
+#   Target Information
+#****************************************************************************
+
+# to be scanned by bldlevel.exe (but doesn't work?)
+
+FILEVER = @@\#Vitus Jensen:0.01\#@@
+
+
+
+# Should be the default tag for all general processing
+
+all: mini.sys
+
+debug: minid.sys
+
+clean:
+	+if exist *.lnk		del *.lnk
+	+if exist o\*.obj	del o\*.obj
+	+if exist o\*.dbj	del o\*.dbj
+	+if exist list\*.cod	del list\*.cod
+	+if exist list\*.dod	del list\*.dod
+	+if exist *.sym		del *.sym
+	+if exist *.sys		del *.sys
+	+if exist *.tff		del *.tff
+
+
+
+
+#****************************************************************************
+#   OBJ dependant rules for compiling and assembling source code
+#****************************************************************************
+
+
+
+
+#*****************************************************************************
+#   Linker commands
+#*****************************************************************************
+
+
+mini.sys: $(OBJS) $(LIBS) makefile
+	$(LINK) $(LFLAGS) @@$(mktmp,$*.lnk	\
+		$(OBJ1) +			\n\
+		$(CLIB) +			\n\
+		$(OBJ2) +			\n\
+		$(OBJ3)				\n\
+		$*.sys				\n\
+		$*.map				\n\
+		$(LIBS)				\n\
+		$(mktmp,$*.def			\
+			LIBRARY Mini		\n\
+			DESCRIPTION "$(FILEVER) Mini Character Driver" \n\
+			PROTMODE			\n\
+			SEGMENTS			\n\
+			 DDHeader	CLASS 'CONST'	\n\
+			 CONST		CLASS 'CONST'	\n\
+			 CONST		CLASS 'DATA'	\n\
+			 CONST2		CLASS 'DATA'	\n\
+			 LIBDATA	CLASS 'DATA'	\n\
+			 _DATA		CLASS 'DATA'	\n\
+			 _BSS		CLASS 'BSS'	\n\
+			 LIBCODE	CLASS 'CODE'	\n\
+			 'Code'		CLASS 'CODE'	\n\
+			 _TEXT		CLASS 'CODE'	\n\
+			 SwapData	CLASS 'FAR_DATA' IOPL	\n\
+			 INITDATA	CLASS 'FAR_DATA'	\n\
+			IMPORTS				\n\
+			   DOS16WRITE=DOSCALLS.138	\n\
+			   DOS16OPEN=DOSCALLS.70	\n\
+			   DOS16CLOSE=DOSCALLS.59	\n\
+			   DOS16DEVIOCTL=DOSCALLS.53\n); )
+	$(MAPSYM) $*.map
+
+
+minid.sys: $(DBJS) $(LIBS) makefile
+	$(LINK) $(LFLAGS) @@$(mktmp,$*.lnk	\
+		$(DBJ1) +			\n\
+		$(CLIB) +			\n\
+		$(DBJ2)	+			\n\
+		$(DBJ3)				\n\
+		$*.sys				\n\
+		$*.map				\n\
+		$(LIBS)	$(DDKLIB)\os2286.lib	\n\
+		$(mktmp,$*.def			\
+			LIBRARY Mini		\n\
+			DESCRIPTION "$(FILEVER) Mini Character Driver" \n\
+			PROTMODE			\n\
+			SEGMENTS			\n\
+			 DDHeader	CLASS 'CONST'	\n\
+			 CONST		CLASS 'CONST'	\n\
+			 CONST		CLASS 'DATA'	\n\
+			 CONST2		CLASS 'DATA'	\n\
+			 LIBDATA	CLASS 'DATA'	\n\
+			 _DATA		CLASS 'DATA'	\n\
+			 _BSS		CLASS 'BSS'	\n\
+			 LIBCODE	CLASS 'CODE'	\n\
+			 'Code'		CLASS 'CODE'	\n\
+			 _TEXT		CLASS 'CODE'	\n\
+			 SwapData	CLASS 'FAR_DATA' IOPL	\n\
+			 INITDATA	CLASS 'FAR_DATA'\n); )
+	$(MAPSYM) $*.map
+
+
+#****************************************************************************
+@
+
+
+1.3
+log
+@- moved compiler OBJs and dprintf.asm to ..
+@
+text
+@d4 2
+a5 2
+# $Revision: 1.2 $
+# $Date: 2001/06/26 01:43:38 $
+d13 3
+d109 1
+a109 1
+OBJ2 =  o\Ioctl.obj o\Init1.obj
+@
+
+
+1.2
+log
+@- moved DDK to R:\DEV\DDK
+@
+text
+@d4 2
+a5 2
+# $Revision: 1.1 $
+# $Date: 2000/06/12 02:04:03 $
+d13 3
+d121 1
+a121 1
+CLIB =	anulrem.obj anfauldi.obj anuldiv.obj
+d123 1
+a123 1
+CLIB =	i4d.obj
+d136 3
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 1
+a2 1
+# $Source$
+d4 3
+a6 3
+# $Revision$
+# $Date$
+# $Locker$
+d12 4
+a15 1
+# $Log$
+d30 2
+a31 2
+DDK = D:\Ddk
+DDKTOOLS = D:\Ddk\Tools
+@

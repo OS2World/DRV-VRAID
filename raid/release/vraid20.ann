@@ -1,0 +1,21 @@
+Neue VRAID Version verfgbar!
+
+VRAID.FLT Version 0.70 und VSetup.exe Version 0.80 sind freigegeben.  VRAID ist ein Software RAID Paket fr OS/2 2.0 und h”her.  Das Paket besteht aus einem Filter Treiber und einen Presentation Manager Programm zur Konfiguration.  Untersttzt werden RAID Level 0 und 1 sowie Chaining.
+
+Archiv: VRAID20.ZIP, 143KB, Frequest unter Magic VRAID bei 2:2474/424
+
+nderungen seit VRAID10.ZIP:
+	- Dokumentation als INF
+	- Treiber untersttzt RAID 1 (Mirroring)
+	- akustisches Signal bei Ausfall eines Teils eines RAID 1 Verbandes,
+	  abschaltbar via Setup Programm
+	- VRAID Partitionen k”nnen mit installierem Treiber entfernt werden,
+	  kein doppeltes Reboot mehr n”tig.
+	- Setup-Programm untersttzt Drag-n-Drop
+
+nderungen, die schon seperat erh„ltlich waren:
+	- Setup-Programm kommt nun auch mit von OS/2 gesperrten Laufwerken
+	  zurecht (Fix war verfgbar als VSETUP07.ZIP)
+	- Setup-Programm berschrieb versehentlich manchmal den MBR
+	  (Fix war verfgbar als VSETUP071.ZIP).
+

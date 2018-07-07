@@ -1,0 +1,88 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@ * @;
+
+
+1.1
+date	2000.06.12.01.07.24;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@General IOCtl interface
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@/*
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+ *
+ * 	General IOCtl interface
+ *
+ * $Log$
+ * ----------------------------------------
+ * Author: Vitus Jensen, 2:2474/424
+ */
+static char vcid[]="$Id: ioctl.c,v 1.4 1997/12/16 02:24:16 vitus Exp $";
+
+#include <string.h>
+
+#define INCL_NOBASEAPI
+#define INCL_DOSERRORS
+#define INCL_NOPMAPI
+#include <os2.h>
+#include <bseerr.h>
+
+#include <devcmd.h>
+#include <strat2.h>
+#include <reqpkt.h>
+
+#include "mini.h"
+
+
+
+
+/* Macro to verify that a certain memory range is
+ * readable/writable (depending on w). */
+
+#define CheckPointer(p,s,w)	DevHelp_VerifyAccess(FP_SEL(p),(s),FP_OFF(p),(w))
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Public Entries **************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * GenIOCtl(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ *
+ * RETURNS
+ *	driver status word
+ *
+ * DESPRIPTION
+ *	Calls approbiate subfunction.
+ *
+ * REMARKS
+ */
+PUBLIC USHORT
+GenIOCtl(PRP_GENIOCTL rp)
+{
+    return STATUS_ERR_UNKCMD;
+}
+@

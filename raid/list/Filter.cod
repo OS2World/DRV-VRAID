@@ -1,0 +1,184 @@
+;	Static Name Aliases
+;
+;	$S170_id	EQU	id
+	TITLE   Filter.c
+	.286p
+	.287
+_TEXT	SEGMENT  WORD PUBLIC 'CODE'
+_TEXT	ENDS
+_DATA	SEGMENT  WORD PUBLIC 'DATA'
+_DATA	ENDS
+CONST	SEGMENT  WORD PUBLIC 'CONST'
+CONST	ENDS
+_BSS	SEGMENT  WORD PUBLIC 'BSS'
+_BSS	ENDS
+INITDATA	SEGMENT  WORD PUBLIC 'FAR_DATA'
+INITDATA	ENDS
+DGROUP	GROUP	CONST, _BSS, _DATA
+	ASSUME DS: DGROUP
+	ASSUME  SS: NOTHING
+EXTRN	_CallADD:NEAR
+EXTRN	_NotifyIorb:NEAR
+_DATA      SEGMENT
+$S170_id	DB	'$Id: filter.c,v 1.4 2000/04/15 22:22:32 vitus Exp $',  00H
+_DATA      ENDS
+_TEXT      SEGMENT
+	ASSUME	CS: _TEXT
+	PUBLIC	_FilterHandler
+_FilterHandler	PROC NEAR
+; Line 81
+	*** 000000	c8 08 00 00 		enter	8,0
+	*** 000004	57 			push	di
+	*** 000005	56 			push	si
+;	disk = 4
+;	pIorb = 8
+;	CommandCode = -2
+;	register si = CommandModifier
+;	p = -4
+	*** 000006	8b 4e 08 		mov	cx,WORD PTR [bp+8]	;pIorb
+; Line 83
+	*** 000009	8b d9 			mov	bx,cx
+	*** 00000b	8e 46 0a 		mov	es,WORD PTR [bp+10]
+	*** 00000e	26 8b 77 06 		mov	si,WORD PTR es:[bx+6]
+; Line 91
+	*** 000012	26 8b 47 04 		mov	ax,WORD PTR es:[bx+4]
+; Line 167
+	*** 000016	48 			dec	ax
+	*** 000017	48 			dec	ax
+	*** 000018	75 03 			jne	$JCC24
+	*** 00001a	e9 81 00 		jmp	$SC1329
+					$JCC24:
+; Line 156
+	*** 00001d	8b 7e 04 		mov	di,WORD PTR [bp+4]	;disk
+; Line 159
+	*** 000020	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000023	26 c4 5d 14 		les	bx,DWORD PTR es:[di+20]
+	*** 000027	26 8b 07 		mov	ax,WORD PTR es:[bx]
+	*** 00002a	26 8b 57 02 		mov	dx,WORD PTR es:[bx+2]
+	*** 00002e	89 46 f8 		mov	WORD PTR [bp-8],ax
+	*** 000031	89 56 fa 		mov	WORD PTR [bp-6],dx
+	*** 000034	0b d0 			or	dx,ax
+	*** 000036	74 07 			je	$I1341
+; Line 160
+	*** 000038	c4 5e f8 		les	bx,DWORD PTR [bp-8]
+	*** 00003b	26 ff 47 07 		inc	WORD PTR es:[bx+7]
+; Line 161
+					$I1341:
+; Line 163
+	*** 00003f	8b 46 0a 		mov	ax,WORD PTR [bp+10]
+	*** 000042	8b d9 			mov	bx,cx
+	*** 000044	89 46 fe 		mov	WORD PTR [bp-2],ax	;CommandCode
+	*** 000047	8b d0 			mov	dx,ax
+	*** 000049	0b d1 			or	dx,cx
+	*** 00004b	74 35 			je	$FB1344
+					$F1342:
+; Line 164
+	*** 00004d	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000050	26 c4 75 14 		les	si,DWORD PTR es:[di+20]
+	*** 000054	26 8b 44 08 		mov	ax,WORD PTR es:[si+8]
+	*** 000058	8e 46 fe 		mov	es,WORD PTR [bp-2]	;CommandCode
+	*** 00005b	26 89 47 02 		mov	WORD PTR es:[bx+2],ax
+; Line 163
+	*** 00005f	26 f6 47 08 02 		test	BYTE PTR es:[bx+8],2
+	*** 000064	74 0e 			je	$L1345
+	*** 000066	8e 46 fe 		mov	es,WORD PTR [bp-2]	;CommandCode
+	*** 000069	26 8b 47 18 		mov	ax,WORD PTR es:[bx+24]
+	*** 00006d	26 8b 57 1a 		mov	dx,WORD PTR es:[bx+26]
+	*** 000071	eb 04 			jmp	SHORT $L1349
+	*** 000073	90 			nop	
+					$L1345:
+	*** 000074	33 c0 			xor	ax,ax
+	*** 000076	99 			cwd	
+					$L1349:
+	*** 000077	8b d8 			mov	bx,ax
+	*** 000079	89 56 fe 		mov	WORD PTR [bp-2],dx	;CommandCode
+	*** 00007c	8b c2 			mov	ax,dx
+	*** 00007e	0b c3 			or	ax,bx
+	*** 000080	75 cb 			jne	$F1342
+; Line 164
+					$FB1344:
+; Line 165
+	*** 000082	8b 46 0a 		mov	ax,WORD PTR [bp+10]
+	*** 000085	50 			push	ax
+	*** 000086	51 			push	cx
+	*** 000087	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 00008a	26 c4 5d 14 		les	bx,DWORD PTR es:[di+20]
+	*** 00008e	26 ff 77 06 		push	WORD PTR es:[bx+6]
+	*** 000092	26 ff 77 04 		push	WORD PTR es:[bx+4]
+	*** 000096	e8 00 00 		call	_CallADD
+	*** 000099	83 c4 08 		add	sp,8
+; Line 166
+	*** 00009c	eb 5d 			jmp	SHORT $EX1321
+; Line 93
+					$SC1329:
+; Line 94
+	*** 00009e	8b c6 			mov	ax,si
+; Line 152
+	*** 0000a0	48 			dec	ax
+	*** 0000a1	74 0b 			je	$SC1334
+	*** 0000a3	48 			dec	ax
+	*** 0000a4	74 20 			je	$SC1336
+	*** 0000a6	48 			dec	ax
+	*** 0000a7	74 2b 			je	$SC1338
+; Line 150
+	*** 0000a9	68 01 01 		push	257	;0101H
+	*** 0000ac	eb 41 			jmp	SHORT $L1350
+; Line 103
+					$SC1334:
+	*** 0000ae	8b 76 04 		mov	si,WORD PTR [bp+4]	;disk
+; Line 105
+	*** 0000b1	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0000b4	26 f6 04 01 		test	BYTE PTR es:[si],1
+	*** 0000b8	74 06 			je	$I1335
+; Line 108
+	*** 0000ba	68 02 02 		push	514	;0202H
+	*** 0000bd	eb 30 			jmp	SHORT $L1350
+	*** 0000bf	90 			nop	
+; Line 111
+					$I1335:
+	*** 0000c0	26 80 0c 01 		or	BYTE PTR es:[si],1
+	*** 0000c4	eb 27 			jmp	SHORT $L1351
+; Line 122
+					$SC1336:
+; Line 124
+	*** 0000c6	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;disk
+	*** 0000c9	26 f6 07 01 		test	BYTE PTR es:[bx],1
+	*** 0000cd	75 1e 			jne	$L1351
+; Line 127
+	*** 0000cf	68 01 02 		push	513	;0201H
+	*** 0000d2	eb 1b 			jmp	SHORT $L1350
+; Line 141
+					$SC1338:
+; Line 143
+	*** 0000d4	26 8b 47 46 		mov	ax,WORD PTR es:[bx+70]
+	*** 0000d8	26 8b 57 48 		mov	dx,WORD PTR es:[bx+72]
+	*** 0000dc	c4 76 04 		les	si,DWORD PTR [bp+4]	;disk
+	*** 0000df	1e 			push	ds
+	*** 0000e0	8d 7c 02 		lea	di,WORD PTR [si+2]
+	*** 0000e3	8b f0 			mov	si,ax
+	*** 0000e5	8e da 			mov	ds,dx
+	ASSUME DS: NOTHING
+	*** 0000e7	b9 09 00 		mov	cx,9
+	*** 0000ea	f3 			rep
+	*** 0000eb	a5 			movsw
+	*** 0000ec	1f 			pop	ds
+	ASSUME DS: DGROUP
+; Line 144
+					$L1351:
+	*** 0000ed	6a 00 			push	0
+					$L1350:
+	*** 0000ef	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 0000f2	ff 76 08 		push	WORD PTR [bp+8]	;pIorb
+	*** 0000f5	e8 00 00 		call	_NotifyIorb
+	*** 0000f8	83 c4 06 		add	sp,6
+; Line 170
+					$EX1321:
+	*** 0000fb	5e 			pop	si
+	*** 0000fc	5f 			pop	di
+	*** 0000fd	c9 			leave	
+	*** 0000fe	c3 			ret	
+	*** 0000ff	90 			nop	
+
+_FilterHandler	ENDP
+_TEXT	ENDS
+END

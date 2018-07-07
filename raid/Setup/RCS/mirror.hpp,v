@@ -1,0 +1,577 @@
+head	2.1;
+access;
+symbols
+	VSETUPv0_84:1.13
+	VSETUP_82:1.10
+	VSETUPv0_80:1.9
+	VSETUPv0_71:1.2
+	VSETUPv0_70:1.2;
+locks; strict;
+comment	@// @;
+
+
+2.1
+date	2005.06.17.06.09.37;	author vitus;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2001.01.15.01.28.47;	author vitus;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2000.08.17.02.16.32;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2000.08.07.01.25.37;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.07.05.00.48.49;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.06.21.01.30.52;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.06.19.22.05.23;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.06.19.17.22.31;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.06.02.01.46.18;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	99.05.26.01.33.42;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	99.05.13.22.41.21;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	99.04.13.01.26.18;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	99.03.08.05.08.02;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.03.04.02.06.28;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Declaration of class VMirror.
+@
+
+
+2.1
+log
+@- new setSize() method
+- added New BSD license statement
+- removed tabs
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/mirror.hpp,v $
+ * $Revision: 1.13 $
+ * $Date: 2001/01/15 01:28:47 $
+ * $Locker: vitus $
+ *
+ *      Declaration of class VMirror.
+ *
+ * $Log: mirror.hpp,v $
+ * Revision 1.13  2001/01/15 01:28:47  vitus
+ * - VMirror: implemented queryState()
+ *
+ * Revision 1.12  2000/08/17 02:16:32  vitus
+ * - method addChild() parameter 'datav' changed to sector no.
+ * - method querySize() now inline.
+ * - added ioInvalidChild(), ioStartRebuild()
+ *
+ * Revision 1.11  2000/08/07 01:25:37  vitus
+ * - adding support for rebuild state
+ *
+ * Revision 1.10  1999/07/05 00:48:49  vitus
+ * - addChild() gets additional flag "config sector valid", saved in child array
+ *
+ * Revision 1.9  1999/06/21 01:30:52  vitus
+ * - corrected english spelling
+ *
+ * Revision 1.8  1999/06/19 22:05:23  vitus
+ * - added 'state' member to hold fail/error/ready/build status
+ *
+ * Revision 1.7  1999/06/19 17:22:31  vitus
+ * - minor corrections (setHostdrive)
+ *
+ * Revision 1.6  1999/06/02 01:46:18  vitus
+ * - added inv_icon member (icon if child is invalid in respect to parent)
+ * - isValidChild() now non-inline and with two incarnations
+ *
+ * Revision 1.5  1999/05/26 01:33:42  vitus
+ * - added isValidChild(int which)
+ *
+ * Revision 1.4  1999/05/13 22:41:21  vitus
+ * - added ioRemoveChild()
+ * - removed bdone, handled per child
+ *
+ * Revision 1.3  1999/04/13 01:26:18  vitus
+ * - child[] now static member of object
+ *
+ * Revision 1.2  1999/03/08 05:08:02  vitus
+ * - added queryIcon() method
+ *
+ * Revision 1.1  1999/03/04 02:06:28  vitus
+ * Initial revision
+ * ---------------------------------------------
+ *      Copyright (c) 1998-2001,2005, Vitus Jensen
+ *      All rights reserved.
+ *
+ *      Redistribution and use in source and binary forms, with or without
+ *      modification, are permitted provided that the following conditions are
+ *      met:
+ *
+ *          * Redistributions of source code must retain the above copyright
+ *            notice, this list of conditions and the following disclaimer.
+ *          * Redistributions in binary form must reproduce the above copyright
+ *            notice, this list of conditions and the following disclaimer in
+ *            the documentation and/or other materials provided with the
+ *            distribution.
+ *          * Neither the name of Vitus Jensen nor the names of its
+ *            contributors may be used to endorse or promote products derived
+ *            from this software without specific prior written permission.
+ *
+ *      THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *      "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *      LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *      A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *      OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *      SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *      LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *      DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *      THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *      (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *      OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+#define _MIRROR_HPP     "$Id: mirror.hpp,v 1.13 2001/01/15 01:28:47 vitus Exp vitus $"
+
+
+
+
+
+class VMirror : public VDriveWithRedundancy {
+  private:
+    Boolean     hostdrive;
+    ULONG       os2access;
+
+    int         children;
+    struct _ChildInfo {
+        VRDev * rdev;
+        ULONG   valid;
+        Boolean cfgok;
+    } child[MAX_CHILDREN];
+
+    ULONG       size;
+    Boolean     writable;
+    HPOINTER    inv_icon, rw_icon, ro_icon;
+    ArrayState  state;
+
+
+  public:
+    VMirror(DEVID drive_id,int nchd);
+    ~VMirror();
+
+    void        setSize(ULONG newsize);
+    void        setBuild(ULONG nextsec, Boolean redo = False);
+    int         ioRemoveChild(VRDev * child);
+    int         ioInvalidChild(DEVID const id_of_invalid_child,
+                               ULONG from_this_sector_on);
+    int         ioStartRebuild(ULONG start_sector);
+
+    int         ioDeleteYourself();
+    int         ioRemoveParent();
+    int         ioChangeID(DEVID);
+    int         ioSync();
+
+    UCHAR       isArray() { return RDTYPE_MIRROR; }
+    Boolean     isHostdrive() { return hostdrive; }
+    char *      allocateDescription();
+    HPOINTER    queryIcon();
+    ArrayState  queryState() { return state; }
+    int         queryChildren();
+    VRDev *     getChild(int which);
+    Boolean     isValidChild(int which);
+    Boolean     isValidChild(VRDev * which);
+
+    void        setHostdrive(ULONG os2idx = -1UL);
+    void        addChild(VRDev * newchild, Boolean cfgv, ULONG datav = -1ul);
+
+    void        forceUnwritable() { writable = False; }
+    Boolean     isWritable() { return writable; }
+    ULONG       querySize() { return size; }
+    APIRET      read(ULONG offset,ULONG count,PVOID buffer);
+    APIRET      write(ULONG offset,ULONG count,PVOID buffer);
+};
+
+@
+
+
+1.13
+log
+@- VMirror: implemented queryState()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.12 $
+ * $Date: 2000/08/17 02:16:32 $
+d7 1
+a7 1
+ *	Declaration of class VMirror.
+d10 3
+d53 28
+a80 1
+ * This code is Copyright Vitus Jensen 1999-2001
+d82 1
+a82 1
+#define _MIRROR_HPP	"$Id: mirror.hpp,v 1.12 2000/08/17 02:16:32 vitus Exp vitus $"
+d90 2
+a91 2
+    Boolean	hostdrive;
+    ULONG	os2access;
+d93 1
+a93 1
+    int		children;
+d95 3
+a97 3
+	VRDev *	rdev;
+	ULONG	valid;
+	Boolean cfgok;
+d100 4
+a103 4
+    ULONG	size;
+    Boolean	writable;
+    HPOINTER	inv_icon, rw_icon, ro_icon;
+    ArrayState	state;
+d110 30
+a139 29
+    void	setBuild(ULONG nextsec, Boolean redo = False);
+    int		ioRemoveChild(VRDev * child);
+    int		ioInvalidChild(DEVID const id_of_invalid_child,
+			       ULONG from_this_sector_on);
+    int		ioStartRebuild(ULONG start_sector);
+
+    int		ioDeleteYourself();
+    int		ioRemoveParent();
+    int		ioChangeID(DEVID);
+    int		ioSync();
+
+    UCHAR	isArray() { return RDTYPE_MIRROR; }
+    Boolean	isHostdrive() { return hostdrive; }
+    char *	allocateDescription();
+    HPOINTER	queryIcon();
+    ArrayState	queryState() { return state; }
+    int		queryChildren();
+    VRDev *	getChild(int which);
+    Boolean	isValidChild(int which);
+    Boolean	isValidChild(VRDev * which);
+
+    void	setHostdrive(ULONG os2idx = -1UL);
+    void	addChild(VRDev * newchild, Boolean cfgv, ULONG datav = -1ul);
+
+    void	forceUnwritable() { writable = False; }
+    Boolean	isWritable() { return writable; }
+    ULONG	querySize() { return size; }
+    APIRET	read(ULONG offset,ULONG count,PVOID buffer);
+    APIRET	write(ULONG offset,ULONG count,PVOID buffer);
+@
+
+
+1.12
+log
+@- method addChild() parameter 'datav' changed to sector no.
+- method querySize() now inline.
+- added ioInvalidChild(), ioStartRebuild()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.11 $
+ * $Date: 2000/08/07 01:25:37 $
+d10 5
+d50 1
+a50 1
+ * This code is Copyright Vitus Jensen 1999-2000
+d52 1
+a52 1
+#define _MIRROR_HPP	"$Id: mirror.hpp,v 1.11 2000/08/07 01:25:37 vitus Exp vitus $"
+d73 2
+a74 3
+    enum {
+	Ready = 0, Build, Rebuild, Fail, Error
+    } state;
+d82 2
+a83 1
+    int		ioInvalidChild(DEVID id_of_invalid_child, ULONG from_this_sector_on);
+d95 1
+@
+
+
+1.11
+log
+@- adding support for rebuild state
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/07/05 00:48:49 $
+d10 3
+d47 1
+a47 1
+#define _MIRROR_HPP	"$Id: mirror.hpp,v 1.10 1999/07/05 00:48:49 vitus Exp vitus $"
+d61 1
+a61 1
+	Boolean	valid;
+d78 2
+d96 1
+a96 1
+    void	addChild(VRDev * newchild,Boolean cfgv,Boolean datav=True);
+d100 1
+a100 1
+    ULONG	querySize();
+@
+
+
+1.10
+log
+@- addChild() gets additional flag "config sector valid", saved in child array
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/06/21 01:30:52 $
+d10 3
+d41 2
+a42 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1999
+d44 1
+a44 1
+#define _MIRROR_HPP	"$Id: mirror.hpp,v 1.9 1999/06/21 01:30:52 vitus Exp vitus $"
+d66 1
+a66 1
+	Ready = 0, Build, Fail, Error
+d73 1
+a73 1
+    void	setBuild(ULONG nextsec);
+@
+
+
+1.9
+log
+@- corrected english spelling
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/06/19 22:05:23 $
+d10 3
+d41 1
+a41 1
+#define _MIRROR_HPP	"$Id: mirror.hpp,v 1.8 1999/06/19 22:05:23 vitus Exp vitus $"
+d56 1
+d88 1
+a88 1
+    void	addChild(VRDev * newchild,Boolean valid=True);
+@
+
+
+1.8
+log
+@- added 'state' member to hold fail/error/ready/build status
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/06/19 17:22:31 $
+d10 3
+d38 1
+a38 1
+#define _MIRROR_HPP	"$Id: mirror.hpp,v 1.7 1999/06/19 17:22:31 vitus Exp vitus $"
+d49 1
+a49 1
+    int		childs;
+d53 1
+a53 1
+    } child[MAX_CHILDS];
+d78 1
+a78 1
+    int		queryChilds();
+@
+
+
+1.7
+log
+@- minor corrections (setHostdrive)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1999/06/02 01:46:18 $
+d10 3
+d35 1
+a35 1
+#define _MIRROR_HPP	"$Id: mirror.hpp,v 1.6 1999/06/02 01:46:18 vitus Exp vitus $"
+d45 1
+d51 1
+d55 3
+a57 1
+    Boolean	building;			// BUILD process should run?
+@
+
+
+1.6
+log
+@- added inv_icon member (icon if child is invalid in respect to parent)
+- isValidChild() now non-inline and with two incarnations
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1999/05/26 01:33:42 $
+d10 4
+d32 1
+a32 1
+#define _MIRROR_HPP	"$Id: mirror.hpp,v 1.5 1999/05/26 01:33:42 vitus Exp vitus $"
+d73 1
+a73 1
+    void	setHostdrive(ULONG os2idx = -1);
+@
+
+
+1.5
+log
+@- added isValidChild(int which)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1999/05/13 22:41:21 $
+d10 3
+d28 1
+a28 1
+#define _MIRROR_HPP	"$Id: mirror.hpp,v 1.4 1999/05/13 22:41:21 vitus Exp vitus $"
+d45 1
+a45 1
+    HPOINTER	rw_icon, ro_icon;
+d66 2
+a67 2
+    Boolean	isValidChild(int which) { return child[which].valid; }
+
+@
+
+
+1.4
+log
+@- added ioRemoveChild()
+- removed bdone, handled per child
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1999/04/13 01:26:18 $
+d10 4
+d25 1
+a25 1
+#define _MIRROR_HPP	"$Id: mirror.hpp,v 1.3 1999/04/13 01:26:18 vitus Exp vitus $"
+d63 2
+@
+
+
+1.3
+log
+@- child[] now static member of object
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1999/03/08 05:08:02 $
+d10 3
+d21 1
+a21 1
+#define _MIRROR_HPP	"$Id: mirror.hpp,v 1.2 1999/03/08 05:08:02 vitus Exp vitus $"
+a39 1
+    ULONG	bnext;				// next sector when building
+d46 1
+@
+
+
+1.2
+log
+@- added queryIcon() method
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1999/03/04 02:06:28 $
+d10 3
+d18 1
+a18 1
+#define _MIRROR_HPP	"$Id: mirror.hpp,v 1.1 1999/03/04 02:06:28 vitus Exp vitus $"
+d32 1
+a32 1
+    } * child;
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 3
+a11 1
+ * $Log$
+d15 1
+a15 1
+#define _MIRROR_HPP	"$Id$"
+d32 3
+d50 1
+@

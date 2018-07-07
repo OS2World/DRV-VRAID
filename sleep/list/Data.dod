@@ -1,0 +1,65 @@
+;	Static Name Aliases
+;
+;	$S170_id	EQU	id
+	TITLE   Data.c
+	.286p
+	.287
+_TEXT	SEGMENT  WORD PUBLIC 'CODE'
+_TEXT	ENDS
+_DATA	SEGMENT  WORD PUBLIC 'DATA'
+_DATA	ENDS
+CONST	SEGMENT  WORD PUBLIC 'CONST'
+CONST	ENDS
+_BSS	SEGMENT  WORD PUBLIC 'BSS'
+_BSS	ENDS
+$$SYMBOLS	SEGMENT  BYTE PUBLIC 'DEBSYM'
+$$SYMBOLS	ENDS
+$$TYPES	SEGMENT  BYTE PUBLIC 'DEBTYP'
+$$TYPES	ENDS
+DGROUP	GROUP	CONST, _BSS, _DATA
+	ASSUME DS: DGROUP
+	ASSUME  SS: NOTHING
+PUBLIC  _Device_Help
+PUBLIC  _pGlobalInfoSeg
+PUBLIC  _ulTimer
+PUBLIC  _hdThisDriver
+PUBLIC  _cUnit
+PUBLIC  _anpUnit
+PUBLIC  _fDriverFlags
+PUBLIC  _fAPMSuspended
+PUBLIC  _szDriverName
+PUBLIC  _npInitData
+PUBLIC  _DeviceTable
+PUBLIC  _szMsgBuffer
+PUBLIC  _msgBuffer
+PUBLIC  _MemPool
+_DATA      SEGMENT
+$S170_id	DB	'$Id: Data.c,v 1.8 2001/02/27 02:27:56 vitus Exp $',  00H
+_Device_Help	DD	00H
+_pGlobalInfoSeg	DD	00H
+_fDriverFlags	DW	00H
+_fAPMSuspended	DB	00H
+	ORG	$+1
+_szDriverName	DB	'DSLEEPS$',  00H
+	ORG	$+1
+_hdThisDriver	DW	00H
+_ulTimer	DD	00H
+_anpUnit	DW	00H
+ 	DB	46 DUP(0)
+
+_cUnit	DW	00H
+_szMsgBuffer	DB	00H
+ 	DB	1023 DUP(0)
+
+_msgBuffer	DW	049aH
+	DW	01H
+	DD	DGROUP:_szMsgBuffer
+_MemPool	DB	00H
+ 	DB	30719 DUP(0)
+
+_npInitData	DW	DGROUP:_MemPool
+_DeviceTable	DB	00H
+ 	DB	1023 DUP(0)
+
+_DATA	ENDS
+END

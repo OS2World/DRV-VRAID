@@ -1,0 +1,40 @@
+
+/* OS/2 Warp 3.0 Resource Script File - Created by Prominare Designer */
+
+#define INCL_WINSYS
+#define INCL_WINBIDI
+#define INCL_WINSTDDLGS
+#define INCL_WINSTDSPIN
+#define INCL_NLS
+#define INCL_SW
+
+#include <os2.h>
+
+#include "\source\driver\raid\setup\resources.h"
+
+DLGTEMPLATE IDW_PROGRESS
+BEGIN
+    DIALOG "Array Verification", IDW_PROGRESS, 68, 75, 207, 79, FS_NOBYTEALIGN |
+                FS_DLGBORDER | WS_CLIPSIBLINGS | WS_SAVEBITS | WS_VISIBLE,
+                FCF_TITLEBAR | FCF_SYSMENU
+    PRESPARAMS PP_USER, "9.WarpSans"
+    BEGIN
+        CONTROL "",                    SL_PROGPERCENT, 9, 34, 187, 24,
+                                            WC_SLIDER, SLS_HORIZONTAL |
+                                            SLS_BOTTOM | SLS_BUTTONSRIGHT |
+                                            SLS_HOMELEFT | SLS_READONLY |
+                                            SLS_RIBBONSTRIP | SLS_PRIMARYSCALE1 |
+                                            WS_GROUP | WS_VISIBLE
+                CTLDATA 12, 0, 8, 0, 0, 0
+        CONTROL "~Pause",              PB_PAUSERESUME, 9, 8, 40, 14, WC_BUTTON,
+                                            BS_PUSHBUTTON | WS_TABSTOP |
+                                            WS_VISIBLE
+        CONTROL "~Abort",              DID_CANCEL, 64, 8, 40, 14, WC_BUTTON,
+                                            BS_PUSHBUTTON | WS_TABSTOP |
+                                            WS_VISIBLE
+        CONTROL "Percentage done",     -1, 60, 61, 84, 8, WC_STATIC, SS_TEXT |
+                                            DT_LEFT | DT_TOP | WS_GROUP |
+                                            WS_VISIBLE
+    END
+END
+RESOURCE     11                                 1 "u0000001.usr"

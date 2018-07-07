@@ -1,0 +1,11 @@
+-*- indented-text -*-
+
+-=- VSETUP -=-
+
+    * When an RAID 1 array is smaller than the PHYSDEVs it consists of
+      VSETUP only accepts new parts to that array which are at least
+      the size of the PHYSDEV (which one?).  VSETUP should look at the
+      array size not at the PHYSDEV size.
+
+      First modifications to VSETUP started (setSize() method) but
+      were not successfull so far.

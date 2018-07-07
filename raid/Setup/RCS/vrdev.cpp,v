@@ -1,0 +1,2351 @@
+head	1.16;
+access;
+symbols
+	VSETUPv0_84:1.16
+	VSETUP_82:1.14
+	VSETUPv0_80:1.10
+	VSETUPv0_71:1.6
+	VSETUPv0_70:1.6;
+locks; strict;
+comment	@// @;
+
+
+1.16
+date	2000.08.07.01.33.53;	author vitus;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2000.05.28.17.38.40;	author vitus;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2000.04.10.01.10.30;	author vitus;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	99.12.14.00.28.26;	author vitus;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	99.11.16.22.39.18;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	99.10.01.01.28.13;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.06.20.17.04.49;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.06.19.17.19.13;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.06.02.01.38.59;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.05.13.22.47.18;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.03.24.23.04.11;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	99.03.15.03.27.37;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	99.03.08.03.02.47;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	99.03.06.19.55.45;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	99.03.01.02.17.30;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.02.24.00.18.55;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Implements classes VRDev and direct childs.
+@
+
+
+1.16
+log
+@- VORDev: changed class member 'hd' to 'flt_hd'
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/vrdev.cpp,v $
+ * $Revision: 1.15 $
+ * $Date: 2000/05/28 17:38:40 $
+ * $Locker: vitus $
+ *
+ *	Implements classes VRDev and direct childs.
+ *
+ * $Log: vrdev.cpp,v $
+ * Revision 1.15  2000/05/28 17:38:40  vitus
+ * - adjusted verbosity levels
+ *
+ * Revision 1.14  2000/04/10 01:10:30  vitus
+ * - include VSetup.h instead of proto.h
+ * - converted C++ to C comments
+ *
+ * Revision 1.13  1999/12/14 00:28:26  vitus
+ * - more error logging
+ *
+ * Revision 1.12  1999/11/16 22:39:18  vitus
+ * - VOS2Disk: create() tries PDskLockIO() but ignores any errors
+ *
+ * Revision 1.11  1999/10/01 01:28:13  vitus
+ * - VFRDev constructor: DriverPhysinfo() changed to DriverPhyssize()
+ *
+ * Revision 1.10  1999/06/20 17:04:49  vitus
+ * - corrected VOS2Disk::create, didn't return a value
+ *
+ * Revision 1.9  1999/06/19 17:19:13  vitus
+ * - added VOS2Disk::VOS2Disk(ULONG idx,ULONG handle) constructor
+ *
+ * Revision 1.8  1999/06/02 01:38:59  vitus
+ * - VFRDev/VORDev: queryIcon() returns ICO_INVCHILDPDEV if parent says that this
+ *   child is invalid
+ *
+ * Revision 1.7  1999/05/13 22:47:18  vitus
+ * - ioRemoveParent: clear parent's admin sector
+ * - ioDeleteYourself: no disk i/o
+ *
+ * Revision 1.6  1999/03/24 23:04:11  vitus
+ * - allocateDescription() adds drive ID to description
+ *
+ * Revision 1.5  1999/03/15 03:27:37  vitus
+ * - VORDev: create new ID when PYSDEV sector is invalid
+ * - VORDev: doesn't delete theDisk if ioDeleteYourself() is called first
+ *
+ * Revision 1.4  1999/03/08 03:02:47  vitus
+ * - VORDev deletes it's disk when destructed
+ * - may now construct VORDev w/o SEC_PHYSDEV
+ *
+ * Revision 1.3  1999/03/06 19:55:45  vitus
+ * - implemented queryIcon() methods
+ *
+ * Revision 1.2  1999/03/01 02:17:30  vitus
+ * - many more methods to get things working again
+ *
+ * Revision 1.1  1999/02/24 00:18:55  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1999-2000
+ */
+static char const vcid[]="$Id: vrdev.cpp,v 1.15 2000/05/28 17:38:40 vitus Exp vitus $";
+
+#include <assert.h>
+#include <limits.h>
+#include <string.h>
+#include <stdio.h>
+#include <time.h>
+
+#define __IBMC__	0
+#define INCL_WINPOINTERS
+#define INCL_DOS
+#define INCL_DOSDEVIOCTL
+#define INCL_ERRORS
+#include <os2.h>
+
+extern "C" {
+#include "../../../Lib/defines.h"
+#include "../../../Lib/verbose.h"
+#include "../../../Lib/physdsk.h"
+}
+#include "VSetup.h"
+#include "drvif.h"
+#include "resources.h"
+
+#include "dskinfo.hpp"
+
+extern USHORT	usHostId;
+
+
+
+
+
+
+/* **********************************************************************
+ * **** VORDev::* *******************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * VORDev::VORDev(where,pstart,psize)
+ *
+ * PARAMETER
+ *	where		disk where this thing resides
+ *	pstart,psize	describes VRAID partition
+ * RETURNS
+ *	(nothing, C++)
+ * DESCRIPTION
+ *	Constructur for VORDev object.
+ *
+ * REMARKS
+ */
+VORDev::VORDev(VOS2Disk * where,ULONG pstart,ULONG psize)
+{
+    PSEC_PHYSDEV sec = new SEC_PHYSDEV;
+    APIRET	rc;
+
+    delete_disk = True;
+    theDisk = where;
+    partstart = pstart;
+    partsize = psize;
+    parent = NULL;
+    size = 0;
+    writable = theDisk->isWritable();
+
+    do
+    {
+	USHORT		crc;
+
+	rc = read(0, 1, sec);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VORDev::VORDev", "can't read PHYSDEV - rc %lu", rc);
+	    break;
+	}
+
+	crc = Crc16(sec, SECTOR_SIZE-2);
+	if( memcmp(sec->sectype, "PHYSDEVICE      ", 16) != 0 )
+	{
+	    Verbose(1, "VORDev", "missing PHYSDEV mark");
+	    rc = -1ul;				/* anything != 0 */
+	    break;
+	}
+	if( crc != sec->crc )
+	{
+	    Verbose(1, "VORDev", "CRC error in PHYSDEV sector (%#x, %#x)",
+		    crc,sec->crc);
+	    rc = -2ul;				/* anything != 0 */
+	    break;
+	}
+	memcpy(id, sec->u.s.id, sizeof(DEVID));
+	size = sec->u.s.size;
+    }
+    while(0);
+    delete sec;
+
+    if( rc != 0 )
+    {
+	/* Data couldn't be read from the disk because we are creating a
+	 * new VRAID partition and a new PHYSDEV sector.  Next call will
+	 * probably be ioSync() so prepare operation by inventing an ID
+	 * and a size... */
+
+	memcpy(&id[0], &usHostId, sizeof(usHostId));
+	*(PULONG)&id[2] = time(NULL);
+
+	size = psize - VRAID_ADMINSECTORS;
+    }
+
+    inv_icon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_INVCHILDPDEV);
+    rw_icon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_PDEVDRIVE);
+    ro_icon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_DISABLEDPDEV);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VORDev::~VORDev()
+ *
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	(none, C++)
+ *
+ * DESCRIPTION
+ *	Destructur for VORDev object.
+ *
+ * REMARKS
+ */
+VORDev::~VORDev()
+{
+    if( delete_disk == True )
+	delete theDisk;				/* no need for that disk object */
+
+    WinDestroyPointer(rw_icon);
+    WinDestroyPointer(ro_icon);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VORDev::allocateDescription()
+ *
+ * PARAMETER
+ *	(none)
+ * RETURNS
+ *	ASCIIZ
+ * DESCRIPTION
+ *	Allocates buffer and fill it with description of this object.
+ *
+ * REMARKS
+ */
+char *
+VORDev::allocateDescription()
+{
+    char * descr = new char[80];
+    sprintf(descr, "PHYSDEV (OS/2 Device %lu)\n"
+	    "ID %02X%02X%02X%02X%02X%02X    %lu MByte",
+	    theDisk->queryIndex(),
+	    id[0],id[1],id[2],id[3],id[4],id[5],
+	    size / 2 / 1024u);
+    return descr;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VORDev::queryIcon()
+ *
+ * PARAMETER
+ *	(none)
+ * RETURNS
+ *	handle of pointer/icon
+ *
+ * DESCRIPTION
+ *	Returns handle of special icnon for this class of devices.
+ *
+ * REMARKS
+ */
+HPOINTER
+VORDev::queryIcon()
+{
+    if( parent != 0  &&  parent->isValidChild(this) == False )
+	return inv_icon;
+    else if( writable == True )
+	return rw_icon;
+    else
+	return ro_icon;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VORDev::ioChangeID(newid)
+ *
+ * PARAMETER
+ *	newid		new DEVID
+ * RETURNS
+ *	count of errors
+ *
+ * DESCRIPTION
+ *	Changes our own DEVID.
+ *
+ * REMARKS
+ */
+int
+VORDev::ioChangeID(DEVID newid)
+{
+    PSEC_PHYSDEV	sec = new SEC_PHYSDEV;
+    int			errors = 0;
+
+    memcpy(id, newid, sizeof(DEVID));		/* update object */
+
+    do
+    {
+	APIRET	rc;
+
+	rc = read(0, 1, sec);			/* remember: 0 defines ourself */
+	if( rc != 0 )
+	{
+	    Verbose(1,"VORDev::ioChangeID","can't read own SEC_PHYSDEV - rc %lu",rc);
+	    ++errors;
+	    break;
+	}
+
+	memcpy(sec->u.s.id, newid, sizeof(DEVID));
+	sec->timestamp = time(NULL);		/* UTC of change */
+	sec->crc = Crc16(sec, SECTOR_SIZE-2);	/* !!! */
+
+	rc = write(0, 1, sec);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VORDev::ioChangeID", "can't write own SEC_PHYSDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+    }
+    while(0);
+
+    delete sec;
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VORDev::ioRemoveParent()
+ *
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	count of errors
+ *
+ * DESCRIPTION
+ *	No parent means: all room in partition usable as user space.
+ *
+ * REMARKS
+ */
+int
+VORDev::ioRemoveParent()
+{
+    PSEC_PHYSDEV	sec = new SEC_PHYSDEV;
+    int		errors = 0;
+    APIRET	rc;
+
+
+    /* 1st: clear administraive sector of parent. */
+
+    memset(sec, 0, SECTOR_SIZE);
+    rc = write(1, 1, sec);
+    if( rc != 0 )
+    {
+	Verbose(1, "VORDev::ioRemoveParent", "can't clear parent SEC_VRDEV - rc %lu", rc);
+	++errors;
+    }
+
+
+    /* 2nd: update size (no RDFLAG_HOSTDRIVE) */
+
+    do
+    {
+	rc = read(0, 1, sec);			/* remember: 0 defines ourself */
+	if( rc != 0 )
+	{
+	    Verbose(1, "VORDev::ioRemoveParent", "can't read own SEC_PHYSDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	sec->u.s.size = size = partsize - sec->u.s.adminspace;
+	sec->timestamp = time(NULL);
+	sec->crc = Crc16(sec, SECTOR_SIZE-2);	/* !!! */
+
+	rc = write(0, 1, sec);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VORDev::ioRemoveParent", "can't write own SEC_PHYSDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	parent = NULL;				/* none */
+    }
+    while(0);
+
+    delete sec;
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VORDev::ioDeleteYourself()
+ *
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	count of errors
+ *
+ * DESCRIPTION
+ *	Destroys itself by clearing configuration sector.
+ *
+ * REMARKS
+ */
+int
+VORDev::ioDeleteYourself()
+{
+    PUCHAR	buffer = new UCHAR[SECTOR_SIZE];
+    PMBR const	mbr = (PMBR)buffer;
+    APIRET	rc;
+    int		errors = 0;
+
+    delete_disk = False;			/* destructor: don't delete theDisk */
+
+    do
+    {
+	memset(buffer, 0, SECTOR_SIZE);
+	rc = write(0, 1, buffer);		/* clear PHYSDEV sector */
+	if( rc != 0 )
+	{
+	    Verbose(1, "VORDev::ioDeleteYourself", "can't clear SEC_PHYSDEV - rc %lu", rc);
+	    ++errors;				/* ignore errors */
+	}
+
+	int	i;
+	int	found = -1;			/* indices */
+
+	rc = theDisk->read(0, 1, buffer);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VORDev::ioDeleteYourself", "can't read MBR - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	if( mbr->Signature != 0xAA55 )
+	{
+	    Verbose(1, "VORDev", "invalid MBR, done");
+	    break;
+	}
+
+	for( i = 0; i < 4; ++i )
+	{
+	    if( mbr->PartitionTable[i].SysIndicator == VRAID_PARTTYPE )
+	    {
+		memset(&mbr->PartitionTable[i], 0, sizeof(mbr->PartitionTable[i]));
+		found = i;
+		break;
+	    }
+	}
+
+	if( found == -1 )
+	{
+	    Verbose(0, "VORDev", "no VRAID partition, done");
+	    break;				/* rc still 0 */
+	}
+
+	rc = theDisk->write(0, 1, buffer);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VORDev::ioDeleteYourself", "can't write MBR - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+    }
+    while(0);
+
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VORDev::ioSync()
+ *
+ * PARAMETER
+ *	(none, C++)
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	'this' has been changed -> update physical storage.
+ *
+ * REMARKS
+ */
+int
+VORDev::ioSync()
+{
+    PSEC_PHYSDEV	sec = new SEC_PHYSDEV;
+    int			modified = 0;
+    APIRET		rc;
+    int			errors = 0;
+
+
+    do
+    {
+	rc = read(0, 1, sec);
+	if( rc )
+	{
+	    Verbose(1, "VORDev::ioSync", "can't read own SEC_PHYSDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	if( memcmp(sec->sectype, "PHYSDEVICE      ", 16) != 0
+	    ||  Crc16(sec, SECTOR_SIZE-2) != sec->crc )
+	{
+	    Verbose(1, "VORDev", "new PHYSDEV sector");
+	    ++modified;
+	    memset(sec, 0, sizeof(*sec));
+
+	    memcpy(sec->sectype, "PHYSDEVICE      ", 16);
+	    sec->u.s.adminspace = VRAID_ADMINSECTORS;
+	    size = sec->u.s.size = (partsize - sec->u.s.adminspace);
+
+	    memcpy(sec->u.s.id, id, sizeof(DEVID));
+	}
+
+	if( size != sec->u.s.size )
+	{
+	    ++modified;
+	    sec->u.s.size = size;
+	}
+
+	if( modified )
+	{
+	    sec->timestamp = time(NULL);
+	    sec->crc = Crc16(sec, SECTOR_SIZE-2); /* !!! */
+	    rc = write(0, 1, sec);
+	    if( rc != 0 )
+	    {
+		Verbose(1, "VORDev::ioSync", "write(0,1,...) - rc %lu, not updated", rc);
+		++errors;
+		break;
+	    }
+	}
+    }
+    while(0);
+
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VORDev::querySize()
+ *
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	size of device
+ *
+ * DESCRIPTION
+ *	Guess!
+ *
+ * REMARKS
+ */
+ULONG
+VORDev::querySize()
+{
+    return (size == 0 ? partsize : size);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VORDev::read(block,count,buffer)
+ *
+ * PARAMETER
+ *	block		block number on disk
+ *	count		how many blocks?
+ *	buffer		data from here
+ * RETURNS
+ *	0		OK
+ *	/0		APIRET
+ *
+ * DESCRIPTION
+ *	Read one or more sectors from configuration space of disk.  Done
+ *	when analysing disk contents.
+ *
+ * REMARKS
+ */
+APIRET
+VORDev::read(ULONG block,ULONG count,PVOID buffer)
+{
+    return theDisk->read(partstart+block, count, buffer);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VORDev::write(block,count,buffer)
+ *
+ * PARAMETER
+ *	block		block number on disk
+ *	count		how many blocks?
+ *	buffer		data from here
+ * RETURNS
+ *	0		OK
+ *	/0		APIRET
+ *
+ * DESCRIPTION
+ *	Write one or more sectors to configuration space of disk. Done
+ *	when creating something new.
+ *
+ * REMARKS
+ */
+APIRET
+VORDev::write(ULONG block,ULONG count,PVOID buffer)
+{
+    return theDisk->write(partstart+block, count, buffer);
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** VFRDev::* *******************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * VFRDev::VFRDev(flthd)
+ *
+ * PARAMETER
+ *	flthd		how to access via VRAID.FLT
+ * RETURNS
+ *	(nothing, C++)
+ * DESCRIPTION
+ *	Constructur for VFRDev object.
+ *
+ * REMARKS
+ */
+VFRDev::VFRDev(USHORT flthd)
+{
+    APIRET	rc;
+    PSEC_PHYSDEV sec = new SEC_PHYSDEV;
+
+    flt_hd = flthd;
+    parent = NULL;
+
+    /* Assume this device may be changed by VSETUP.  Only 'VORDev',
+     * 'VOS2Disk' and top-level 'VRDrive' objects should get an
+     * 'avail = 0'. */
+
+    writable = True;
+
+    do
+    {
+	USHORT		crc;
+
+	rc = DriverPhyssize(flt_hd, &partsize);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VFRDev::VFRDev", "DriverPhyssize - rc %lu", rc);
+	    break;
+	}
+
+	rc = read(0, 1, sec);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VFRDev::VFRDev", "read(0,1,...) - rc %lu", rc);
+	    break;
+	}
+
+	if( memcmp(sec->sectype, "PHYSDEVICE      ", 16) != 0 )
+	{
+	    Verbose(1, "VFRDev", "missing PHYSDEV mark");
+	    rc = -1ul;				/* anything != 0 */
+	    break;
+	}
+
+	crc = Crc16(sec, SECTOR_SIZE-2);
+	if( crc != sec->crc )
+	{
+	    Verbose(1, "VFRDev", "CRC error in PHYSDEV sector (%#x, %#x)",
+		    crc,sec->crc);
+	    rc = -2ul;				/* anything != 0 */
+	    break;
+	}
+	memcpy(id, sec->u.s.id, sizeof(DEVID));
+	size = sec->u.s.size;
+    }
+    while(0);
+    delete sec;
+
+    inv_icon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_INVCHILDPDEV);
+    rw_icon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_PDEVDRIVE);
+    ro_icon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_DISABLEDPDEV);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VFRDev::~VFRDev()
+ *
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	(none, C++)
+ *
+ * DESCRIPTION
+ *	Destructur for VFRDev object.
+ *
+ * REMARKS
+ */
+VFRDev::~VFRDev()
+{
+    WinDestroyPointer(rw_icon);
+    WinDestroyPointer(ro_icon);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VFRDev::allocateDescription()
+ *
+ * PARAMETER
+ *	(none)
+ * RETURNS
+ *	ASCIIZ
+ * DESCRIPTION
+ *	Allocates buffer and fill it with description of this object.
+ *
+ * REMARKS
+ */
+char *
+VFRDev::allocateDescription()
+{
+    char * descr = new char[80];
+    sprintf(descr, "PHYSDEV (filter device handle %#x)\n"
+	    "ID %02X%02X%02X%02X%02X%02X    %lu MByte partition",
+	    flt_hd,
+	    id[0],id[1],id[2],id[3],id[4],id[5],
+	    partsize / 2 / 1024);
+    return descr;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VFRDev::queryIcon()
+ *
+ * PARAMETER
+ *	(none)
+ * RETURNS
+ *	handle of pointer/icon
+ *
+ * DESCRIPTION
+ *	Returns handle of special icnon for this class of devices.
+ *
+ * REMARKS
+ */
+HPOINTER
+VFRDev::queryIcon()
+{
+    if( parent != 0  &&  parent->isValidChild(this) == False )
+	return inv_icon;
+    else if( writable == True )
+	return rw_icon;
+    else
+	return ro_icon;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VFRDev::ioRemoveParent()
+ *
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	count of errors
+ *
+ * DESCRIPTION
+ *	No parent means: all room in partition usable as user space.
+ *
+ * REMARKS
+ */
+int
+VFRDev::ioRemoveParent()
+{
+    PSEC_PHYSDEV	sec = new SEC_PHYSDEV;
+    int		errors = 0;
+    APIRET	rc;
+
+
+    /* 1st: clear administrative sector of parent. */
+
+    memset(sec, 0, SECTOR_SIZE);
+    rc = write(1, 1, sec);
+    if( rc != 0 )
+    {
+	Verbose(1, "VFRDev::ioRemoveParent",
+		"can't clear parent SEC_VRDEV - rc %lu", rc);
+	++errors;
+    }
+
+
+    /* 2nd: update size (no RDFLAG_HOSTDRIVE) */
+
+    do
+    {
+	rc = read(0, 1, sec);			/* remember: 0 defines ourself */
+	if( rc != 0 )
+	{
+	    Verbose(1, "VFRDev::ioRemoveParent",
+		    "can't read own SEC_PHYSDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	sec->u.s.size = size = partsize - sec->u.s.adminspace;
+	sec->timestamp = time(NULL);
+	sec->crc = Crc16(sec, SECTOR_SIZE-2);	/* !!! */
+
+	rc = write(0, 1, sec);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VFRDev::ioRemoveParent", "can't write own SEC_PHYSDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	parent = NULL;				/* none */
+    }
+    while(0);
+
+    delete sec;
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VFRDev::ioChangeID(myid)
+ *
+ * PARAMETER
+ *	myid		new DEVID
+ * RETURNS
+ *	count of errors
+ *
+ * DESCRIPTION
+ *	Changes our own DEVID.
+ *
+ * REMARKS
+ */
+int
+VFRDev::ioChangeID(DEVID newid)
+{
+    PSEC_PHYSDEV	sec = new SEC_PHYSDEV;
+    int		errors = 0;
+
+    memcpy(id, newid, sizeof(DEVID));		/* update object */
+
+    do
+    {
+	APIRET	rc;
+
+	rc = read(0, 1, sec);			/* remember: 0 defines ourself */
+	if( rc != 0 )
+	{
+	    Verbose(1,"VFRDev::ioChangeID","can't read own SEC_PHYSDEV - rc %lu",rc);
+	    ++errors;
+	    break;
+	}
+
+	memcpy(sec->u.s.id, newid, sizeof(DEVID));
+	sec->timestamp = time(NULL);		/* UTC of change */
+	sec->crc = Crc16(sec, SECTOR_SIZE-2);	/* !!! */
+
+	rc = write(0, 1, sec);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VFRDev::ioChangeID", "can't write own SEC_PHYSDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+    }
+    while(0);
+
+    delete sec;
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VFRDev::ioDeleteYourself()
+ *
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	count of errors
+ *
+ * DESCRIPTION
+ *	Destroys itself by clearing configuration sector.
+ *
+ * REMARKS
+ */
+int
+VFRDev::ioDeleteYourself()
+{
+    PUCHAR	buffer = new UCHAR[SECTOR_SIZE];
+    APIRET	rc;
+    int		errors = 0;
+
+    memset(buffer, 0, SECTOR_SIZE);
+    rc = write(0, 1, buffer);			/* clear PHYSDEV sector */
+    if( rc != 0 )
+    {
+	Verbose(1, "VFRDev::ioDeleteYourself", "can't clear own SEC_PHYSDEV - rc %lu", rc);
+	++errors;				/* ignore errors */
+    }
+
+    delete[] buffer;
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VFRDev::ioSync()
+ *
+ * PARAMETER
+ *	(none, C++)
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	'this' has been changed -> update physical storage.
+ *
+ * REMARKS
+ *	Uses global 'usHostId' to build a device ID.
+ */
+int
+VFRDev::ioSync()
+{
+    PSEC_PHYSDEV	sec = new SEC_PHYSDEV;
+    int			modified = 0;
+    APIRET		rc;
+    int			errors = 0;
+
+
+    do
+    {
+	rc = read(0, 1, sec);
+	if( rc )
+	{
+	    Verbose(1, "VFRDev::ioSync", "read(0,1,...) - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	if( memcmp(sec->sectype, "PHYSDEVICE      ", 16) != 0
+	    ||  Crc16(sec, SECTOR_SIZE-2) != sec->crc )
+	{
+	    Verbose(1, "VFRDev", "new PHYSDEV sector");
+	    ++modified;
+	    memset(sec, 0, sizeof(*sec));
+
+	    memcpy(sec->sectype, "PHYSDEVICE      ", 16);
+	    sec->u.s.adminspace = VRAID_ADMINSECTORS;
+	    size = sec->u.s.size = (partsize - sec->u.s.adminspace);
+
+	    memcpy(sec->u.s.id, id, sizeof(DEVID));
+	}
+
+	if( size != sec->u.s.size )
+	{
+	    ++modified;
+	    sec->u.s.size = size;
+	}
+
+	if( modified )
+	{
+	    sec->timestamp = time(NULL);
+	    sec->crc = Crc16(sec, SECTOR_SIZE-2);
+
+	    rc = write(0, 1, sec);
+	    if( rc != 0 )
+	    {
+		Verbose(1, "VFRDev::ioSync", "write(0,1,...) - rc %lu, not updated", rc);
+		++errors;
+		break;
+	    }
+	}
+    }
+    while(0);
+
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VFRDev::querySize()
+ *
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	size of device
+ *
+ * DESCRIPTION
+ *	Guess!
+ *
+ * REMARKS
+ */
+ULONG
+VFRDev::querySize()
+{
+    return (size == 0 ? partsize : size);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VFRDev::read(block,count,buffer)
+ *
+ * PARAMETER
+ *	block		block number on disk
+ *	count		how many blocks?
+ *	buffer		data from here
+ * RETURNS
+ *	0		OK
+ *	/0		APIRET
+ *
+ * DESCRIPTION
+ *	Read one or more sectors from configuration space of disk.  Done
+ *	when analysing disk contents.
+ *
+ * REMARKS
+ */
+APIRET
+VFRDev::read(ULONG block,ULONG count,PVOID buffer)
+{
+    APIRET	rc = 0;
+
+    for( ; count != 0; --count, ++block, block += SECTOR_SIZE )
+    {
+	rc = DriverPhysIO(flt_hd, FALSE, block, buffer);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VFRDev", "can't read block %lu - rc %lu", block, rc);
+	    break;
+	}
+    }
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VFRDev::write(block,count,buffer)
+ *
+ * PARAMETER
+ *	block		block number on disk
+ *	count		how many blocks?
+ *	buffer		data from here
+ * RETURNS
+ *	0		OK
+ *	/0		APIRET
+ *
+ * DESCRIPTION
+ *	Write one or more sectors to configuration space of disk. Done
+ *	when creating something new.
+ *
+ * REMARKS
+ */
+APIRET
+VFRDev::write(ULONG block,ULONG count,PVOID buffer)
+{
+    APIRET	rc = 0;
+
+    for( ; count != 0; --count, ++block, block += SECTOR_SIZE )
+    {
+	rc = DriverPhysIO(flt_hd, TRUE, block, buffer);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VFRDev", "can't write block %lu - rc %lu", block, rc);
+	    break;
+	}
+    }
+    return rc;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** VOS2Disk:: ******************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * VOS2Disk::VOS2Disk(idx)
+ *
+ * PARAMETER
+ *	idx		from DosPhysicalDisk()
+ * RETURNS
+ *	(nothing, C++)
+ * DESCRIPTION
+ *	Constructur for new object.  Uses PDsk*() routines to access
+ *	the physical disk.
+ *
+ * REMARKS
+ */
+VOS2Disk::VOS2Disk(ULONG idx)
+{
+    ULONG	handle;
+    APIRET	rc;
+
+    /* Open physical device, this may fail! */
+
+    rc = PDskOpen(idx, &handle);
+    if( rc != 0 )
+    {
+	Verbose(1, "VOS2Disk", "PDskOpen(%lu) - rc %lu", pdskidx, rc);
+	return;
+    }
+
+    rc = create(idx, handle);
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VOS2Disk::VOS2Disk(idx,handle)
+ *
+ * PARAMETER
+ *	idx		from DosPhysicalDisk()
+ *	handle		frpm PDskOpen()
+ *
+ * RETURNS
+ *	(nothing, C++)
+ *
+ * DESCRIPTION
+ *	Constructur for new object.  Uses PDsk*() routines to access
+ *	the physical disk.
+ *
+ * REMARKS
+ */
+VOS2Disk::VOS2Disk(ULONG idx,ULONG handle)
+{
+    create(idx, handle);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VOS2Disk::~VOS2Disk()
+ *
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	(nothing, C++)
+ * DESCRIPTION
+ *	Destructor for our object.  Releases resources.
+ *
+ * REMARKS
+ */
+VOS2Disk::~VOS2Disk()
+{
+    APIRET	rc;
+
+    if( writable == True )
+    {
+	rc = PDskUnlockIO(pdskhd);
+	if( rc != 0 )
+	    Verbose(0, "VOS2Disk", "PDskUnlockIO - rc %lu", rc);
+    }
+    rc = PDskClose(pdskhd);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VOS2Disk::create(idx,hd)
+ *
+ * PARAMETER
+ *	idx		from DosPhysicalDisk()
+ *	handle		from PDskOpen()
+ *
+ * RETURNS
+ * DESCRIPTION
+ * REMARKS
+ */
+APIRET
+VOS2Disk::create(ULONG idx,ULONG handle)
+{
+    APIRET	rc;
+
+    /* Initialize object data. */
+
+    pdskidx = idx;
+    pdskhd = handle;
+
+    memset(&devparam, 0, sizeof(devparam));
+    writable = False;
+
+
+    /* And please, don't disturb us.  If it isn't possible
+     * to do a PDskLock() just ignore this error.  Sam Detweiler
+     * told (ML.OS2PDD) FDISK won't lock at all... */
+  
+    rc = PDskLockIO(pdskhd);
+    if( rc != 0 )
+	Verbose(2, "VOS2Disk", "PDskLock(%lu) - rc %lu, ignored", pdskidx, rc);
+    writable = True;				/* device is changable! */
+
+
+    rc = PDskQueryParam(pdskhd,&devparam);
+    if( rc != 0 )
+    {
+	Verbose(1, "VOS2Disk", "PDskQueryParam(%lu) - rc %lu", pdskidx, rc);
+	PDskUnlockIO(pdskhd);
+	PDskClose(pdskhd);
+	return rc;
+    }
+
+    Verbose(3, "VOS2Disk", "Index: %lu, Cylinders: %d, Heads: %d, Sectors/Track: %d",
+	    pdskidx,
+	    devparam.cCylinders, devparam.cHeads, devparam.cSectorsPerTrack);
+    return 0;
+}
+
+
+
+
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VOS2Disk::queryDPB()
+ *
+ * PARAMETER
+ *	(none, C++)
+ *
+ * RETURNS
+ *	Reference to DEVICEPARAMETERBLOCK
+ *
+ * DESCRIPTION
+ *	Usefull when creating new partitions, as a partition should start at
+ *	head 0 or at least at sector 1.
+ *
+ * REMARKS
+ */
+DEVICEPARAMETERBLOCK &
+VOS2Disk::queryDPB()
+{
+    return devparam;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VOS2Disk::queryIndex()
+ *
+ * PARAMETER
+ *	(none)
+ * RETURNS
+ *	0-based index
+ *
+ * DESCRIPTION
+ *	Returns index used to access this disk.  Use only for display purposes!
+ *
+ * REMARKS
+ */
+ULONG
+VOS2Disk::queryIndex()
+{
+    return pdskidx;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VOS2Disk::querySize()
+ *
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	size
+ * DESCRIPTION
+ *	Returns size of OS/2 disk.
+ *
+ * REMARKS
+ */
+ULONG
+VOS2Disk::querySize()
+{
+    ULONG const	size = (ULONG)devparam.cSectorsPerTrack
+	* devparam.cHeads * (ULONG)devparam.cCylinders;
+
+    Verbose(4, "VOS2Disk", "disk capacity: %lu MBytes", size / 2 / 1024ul);
+    return size;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VOS2Disk::read(block,count,buffer)
+ *
+ * PARAMETER
+ *	block		block number on disk
+ *	count		how many blocks?
+ *	buffer		data from here
+ * RETURNS
+ *	0		OK
+ *	/0		APIRET
+ *
+ * DESCRIPTION
+ *	Read one or more sectors from configuration space of disk.  Done
+ *	when analysing disk contents.
+ *
+ * REMARKS
+ */
+APIRET
+VOS2Disk::read(ULONG block,ULONG count,PVOID buffer)
+{
+    assert( count < USHRT_MAX );
+
+    APIRET const rc = PDskRead(pdskhd, block, (USHORT)count, buffer);
+    if( rc != 0 )
+	Verbose(1, "VOS2Disk", "can't read sector %lu - rc %lu", block, rc);
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VOS2Disk::write(block,count,buffer)
+ *
+ * PARAMETER
+ *	block		block number on disk
+ *	count		how many blocks?
+ *	buffer		data from here
+ * RETURNS
+ *	0		OK
+ *	/0		APIRET
+ *
+ * DESCRIPTION
+ *	Write one or more sectors to configuration space of disk. Done
+ *	when creating a new VORDev.
+ *
+ * REMARKS
+ */
+APIRET
+VOS2Disk::write(ULONG block,ULONG count,PVOID buffer)
+{
+    assert( count < USHRT_MAX );
+
+    APIRET const rc = PDskWrite(pdskhd, block, (USHORT)count, buffer);
+    if( rc != 0 )
+	Verbose(1, "VOS2Disk", "can't write sector %lu - rc %lu", block, rc);
+    return rc;
+}
+
+@
+
+
+1.15
+log
+@- adjusted verbosity levels
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.14 $
+ * $Date: 2000/04/10 01:10:30 $
+d10 3
+d62 1
+a62 1
+static char const vcid[]="$Id: vrdev.cpp,v 1.14 2000/04/10 01:10:30 vitus Exp vitus $";
+d630 1
+a630 1
+    hd = flthd;
+d643 1
+a643 1
+	rc = DriverPhyssize(hd, &partsize);
+d726 1
+a726 1
+	    hd,
+d1042 1
+a1042 1
+	rc = DriverPhysIO(hd, FALSE, block, buffer);
+d1079 1
+a1079 1
+	rc = DriverPhysIO(hd, TRUE, block, buffer);
+@
+
+
+1.14
+log
+@- include VSetup.h instead of proto.h
+- converted C++ to C comments
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.13 $
+ * $Date: 1999/12/14 00:28:26 $
+d10 4
+d59 1
+a59 1
+static char const vcid[]="$Id: vrdev.cpp,v 1.13 1999/12/14 00:28:26 vitus Exp vitus $";
+d786 2
+a787 1
+	Verbose(1, "VFRDev::ioRemoveParent", "can't clear parent SEC_VRDEV - rc %lu", rc);
+d799 2
+a800 1
+	    Verbose(1, "VFRDev::ioRemoveParent", "can't read own SEC_PHYSDEV - rc %lu", rc);
+d1225 2
+a1226 2
+    Verbose(3, "VOS2Disk", "physical drive parameters:");
+    Verbose(3, "VOS2Disk", "Cylinders: %d, Heads: %d, Sectors/Track: %d",
+d1302 1
+a1302 1
+    Verbose(3, "VOS2Disk", "drive capacity: %lu MBytes", size / 2 / 1024ul);
+@
+
+
+1.13
+log
+@- more error logging
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.12 $
+ * $Date: 1999/11/16 22:39:18 $
+d10 3
+d52 2
+a53 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1999
+d55 1
+a55 1
+static char const vcid[]="$Id: vrdev.cpp,v 1.12 1999/11/16 22:39:18 vitus Exp vitus $";
+d75 1
+a76 1
+#include "proto.h"
+d133 1
+a133 1
+	    rc = -1ul;				// anything != 0
+d140 1
+a140 1
+	    rc = -2ul;				// anything != 0
+d186 1
+a186 1
+	delete theDisk;				// no need for that disk object
+d268 1
+a268 1
+    memcpy(id, newid, sizeof(DEVID));		// update object
+d274 1
+a274 1
+	rc = read(0, 1, sec);			// remember: 0 defines ourself
+d283 2
+a284 2
+	sec->timestamp = time(NULL);		// UTC of change
+	sec->crc = Crc16(sec, SECTOR_SIZE-2);	// !!!
+d339 1
+a339 1
+	rc = read(0, 1, sec);			// remember: 0 defines ourself
+d349 1
+a349 1
+	sec->crc = Crc16(sec, SECTOR_SIZE-2);	// !!!
+d359 1
+a359 1
+	parent = NULL;				// none
+d391 1
+a391 1
+    delete_disk = False;			// destructor: don't delete theDisk
+d400 1
+a400 1
+	    ++errors;				// ignore errors
+d508 1
+a508 1
+	    sec->crc = Crc16(sec, SECTOR_SIZE-2);	// !!!
+d549 2
+a550 2
+ * CALL
+ *	VORDev::read(block,count,buffer)
+d575 2
+a576 2
+ * CALL
+ *	VORDev::write(block,count,buffer)
+d607 2
+a608 2
+ * CALL
+ *	VFRDev::VFRDev(flthd)
+d653 1
+a653 1
+	    rc = -1ul;				// anything != 0
+d662 1
+a662 1
+	    rc = -2ul;				// anything != 0
+d680 2
+a681 2
+ * CALL
+ *	VFRDev::~VFRDev()
+d702 2
+a703 2
+ * CALL
+ *	VFRDev::allocateDescription()
+d729 2
+a730 2
+ * CALL
+ *	VFRDev::queryIcon()
+d756 2
+a757 2
+ * CALL
+ *	VFRDev::ioRemoveParent()
+d791 1
+a791 1
+	rc = read(0, 1, sec);			// remember: 0 defines ourself
+d801 1
+a801 1
+	sec->crc = Crc16(sec, SECTOR_SIZE-2);	// !!!
+d811 1
+a811 1
+	parent = NULL;				// none
+d823 2
+a824 2
+ * CALL
+ *	VFRDev::ioChangeID(myid)
+d841 1
+a841 1
+    memcpy(id, newid, sizeof(DEVID));		// update object
+d847 1
+a847 1
+	rc = read(0, 1, sec);			// remember: 0 defines ourself
+d856 2
+a857 2
+	sec->timestamp = time(NULL);		// UTC of change
+	sec->crc = Crc16(sec, SECTOR_SIZE-2);	// !!!
+d877 2
+a878 2
+ * CALL
+ *	VFRDev::ioDeleteYourself()
+d901 1
+a901 1
+	++errors;				// ignore errors
+d912 2
+a913 2
+ * CALL
+ *	VFRDev::ioSync()
+d988 2
+a989 2
+ * CALL
+ *	VFRDev::querySize()
+d1010 2
+a1011 2
+ * CALL
+ *	VFRDev::read(block,count,buffer)
+d1047 2
+a1048 2
+ * CALL
+ *	VFRDev::write(block,count,buffer)
+d1109 1
+a1109 1
+    rc = PDskOpen(pdskidx, &handle);
+d1148 2
+a1149 2
+ * CALL
+ *	VOS2Disk::~VOS2Disk()
+d1304 2
+a1305 2
+ * CALL
+ *	VOS2Disk::read(block,count,buffer)
+d1335 2
+a1336 2
+ * CALL
+ *	VOS2Disk::write(block,count,buffer)
+@
+
+
+1.12
+log
+@- VOS2Disk: create() tries PDskLockIO() but ignores any errors
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.11 $
+ * $Date: 1999/10/01 01:28:13 $
+d10 3
+d52 1
+a52 1
+static char const vcid[]="$Id: vrdev.cpp,v 1.11 1999/10/01 01:28:13 vitus Exp vitus $";
+d122 1
+a122 1
+	    Verbose(1, "VORDev", "can't read PHYSDEV - rc %lu", rc);
+d274 1
+a274 1
+	    Verbose(1, "VORDev", "can't read own SEC_PHYSDEV - rc %lu", rc);
+d286 1
+a286 1
+	    Verbose(1, "VORDev", "can't write own SEC_PHYSDEV - rc %lu", rc);
+d318 1
+d324 4
+a327 1
+    if( write(1, 1, sec) != 0 )
+d329 1
+a335 2
+	APIRET	rc;
+
+d339 1
+a339 1
+	    Verbose(1, "VORDev", "can't read own SEC_PHYSDEV - rc %lu", rc);
+d351 1
+a351 1
+	    Verbose(1, "VORDev", "can't write own SEC_PHYSDEV - rc %lu", rc);
+d395 2
+d398 1
+d406 1
+d436 1
+d477 1
+a477 1
+	    Verbose(1, "VORDev", "read(0,1,...) - rc %lu", rc);
+d507 1
+a507 1
+	    if( rc )
+d509 1
+a509 1
+		Verbose(1, "VORDev", "write(0,1,...) - rc %lu, not updated", rc);
+d636 1
+a636 1
+	    Verbose(1, "VFRDev", "DriverPhyssize - rc %lu", rc);
+d643 1
+a643 1
+	    Verbose(1, "VFRDev", "DriverPhysIO - rc %lu", rc);
+d770 1
+d776 4
+a779 1
+    if( write(1, 1, sec) != 0 )
+d781 1
+a787 2
+	APIRET	rc;
+
+d791 1
+a791 1
+	    Verbose(1, "VFRDev", "can't read own SEC_PHYSDEV - rc %lu", rc);
+d803 1
+a803 1
+	    Verbose(1, "VFRDev", "can't write own SEC_PHYSDEV - rc %lu", rc);
+d847 1
+a847 1
+	    Verbose(1, "VFRDev", "can't read own SEC_PHYSDEV - rc %lu", rc);
+d859 1
+a859 1
+	    Verbose(1, "VFRDev", "can't write own SEC_PHYSDEV - rc %lu", rc);
+d896 2
+d899 1
+d937 1
+a937 1
+	    Verbose(1, "VFRDev", "read(0,1,...) - rc %lu", rc);
+d968 1
+a968 1
+	    if( rc )
+d970 1
+a970 1
+		Verbose(1, "VFRDev", "write(0,1,...) - rc %lu, not updated", rc);
+@
+
+
+1.11
+log
+@- VFRDev constructor: DriverPhysinfo() changed to DriverPhyssize()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/06/20 17:04:49 $
+d10 3
+d49 1
+a49 1
+static char const vcid[]="$Id: vrdev.cpp,v 1.10 1999/06/20 17:04:49 vitus Exp vitus $";
+d87 2
+a88 2
+ * CALL
+ *	VORDev::VORDev(where,pstart,psize)
+d165 2
+a166 2
+ * CALL
+ *	VORDev::~VORDev()
+d190 2
+a191 2
+ * CALL
+ *	VORDev::allocateDescription()
+d217 2
+a218 2
+ * CALL
+ *	VORDev::queryIcon()
+d244 2
+a245 2
+ * CALL
+ *	VORDev::ioChangeID(newid)
+d298 2
+a299 2
+ * CALL
+ *	VORDev::ioRemoveParent()
+d362 2
+a363 2
+ * CALL
+ *	VORDev::ioDeleteYourself()
+d439 2
+a440 2
+ * CALL
+ *	VORDev::ioSync()
+d513 2
+a514 2
+ * CALL
+ *	VORDev::querySize()
+d1145 1
+a1145 1
+	rc = PDskUnlock(pdskhd);
+d1147 1
+a1147 1
+	    Verbose(0, "VOS2Disk", "PDskUnlock - rc %lu", rc);
+d1181 2
+a1182 3
+     * to do a PDskLock() ask the user whether we should ignore this
+     * situation as we can write without locking.  We may even ignore
+     * ignore locking complete as ML.OS2PDD suggested this. */
+d1184 1
+a1184 1
+    rc = PDskLock(pdskhd);
+d1186 2
+a1187 14
+    {
+	Verbose(2, "VOS2Disk", "PDskLock(%lu) - rc %lu", pdskidx, rc);
+
+	char	str[80];
+	sprintf(str, "Can't lock physical disk %lu,"
+		" ignore this error and allow writing?", pdskidx);
+	ULONG	response;
+
+	response = WinMessageBox(HWND_DESKTOP, HWND_DESKTOP, str, "Warning",
+				 -1UL, MB_YESNO|MB_WARNING|MB_MOVEABLE);
+	writable = (response == MBID_YES ? True : False);
+    }
+    else
+	writable = True;			/* device is changable! */
+d1194 1
+a1194 1
+	PDskUnlock(pdskhd);
+d1213 2
+a1214 2
+ * CALL
+ *	VOS2Disk::queryDPB()
+d1217 1
+d1237 2
+a1238 2
+ * CALL
+ *	VOS2Disk::queryIndex()
+d1259 2
+a1260 2
+ * CALL
+ *	VOS2Disk::querySize()
+@
+
+
+1.10
+log
+@- corrected VOS2Disk::create, didn't return a value
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/06/19 17:19:13 $
+d10 3
+d46 1
+a46 1
+static char const vcid[]="$Id: vrdev.cpp,v 1.9 1999/06/19 17:19:13 vitus Exp vitus $";
+d619 1
+a619 1
+	rc = DriverPhysinfo(hd, &partsize);
+d622 1
+a622 1
+	    Verbose(1, "VFRDev", "DriverPhysinfo - rc %lu", rc);
+@
+
+
+1.9
+log
+@- added VOS2Disk::VOS2Disk(ULONG idx,ULONG handle) constructor
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/06/02 01:38:59 $
+d10 3
+d43 1
+a43 1
+static char const vcid[]="$Id: vrdev.cpp,v 1.8 1999/06/02 01:38:59 vitus Exp vitus $";
+d1203 1
+a1203 1
+	return;
+d1209 1
+@
+
+
+1.8
+log
+@- VFRDev/VORDev: queryIcon() returns ICO_INVCHILDPDEV if parent says that this
+  child is invalid
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/05/13 22:47:18 $
+d10 4
+d40 1
+a40 1
+static char const vcid[]="$Id: vrdev.cpp,v 1.7 1999/05/13 22:47:18 vitus Exp vitus $";
+d43 1
+d1061 2
+a1062 2
+ * CALL
+ *	VOS2Disk::VOS2Disk(idx)
+d1075 1
+d1078 3
+a1080 2
+    pdskidx = idx;
+    rc = PDskOpen(pdskidx, &pdskhd);
+d1083 1
+a1083 1
+	Verbose(1, "DrvScan", "PDskOpen(%lu) - rc %lu", pdskidx, rc);
+d1086 83
+a1168 2
+    Verbose(3, "DrvScan", "======== Disk %lu, handle %lu ========",
+	    pdskidx, pdskhd);
+d1179 1
+a1179 1
+	Verbose(2, "DrvScan", "PDskLock(%lu) - rc %lu", pdskidx, rc);
+d1187 1
+a1187 1
+				 -1, MB_YESNO|MB_WARNING|MB_MOVEABLE);
+d1203 2
+a1204 2
+    Verbose(3, "DrvSetup", "physical drive parameters:");
+    Verbose(3, "DrvSetup", "Cylinders: %d, Heads: %d, Sectors/Track: %d",
+a1210 24
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VOS2Disk::~VOS2Disk()
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	(nothing, C++)
+ * DESCRIPTION
+ *	Destructor for our object.  Releases resources.
+ *
+ * REMARKS
+ */
+VOS2Disk::~VOS2Disk()
+{
+    APIRET	rc;
+
+    if( writable == True )
+    {
+	rc = PDskUnlock(pdskhd);
+	if( rc != 0 )
+	    Verbose(0, "VOS2Disk", "PDskUnlock - rc %lu", rc);
+    }
+    rc = PDskClose(pdskhd);
+}
+d1278 1
+a1278 1
+    Verbose(3, "DrvSetup", "drive capacity: %lu MBytes", size / 2 / 1024ul);
+d1305 3
+a1307 1
+    APIRET const rc = PDskRead(pdskhd, block, count, buffer);
+d1336 3
+a1338 1
+    APIRET const rc = PDskWrite(pdskhd, block, count, buffer);
+d1343 1
+@
+
+
+1.7
+log
+@- ioRemoveParent: clear parent's admin sector
+- ioDeleteYourself: no disk i/o
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1999/03/24 23:04:11 $
+d10 4
+d36 1
+a36 1
+static char const vcid[]="$Id: vrdev.cpp,v 1.6 1999/03/24 23:04:11 vitus Exp vitus $";
+d142 1
+d218 3
+a220 1
+    if( writable == True )
+d643 1
+d716 3
+a718 1
+    if( writable == True )
+@
+
+
+1.6
+log
+@- allocateDescription() adds drive ID to description
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1999/03/15 03:27:37 $
+d10 3
+d32 1
+a32 1
+static char const vcid[]="$Id: vrdev.cpp,v 1.5 1999/03/15 03:27:37 vitus Exp vitus $";
+d295 10
+d735 10
+@
+
+
+1.5
+log
+@- VORDev: create new ID when PYSDEV sector is invalid
+- VORDev: doesn't delete theDisk if ioDeleteYourself() is called first
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1999/03/08 03:02:47 $
+d10 4
+d29 1
+a29 1
+static char const vcid[]="$Id: vrdev.cpp,v 1.4 1999/03/08 03:02:47 vitus Exp vitus $";
+d183 5
+a187 2
+    sprintf(descr, "PHYSDEV (OS/2 Device %lu)\n%lu MByte",
+	    theDisk->queryIndex(), size / 2 / 1024u);
+d668 5
+a672 2
+    sprintf(descr, "PHYSDEV (filter device handle %#x)\n%lu MByte partition",
+	    hd, partsize / 2 / 1024);
+@
+
+
+1.4
+log
+@- VORDev deletes it's disk when destructed
+- may now construct VORDev w/o SEC_PHYSDEV
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1999/03/06 19:55:45 $
+d10 4
+d25 1
+a25 1
+static char const vcid[]="$Id: vrdev.cpp,v 1.3 1999/03/06 19:55:45 vitus Exp vitus $";
+d50 2
+d79 1
+d83 1
+d98 1
+a104 2
+
+	crc = Crc16(sec, SECTOR_SIZE-2);
+d118 13
+d153 2
+a154 1
+    delete theDisk;				// no need for that disk object
+d299 1
+d341 1
+d440 2
+a442 1
+	memcpy(sec->u.s.id, id, sizeof(DEVID));
+d453 1
+a453 1
+	    sec->crc = Crc16(sec, SECTOR_SIZE-2);
+d569 1
+d614 1
+a614 4
+    if( rc == 0 )
+    {
+	rw_icon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_PDEVDRIVE);
+	ro_icon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_DISABLEDPDEV);
+d616 2
+a617 10
+    }
+    else
+    {
+	/* Enter device as endpoint and stop scanning it.  Or repair
+	 * on the fly or ... */
+
+	assert( 0 );
+    }
+
+    delete sec;
+d727 1
+d878 2
+a880 1
+	memcpy(sec->u.s.id, id, sizeof(DEVID));
+d1041 3
+a1043 2
+     * to do a PDskLock(), assume that a filesystem uses a
+     * partition on this device and flag it as 'not avail'. */
+d1049 9
+a1057 1
+	writable = False;
+a1059 1
+    {
+d1061 1
+a1061 1
+    }
+@
+
+
+1.3
+log
+@- implemented queryIcon() methods
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1999/03/01 02:17:30 $
+d10 3
+d21 1
+a21 1
+static char const vcid[]="$Id: vrdev.cpp,v 1.2 1999/03/01 02:17:30 vitus Exp vitus $";
+d73 1
+a73 1
+    os2disk = where;
+d77 1
+d109 1
+a109 12
+    if( rc == 0 )
+    {
+	rw_icon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_PDEVDRIVE);
+	ro_icon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_DISABLEDPDEV);
+    }
+    else
+    {
+	/* Enter device as endpoint and stop scanning it.  Or repair
+	 * on the fly or ... */
+
+	assert( 0 );
+    }
+d111 2
+a112 1
+    delete sec;
+d133 2
+d159 1
+a159 1
+	    os2disk->queryIndex(), size / 2 / 1024u);
+d330 1
+a330 1
+	rc = os2disk->read(0, 1, buffer);
+d359 1
+a359 1
+	rc = os2disk->write(0, 1, buffer);
+d489 1
+a489 1
+    return os2disk->read(partstart+block, count, buffer);
+d515 1
+a515 1
+    return os2disk->write(partstart+block, count, buffer);
+@
+
+
+1.2
+log
+@- many more methods to get things working again
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1999/02/24 00:18:55 $
+d10 3
+d18 1
+a18 1
+static char const vcid[]="$Id: vrdev.cpp,v 1.1 1999/02/24 00:18:55 vitus Exp vitus $";
+d26 1
+d39 1
+d105 6
+a110 1
+    if( rc != 0 )
+d139 2
+d172 25
+d593 7
+a599 1
+    if( rc != 0 )
+d628 2
+d661 25
+d1076 6
+a1081 4
+    rc = PDskUnlock(pdskhd);
+    if( rc != 0 )
+	Verbose(0, "VOS2Disk", "PDskUnlock - rc %lu", rc);
+
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 3
+a11 1
+ * $Log$
+d15 1
+a15 1
+static char const vcid[]="$Id$";
+d19 1
+a42 1
+
+d44 1
+a44 1
+ * **** VRDev::* ********************************************************
+d49 1
+a49 1
+ *	VRDev()
+d51 2
+d54 1
+d56 1
+a59 15
+DEVID const *
+VRDev::queryID()
+{
+    return &id;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** VORDev::* *******************************************************
+ * ******************************************************************* */
+
+d65 1
+a65 1
+    os2dev = where;
+d114 13
+d134 14
+a147 2
+ULONG
+VORDev::querySize()
+d149 4
+a152 1
+    return (size == 0 ? partsize : size);
+d160 1
+d162 1
+d164 2
+d167 1
+d172 1
+a172 1
+VORDev::ioChangeID(DEVID myid)
+d174 33
+a206 2
+    /*xxx*/
+    return 1;					// "1" errors
+d214 1
+d216 1
+d218 2
+d265 188
+d456 1
+a456 1
+    return os2dev->read(partstart+block, count, buffer);
+d462 17
+d482 1
+a482 1
+    return os2dev->write(partstart+block, count, buffer);
+d494 12
+d570 13
+d592 1
+d594 1
+d596 26
+d667 15
+a681 2
+ULONG
+VFRDev::querySize()
+d683 33
+a715 1
+    return (size == 0 ? partsize : size);
+d723 1
+d725 1
+d727 2
+d730 1
+d735 1
+a735 1
+VFRDev::ioChangeID(DEVID myid)
+d737 11
+a747 2
+    /*xxx*/
+    return 1;					// "1" errors
+d753 114
+d887 17
+a929 1
+
+d932 1
+d934 1
+d936 1
+d938 3
+d992 1
+d994 1
+d996 1
+d998 2
+d1016 58
+a1073 1
+ULONG	
+d1085 18
+d1106 4
+a1109 1
+    return PDskRead(pdskhd, block, count, buffer);
+d1115 17
+d1135 4
+a1138 1
+    return PDskWrite(pdskhd, block, count, buffer);
+@

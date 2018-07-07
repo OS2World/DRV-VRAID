@@ -1,0 +1,12 @@
+Neue VRAID Version verfÅgbar!
+
+VRAID.FLT Version 0.80 und VSetup.exe Version 0.81 sind freigegeben.  VRAID ist ein Software RAID Paket fÅr OS/2 2.0 und hîher.  Das Paket besteht aus einem Filter Treiber und einen Presentation Manager Programm zur Konfiguration.  UnterstÅtzt werden RAID Level 0 und 1 sowie Chaining.
+
+Archiv: VRAID21.ZIP, 156KB, Frequest unter Magic VRAID bei 2:2474/424
+
+énderungen seit VRAID20.ZIP:
+	- Platten mit VRAID Partitionen werden vom Filter nicht mehr versteckt.
+	  D.h. eine auf der gleichen Platte existierende HPFS Partition ist
+	  weiterhin als Laufwerk nutzbar.
+
+

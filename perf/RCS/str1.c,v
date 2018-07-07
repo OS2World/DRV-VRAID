@@ -1,0 +1,279 @@
+head	1.3;
+access;
+symbols;
+locks; strict;
+comment	@ * @;
+
+
+1.3
+date	97.12.16.02.22.14;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	97.12.06.00.42.23;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	97.06.04.23.44.55;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Strategy Level 1 code
+@
+
+
+1.3
+log
+@- renamed source files
+@
+text
+@/*
+ * $Source: e:/source/driver/perf/RCS/str1.c,v $
+ * $Revision: 1.2 $
+ * $Date: 1997/12/06 00:42:23 $
+ * $Author: vitus $
+ *
+ * Strategy Level 1 code.
+ *
+ * $Log: str1.c,v $
+ * Revision 1.2  1997/12/06 00:42:23  vitus
+ * - enabled support for WatCom C
+ *
+ * Revision 1.1  1997/06/04 23:44:55  vitus
+ * Initial revision
+ * ----------------------------------------
+ * Author: Vitus Jensen, 2:2474/424, 1997
+ */
+#pragma off (unreferenced)
+static char vcid[]="$Id: str1.c,v 1.2 1997/12/06 00:42:23 vitus Exp vitus $";
+#pragma on (unreferenced)
+
+
+/*#define INCL_NOBASEAPI*/
+#define INCL_DOSERRORS
+#define INCL_NOPMAPI
+#include <os2.h>
+
+#include <devcmd.h>
+
+#define INCL_INITRP_ONLY
+#include <reqpkt.h>
+
+#include <iorb.h>
+#include <addcalls.h>
+#if defined(__WATCOMC__)
+# include <devhelp.h>
+typedef USHORT NEAR *	NPUSHORT;
+typedef VOID NEAR *	NPVOID;
+#else
+# include <dhcalls.h>
+#endif
+
+#include "scsiopt.h"
+#include "proto.h"
+#include "extern.h"
+
+/* To skip including all request packets... */
+extern USHORT NEAR	GenIOCtl(PRPH pRPH);
+
+
+
+
+/*
+ * NAME
+ *	Shutdown
+ * CALL
+ *	Shutdown(rph)
+ * PARAMETER
+ *	rph		request header
+ * RETURNS
+ *	STATUS_DONE
+ * GLOBAL
+ *	none
+ * DESPRIPTION
+ *	The system starts or ends shutdown state.  There is currently
+ *	nothing special we would like to do.
+ *
+ * REMARKS
+ */
+PRIVATE USHORT NEAR
+Shutdown(PRPH const rph)
+{
+    /* What to do? */
+
+    return STATUS_DONE;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Public Entries **************************************************
+ * ******************************************************************* */
+
+
+/*
+ * NAME
+ *	Strategy
+ * CALL
+ *	Strategy(rph)
+ * PARAMETER
+ *	rph		request header
+ * RETURNS
+ *	nothing
+ * GLOBAL
+ *	none
+ * DESPRIPTION
+ *	Entry point for strategy level 1 requests.  Only
+ *	some commands are supported.
+ * REMARKS
+ *	Called by assembler stub.
+ */
+PUBLIC void NEAR _Cdecl
+Strategy(PRPH rph)
+{
+    switch( rph->Cmd )
+    {
+      case CMDInitBase:
+	if( (fDriverFlags & DF_INITDONE) )
+	    rph->Status = STDON | STERR | ERROR_I24_BAD_COMMAND;
+	else
+	    rph->Status = InitBase( (PRPINITIN)rph );
+	break;
+
+      case CMDShutdown:
+	rph->Status = Shutdown( rph );
+	break;
+
+      case CMDOpen:
+      case CMDClose:
+	rph->Status = STATUS_DONE;
+	break;
+
+      case CMDGenIOCTL:
+	rph->Status = GenIOCtl( rph );
+	break;
+
+      default:
+	rph->Status = STDON | STERR | ERROR_I24_BAD_COMMAND;
+	break;
+    }
+    return;
+}
+@
+
+
+1.2
+log
+@- enabled support for WatCom C
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1997/06/04 23:44:55 $
+d10 3
+d16 1
+a16 1
+ * Author: Vitus Jensen, 2:2474/424
+d19 1
+a19 1
+static char vcid[]="$Id: str1.c,v 1.1 1997/06/04 23:44:55 vitus Exp vitus $";
+d43 1
+a43 1
+#include "dskperf.h"
+d65 2
+a66 4
+ *	Could start all stopped devices to avoid errors when
+ *	BIOS starts.
+ *	BUT --- OS/2 flushes all cache buffers before shutting
+ *	down, so all disks are rotating anyway now.
+a68 2
+ *	Is this even neccessary?  Newer AHA* have an option
+ *	"send start" in BIOS setup...
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Author$
+d9 3
+a11 1
+ * $Log$
+d13 1
+a13 1
+ * This code is Copyright Vitus Jensen 1997
+d15 3
+a17 1
+static char vcid[]="$Id$";
+d20 1
+a20 1
+//#define INCL_NOBASEAPI
+d32 7
+a38 2
+
+#include <dhcalls.h>
+a49 45
+PUBLIC void NEAR
+_far_memset(PUCHAR data,UCHAR val,USHORT size)
+{
+    while( size-- )
+	*(data++) = val;
+}
+
+
+
+
+PUBLIC void NEAR
+_far_memcpy(PUCHAR dest,UCHAR const _far *src,USHORT size)
+{
+    while( size-- )
+	*(dest++) = *(src++);
+}
+
+
+
+
+PUBLIC int NEAR
+_far_memcmp(UCHAR const _far *dest,UCHAR const _far *src,USHORT size)
+{
+    while( size-- )
+	if( *(dest++) != *(src++) )
+	    return 1;
+    return 0;					/* memory regions identical */
+}
+
+
+
+
+PUBLIC int NEAR
+_far_strlen(UCHAR const _far *s)
+{
+    int	len = 0;
+
+    for(; *s != '\0'; ++s )
+	++len;
+    return len;
+}
+
+
+
+
+d106 1
+a106 1
+PUBLIC void NEAR
+@

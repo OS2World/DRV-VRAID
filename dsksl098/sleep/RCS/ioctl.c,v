@@ -1,0 +1,1409 @@
+head	1.11;
+access;
+symbols
+	DSLEEPv0_98:1.11
+	DSLEEPv0_95:1.8
+	DSLEEPv0_93:1.7
+	DSLEEPv0_92:1.7
+	DSLEEPv0_91:1.6
+	DSLEEPv0_80:1.1;
+locks; strict;
+comment	@ * @;
+
+
+1.11
+date	99.11.29.00.38.33;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	98.09.23.01.19.53;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	97.12.05.01.35.40;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	97.11.09.00.56.20;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	97.09.03.01.05.12;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	97.06.03.23.54.10;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	97.05.11.01.51.13;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	97.05.07.23.04.26;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	97.04.07.01.04.22;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	97.03.05.22.01.55;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	97.02.06.01.09.42;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@General IOCtl interface
+@
+
+
+1.11
+log
+@- moved all system includes to dsksleep.h
+@
+text
+@/*
+ * $Source: r:/source/driver/sleep/RCS/ioctl.c,v $
+ * $Revision: 1.10 $
+ * $Date: 1998/09/23 01:19:53 $
+ * $Locker: vitus $
+ *
+ *	General IOCtl interface
+ *	These functions don't return an error if someone
+ *	uses 16bit-DosDevIOCtl with a too-small buffer.  They
+ *	just kills that app (because of an memory protection
+ *	fault).
+ *
+ * $Log: ioctl.c,v $
+ * Revision 1.10  1998/09/23 01:19:53  vitus
+ * - switched to WatCom's intrinsic _f* routines
+ *
+ * Revision 1.9  1997/12/05 01:35:40  vitus
+ * - added WatCom specific code and header
+ * - moved history to bottom of file
+ *
+ * Revision 1.8  1997/11/09 00:56:20  vitus
+ * - modified for new DDK (request contains length fields)
+ *
+ * Revision 1.7  1997/09/03 01:05:12  vitus
+ * - implemented DSKSL_GET_LASTSTATUS
+ *
+ * Revision 1.6  1997/06/03 23:54:10  vitus
+ * - corrected syntax error
+ *
+ * Revision 1.5  1997/05/11 01:51:13  vitus
+ * - ChangeList: only update counter when reducing usSleep
+ *
+ * Revision 1.4  1997/05/07 23:04:26  vitus
+ * - Handle partial copy of message buffer correctly
+ * - Return consistent timer values even if timeout changed or zero
+ * - Corrected data->cb/datasize values (thanks to N.Dufva)
+ * - Allows IOCtl to query partial version info
+ *
+ * Revision 1.3  1997/04/07 01:04:22  vitus
+ * Modifies/Checks application datasize values
+ * VERSION returns registration flag, too
+ *
+ * Revision 1.2  1997/03/05 22:01:55  vitus
+ * SaveMessage() to save/display messages
+ * IOCtls to read/clear those messages
+ * IOCtls now specify times in seconds
+ * Query/ChangeDeviceState added
+ *
+ * Revision 1.1  1997/02/06 01:09:42  vitus
+ * Initial revision
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1996-99
+ */
+static char id[]="$Id: ioctl.c,v 1.10 1998/09/23 01:19:53 vitus Exp vitus $";
+
+#define INCL_NOBASEAPI
+#define INCL_DOSERRORS
+#define INCL_NOPMAPI
+#include "dsksleep.h"
+#include "proto.h"
+#include "extern.h"
+
+#include "dskslpub.h"
+
+
+#define PTRDIFF(a,b)	((PUCHAR)(a)-(PUCHAR)(b))
+
+
+
+/* Save messages here.  This buffer is located in a swapable
+ * data segment and may only access at task time!
+ * OBS: M$-C tends to allocate a const containing the
+ * segment of these variables.  To prevent this use strange code
+ * and no optimization at all. */
+
+#define _inswap		_based(_segname("SwapData"))
+PRIVATE USHORT _inswap	iNextString = 0;
+PRIVATE UCHAR _inswap	DisplayBuffer[DISPLAYBUFFER_SIZE];
+
+
+
+
+/* Macro to verify that a certain memory range is
+ * readable/writable (depending on w). */
+
+#define CheckPointer(p,s,w)	DevHelp_VerifyAccess(FP_SEL(p),(s),FP_OFF(p),(w))
+
+
+
+
+
+/*#
+ * DriverVersion(rp)
+ *
+ * PARAMETER
+ *	request packet
+ * RETURNS
+ *	driver status word
+ * GLOBAL
+ *	none
+ * DESPRIPTION
+ *	Returns version of this driver.  Coded like the MS-DOS
+ *	version number.
+ * REMARKS
+ */
+PRIVATE USHORT NEAR
+DriverVersion(PRP_GENIOCTL rp)
+{
+    PUSHORT const	parmsize = &rp->ParmLen;
+    PUSHORT const	datasize = &rp->DataLen;
+    USHORT const	dsize = (*datasize == 0 ? 0xFFFF : *datasize);
+    DSKSL_VER_DATA FAR * const data = (DSKSL_VER_DATA FAR *)rp->DataPacket;
+
+    *datasize = sizeof(DSKSL_VER_DATA);		/* set required values */
+    *parmsize = 0;
+    if( dsize < sizeof(data->version)
+	||  CheckPointer(rp->DataPacket, sizeof(data->version), 1) )
+	return STATUS_ERR_INVPARAM;
+
+    data->version = MAKEUSHORT(SUBVERSION,VERSION);
+    if( dsize >= sizeof(DSKSL_VER_DATA)
+	&&  !CheckPointer(rp->DataPacket, sizeof(DSKSL_VER_DATA), 1) )
+    {
+	data->flags = 0;
+	if( (fDriverFlags & DF_REGISTERED) )
+	    data->flags |= 0x01;
+    }
+
+    return STATUS_DONE;
+}
+
+
+
+
+/*#
+ * DeviceList(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ * RETURNS
+ *	driver status word
+ * GLOBAL
+ *	cUnit, anpUnit
+ * DESPRIPTION
+ *	Builds list of all devices in user space.
+ * REMARKS
+ */
+PRIVATE USHORT NEAR
+DeviceList(PRP_GENIOCTL rp)
+{
+    PUSHORT const	parmsize = &rp->ParmLen;
+    PUSHORT const	datasize = &rp->DataLen;
+    USHORT const	dsize = (*datasize == 0 ? 0xFFFF : *datasize);
+    DSKSL_QL_DATA FAR * const data = (DSKSL_QL_DATA FAR *)rp->DataPacket;
+    USHORT		i;
+
+    *parmsize = 0;
+    *datasize = FIELDOFFSET(DSKSL_QL_DATA,list) + sizeof(DEVICE_TIMEOUT) * cUnit;
+
+    if( dsize < FIELDOFFSET(DSKSL_QL_DATA,list)
+	||  CheckPointer(data, FIELDOFFSET(DSKSL_QL_DATA,list), 1) )
+    {
+	return STATUS_ERR_INVPARAM;
+    }
+
+    data->reserved[0] = data->reserved[1] = 0;
+    data->cb = *datasize;
+    for( i = 0; i < cUnit  &&  i < dsize / sizeof(DEVICE_TIMEOUT); ++i )
+    {
+	DEVICE_TIMEOUT FAR * p = &data->list[i];
+
+	if( CheckPointer(p, sizeof(DEVICE_TIMEOUT), 1) )
+	{
+	    return STATUS_ERR_INVPARAM;
+	}
+
+	p->adapter = (UCHAR)anpUnit[i]->iAdapter;
+	p->unit = (UCHAR)anpUnit[i]->iUnit;
+	p->reserved[0] = p->reserved[1] = 0;
+	p->seconds = anpUnit[i]->usSleep;
+    }
+
+    return STATUS_DONE;
+}
+
+
+
+
+/*#
+ * ChangeList(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ * RETURNS
+ *	driver status word
+ * GLOBAL
+ *	cUnit, anpUnit
+ *
+ * DESPRIPTION
+ *	Changes one or more timeout values.
+ * REMARKS
+ */
+PRIVATE USHORT NEAR
+ChangeList(PRP_GENIOCTL rp)
+{
+    PUSHORT const	parmsize = &rp->ParmLen;
+    PUSHORT const	datasize = &rp->DataLen;
+    USHORT const	psize = (*parmsize == 0 ? 0xFFFF : *parmsize);
+    DSKSL_SETTO_PARM FAR * const parm = (DSKSL_SETTO_PARM FAR *)rp->ParmPacket;
+    USHORT		i, cnt;
+    USHORT		rc = STATUS_DONE;
+
+    *datasize = 0;				/* not interested */
+    *parmsize = FIELDOFFSET(DSKSL_SETTO_PARM,list);
+
+    if( psize < FIELDOFFSET(DSKSL_SETTO_PARM,list)
+       ||  CheckPointer(parm, FIELDOFFSET(DSKSL_SETTO_PARM,list), 0) )
+    {
+	return STATUS_ERR_INVPARAM;
+    }
+    if( parm->reserved[0] != 0  ||  parm->reserved[1] != 0 )
+	return STATUS_ERR_INVPARAM;
+    if( psize < parm->cb  ||  CheckPointer(parm, parm->cb, 0) )
+    {
+	*parmsize = parm->cb;
+	return STATUS_ERR_INVPARAM;
+    }
+
+    cnt = (parm->cb - FIELDOFFSET(DSKSL_SETTO_PARM,list))
+		/ sizeof(DEVICE_TIMEOUT);
+
+    for( i = 0; i < cnt; ++i )
+    {
+	DEVICE_TIMEOUT FAR * const p = &parm->list[i];
+	USHORT		u;
+
+	if( p->reserved[0] != 0  ||  p->reserved[1] != 0 )
+	{
+	    rc = STATUS_ERR_INVPARAM;
+	    break;
+	}
+
+	rc = STATUS_ERR_INVPARAM;
+	for( u = 0; u < cUnit; ++u )
+	{
+	    if( p->adapter == (UCHAR)anpUnit[u]->iAdapter
+	       &&  p->unit == (UCHAR)anpUnit[u]->iUnit )
+	    {
+		/* Change timeout value for this device.  Don't
+		 * let timer value exceed this new timeout. */
+
+		cli();
+		anpUnit[u]->usSleep = (USHORT)p->seconds;
+		if( anpUnit[u]->counter > anpUnit[u]->usSleep )
+		    anpUnit[u]->counter = anpUnit[u]->usSleep;
+		sti();
+		rc = STATUS_DONE;
+		break;
+	    }
+	}
+	if( rc != STATUS_DONE )
+	    break;
+    }
+
+    return rc;
+}
+
+
+
+
+/*#
+ * QueryDeviceState(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ * RETURNS
+ *	driver status word
+ * GLOBAL
+ *	cUnit, anpUnit
+ * DESPRIPTION
+ *	Returns state of a single device
+ * REMARKS
+ */
+PRIVATE USHORT NEAR
+QueryDeviceState(PRP_GENIOCTL rp)
+{
+    PUSHORT const	parmsize = &rp->ParmLen;
+    PUSHORT const	datasize = &rp->DataLen;
+    USHORT const	psize = (*parmsize == 0 ? 0xFFFF : *parmsize);
+    USHORT const	dsize = (*datasize == 0 ? 0xFFFF : *datasize);
+    DSKSL_DEVSTATE_PARM FAR * const parm = (DSKSL_DEVSTATE_PARM FAR *)rp->ParmPacket;
+    DSKSL_DEVSTATE_DATA FAR * const data = (DSKSL_DEVSTATE_DATA FAR *)rp->DataPacket;
+    USHORT		u;
+    USHORT		rc = STATUS_ERR_INVPARAM;
+
+    *parmsize = sizeof(DSKSL_DEVSTATE_PARM);
+    *datasize = sizeof(DSKSL_DEVSTATE_DATA);
+
+    if( psize < sizeof(DSKSL_DEVSTATE_PARM)
+       ||  CheckPointer(parm, sizeof(DSKSL_DEVSTATE_PARM), 0) )
+    {
+	return rc;
+    }
+    if( dsize < sizeof(data->seconds)  ||  CheckPointer(data, dsize, 1) )
+    {
+	return rc;
+    }
+
+    for( u = 0; u < cUnit; ++u )
+    {
+	if( parm->adapter == (UCHAR)anpUnit[u]->iAdapter
+	   &&  parm->unit == (UCHAR)anpUnit[u]->iUnit )
+	{
+	    if( anpUnit[u]->usSleep == 0 )
+		data->seconds = (USHORT)-1;	/* never stopped */
+	    else
+		data->seconds = anpUnit[u]->usSleep - anpUnit[u]->counter;
+
+	    if( dsize >= sizeof(DSKSL_DEVSTATE_DATA) ) /* room for complete struc? */
+		_fmemcpy(data->restart, anpUnit[u]->rst_reason,
+			 min(dsize, sizeof(anpUnit[u]->rst_reason)));
+	    rc = STATUS_DONE;
+	    break;
+	}
+    }
+
+    return rc;
+}
+
+
+
+
+/*#
+ * SetDeviceState(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ * RETURNS
+ *	driver status word
+ * GLOBAL
+ *	cUnit, anpUnit
+ * DESPRIPTION
+ *	Changes state of a single device
+ * REMARKS
+ */
+PRIVATE USHORT NEAR
+SetDeviceState(PRP_GENIOCTL rp)
+{
+    PUSHORT const	parmsize = &rp->ParmLen;
+    PUSHORT const	datasize = &rp->DataLen;
+    USHORT const	psize = (*parmsize == 0 ? 0xFFFF : *parmsize);
+    USHORT const	dsize = (*datasize == 0 ? 0xFFFF : *datasize);
+    DSKSL_DEVSTATE_PARM FAR * const parm = (DSKSL_DEVSTATE_PARM FAR *)rp->ParmPacket;
+    DSKSL_DEVSTATE_DATA FAR * const data = (DSKSL_DEVSTATE_DATA FAR *)rp->DataPacket;
+    USHORT		u;
+    USHORT		rc = STATUS_ERR_INVPARAM;
+
+    *parmsize = sizeof(DSKSL_DEVSTATE_PARM);
+    *datasize = sizeof(DSKSL_DEVSTATE_DATA);
+
+    if( psize < sizeof(DSKSL_DEVSTATE_PARM)
+       ||  CheckPointer(parm, sizeof(DSKSL_DEVSTATE_PARM), 0) )
+    {
+	return rc;
+    }
+    if( dsize < sizeof(DSKSL_DEVSTATE_DATA)
+       ||  CheckPointer(data, sizeof(DSKSL_DEVSTATE_DATA), 1) )
+    {
+	return rc;
+    }
+
+    for( u = 0; u < cUnit; ++u )
+    {
+	if( parm->adapter == (UCHAR)anpUnit[u]->iAdapter
+	   &&  parm->unit == (UCHAR)anpUnit[u]->iUnit )
+	{
+	    ULONG const	ul = data->seconds;
+
+	    if( ul >= anpUnit[u]->usSleep )
+		anpUnit[u]->counter = 0;
+	    else
+		anpUnit[u]->counter = (USHORT)(anpUnit[u]->usSleep - ul);
+	    rc = STATUS_DONE;
+	    break;
+	}
+    }
+
+    return rc;
+}
+
+
+
+
+/*#
+ * ReadMessages(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ * RETURNS
+ *	driver status word
+ * GLOBAL
+ *	DisplayBuffer,iNextString
+ * DESPRIPTION
+ *	Copies message buffer to user buffer.
+ * REMARKS
+ */
+#pragma optimize("",off)			/* keep optimizer quiet */
+PRIVATE USHORT NEAR
+ReadMessages(PRP_GENIOCTL rp)
+{
+    PUSHORT const	datasize = &rp->DataLen;
+    USHORT		dsize = (*datasize == 0 ? 0xFFFF : *datasize);
+    DSKSL_MSGS_DATA FAR * const data = (DSKSL_MSGS_DATA FAR *)rp->DataPacket;
+    PUSHORT		pcbMsg = &iNextString;
+    PUCHAR		pMsg = DisplayBuffer;
+    USHORT		rc = STATUS_ERR_INVPARAM;
+
+    *datasize = *pcbMsg + FIELDOFFSET(DSKSL_MSGS_DATA,msg);
+
+    if( dsize < FIELDOFFSET(DSKSL_MSGS_DATA,msg)
+       ||  CheckPointer(data, FIELDOFFSET(DSKSL_MSGS_DATA,msg), 1) )
+	return rc;
+    data->cb = *datasize;			/* tell caller */
+
+    if( dsize > *pcbMsg + FIELDOFFSET(DSKSL_MSGS_DATA,msg) )
+	dsize = *pcbMsg + FIELDOFFSET(DSKSL_MSGS_DATA,msg);
+    if( CheckPointer(data, dsize, 1) )
+	return rc;
+
+    /* If some bytes available in caller buffer (more than
+     * just 'cb'), copy part/all of message buffer. */
+
+    if( dsize - FIELDOFFSET(DSKSL_MSGS_DATA,msg) > 0 )
+    {
+	_fmemcpy(data->msg, pMsg, dsize - FIELDOFFSET(DSKSL_MSGS_DATA,msg));
+    }
+
+    return STATUS_DONE;
+}
+#pragma optimize("",)
+
+
+
+
+/*#
+ * ClearMessages(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ * RETURNS
+ *	driver status word
+ * GLOBAL
+ *	iNextString
+ * DESPRIPTION
+ *	Removes messages from DisplayBuffer.
+ * REMARKS
+ */
+#pragma optimize("",off)			/* keep optimizer quiet */
+PRIVATE USHORT NEAR
+ClearMessages(PRP_GENIOCTL rp)
+{
+    PUSHORT const	parmsize = &rp->ParmLen;
+    PUSHORT const	datasize = &rp->DataLen;
+
+    PUSHORT	pi = &iNextString;
+    USHORT	rc = STATUS_DONE;
+
+    *parmsize = 0;
+    *datasize = 0;
+
+    *pi = 0;					/* to beginning of buffer */
+    return rc;
+}
+#pragma optimize("",)
+
+
+
+
+/*#
+ * GetLaststatus(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ * RETURNS
+ *	driver status word
+ * GLOBAL
+ *	(none)
+ * DESPRIPTION
+ *	Copies status info from device structure to user buffer.
+ * REMARKS
+ */
+#pragma optimize("",off)			/* keep optimizer quiet */
+PRIVATE USHORT NEAR
+GetLaststatus(PRP_GENIOCTL rp)
+{
+    PUSHORT const	parmsize = &rp->ParmLen;
+    PUSHORT const	datasize = &rp->DataLen;
+    USHORT const	psize = (*parmsize == 0 ? 0xFFFF : *parmsize);
+    USHORT		dsize = (*datasize == 0 ? 0xFFFF : *datasize);
+    DSKSL_STATUS_DATA FAR * const data = (DSKSL_STATUS_DATA FAR *)rp->DataPacket;
+    DSKSL_DEVSTATE_PARM FAR * const parm = (DSKSL_DEVSTATE_PARM FAR *)rp->ParmPacket;
+    USHORT		u;
+    USHORT		rc = STATUS_ERR_INVPARAM;
+
+    *parmsize = sizeof(DSKSL_DEVSTATE_PARM);
+    *datasize = sizeof(DSKSL_STATUS_DATA);
+
+    if( psize < sizeof(DSKSL_DEVSTATE_PARM)
+       ||  CheckPointer(parm, sizeof(DSKSL_DEVSTATE_PARM), 0) )
+    {
+	return rc;
+    }
+    if( dsize < sizeof(DSKSL_STATUS_DATA)
+	||  CheckPointer(data, sizeof(DSKSL_STATUS_DATA), 1) )
+	return rc;
+
+    for( u = 0; u < cUnit; ++u )
+    {
+	if( parm->adapter == (UCHAR)anpUnit[u]->iAdapter
+	   &&  parm->unit == (UCHAR)anpUnit[u]->iUnit )
+	{
+	    data->status = anpUnit[u]->laststatus;
+	    data->error = anpUnit[u]->lasterror;
+	    *(PSCSI_STATUS_BLOCK)data->statusblock = anpUnit[u]->statusblock;
+	    *(PSCSI_REQSENSE_DATA)data->sensedata = anpUnit[u]->sensedata;
+	    rc = STATUS_DONE;
+	    break;
+	}
+    }
+
+    return rc;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Public Entries **************************************************
+ * ******************************************************************* */
+
+/*#
+ * SaveMessage(void)
+ *
+ * PARAMETER
+ *	none
+ * RETURNS
+ *	nothing
+ * GLOBAL
+ *	szMsgBuffer,msgBuffer		message
+ *	DisplayBuffer,iNextString	swapdata buffer
+ * DESPRIPTION
+ *	Copies 'szMsgBuffer' to swapdata buffer and, if still
+ *	in init phase 1, to screen via DevHelp_Save_Messsage.
+ * REMARKS
+ */
+#pragma optimize("",off)
+PUBLIC void NEAR
+SaveMessage(void)
+{
+    PUSHORT	pi = &iNextString;
+
+    cli();
+    if( *pi+_fstrlen(szMsgBuffer) < DISPLAYBUFFER_SIZE )
+    {
+	_fstrcpy(&DisplayBuffer[*pi], szMsgBuffer);
+	*pi += _fstrlen(szMsgBuffer) + 1;
+    }
+    sti();
+    DEBMSG(szMsgBuffer);
+    if( !(fDriverFlags & DF_INITDONE) )
+	DevHelp_Save_Message((NPBYTE)&msgBuffer);
+    return;
+}
+#pragma optimize("",)
+
+
+
+
+/*#
+ * GenIOCtl(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ * RETURNS
+ *	driver status word
+ * GLOBAL
+ *	none
+ * DESPRIPTION
+ *	Calls approbiate subfunction.
+ * REMARKS
+ */
+PUBLIC USHORT
+GenIOCtl(PRP_GENIOCTL rp)
+{
+    USHORT rc = STATUS_ERR_UNKCMD;
+
+    if( rp->Category == IOCTL_DSKSLEEP_CATEGORY )
+    {
+	switch( rp->Function )
+	{
+	  case DSKSL_QUERY_VERSION:
+	    rc = DriverVersion( rp );
+	    break;
+
+	  case DSKSL_QUERY_TIMEOUT:
+	    rc = DeviceList( rp );
+	    break;
+
+	  case DSKSL_SET_TIMEOUT:
+	    rc = ChangeList( rp );
+	    break;
+
+	  case DSKSL_QUERY_DEVSTATE:
+	    rc = QueryDeviceState( rp );
+	    break;
+
+	  case DSKSL_SET_DEVSTATE:
+	    rc = SetDeviceState( rp );
+	    break;
+
+	  case DSKSL_READ_MSGS:
+	    rc = ReadMessages( rp );
+	    break;
+
+	  case DSKSL_CLEAR_MSGS:
+	    rc = ClearMessages( rp );
+	    break;
+
+	  case DSKSL_GET_LASTSTATUS:
+	    rc = GetLaststatus(rp);
+	    break;
+	}
+    }
+
+    return rc;
+}
+@
+
+
+1.10
+log
+@- switched to WatCom's intrinsic _f* routines
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/sleep/RCS/ioctl.c,v $
+ * $Revision: 1.9 $
+ * $Date: 1997/12/05 01:35:40 $
+d14 3
+d52 1
+a52 1
+ * This code is Copyright Vitus Jensen 1996-98
+d54 1
+a54 5
+#pragma off (unreferenced)
+static char id[]="$Id: ioctl.c,v 1.9 1997/12/05 01:35:40 vitus Exp vitus $";
+#pragma on (unreferenced)
+
+#include <string.h>
+a58 17
+#include <os2.h>
+#include <bseerr.h>
+
+#include <devcmd.h>
+#include <strat2.h>
+#include <reqpkt.h>
+
+#include <scsi.h>
+#include <iorb.h>
+#if defined(__WATCOMC__)
+# include <devhelp.h>
+typedef USHORT NEAR *NPUSHORT;
+typedef VOID   NEAR *NPVOID;
+#else
+# include <dhcalls.h>
+#endif
+
+d93 2
+a94 4
+ * NAME
+ *	DriverVersion
+ * CALL
+ *	DriverVersion(rp)
+d136 2
+a137 4
+ * NAME
+ *	DeviceList
+ * CALL
+ *	DeviceList(rp)
+d190 2
+a191 4
+ * NAME
+ *	ChangeList
+ * CALL
+ *	ChangeList(rp)
+d272 2
+a273 4
+ * NAME
+ *	QueryDeviceState
+ * CALL
+ *	QueryDeviceState(rp)
+d334 2
+a335 4
+ * NAME
+ *	SetDeviceState
+ * CALL
+ *	SetDeviceState(rp)
+d395 2
+a396 4
+ * NAME
+ *	ReadMessages
+ * CALL
+ *	ReadMessages(rp)
+d446 2
+a447 4
+ * NAME
+ *	ClearMessages
+ * CALL
+ *	ClearMessages(rp)
+d480 2
+a481 4
+ * NAME
+ *	GetLaststatus
+ * CALL
+ *	GetLaststatus(rp)
+d544 2
+a545 4
+ * NAME
+ *	SaveMessage
+ * CALL
+ *	SaveMessage(void)
+d582 2
+a583 4
+ * NAME
+ *	GenIOCtl
+ * CALL
+ *	GenIOCtl(rp)
+@
+
+
+1.9
+log
+@- added WatCom specific code and header
+- moved history to bottom of file
+@
+text
+@d2 10
+a11 10
+ * $Source: e:/source/driver/sleep/RCS/ioctl.c,v $
+ * $Revision: 1.8 $
+ * $Date: 1997/11/09 00:56:20 $
+ * $Author: vitus $
+ *
+ * General IOCtl interface
+ * These functions don't return an error if someone
+ * uses 16bit-DosDevIOCtl with a too-small buffer.  They
+ * just kills that app (because of an memory protection
+ * fault).
+d13 35
+a47 1
+ * History: see bottom of file
+d49 1
+a49 1
+ * This code is Copyright Vitus Jensen 1996-97
+d52 1
+a52 1
+static char id[]="$Id: ioctl.c,v 1.8 1997/11/09 00:56:20 vitus Exp vitus $";
+d55 2
+a68 1
+#include <addcalls.h>
+d94 1
+a94 1
+#define _inswap		_based(_segname("SWAPDATA"))
+d276 1
+a276 1
+		DISABLE();
+d280 1
+a280 1
+		ENABLE();
+d330 1
+a330 2
+    if( dsize < sizeof(DSKSL_DEVSTATE_DATA)
+       ||  CheckPointer(data, sizeof(DSKSL_DEVSTATE_DATA), 1) )
+d344 4
+d465 1
+a465 3
+	_far_memcpy(data->msg,
+		    pMsg,
+		    dsize - FIELDOFFSET(DSKSL_MSGS_DATA,msg));
+d600 2
+a601 2
+    DISABLE();
+    if( *pi+_far_strlen(szMsgBuffer) < DISPLAYBUFFER_SIZE )
+d603 2
+a604 2
+	_far_strcpy(&DisplayBuffer[*pi], szMsgBuffer);
+	*pi += _far_strlen(szMsgBuffer) + 1;
+d606 1
+a606 1
+    ENABLE();
+a676 37
+
+
+
+/* History:
+ *
+ * $Log: ioctl.c,v $
+ * Revision 1.8  1997/11/09 00:56:20  vitus
+ * - modified for new DDK (request contains length fields)
+ *
+ * Revision 1.7  1997/09/03 01:05:12  vitus
+ * - implemented DSKSL_GET_LASTSTATUS
+ *
+ * Revision 1.6  1997/06/03 23:54:10  vitus
+ * - corrected syntax error
+ *
+ * Revision 1.5  1997/05/11 01:51:13  vitus
+ * - ChangeList: only update counter when reducing usSleep
+ *
+ * Revision 1.4  1997/05/07 23:04:26  vitus
+ * - Handle partial copy of message buffer correctly
+ * - Return consistent timer values even if timeout changed or zero
+ * - Corrected data->cb/datasize values (thanks to N.Dufva)
+ * - Allows IOCtl to query partial version info
+ *
+ * Revision 1.3  1997/04/07 01:04:22  vitus
+ * Modifies/Checks application datasize values
+ * VERSION returns registration flag, too
+ *
+ * Revision 1.2  1997/03/05 22:01:55  vitus
+ * SaveMessage() to save/display messages
+ * IOCtls to read/clear those messages
+ * IOCtls now specify times in seconds
+ * Query/ChangeDeviceState added
+ *
+ * Revision 1.1  1997/02/06 01:09:42  vitus
+ * Initial revision
+ */
+@
+
+
+1.8
+log
+@- modified for new DDK (request contains length fields)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1997/09/03 01:05:12 $
+d13 1
+a13 28
+ * $Log: ioctl.c,v $
+ * Revision 1.7  1997/09/03 01:05:12  vitus
+ * - implemented DSKSL_GET_LASTSTATUS
+ *
+ * Revision 1.6  1997/06/03 23:54:10  vitus
+ * - corrected syntax error
+ *
+ * Revision 1.5  1997/05/11 01:51:13  vitus
+ * - ChangeList: only update counter when reducing usSleep
+ *
+ * Revision 1.4  1997/05/07 23:04:26  vitus
+ * - Handle partial copy of message buffer correctly
+ * - Return consistent timer values even if timeout changed or zero
+ * - Corrected data->cb/datasize values (thanks to N.Dufva)
+ * - Allows IOCtl to query partial version info
+ *
+ * Revision 1.3  1997/04/07 01:04:22  vitus
+ * Modifies/Checks application datasize values
+ * VERSION returns registration flag, too
+ *
+ * Revision 1.2  1997/03/05 22:01:55  vitus
+ * SaveMessage() to save/display messages
+ * IOCtls to read/clear those messages
+ * IOCtls now specify times in seconds
+ * Query/ChangeDeviceState added
+ *
+ * Revision 1.1  1997/02/06 01:09:42  vitus
+ * Initial revision
+d17 3
+a19 1
+static char vcid[]="$Id: ioctl.c,v 1.7 1997/09/03 01:05:12 vitus Exp vitus $";
+d34 7
+a40 2
+
+#include <dhcalls.h>
+a402 1
+    PUSHORT const	parmsize = &rp->ParmLen;
+a529 2
+
+    return STATUS_DONE;
+d559 1
+a559 1
+PUBLIC void
+d564 1
+a564 1
+    _asm { cli }
+d570 1
+a570 1
+    _asm { sti }
+d641 37
+@
+
+
+1.7
+log
+@Implemented DSKSL_GET_LASTSTATUS
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1997/06/03 23:54:10 $
+d14 3
+d21 1
+a21 1
+ * ChangeList: only update counter when reducing usSleep
+d44 1
+a44 1
+static char vcid[]="$Id: ioctl.c,v 1.6 1997/06/03 23:54:10 vitus Exp vitus $";
+d114 2
+a115 2
+    PUSHORT const	parmsize = (((PUSHORT)(rp+1))+0);
+    PUSHORT const	datasize = (((PUSHORT)(rp+1))+1);
+d158 2
+a159 2
+    PUSHORT const	parmsize = (((PUSHORT)(rp+1))+0);
+    PUSHORT const	datasize = (((PUSHORT)(rp+1))+1);
+d215 2
+a216 2
+    PUSHORT const	datasize = (((PUSHORT)(rp+1))+1);
+    PUSHORT const	parmsize = (((PUSHORT)(rp+1))+0);
+d298 2
+a299 2
+    PUSHORT const	parmsize = (((PUSHORT)(rp+1))+0);
+    PUSHORT const	datasize = (((PUSHORT)(rp+1))+1);
+d359 2
+a360 2
+    PUSHORT const	parmsize = (((PUSHORT)(rp+1))+0);
+    PUSHORT const	datasize = (((PUSHORT)(rp+1))+1);
+d423 2
+a424 2
+    PUSHORT const	parmsize = (((PUSHORT)(rp+1))+0);
+    PUSHORT const	datasize = (((PUSHORT)(rp+1))+1);
+d479 2
+a480 2
+    PUSHORT const	parmsize = (((PUSHORT)(rp+1))+0);
+    PUSHORT const	datasize = (((PUSHORT)(rp+1))+1);
+d515 2
+a516 2
+    PUSHORT const	parmsize = (((PUSHORT)(rp+1))+0);
+    PUSHORT const	datasize = (((PUSHORT)(rp+1))+1);
+@
+
+
+1.6
+log
+@- corrected syntax error
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1997/05/11 01:51:13 $
+d14 3
+d41 1
+a41 1
+static char vcid[]="$Id: ioctl.c,v 1.5 1997/05/11 01:51:13 vitus Exp vitus $";
+d53 1
+d114 1
+d118 2
+a119 1
+    if( dsize < 2  ||  CheckPointer(rp->DataPacket, 2, 1) )
+d122 1
+a122 2
+    *(rp->DataPacket+0) = SUBVERSION;		/* byte 0 */
+    *(rp->DataPacket+1) = VERSION;		/* byte 1 */
+d124 1
+a124 1
+       &&  CheckPointer(rp->DataPacket, sizeof(DSKSL_VER_DATA), 1) )
+d126 1
+a126 2
+	*(rp->DataPacket+2) = 0;		/* byte 2 */
+	*(rp->DataPacket+3) = 0;		/* byte 3 */
+d128 1
+a128 1
+	    *(rp->DataPacket+2) |= 0x01;
+d256 1
+a256 1
+		 * let timer value acceed this new timeout. */
+d441 1
+a441 1
+       just 'cb'), copy part/all of message buffer. */
+d493 62
+d651 4
+@
+
+
+1.5
+log
+@ChangeList: only update counter when reducing usSleep
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1997/05/07 23:04:26 $
+d14 3
+d35 2
+a36 3
+ *
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1996
+d38 1
+a38 1
+static char vcid[]="$Id: ioctl.c,v 1.4 1997/05/07 23:04:26 vitus Exp vitus $";
+d123 1
+a123 1
+	if( (fDriverFlags & DF_REGISTRATED) )
+@
+
+
+1.4
+log
+@- Handle partial copy of message buffer correctly
+- Return consistent timer values even if timeout changed or zero
+- Corrected data->cb/datasize values (thanks to N.Dufva)
+- Allows IOCtl to query partial version info
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1997/04/07 01:04:22 $
+d14 6
+d36 1
+a36 1
+static char vcid[]="$Id: ioctl.c,v 1.3 1997/04/07 01:04:22 vitus Exp vitus $";
+d159 1
+a159 1
+       ||  CheckPointer(data, FIELDOFFSET(DSKSL_QL_DATA,list), 1) )
+d249 3
+a252 2
+		if( anpUnit[u]->counter == anpUnit[u]->usSleep )
+		    anpUnit[u]->counter = (USHORT)p->seconds;
+d254 2
+d410 1
+a410 1
+#pragma optimize("",off)
+d466 1
+a466 1
+#pragma optimize("",off)
+@
+
+
+1.3
+log
+@Modifies/Checks application datasize values
+VERSION returns registration flag, too
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1997/03/05 22:01:55 $
+d14 4
+d30 1
+a30 1
+static char vcid[]="$Id: ioctl.c,v 1.2 1997/03/05 22:01:55 vitus Exp vitus $";
+d105 1
+a105 2
+    if( dsize < sizeof(DSKSL_VER_DATA)
+       ||  CheckPointer(rp->DataPacket, sizeof(DSKSL_VER_DATA), 1) )
+d110 8
+a117 4
+    *(rp->DataPacket+2) = 0;			/* byte 2 */
+    *(rp->DataPacket+3) = 0;			/* byte 3 */
+    if( (fDriverFlags & DF_REGISTRATED) )
+	*(rp->DataPacket+2) |= 0x01;
+d159 2
+a160 1
+    for( i = 0; i < cUnit  &&  i < *datasize / sizeof(DEVICE_TIMEOUT); ++i )
+a173 1
+    data->cb = *datasize;
+d243 3
+d247 1
+d308 4
+a311 1
+	    data->seconds = anpUnit[u]->usSleep - anpUnit[u]->counter;
+d418 1
+d425 10
+a434 4
+    _far_memcpy(data->msg,
+		pMsg,
+		dsize - FIELDOFFSET(DSKSL_MSGS_DATA,msg));
+    data->cb = dsize;
+d514 1
+@
+
+
+1.2
+log
+@SaveMessage() to save/display messages
+IOCtls to read/clear those messages
+IOCtls now specify times in seconds
+Query/ChangeDeviceState added
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1997/02/06 01:09:42 $
+d8 4
+d14 6
+d26 1
+a26 1
+static char vcid[]="$Id: ioctl.c,v 1.1 1997/02/06 01:09:42 vitus Exp vitus $";
+d50 2
+d95 8
+a102 1
+    if( CheckPointer(rp->DataPacket, sizeof(USHORT), 1) )
+d105 1
+a105 1
+    *rp->DataPacket = SUBVERSION;		/* byte 0 */
+d107 5
+a131 4
+ *	This functions doesn't return an error if someone
+ *	uses 16bit-DosDevIOCtl with a too-small buffer.  It
+ *	just kills that app (because of an memory protection
+ *	fault).
+d136 3
+a138 1
+    USHORT		datasize = *(((PUSHORT)(rp+1))+1);
+d142 6
+a147 4
+    if( datasize == 0 )
+	datasize = 0xFFFF;			/* old style, assume maximum.
+						   But we need at least header */
+    if( CheckPointer(data, FIELDOFFSET(DSKSL_QL_DATA,list), 1) )
+d149 1
+d152 1
+a152 1
+    for( i = 0; i < cUnit  &&  i < datasize / sizeof(DEVICE_TIMEOUT); ++i )
+d157 1
+d159 1
+d166 1
+a166 1
+    data->cb = FIELDOFFSET(DSKSL_QL_DATA,list) + sizeof(DEVICE_TIMEOUT) * cUnit;
+a188 4
+ *	This functions doesn't return an error if someone
+ *	uses 16bit-DosDevIOCtl with a too-small buffer.  It
+ *	just kills that app (because of an memory protection
+ *	fault).
+d193 3
+a195 1
+    USHORT		parmsize = *(((PUSHORT)(rp+1))+0);
+d200 2
+a201 2
+    if( parmsize == 0 )
+	parmsize = 0xFFFF;			/* old style, assume maximum */
+d203 3
+a205 1
+    if( CheckPointer(parm, FIELDOFFSET(DSKSL_SETTO_PARM,list), 0) )
+d207 1
+d210 3
+a212 1
+    if( parm->cb > parmsize )
+d214 1
+a223 5
+	if( CheckPointer(p, sizeof(DEVICE_TIMEOUT), 0) )
+	{
+	    rc = STATUS_ERR_INVPARAM;
+	    break;
+	}
+a264 4
+ *	This functions doesn't return an error if someone
+ *	uses 16bit-DosDevIOCtl with a too-small buffer.  It
+ *	just kills that app (because of an memory protection
+ *	fault).
+d269 4
+a272 1
+    USHORT		parmsize = *(((PUSHORT)(rp+1))+0);
+a273 1
+    USHORT		datasize = *(((PUSHORT)(rp+1))+1);
+d278 2
+a279 4
+    if( parmsize == 0 )
+	parmsize = 0xFFFF;			/* old style, assume maximum */
+    if( datasize == 0 )
+	datasize = 0xFFFF;
+d281 1
+a281 1
+    if( parmsize < sizeof(DSKSL_DEVSTATE_PARM)
+d283 1
+d285 2
+a286 1
+    if( datasize < sizeof(DSKSL_DEVSTATE_DATA)
+d288 1
+d290 1
+a322 4
+ *	This functions doesn't return an error if someone
+ *	uses 16bit-DosDevIOCtl with a too-small buffer.  It
+ *	just kills that app (because of an memory protection
+ *	fault).
+d327 4
+a330 1
+    USHORT		parmsize = *(((PUSHORT)(rp+1))+0);
+a331 1
+    USHORT		datasize = *(((PUSHORT)(rp+1))+1);
+d336 2
+a337 4
+    if( parmsize == 0 )
+	parmsize = 0xFFFF;			/* old style, assume maximum */
+    if( datasize == 0 )
+	datasize = 0xFFFF;
+d339 1
+a339 1
+    if( parmsize < sizeof(DSKSL_DEVSTATE_PARM)
+d341 1
+d343 2
+a344 1
+    if( datasize < sizeof(DSKSL_DEVSTATE_DATA)
+d346 1
+d348 1
+a385 4
+ *	This functions doesn't return an error if someone
+ *	uses 16bit-DosDevIOCtl with a too-small buffer.  It
+ *	just kills that app (because of an memory protection
+ *	fault).
+d391 3
+a393 1
+    USHORT		datasize = *(((PUSHORT)(rp+1))+1);
+d399 1
+a399 2
+    if( datasize == 0 )
+	datasize = 0xFFFF;
+d401 1
+a401 1
+    if( datasize < FIELDOFFSET(DSKSL_MSGS_DATA,msg)
+d405 3
+a407 3
+    if( datasize > *pcbMsg + FIELDOFFSET(DSKSL_MSGS_DATA,msg) )
+	datasize =  *pcbMsg + FIELDOFFSET(DSKSL_MSGS_DATA,msg);
+    if( CheckPointer(data, datasize, 1) )
+d409 1
+d412 2
+a413 2
+		datasize - FIELDOFFSET(DSKSL_MSGS_DATA,msg));
+    data->cb = datasize;
+d440 3
+d445 3
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Author$
+d9 4
+a12 1
+ * $Log$
+d16 1
+a16 1
+static char vcid[]="$Id$";
+d41 14
+a63 1
+
+a104 1
+ *
+a106 1
+ *
+d134 2
+a135 2
+	p->adapter = (UCHAR)anpUnit[i]->modinfo.AdapterIndex;
+	p->unit = (UCHAR)anpUnit[i]->modinfo.UnitIndex;
+d137 1
+a137 1
+	p->minutes = anpUnit[i]->usSleep / 60U;
+a160 1
+ *
+d207 2
+a208 2
+	    if( p->adapter == (UCHAR)anpUnit[u]->modinfo.AdapterIndex
+	       &&  p->unit == (UCHAR)anpUnit[u]->modinfo.UnitIndex )
+d210 1
+a210 1
+		anpUnit[u]->usSleep = (USHORT)p->minutes * 60U;
+d225 202
+d433 38
+d490 1
+a490 1
+    USHORT rc;
+d492 1
+a492 1
+    if( rp->Category != IOCTL_DSKSLEEP_CATEGORY )
+d494 25
+a518 2
+	return STATUS_ERR_UNKCMD;
+    }
+d520 4
+a523 17
+    switch( rp->Function )
+    {
+      case DSKSL_QUERY_VERSION:
+	rc = DriverVersion( rp );
+	break;
+
+      case DSKSL_QUERY_TIMEOUT:
+	rc = DeviceList( rp );
+	break;
+
+      case DSKSL_SET_TIMEOUT:
+	rc = ChangeList( rp );
+	break;
+
+      default:
+	rc = STATUS_ERR_UNKCMD;
+	break;
+@

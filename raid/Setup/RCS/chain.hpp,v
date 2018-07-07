@@ -1,0 +1,290 @@
+head	1.8;
+access;
+symbols
+	VSETUPv0_84:1.8
+	VSETUP_82:1.7
+	VSETUPv0_80:1.6
+	VSETUPv0_71:1.2
+	VSETUPv0_70:1.2;
+locks; strict;
+comment	@// @;
+
+
+1.8
+date	2000.08.15.00.16.22;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.07.05.00.49.14;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.06.21.01.34.01;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	99.06.19.18.27.58;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	99.06.02.01.45.12;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	99.04.13.01.26.48;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	99.03.08.05.08.16;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.03.04.00.22.02;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Declaration of class VChain.
+@
+
+
+1.8
+log
+@- changed addChild() prototype
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/chain.hpp,v $
+ * $Revision: 1.7 $
+ * $Date: 1999/07/05 00:49:14 $
+ * $Locker: vitus $
+ *
+ *	Declaration of class VChain.
+ *
+ * $Log: chain.hpp,v $
+ * Revision 1.7  1999/07/05 00:49:14  vitus
+ * - addChild() gets additional flag "config sector valid", saved in child array
+ *
+ * Revision 1.6  1999/06/21 01:34:01  vitus
+ * - corrected english spelling
+ *
+ * Revision 1.5  1999/06/19 18:27:58  vitus
+ * - minor corrections to keep compiler happy
+ *
+ * Revision 1.4  1999/06/02 01:45:12  vitus
+ * - added inv_icon member (icon if child is invalid in respect to parent)
+ *
+ * Revision 1.3  1999/04/13 01:26:48  vitus
+ * - child[] now static member of object
+ *
+ * Revision 1.2  1999/03/08 05:08:16  vitus
+ * - added queryIcon() method
+ *
+ * Revision 1.1  1999/03/04 00:22:02  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1999-2000
+ */
+#define _CHAIN_HPP	"$Id: chain.hpp,v 1.7 1999/07/05 00:49:14 vitus Exp vitus $"
+
+
+
+
+class VChain : public VRDrive {
+  private:
+    Boolean	hostdrive;
+    ULONG	os2access;
+
+    int		children;
+    struct _ChildInfo {
+	VRDev *	rdev;
+	Boolean cfgok;
+    } child[MAX_CHILDREN];
+
+    ULONG	size;
+    Boolean	writable;
+    HPOINTER	inv_icon, rw_icon, ro_icon;
+
+  public:
+    VChain(DEVID drive_id,int nchd);
+    ~VChain();
+
+    void	forceUnwritable() { writable = False; }
+
+    int		ioDeleteYourself();
+    int		ioRemoveParent();
+    int		ioChangeID(DEVID);
+    int		ioSync();
+
+    UCHAR	isArray() { return RDTYPE_CHAIN; }
+    Boolean	isHostdrive() { return hostdrive; }
+    char *	allocateDescription();
+    HPOINTER	queryIcon();
+    int		queryChildren();
+    VRDev *	getChild(int which);
+
+    void	setHostdrive(ULONG os2idx = -1UL);
+    void	addChild(VRDev * newchild, Boolean cfgv, ULONG datav = -1ul);
+
+    Boolean	isWritable() { return writable; }
+    ULONG	querySize();
+    APIRET	read(ULONG offset,ULONG count,PVOID buffer);
+    APIRET	write(ULONG offset,ULONG count,PVOID buffer);
+};
+@
+
+
+1.7
+log
+@- addChild() gets additional flag "config sector valid", saved in child array
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1999/06/21 01:34:01 $
+d10 3
+d30 2
+a31 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1999
+d33 1
+a33 1
+#define _CHAIN_HPP	"$Id: chain.hpp,v 1.6 1999/06/21 01:34:01 vitus Exp vitus $"
+d72 1
+a72 1
+    void	addChild(VRDev * newchild,Boolean cfgv,Boolean datav=True);
+@
+
+
+1.6
+log
+@- corrected english spelling
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1999/06/19 18:27:58 $
+d10 3
+d30 1
+a30 1
+#define _CHAIN_HPP	"$Id: chain.hpp,v 1.5 1999/06/19 18:27:58 vitus Exp vitus $"
+d39 1
+d41 5
+a45 1
+    VRDev      *child[MAX_CHILDREN];
+d69 1
+a69 1
+    void	addChild(VRDev * newchild,Boolean valid=True);
+@
+
+
+1.5
+log
+@- minor corrections to keep compiler happy
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1999/06/02 01:45:12 $
+d10 3
+d27 1
+a27 1
+#define _CHAIN_HPP	"$Id: chain.hpp,v 1.4 1999/06/02 01:45:12 vitus Exp vitus $"
+d36 2
+a37 2
+    int		childs;
+    VRDev      *child[MAX_CHILDS];
+d57 1
+a57 1
+    int		queryChilds();
+@
+
+
+1.4
+log
+@- added inv_icon member (icon if child is invalid in respect to parent)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1999/04/13 01:26:48 $
+d10 3
+d24 1
+a24 1
+#define _CHAIN_HPP	"$Id: chain.hpp,v 1.3 1999/04/13 01:26:48 vitus Exp vitus $"
+d57 1
+a57 1
+    void	setHostdrive(ULONG os2idx = -1);
+@
+
+
+1.3
+log
+@- child[] now static member of object
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1999/03/08 05:08:16 $
+d10 3
+d21 1
+a21 1
+#define _CHAIN_HPP	"$Id: chain.hpp,v 1.2 1999/03/08 05:08:16 vitus Exp vitus $"
+d34 1
+a34 1
+    HPOINTER	rw_icon, ro_icon;
+@
+
+
+1.2
+log
+@- added queryIcon() method
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1999/03/04 00:22:02 $
+d10 3
+d18 1
+a18 1
+#define _CHAIN_HPP	"$Id: chain.hpp,v 1.1 1999/03/04 00:22:02 vitus Exp vitus $"
+d28 1
+a28 1
+    VRDev     **child;
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 3
+a11 1
+ * $Log$
+d15 1
+a15 1
+#define _CHAIN_HPP	"$Id$"
+d28 1
+d44 1
+@

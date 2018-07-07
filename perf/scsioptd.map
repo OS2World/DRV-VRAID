@@ -1,0 +1,164 @@
+
+ SCSIOpt
+
+ Start     Length     Name                   Class
+ 0001:0000 00020H     DDHeader               CONST
+ 0001:0020 00000H     CONST                  CONST
+ 0001:0020 00339H     CONST                  DATA
+ 0001:035A 00000H     CONST2                 DATA
+ 0001:035C 00000H     LIBDATA                DATA
+ 0001:035C 081F4H     _DATA                  DATA
+ 0001:8550 00125H     _BSS                   BSS
+ 0002:0000 00000H     LIBCODE                CODE
+ 0002:0000 00000H     CODE                   CODE
+ 0002:0000 03494H     _TEXT                  CODE
+ 0003:0000 02002H     SwapData               FAR_DATA
+ 0004:0000 009CBH     INITDATA               FAR_DATA
+ 0004:09D0 00021H     Init111_DATA           FAR_DATA
+ 0004:0A00 00029H     Cmdparse11_DATA        FAR_DATA
+
+ Origin   Group
+ 0001:0   DGROUP
+ 0002:0   StaticGroup
+
+  Address         Publics by Name
+
+ 0002:0629       AddUTable_
+ 0002:20F5       AnalyseCmdLine_
+ 0002:0B44       CheckAdapterInfo_
+ 0002:0BF8       CheckUnitInfo_
+ 0002:04F6       ClearMessages_
+ 0002:060B       Code_End_
+ 0002:279F       Command_Parser_
+ 0002:03BD       DriverVersion_
+ 0002:0985       DumpStatusblock_
+ 0002:05C8       GenIOCtl_
+ 0002:22A2       InitBase_
+ 0002:0E33       ModeSelect_
+ 0002:0CA3       ModeSense_
+ 0002:0FC7       ModifyCachePage_
+ 0002:1A21       ModifyCdromPage_
+ 0002:1626       ModifyConnectPage_
+ 0002:137A       ModifyControlPage_
+ 0002:1D09       ModifyDevice_
+ 0002:091E       QueryUTable_
+ 0002:0416       ReadMessages_
+ 0002:0526       SaveMessage_
+ 0002:1EA1       ScanDevices_
+ 0002:0AC4       SendIORB_
+ 0002:0009       Shutdown_
+ 0002:24AA       sprintk_
+ 0002:2C2B       ulist_parser_
+ 0004:0000       _achDump
+ 0001:856C       _cc
+ 0001:7BA0       _DeviceTable
+ 0001:0392       _Device_Help
+ 0001:0000       _DiskDDHeader
+ 0003:0000       _DisplayBuffer
+ 0002:0078       _dprintf
+ 0001:039A       _fDriverFlags
+ 0001:039C       _hdThisDriver
+ 0003:2000       _iNextString
+ 0001:8572       _length
+ 0001:039E       _MemPool
+ 0001:83A8       _msgBuffer
+ 0001:7B9E       _npInitData
+ 0001:84A4       _opttable
+ 0001:8470       _OPT_ADAPTER
+ 0001:8463       _OPT_DEBUG_DEFAULT
+ 0001:8456       _OPT_DEBUG_NO
+ 0001:848A       _OPT_DISABLE
+ 0001:847D       _OPT_ENABLE
+ 0001:8497       _OPT_END
+ 0001:8449       _OPT_VERBOSE
+ 0001:8560       _pcmdline1
+ 0001:8564       _pcmdline_slash
+ 0001:8568       _pcmdline_start
+ 0001:8558       _pend_option
+ 0001:0396       _pGlobalInfoSeg
+ 0001:8550       _poutbuf1
+ 0001:855C       _poutbuf_end
+ 0001:038E       _ppDiskDDHeader
+ 0001:8554       _ptable_option
+ 0001:7FA0       _ScGaEntry
+ 0002:0A95       _SendIORBNotify
+ 0001:8570       _state_index
+ 0002:0011       _Strategy
+ 0001:000A       _szDriverName
+ 0001:7FA8       _szMsgBuffer
+ 0001:8576       _tokvbuf
+ 0001:8574       _tokv_index
+ 0004:088B       _UnitOption
+ 0002:02E2       __I4D
+ 0002:032F       __U4D
+
+  Address         Publics by Value
+
+ 0001:0000       _DiskDDHeader
+ 0001:000A       _szDriverName
+ 0001:038E       _ppDiskDDHeader
+ 0001:0392       _Device_Help
+ 0001:0396       _pGlobalInfoSeg
+ 0001:039A       _fDriverFlags
+ 0001:039C       _hdThisDriver
+ 0001:039E       _MemPool
+ 0001:7B9E       _npInitData
+ 0001:7BA0       _DeviceTable
+ 0001:7FA0       _ScGaEntry
+ 0001:7FA8       _szMsgBuffer
+ 0001:83A8       _msgBuffer
+ 0001:8449       _OPT_VERBOSE
+ 0001:8456       _OPT_DEBUG_NO
+ 0001:8463       _OPT_DEBUG_DEFAULT
+ 0001:8470       _OPT_ADAPTER
+ 0001:847D       _OPT_ENABLE
+ 0001:848A       _OPT_DISABLE
+ 0001:8497       _OPT_END
+ 0001:84A4       _opttable
+ 0001:8550       _poutbuf1
+ 0001:8554       _ptable_option
+ 0001:8558       _pend_option
+ 0001:855C       _poutbuf_end
+ 0001:8560       _pcmdline1
+ 0001:8564       _pcmdline_slash
+ 0001:8568       _pcmdline_start
+ 0001:856C       _cc
+ 0001:8570       _state_index
+ 0001:8572       _length
+ 0001:8574       _tokv_index
+ 0001:8576       _tokvbuf
+ 0002:0009       Shutdown_
+ 0002:0011       _Strategy
+ 0002:0078       _dprintf
+ 0002:02E2       __I4D
+ 0002:032F       __U4D
+ 0002:03BD       DriverVersion_
+ 0002:0416       ReadMessages_
+ 0002:04F6       ClearMessages_
+ 0002:0526       SaveMessage_
+ 0002:05C8       GenIOCtl_
+ 0002:060B       Code_End_
+ 0002:0629       AddUTable_
+ 0002:091E       QueryUTable_
+ 0002:0985       DumpStatusblock_
+ 0002:0A95       _SendIORBNotify
+ 0002:0AC4       SendIORB_
+ 0002:0B44       CheckAdapterInfo_
+ 0002:0BF8       CheckUnitInfo_
+ 0002:0CA3       ModeSense_
+ 0002:0E33       ModeSelect_
+ 0002:0FC7       ModifyCachePage_
+ 0002:137A       ModifyControlPage_
+ 0002:1626       ModifyConnectPage_
+ 0002:1A21       ModifyCdromPage_
+ 0002:1D09       ModifyDevice_
+ 0002:1EA1       ScanDevices_
+ 0002:20F5       AnalyseCmdLine_
+ 0002:22A2       InitBase_
+ 0002:24AA       sprintk_
+ 0002:279F       Command_Parser_
+ 0002:2C2B       ulist_parser_
+ 0003:0000       _DisplayBuffer
+ 0003:2000       _iNextString
+ 0004:0000       _achDump
+ 0004:088B       _UnitOption

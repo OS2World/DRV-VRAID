@@ -1,0 +1,434 @@
+head	2.1;
+access;
+symbols
+	VSETUPv0_84:1.9
+	VSETUP_82:1.6
+	VSETUPv0_80:1.5
+	VSETUPv0_71:1.2
+	VSETUPv0_70:1.2;
+locks; strict;
+comment	@// @;
+
+
+2.1
+date	2005.06.17.06.10.02;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.01.15.01.30.04;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2000.08.15.00.13.27;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2000.08.07.01.30.00;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.07.05.00.46.13;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	99.06.21.01.39.14;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	99.06.19.18.28.42;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	99.05.13.22.45.25;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	99.03.08.05.07.42;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.03.04.02.05.00;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Declaration of class VMissing.
+@
+
+
+2.1
+log
+@- new setSize() method
+- added New BSD license statement
+- removed tabs
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/missing.hpp,v $
+ * $Revision: 1.9 $
+ * $Date: 2001/01/15 01:30:04 $
+ * $Locker: vitus $
+ *
+ *      Declaration of class VMissing.
+ *      Simplifies handling of missing devices when scanning
+ *      the existing configuration.  Holds information (most
+ *      notible DEVID) between scan and rewrite of configuration
+ *      sectors but may even disappear while running VSetup: when
+ *      it's parent is removed.
+ *
+ *      Implement this class with the richest possible interface.
+ *
+ * $Log: missing.hpp,v $
+ * Revision 1.9  2001/01/15 01:30:04  vitus
+ * - VMissing: implemented queryState()
+ *
+ * Revision 1.8  2000/08/15 00:13:27  vitus
+ * - changed addChild() prototype
+ * - added some aasert's on methods which can never be called
+ *
+ * Revision 1.7  2000/08/07 01:30:00  vitus
+ * - adding support for rebuild state
+ *
+ * Revision 1.6  1999/07/05 00:46:13  vitus
+ * - addChild() gets additional flag "config sector valid"
+ *
+ * Revision 1.5  1999/06/21 01:39:14  vitus
+ * - corrected english spelling
+ *
+ * Revision 1.4  1999/06/19 18:28:42  vitus
+ * - minor corrections to keep compiler happy
+ *
+ * Revision 1.3  1999/05/13 22:45:25  vitus
+ * - isArray() returns 0xFF to detect this class
+ *
+ * Revision 1.2  1999/03/08 05:07:42  vitus
+ * - added queryIcon() method
+ *
+ * Revision 1.1  1999/03/04 02:05:00  vitus
+ * Initial revision
+ * ---------------------------------------------
+ *      Copyright (c) 1998-2001,2005, Vitus Jensen
+ *      All rights reserved.
+ *
+ *      Redistribution and use in source and binary forms, with or without
+ *      modification, are permitted provided that the following conditions are
+ *      met:
+ *
+ *          * Redistributions of source code must retain the above copyright
+ *            notice, this list of conditions and the following disclaimer.
+ *          * Redistributions in binary form must reproduce the above copyright
+ *            notice, this list of conditions and the following disclaimer in
+ *            the documentation and/or other materials provided with the
+ *            distribution.
+ *          * Neither the name of Vitus Jensen nor the names of its
+ *            contributors may be used to endorse or promote products derived
+ *            from this software without specific prior written permission.
+ *
+ *      THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *      "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *      LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *      A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *      OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *      SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *      LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *      DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *      THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *      (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *      OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+#define _MISSING_HPP    "$Id: missing.hpp,v 1.9 2001/01/15 01:30:04 vitus Exp vitus $"
+
+
+
+
+class VMissing : public VDriveWithRedundancy {
+  private:
+    ULONG       size;
+    HPOINTER    icon;
+
+  public:
+    VMissing(DEVID drive_id,ULONG mysize);
+    ~VMissing();
+
+    void        setSize(ULONG newsize) { assert(0); }
+    void        setBuild(ULONG nextsec, Boolean redo = False) { assert(0); }
+    int         ioRemoveChild(VRDev * child) { assert(0); return 0; }
+    int         ioInvalidChild(DEVID const id_of_invalid_child,
+                               ULONG from_this_sector_on) { assert(0); return 0; }
+    int         ioStartRebuild(ULONG start_sector) { assert(0); return 0; }
+
+    int         ioDeleteYourself() { return 0; }
+    int         ioRemoveParent();
+    int         ioChangeID(DEVID);
+    int         ioSync();
+
+    UCHAR       isArray() { return 0xFF; }
+    Boolean     isHostdrive() { return False; }
+    char *      allocateDescription();
+    HPOINTER    queryIcon();
+    ArrayState  queryState() { assert(0); return Error; }
+    int         queryChildren() { return 0; }
+    VRDev *     getChild(int which) { return NULL; }
+
+    void        setHostdrive(ULONG os2idx = -1UL) { }
+    void        addChild(VRDev * newchild, Boolean cfgv,
+                         ULONG datav = -1ul) { assert(0); }
+
+    void        forceUnwritable() { }
+    Boolean     isWritable() { return True; }
+    ULONG       querySize();
+    APIRET      read(ULONG offset,ULONG count,PVOID buffer);
+    APIRET      write(ULONG offset,ULONG count,PVOID buffer);
+};
+
+@
+
+
+1.9
+log
+@- VMissing: implemented queryState()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 2000/08/15 00:13:27 $
+d7 6
+a12 6
+ *	Declaration of class VMissing.
+ *	Simplifies handling of missing devices when scanning
+ *	the existing configuration.  Holds information (most
+ *	notible DEVID) between scan and rewrite of configuration
+ *	sectors but may even disappear while running VSetup: when
+ *	it's parent is removed.
+d14 1
+a14 1
+ *	Implement this class with the richest possible interface.
+d17 3
+d45 28
+a72 1
+ * This code is Copyright Vitus Jensen 1999-2001
+d74 1
+a74 1
+#define _MISSING_HPP	"$Id: missing.hpp,v 1.8 2000/08/15 00:13:27 vitus Exp vitus $"
+d81 2
+a82 2
+    ULONG	size;
+    HPOINTER	icon;
+d88 29
+a116 28
+    void	setBuild(ULONG nextsec, Boolean redo = False) { assert(0); }
+    int		ioRemoveChild(VRDev * child) { assert(0); return 0; }
+    int		ioInvalidChild(DEVID const id_of_invalid_child,
+			       ULONG from_this_sector_on) { assert(0); return 0; }
+    int		ioStartRebuild(ULONG start_sector) { assert(0); return 0; }
+
+    int		ioDeleteYourself() { return 0; }
+    int		ioRemoveParent();
+    int		ioChangeID(DEVID);
+    int		ioSync();
+
+    UCHAR	isArray() { return 0xFF; }
+    Boolean	isHostdrive() { return False; }
+    char *	allocateDescription();
+    HPOINTER	queryIcon();
+    ArrayState	queryState() { assert(0); return Error; }
+    int		queryChildren() { return 0; }
+    VRDev *	getChild(int which) { return NULL; }
+
+    void	setHostdrive(ULONG os2idx = -1UL) { }
+    void	addChild(VRDev * newchild, Boolean cfgv,
+			 ULONG datav = -1ul) { assert(0); }
+
+    void	forceUnwritable() { }
+    Boolean	isWritable() { return True; }
+    ULONG	querySize();
+    APIRET	read(ULONG offset,ULONG count,PVOID buffer);
+    APIRET	write(ULONG offset,ULONG count,PVOID buffer);
+@
+
+
+1.8
+log
+@- changed addChild() prototype
+- added some aasert's on methods which can never be called
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 2000/08/07 01:30:00 $
+d17 4
+d42 1
+a42 1
+ * This code is Copyright Vitus Jensen 1999-2000
+d44 1
+a44 1
+#define _MISSING_HPP	"$Id: missing.hpp,v 1.7 2000/08/07 01:30:00 vitus Exp vitus $"
+d60 3
+a62 4
+    int		ioInvalidChild(DEVID id_of_invalid_child, ULONG from_this_sector_on)
+    { assert(0); return 0; }
+    int		ioStartRebuild(ULONG start_sector)
+    { assert(0); return 0; }
+d73 1
+d78 2
+a79 2
+    void	addChild(VRDev * newchild, Boolean cfgv, ULONG datav = -1ul)
+    { assert(0); }
+@
+
+
+1.7
+log
+@- adding support for rebuild state
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1999/07/05 00:46:13 $
+d17 3
+d40 1
+a40 1
+#define _MISSING_HPP	"$Id: missing.hpp,v 1.6 1999/07/05 00:46:13 vitus Exp vitus $"
+d54 6
+a59 2
+    void	setBuild(ULONG nextsec, Boolean redo = False) { }
+    int		ioRemoveChild(VRDev * child) { return 0; }
+d74 2
+a75 1
+    void	addChild(VRDev * newchild,Boolean cfgv,Boolean datav=True) { }
+@
+
+
+1.6
+log
+@- addChild() gets additional flag "config sector valid"
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1999/06/21 01:39:14 $
+d17 3
+d34 2
+a35 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1999
+d37 1
+a37 1
+#define _MISSING_HPP	"$Id: missing.hpp,v 1.5 1999/06/21 01:39:14 vitus Exp vitus $"
+d51 1
+a51 1
+    void	setBuild(ULONG nextsec) { }
+@
+
+
+1.5
+log
+@- corrected english spelling
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1999/06/19 18:28:42 $
+d17 3
+d34 1
+a34 1
+#define _MISSING_HPP	"$Id: missing.hpp,v 1.4 1999/06/19 18:28:42 vitus Exp vitus $"
+d64 1
+a64 1
+    void	addChild(VRDev * newchild,Boolean valid=True) { }
+@
+
+
+1.4
+log
+@- minor corrections to keep compiler happy
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1999/05/13 22:45:25 $
+d17 3
+d31 1
+a31 1
+#define _MISSING_HPP	"$Id: missing.hpp,v 1.3 1999/05/13 22:45:25 vitus Exp vitus $"
+d57 1
+a57 1
+    int		queryChilds() { return 0; }
+@
+
+
+1.3
+log
+@- isArray() returns 0xFF to detect this class
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1999/03/08 05:07:42 $
+d17 3
+d28 1
+a28 1
+#define _MISSING_HPP	"$Id: missing.hpp,v 1.2 1999/03/08 05:07:42 vitus Exp vitus $"
+d57 1
+a57 1
+    void	setHostdrive(ULONG os2idx = -1) { }
+@
+
+
+1.2
+log
+@- added queryIcon() method
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1999/03/04 02:05:00 $
+d17 3
+d25 1
+a25 1
+#define _MISSING_HPP	"$Id: missing.hpp,v 1.1 1999/03/04 02:05:00 vitus Exp vitus $"
+d40 1
+d47 1
+a47 1
+    UCHAR	isArray() { return 0; }
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d16 3
+a18 1
+ * $Log$
+d22 1
+a22 1
+#define _MISSING_HPP	"$Id$"
+d30 1
+d46 1
+@

@@ -1,0 +1,1221 @@
+;	Static Name Aliases
+;
+;	$S1500_?frac@?1??Timer@@9@9	EQU	?frac@?1??Timer@@9@9
+;	$S1502_?beepfrac@?1??Timer@@9@9	EQU	?beepfrac@?1??Timer@@9@9
+;	$S170_id	EQU	id
+	TITLE   iorb.c
+	.286p
+	.287
+_TEXT	SEGMENT  WORD PUBLIC 'CODE'
+_TEXT	ENDS
+_DATA	SEGMENT  WORD PUBLIC 'DATA'
+_DATA	ENDS
+CONST	SEGMENT  WORD PUBLIC 'CONST'
+CONST	ENDS
+_BSS	SEGMENT  WORD PUBLIC 'BSS'
+_BSS	ENDS
+INITDATA	SEGMENT  WORD PUBLIC 'FAR_DATA'
+INITDATA	ENDS
+DGROUP	GROUP	CONST, _BSS, _DATA
+	ASSUME DS: DGROUP
+	ASSUME  SS: NOTHING
+EXTRN	_CallADD:NEAR
+EXTRN	__lock:NEAR
+EXTRN	__unlock:NEAR
+EXTRN	__fstrncpy:FAR
+EXTRN	DEVHELP_ARMCTXHOOK:FAR
+EXTRN	_DequeueVrio:NEAR
+EXTRN	_InsertVrio:NEAR
+EXTRN	_FilterHandler:NEAR
+EXTRN	_StartManyIorb:NEAR
+EXTRN	_CompleteInit:NEAR
+EXTRN	DEVHELP_BEEP:FAR
+EXTRN	__aNuldiv:NEAR
+EXTRN	_hdBuildHook:DWORD
+EXTRN	_hdThisDriver:WORD
+EXTRN	_apBDisk:BYTE
+EXTRN	_apHDrv:BYTE
+EXTRN	_cHDrv:WORD
+EXTRN	_cBuildProcess:WORD
+EXTRN	_ulTimer:DWORD
+EXTRN	_cBeeps:WORD
+EXTRN	_fDriverFlags:WORD
+EXTRN	_fADDFlags:WORD
+EXTRN	_uADDMaxSGList:WORD
+EXTRN	_ulADDMaxTransfer:DWORD
+EXTRN	_uMaxQueueCount:WORD
+EXTRN	_cIorbInQueue:WORD
+_DATA      SEGMENT
+	ORG	$+56
+$SG1347	DB	'Virtual RAID Adp',  00H
+	ORG	$-73
+$S170_id	DB	'$Id: iorb.c,v 2.4 2003/11/14 00:58:24 vitus Exp vitus $',  00H
+	ORG	$+18
+$S1500_?frac@?1??Timer@@9@9	DW	0aH
+$S1502_?beepfrac@?1??Timer@@9@9	DW	0aH
+_DATA      ENDS
+_TEXT      SEGMENT
+	ASSUME	CS: _TEXT
+	PUBLIC	_HostdriveNotify
+_HostdriveNotify	PROC NEAR
+; Line 156
+	*** 000000	55 			push	bp
+	*** 000001	8b ec 			mov	bp,sp
+	*** 000003	56 			push	si
+;	io = 4
+;	iorb = -4
+	*** 000004	8b 76 04 		mov	si,WORD PTR [bp+4]	;io
+; Line 163
+	*** 000007	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 00000a	26 ff 74 12 		push	WORD PTR es:[si+18]
+	*** 00000e	26 ff 74 0a 		push	WORD PTR es:[si+10]
+	*** 000012	26 ff 74 08 		push	WORD PTR es:[si+8]
+	*** 000016	e8 00 00 		call	_NotifyIorb
+	*** 000019	83 c4 06 		add	sp,6
+; Line 165
+	*** 00001c	5e 			pop	si
+	*** 00001d	c9 			leave	
+	*** 00001e	c3 			ret	
+	*** 00001f	90 			nop	
+
+_HostdriveNotify	ENDP
+
+QueueIorbChain	PROC NEAR
+; Line 193
+	*** 000020	c8 06 00 00 		enter	6,0
+	*** 000024	57 			push	di
+;	pDrive = 4
+;	pIorb = 8
+;	pLastIorb = -4
+;	ChainLength = -6
+	*** 000025	8b 7e 08 		mov	di,WORD PTR [bp+8]	;pIorb
+; Line 194
+	*** 000028	8b 46 0a 		mov	ax,WORD PTR [bp+10]
+	*** 00002b	8b df 			mov	bx,di
+	*** 00002d	89 46 fe 		mov	WORD PTR [bp-2],ax
+; Line 195
+	*** 000030	33 c9 			xor	cx,cx
+; Line 203
+	*** 000032	eb 0d 			jmp	SHORT $L1534
+					$FC1330:
+; Line 211
+	*** 000034	26 8b 47 18 		mov	ax,WORD PTR es:[bx+24]
+	*** 000038	26 8b 57 1a 		mov	dx,WORD PTR es:[bx+26]
+	*** 00003c	8b d8 			mov	bx,ax
+	*** 00003e	89 56 fe 		mov	WORD PTR [bp-2],dx
+; Line 212
+					$L1534:
+	*** 000041	41 			inc	cx
+; Line 208
+	*** 000042	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 000045	26 f6 47 08 02 		test	BYTE PTR es:[bx+8],2
+	*** 00004a	75 e8 			jne	$FC1330
+	*** 00004c	89 4e fa 		mov	WORD PTR [bp-6],cx	;ChainLength
+	*** 00004f	89 5e fc 		mov	WORD PTR [bp-4],bx	;pLastIorb
+; Line 213
+	*** 000052	2b c0 			sub	ax,ax
+	*** 000054	26 89 47 1a 		mov	WORD PTR es:[bx+26],ax
+	*** 000058	26 89 47 18 		mov	WORD PTR es:[bx+24],ax
+; Line 215
+	*** 00005c	8b 46 04 		mov	ax,WORD PTR [bp+4]	;pDrive
+	*** 00005f	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 000062	05 14 00 		add	ax,20	;0014H
+	*** 000065	52 			push	dx
+	*** 000066	50 			push	ax
+	*** 000067	e8 00 00 		call	__lock
+	*** 00006a	83 c4 04 		add	sp,4
+; Line 216
+	*** 00006d	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;pDrive
+	*** 000070	26 ff 47 02 		inc	WORD PTR es:[bx+2]
+; Line 217
+	*** 000074	26 8b 47 0e 		mov	ax,WORD PTR es:[bx+14]
+	*** 000078	26 0b 47 0c 		or	ax,WORD PTR es:[bx+12]
+	*** 00007c	75 10 			jne	$I1334
+; Line 218
+	*** 00007e	8b 46 0a 		mov	ax,WORD PTR [bp+10]
+	*** 000081	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;pDrive
+	*** 000084	26 89 7f 0c 		mov	WORD PTR es:[bx+12],di
+	*** 000088	26 89 47 0e 		mov	WORD PTR es:[bx+14],ax
+; Line 219
+	*** 00008c	eb 12 			jmp	SHORT $I1335
+					$I1334:
+; Line 220
+	*** 00008e	8b 46 0a 		mov	ax,WORD PTR [bp+10]
+	*** 000091	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;pDrive
+	*** 000094	26 c4 5f 10 		les	bx,DWORD PTR es:[bx+16]
+	*** 000098	26 89 7f 18 		mov	WORD PTR es:[bx+24],di
+	*** 00009c	26 89 47 1a 		mov	WORD PTR es:[bx+26],ax
+					$I1335:
+; Line 221
+	*** 0000a0	8b 46 fc 		mov	ax,WORD PTR [bp-4]	;pLastIorb
+	*** 0000a3	8b 56 fe 		mov	dx,WORD PTR [bp-2]
+	*** 0000a6	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;pDrive
+	*** 0000a9	26 89 47 10 		mov	WORD PTR es:[bx+16],ax
+	*** 0000ad	26 89 57 12 		mov	WORD PTR es:[bx+18],dx
+; Line 222
+	*** 0000b1	8b 46 fa 		mov	ax,WORD PTR [bp-6]	;ChainLength
+	*** 0000b4	01 06 00 00 		add	WORD PTR _cIorbInQueue,ax
+; Line 223
+	*** 0000b8	8d 47 14 		lea	ax,WORD PTR [bx+20]
+	*** 0000bb	06 			push	es
+	*** 0000bc	50 			push	ax
+	*** 0000bd	e8 00 00 		call	__unlock
+	*** 0000c0	83 c4 04 		add	sp,4
+; Line 226
+	*** 0000c3	5f 			pop	di
+	*** 0000c4	c9 			leave	
+	*** 0000c5	c3 			ret	
+
+QueueIorbChain	ENDP
+
+QueueDeviceIO	PROC NEAR
+; Line 249
+	*** 0000c6	55 			push	bp
+	*** 0000c7	8b ec 			mov	bp,sp
+	*** 0000c9	57 			push	di
+	*** 0000ca	56 			push	si
+;	pDrive = 4
+;	pIorb = 8
+	*** 0000cb	8b 76 04 		mov	si,WORD PTR [bp+4]	;pDrive
+; Line 251
+	*** 0000ce	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0000d1	26 f6 04 01 		test	BYTE PTR es:[si],1
+	*** 0000d5	75 11 			jne	$I1342
+; Line 254
+	*** 0000d7	68 01 02 		push	513	;0201H
+	*** 0000da	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 0000dd	ff 76 08 		push	WORD PTR [bp+8]	;pIorb
+	*** 0000e0	e8 00 00 		call	_NotifyIorb
+	*** 0000e3	83 c4 06 		add	sp,6
+; Line 255
+	*** 0000e6	eb 1a 			jmp	SHORT $EX1341
+; Line 260
+					$I1342:
+	*** 0000e8	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 0000eb	ff 76 08 		push	WORD PTR [bp+8]	;pIorb
+	*** 0000ee	8c c0 			mov	ax,es
+	*** 0000f0	50 			push	ax
+	*** 0000f1	56 			push	si
+	*** 0000f2	8c c7 			mov	di,es
+	*** 0000f4	e8 29 ff 		call	QueueIorbChain
+	*** 0000f7	83 c4 08 		add	sp,8
+; Line 264
+	*** 0000fa	57 			push	di
+	*** 0000fb	56 			push	si
+	*** 0000fc	e8 00 00 		call	_StartManyIorb
+	*** 0000ff	83 c4 04 		add	sp,4
+; Line 269
+					$EX1341:
+	*** 000102	5e 			pop	si
+	*** 000103	5f 			pop	di
+	*** 000104	c9 			leave	
+	*** 000105	c3 			ret	
+
+QueueDeviceIO	ENDP
+
+SetAdapterInfo	PROC NEAR
+; Line 291
+	*** 000106	55 			push	bp
+	*** 000107	8b ec 			mov	bp,sp
+	*** 000109	56 			push	si
+;	pAdapterInfo = 4
+	*** 00010a	8b 76 04 		mov	si,WORD PTR [bp+4]	;pAdapterInfo
+; Line 294
+	*** 00010d	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000110	26 c7 44 12 00 00 	mov	WORD PTR es:[si+18],0
+; Line 295
+	*** 000116	26 c6 44 16 00 		mov	BYTE PTR es:[si+22],0
+; Line 296
+	*** 00011b	26 c7 44 1a 00 00 	mov	WORD PTR es:[si+26],0
+; Line 298
+	*** 000121	6a 11 			push	17	;0011H
+	*** 000123	1e 			push	ds
+	*** 000124	68 38 00 		push	OFFSET DGROUP:$SG1347
+	*** 000127	06 			push	es
+	*** 000128	56 			push	si
+	*** 000129	9a 00 00 00 00 		call	FAR PTR __fstrncpy
+	*** 00012e	83 c4 0a 		add	sp,10	;000aH
+; Line 302
+	*** 000131	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000134	26 c6 44 17 0f 		mov	BYTE PTR es:[si+23],15	;000fH
+; Line 303
+	*** 000139	32 c0 			xor	al,al
+	*** 00013b	26 c7 44 14 00 00 	mov	WORD PTR es:[si+20],0
+; Line 305
+	*** 000141	26 88 44 18 		mov	BYTE PTR es:[si+24],al
+	*** 000145	26 88 44 19 		mov	BYTE PTR es:[si+25],al
+; Line 310
+	*** 000149	f6 06 00 00 01 		test	BYTE PTR _fADDFlags,1
+	*** 00014e	75 08 			jne	$I1348
+; Line 311
+	*** 000150	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000153	26 80 4c 1a 01 		or	BYTE PTR es:[si+26],1
+; Line 313
+					$I1348:
+	*** 000158	f6 06 00 00 02 		test	BYTE PTR _fADDFlags,2
+	*** 00015d	74 08 			je	$I1349
+; Line 314
+	*** 00015f	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000162	26 80 4c 1a 04 		or	BYTE PTR es:[si+26],4
+; Line 316
+					$I1349:
+	*** 000167	a1 00 00 		mov	ax,WORD PTR _uADDMaxSGList
+	*** 00016a	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 00016d	26 89 44 1c 		mov	WORD PTR es:[si+28],ax
+; Line 317
+	*** 000171	a1 00 00 		mov	ax,WORD PTR _ulADDMaxTransfer
+	*** 000174	8b 16 02 00 		mov	dx,WORD PTR _ulADDMaxTransfer+2
+	*** 000178	26 89 44 1e 		mov	WORD PTR es:[si+30],ax
+	*** 00017c	26 89 54 20 		mov	WORD PTR es:[si+32],dx
+; Line 319
+	*** 000180	5e 			pop	si
+	*** 000181	c9 			leave	
+	*** 000182	c3 			ret	
+	*** 000183	90 			nop	
+
+SetAdapterInfo	ENDP
+
+SetUnitInfo	PROC NEAR
+; Line 342
+	*** 000184	55 			push	bp
+	*** 000185	8b ec 			mov	bp,sp
+	*** 000187	57 			push	di
+	*** 000188	56 			push	si
+;	pUnitInfo = 4
+;	devp = 8
+; Line 344
+	*** 000189	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;devp
+	*** 00018c	26 8b 47 0a 		mov	ax,WORD PTR es:[bx+10]
+	*** 000190	26 0b 47 08 		or	ax,WORD PTR es:[bx+8]
+	*** 000194	74 18 			je	$I1356
+; Line 347
+	*** 000196	26 8b 47 08 		mov	ax,WORD PTR es:[bx+8]
+	*** 00019a	26 8b 57 0a 		mov	dx,WORD PTR es:[bx+10]
+	*** 00019e	1e 			push	ds
+	*** 00019f	8b f0 			mov	si,ax
+	*** 0001a1	8e da 			mov	ds,dx
+	ASSUME DS: NOTHING
+	*** 0001a3	c4 7e 04 		les	di,DWORD PTR [bp+4]	;pUnitInfo
+	*** 0001a6	b9 09 00 		mov	cx,9
+	*** 0001a9	f3 			rep
+	*** 0001aa	a5 			movsw
+	*** 0001ab	1f 			pop	ds
+	ASSUME DS: DGROUP
+; Line 349
+	*** 0001ac	eb 44 			jmp	SHORT $EX1355
+					$I1356:
+	*** 0001ae	8b 76 04 		mov	si,WORD PTR [bp+4]	;pUnitInfo
+; Line 352
+	*** 0001b1	a1 00 00 		mov	ax,WORD PTR _uMaxQueueCount
+	*** 0001b4	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0001b7	26 89 44 0e 		mov	WORD PTR es:[si+14],ax
+; Line 355
+	*** 0001bb	33 c0 			xor	ax,ax
+	*** 0001bd	26 89 44 04 		mov	WORD PTR es:[si+4],ax
+	*** 0001c1	26 89 44 06 		mov	WORD PTR es:[si+6],ax
+; Line 356
+	*** 0001c5	26 89 44 0a 		mov	WORD PTR es:[si+10],ax
+; Line 358
+	*** 0001c9	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;devp
+	*** 0001cc	26 c4 5f 04 		les	bx,DWORD PTR es:[bx+4]
+	*** 0001d0	26 f6 47 06 02 		test	BYTE PTR es:[bx+6],2
+	*** 0001d5	74 08 			je	$I1358
+; Line 360
+	*** 0001d7	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0001da	26 80 4c 04 80 		or	BYTE PTR es:[si+4],128	;0080H
+; Line 364
+					$I1358:
+	*** 0001df	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0001e2	32 c0 			xor	al,al
+	*** 0001e4	26 c7 44 0c 00 00 	mov	WORD PTR es:[si+12],0
+; Line 366
+	*** 0001ea	26 88 44 10 		mov	BYTE PTR es:[si+16],al
+	*** 0001ee	26 88 44 11 		mov	BYTE PTR es:[si+17],al
+; Line 369
+					$EX1355:
+	*** 0001f2	5e 			pop	si
+	*** 0001f3	5f 			pop	di
+	*** 0001f4	c9 			leave	
+	*** 0001f5	c3 			ret	
+
+SetUnitInfo	ENDP
+
+GetDeviceTable	PROC NEAR
+; Line 398
+	*** 0001f6	c8 18 00 00 		enter	24,0
+	*** 0001fa	57 			push	di
+	*** 0001fb	56 			push	si
+;	pIorb = 4
+;	pDeviceTable = -16
+;	pAdapterInfo = -20
+;	pUnitInfo = -4
+;	idxUnit = -8
+;	i = -10
+; Line 412
+	*** 0001fc	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;pIorb
+	*** 0001ff	26 c4 5f 44 		les	bx,DWORD PTR es:[bx+68]
+	*** 000203	8b fb 			mov	di,bx
+	*** 000205	8c 46 f2 		mov	WORD PTR [bp-14],es
+	*** 000208	26 c6 07 01 		mov	BYTE PTR es:[bx],1
+; Line 413
+	*** 00020c	8e 46 f2 		mov	es,WORD PTR [bp-14]
+	*** 00020f	26 c6 45 01 00 		mov	BYTE PTR es:[di+1],0
+; Line 414
+	*** 000214	a1 00 00 		mov	ax,WORD PTR _hdThisDriver
+	*** 000217	26 89 45 02 		mov	WORD PTR es:[di+2],ax
+; Line 415
+	*** 00021b	26 c7 45 04 02 00 	mov	WORD PTR es:[di+4],2
+; Line 420
+	*** 000221	8d 45 06 		lea	ax,WORD PTR [di+6]
+; Line 421
+	*** 000224	8b d8 			mov	bx,ax
+	*** 000226	05 04 00 		add	ax,4
+	*** 000229	89 46 ec 		mov	WORD PTR [bp-20],ax	;pAdapterInfo
+	*** 00022c	8c 46 ee 		mov	WORD PTR [bp-18],es
+; Line 423
+	*** 00022f	26 89 07 		mov	WORD PTR es:[bx],ax
+; Line 424
+	*** 000232	ff 76 ee 		push	WORD PTR [bp-18]
+	*** 000235	ff 76 ec 		push	WORD PTR [bp-20]	;pAdapterInfo
+	*** 000238	e8 cb fe 		call	SetAdapterInfo
+	*** 00023b	83 c4 04 		add	sp,4
+; Line 425
+	*** 00023e	8b 46 ec 		mov	ax,WORD PTR [bp-20]	;pAdapterInfo
+	*** 000241	8b 56 ee 		mov	dx,WORD PTR [bp-18]
+	*** 000244	05 22 00 		add	ax,34	;0022H
+	*** 000247	89 46 fc 		mov	WORD PTR [bp-4],ax	;pUnitInfo
+	*** 00024a	89 56 fe 		mov	WORD PTR [bp-2],dx
+; Line 433
+	*** 00024d	c7 46 f8 00 00 		mov	WORD PTR [bp-8],0	;idxUnit
+	*** 000252	c7 46 fa 00 00 		mov	WORD PTR [bp-6],OFFSET _apBDisk
+	*** 000257	c7 46 f4 18 00 		mov	WORD PTR [bp-12],24	;0018H
+	*** 00025c	89 7e f0 		mov	WORD PTR [bp-16],di	;pDeviceTable
+					$F1368:
+; Line 435
+	*** 00025f	8b 5e fa 		mov	bx,WORD PTR [bp-6]
+	*** 000262	8b 07 			mov	ax,WORD PTR [bx]
+	*** 000264	8b 57 02 		mov	dx,WORD PTR [bx+2]
+	*** 000267	89 56 ea 		mov	WORD PTR [bp-22],dx
+	*** 00026a	0b d0 			or	dx,ax
+	*** 00026c	74 31 			je	$FC1369
+; Line 438
+	*** 00026e	8b 56 ea 		mov	dx,WORD PTR [bp-22]
+	*** 000271	05 02 00 		add	ax,2
+	*** 000274	1e 			push	ds
+	*** 000275	8b f0 			mov	si,ax
+	*** 000277	8e da 			mov	ds,dx
+	ASSUME DS: NOTHING
+	*** 000279	c4 7e fc 		les	di,DWORD PTR [bp-4]	;pUnitInfo
+	*** 00027c	b9 09 00 		mov	cx,9
+	*** 00027f	f3 			rep
+	*** 000280	a5 			movsw
+	*** 000281	1f 			pop	ds
+	ASSUME DS: DGROUP
+; Line 440
+	*** 000282	8b 5e fc 		mov	bx,WORD PTR [bp-4]	;pUnitInfo
+	*** 000285	26 c7 07 00 00 		mov	WORD PTR es:[bx],0
+; Line 441
+	*** 00028a	8b 46 f8 		mov	ax,WORD PTR [bp-8]	;idxUnit
+	*** 00028d	26 89 47 02 		mov	WORD PTR es:[bx+2],ax
+; Line 443
+	*** 000291	83 46 fc 12 		add	WORD PTR [bp-4],18	;0012H	;pUnitInfo
+; Line 444
+	*** 000295	c4 5e ec 		les	bx,DWORD PTR [bp-20]	;pAdapterInfo
+	*** 000298	26 ff 47 12 		inc	WORD PTR es:[bx+18]
+; Line 445
+	*** 00029c	ff 46 f8 		inc	WORD PTR [bp-8]	;idxUnit
+; Line 433
+					$FC1369:
+	*** 00029f	83 46 fa 04 		add	WORD PTR [bp-6],4
+	*** 0002a3	ff 4e f4 		dec	WORD PTR [bp-12]
+	*** 0002a6	75 b7 			jne	$F1368
+; Line 446
+	*** 0002a8	8b 7e fc 		mov	di,WORD PTR [bp-4]	;pUnitInfo
+; Line 451
+	*** 0002ab	8b 46 fe 		mov	ax,WORD PTR [bp-2]
+	*** 0002ae	89 7e ec 		mov	WORD PTR [bp-20],di	;pAdapterInfo
+	*** 0002b1	89 46 ee 		mov	WORD PTR [bp-18],ax
+; Line 452
+	*** 0002b4	8b c7 			mov	ax,di
+	*** 0002b6	c4 5e f0 		les	bx,DWORD PTR [bp-16]	;pDeviceTable
+	*** 0002b9	26 89 47 08 		mov	WORD PTR es:[bx+8],ax
+; Line 453
+	*** 0002bd	ff 76 ee 		push	WORD PTR [bp-18]
+	*** 0002c0	ff 76 ec 		push	WORD PTR [bp-20]	;pAdapterInfo
+	*** 0002c3	e8 40 fe 		call	SetAdapterInfo
+	*** 0002c6	83 c4 04 		add	sp,4
+; Line 454
+	*** 0002c9	8b 46 ec 		mov	ax,WORD PTR [bp-20]	;pAdapterInfo
+	*** 0002cc	8b 56 ee 		mov	dx,WORD PTR [bp-18]
+	*** 0002cf	05 22 00 		add	ax,34	;0022H
+	*** 0002d2	8b f8 			mov	di,ax
+	*** 0002d4	89 56 fe 		mov	WORD PTR [bp-2],dx
+; Line 460
+	*** 0002d7	c7 46 f8 00 00 		mov	WORD PTR [bp-8],0	;idxUnit
+	*** 0002dc	be 00 00 		mov	si,OFFSET _apHDrv
+	*** 0002df	c7 46 fa 10 00 		mov	WORD PTR [bp-6],16	;0010H
+					$F1372:
+; Line 462
+	*** 0002e4	8b 44 02 		mov	ax,WORD PTR [si+2]
+	*** 0002e7	0b 04 			or	ax,WORD PTR [si]
+	*** 0002e9	74 2d 			je	$FC1373
+; Line 465
+	*** 0002eb	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 0002ee	26 c7 05 01 00 		mov	WORD PTR es:[di],1
+; Line 466
+	*** 0002f3	8b 46 f8 		mov	ax,WORD PTR [bp-8]	;idxUnit
+	*** 0002f6	26 89 45 02 		mov	WORD PTR es:[di+2],ax
+; Line 467
+	*** 0002fa	26 89 75 08 		mov	WORD PTR es:[di+8],si
+; Line 468
+	*** 0002fe	ff 74 02 		push	WORD PTR [si+2]
+	*** 000301	ff 34 			push	WORD PTR [si]
+	*** 000303	06 			push	es
+	*** 000304	57 			push	di
+	*** 000305	e8 7c fe 		call	SetUnitInfo
+	*** 000308	83 c4 08 		add	sp,8
+; Line 470
+	*** 00030b	83 c7 12 		add	di,18	;0012H
+; Line 471
+	*** 00030e	c4 5e ec 		les	bx,DWORD PTR [bp-20]	;pAdapterInfo
+	*** 000311	26 ff 47 12 		inc	WORD PTR es:[bx+18]
+; Line 472
+	*** 000315	ff 46 f8 		inc	WORD PTR [bp-8]	;idxUnit
+; Line 460
+					$FC1373:
+	*** 000318	83 c6 04 		add	si,4
+	*** 00031b	ff 4e fa 		dec	WORD PTR [bp-6]
+	*** 00031e	75 c4 			jne	$F1372
+; Line 475
+	*** 000320	6a 00 			push	0
+	*** 000322	ff 76 06 		push	WORD PTR [bp+6]
+	*** 000325	ff 76 04 		push	WORD PTR [bp+4]	;pIorb
+	*** 000328	e8 00 00 		call	_NotifyIorb
+	*** 00032b	83 c4 06 		add	sp,6
+; Line 477
+	*** 00032e	5e 			pop	si
+	*** 00032f	5f 			pop	di
+	*** 000330	c9 			leave	
+	*** 000331	c3 			ret	
+
+GetDeviceTable	ENDP
+
+AllocateUnit	PROC NEAR
+; Line 501
+	*** 000332	55 			push	bp
+	*** 000333	8b ec 			mov	bp,sp
+	*** 000335	56 			push	si
+;	pDrive = 4
+;	pIorb = 8
+	*** 000336	8b 76 04 		mov	si,WORD PTR [bp+4]	;pDrive
+; Line 503
+	*** 000339	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 00033c	26 f6 04 01 		test	BYTE PTR es:[si],1
+	*** 000340	74 06 			je	$I1382
+; Line 506
+	*** 000342	68 02 02 		push	514	;0202H
+	*** 000345	eb 0b 			jmp	SHORT $L1535
+	*** 000347	90 			nop	
+; Line 510
+					$I1382:
+	*** 000348	26 80 0c 01 		or	BYTE PTR es:[si],1
+; Line 511
+	*** 00034c	26 ff 44 02 		inc	WORD PTR es:[si+2]
+; Line 512
+	*** 000350	6a 00 			push	0
+					$L1535:
+	*** 000352	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 000355	ff 76 08 		push	WORD PTR [bp+8]	;pIorb
+	*** 000358	e8 00 00 		call	_NotifyIorb
+	*** 00035b	83 c4 06 		add	sp,6
+; Line 514
+	*** 00035e	5e 			pop	si
+	*** 00035f	c9 			leave	
+	*** 000360	c3 			ret	
+	*** 000361	90 			nop	
+
+AllocateUnit	ENDP
+
+DeAllocateUnit	PROC NEAR
+; Line 538
+	*** 000362	55 			push	bp
+	*** 000363	8b ec 			mov	bp,sp
+	*** 000365	56 			push	si
+;	pDrive = 4
+;	pIorb = 8
+	*** 000366	8b 76 04 		mov	si,WORD PTR [bp+4]	;pDrive
+; Line 540
+	*** 000369	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 00036c	26 f6 04 01 		test	BYTE PTR es:[si],1
+	*** 000370	75 06 			jne	$I1389
+; Line 543
+	*** 000372	68 01 02 		push	513	;0201H
+	*** 000375	eb 0b 			jmp	SHORT $L1536
+	*** 000377	90 			nop	
+; Line 547
+					$I1389:
+	*** 000378	26 80 24 fe 		and	BYTE PTR es:[si],254	;00feH
+; Line 548
+	*** 00037c	26 ff 44 02 		inc	WORD PTR es:[si+2]
+; Line 549
+	*** 000380	6a 00 			push	0
+					$L1536:
+	*** 000382	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 000385	ff 76 08 		push	WORD PTR [bp+8]	;pIorb
+	*** 000388	e8 00 00 		call	_NotifyIorb
+	*** 00038b	83 c4 06 		add	sp,6
+; Line 551
+	*** 00038e	5e 			pop	si
+	*** 00038f	c9 			leave	
+	*** 000390	c3 			ret	
+	*** 000391	90 			nop	
+
+DeAllocateUnit	ENDP
+
+ChangeUnitInfo	PROC NEAR
+; Line 575
+	*** 000392	55 			push	bp
+	*** 000393	8b ec 			mov	bp,sp
+	*** 000395	57 			push	di
+	*** 000396	56 			push	si
+;	pDrive = 4
+;	pIorb = 8
+	*** 000397	8b 7e 04 		mov	di,WORD PTR [bp+4]	;pDrive
+	*** 00039a	8b 76 08 		mov	si,WORD PTR [bp+8]	;pIorb
+; Line 577
+	*** 00039d	8e 46 0a 		mov	es,WORD PTR [bp+10]
+	*** 0003a0	26 8b 44 46 		mov	ax,WORD PTR es:[si+70]
+	*** 0003a4	26 8b 54 48 		mov	dx,WORD PTR es:[si+72]
+	*** 0003a8	8c c1 			mov	cx,es
+	*** 0003aa	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0003ad	26 89 45 08 		mov	WORD PTR es:[di+8],ax
+	*** 0003b1	26 89 55 0a 		mov	WORD PTR es:[di+10],dx
+; Line 578
+	*** 0003b5	26 ff 45 02 		inc	WORD PTR es:[di+2]
+; Line 579
+	*** 0003b9	6a 00 			push	0
+	*** 0003bb	51 			push	cx
+	*** 0003bc	56 			push	si
+	*** 0003bd	e8 00 00 		call	_NotifyIorb
+	*** 0003c0	83 c4 06 		add	sp,6
+; Line 581
+	*** 0003c3	5e 			pop	si
+	*** 0003c4	5f 			pop	di
+	*** 0003c5	c9 			leave	
+	*** 0003c6	c3 			ret	
+	*** 0003c7	90 			nop	
+
+ChangeUnitInfo	ENDP
+
+GetDeviceGeometry	PROC NEAR
+; Line 604
+	*** 0003c8	55 			push	bp
+	*** 0003c9	8b ec 			mov	bp,sp
+	*** 0003cb	57 			push	di
+	*** 0003cc	56 			push	si
+;	pDrive = 4
+;	pIorb = 8
+; Line 606
+	*** 0003cd	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;pIorb
+	*** 0003d0	26 83 7f 48 10 		cmp	WORD PTR es:[bx+72],16	;0010H
+	*** 0003d5	73 07 			jae	$I1402
+; Line 609
+	*** 0003d7	68 02 01 		push	258	;0102H
+	*** 0003da	e9 f3 00 		jmp	$L1537
+	*** 0003dd	90 			nop	
+; Line 612
+					$I1402:
+	*** 0003de	8b 76 04 		mov	si,WORD PTR [bp+4]	;pDrive
+	*** 0003e1	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0003e4	26 f6 04 01 		test	BYTE PTR es:[si],1
+	*** 0003e8	75 06 			jne	$I1403
+; Line 615
+	*** 0003ea	68 01 02 		push	513	;0201H
+	*** 0003ed	e9 e0 00 		jmp	$L1537
+; Line 619
+					$I1403:
+	*** 0003f0	26 c4 5c 04 		les	bx,DWORD PTR es:[si+4]
+	*** 0003f4	26 8b 47 0b 		mov	ax,WORD PTR es:[bx+11]
+	*** 0003f8	26 8b 57 0d 		mov	dx,WORD PTR es:[bx+13]
+	*** 0003fc	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;pIorb
+	*** 0003ff	26 c4 7f 44 		les	di,DWORD PTR es:[bx+68]
+	*** 000403	26 89 05 		mov	WORD PTR es:[di],ax
+	*** 000406	26 89 55 02 		mov	WORD PTR es:[di+2],dx
+; Line 620
+	*** 00040a	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;pIorb
+	*** 00040d	26 c4 7f 44 		les	di,DWORD PTR es:[bx+68]
+	*** 000411	26 c7 45 04 00 02 	mov	WORD PTR es:[di+4],512	;0200H
+; Line 621
+	*** 000417	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;pIorb
+	*** 00041a	26 c4 7f 44 		les	di,DWORD PTR es:[bx+68]
+	*** 00041e	26 c7 45 06 00 00 	mov	WORD PTR es:[di+6],0
+; Line 622
+	*** 000424	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;pIorb
+	*** 000427	26 c4 7f 44 		les	di,DWORD PTR es:[bx+68]
+	*** 00042b	26 c7 45 08 40 00 	mov	WORD PTR es:[di+8],64	;0040H
+; Line 623
+	*** 000431	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;pIorb
+	*** 000434	26 c4 7f 44 		les	di,DWORD PTR es:[bx+68]
+	*** 000438	26 c7 45 0e 20 00 	mov	WORD PTR es:[di+14],32	;0020H
+; Line 624
+	*** 00043e	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000441	26 c4 5c 04 		les	bx,DWORD PTR es:[si+4]
+	*** 000445	26 8b 47 0b 		mov	ax,WORD PTR es:[bx+11]
+	*** 000449	26 8b 57 0d 		mov	dx,WORD PTR es:[bx+13]
+	*** 00044d	8a c4 			mov	al,ah
+	*** 00044f	8a e2 			mov	ah,dl
+	*** 000451	8a d6 			mov	dl,dh
+	*** 000453	2a f6 			sub	dh,dh
+	*** 000455	d1 ea 			shr	dx,1
+	*** 000457	d1 d8 			rcr	ax,1
+	*** 000459	d1 ea 			shr	dx,1
+	*** 00045b	d1 d8 			rcr	ax,1
+	*** 00045d	d1 ea 			shr	dx,1
+	*** 00045f	d1 d8 			rcr	ax,1
+	*** 000461	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;pIorb
+	*** 000464	26 c4 7f 44 		les	di,DWORD PTR es:[bx+68]
+	*** 000468	26 89 45 0a 		mov	WORD PTR es:[di+10],ax
+	*** 00046c	26 89 55 0c 		mov	WORD PTR es:[di+12],dx
+; Line 625
+	*** 000470	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;pIorb
+	*** 000473	26 c4 5f 44 		les	bx,DWORD PTR es:[bx+68]
+	*** 000477	26 83 7f 0c 00 		cmp	WORD PTR es:[bx+12],0
+	*** 00047c	74 49 			je	$I1404
+; Line 633
+	*** 00047e	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;pIorb
+	*** 000481	26 c4 7f 44 		les	di,DWORD PTR es:[bx+68]
+	*** 000485	26 c7 45 08 ff 00 	mov	WORD PTR es:[di+8],255	;00ffH
+; Line 634
+	*** 00048b	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;pIorb
+	*** 00048e	26 c4 7f 44 		les	di,DWORD PTR es:[bx+68]
+	*** 000492	26 c7 45 0e 3f 00 	mov	WORD PTR es:[di+14],63	;003fH
+; Line 635
+	*** 000498	6a 00 			push	0
+	*** 00049a	6a 3f 			push	63	;003fH
+	*** 00049c	6a 00 			push	0
+	*** 00049e	68 ff 00 		push	255	;00ffH
+	*** 0004a1	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0004a4	26 c4 5c 04 		les	bx,DWORD PTR es:[si+4]
+	*** 0004a8	26 ff 77 0d 		push	WORD PTR es:[bx+13]
+	*** 0004ac	26 ff 77 0b 		push	WORD PTR es:[bx+11]
+	*** 0004b0	e8 00 00 		call	__aNuldiv
+	*** 0004b3	52 			push	dx
+	*** 0004b4	50 			push	ax
+	*** 0004b5	e8 00 00 		call	__aNuldiv
+	*** 0004b8	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;pIorb
+	*** 0004bb	26 c4 5f 44 		les	bx,DWORD PTR es:[bx+68]
+	*** 0004bf	26 89 47 0a 		mov	WORD PTR es:[bx+10],ax
+	*** 0004c3	26 89 57 0c 		mov	WORD PTR es:[bx+12],dx
+; Line 645
+					$I1404:
+; Line 646
+	*** 0004c7	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0004ca	26 ff 44 02 		inc	WORD PTR es:[si+2]
+; Line 647
+	*** 0004ce	6a 00 			push	0
+					$L1537:
+	*** 0004d0	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 0004d3	ff 76 08 		push	WORD PTR [bp+8]	;pIorb
+	*** 0004d6	e8 00 00 		call	_NotifyIorb
+	*** 0004d9	83 c4 06 		add	sp,6
+; Line 649
+	*** 0004dc	5e 			pop	si
+	*** 0004dd	5f 			pop	di
+	*** 0004de	c9 			leave	
+	*** 0004df	c3 			ret	
+
+GetDeviceGeometry	ENDP
+
+GetUnitStatus	PROC NEAR
+; Line 674
+	*** 0004e0	55 			push	bp
+	*** 0004e1	8b ec 			mov	bp,sp
+	*** 0004e3	57 			push	di
+	*** 0004e4	56 			push	si
+;	pIorb = 8
+;	pDrive = 4
+	*** 0004e5	8b 7e 04 		mov	di,WORD PTR [bp+4]	;pDrive
+; Line 676
+	*** 0004e8	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0004eb	26 c4 5d 04 		les	bx,DWORD PTR es:[di+4]
+	*** 0004ef	26 f6 47 06 02 		test	BYTE PTR es:[bx+6],2
+	*** 0004f4	74 0e 			je	$I1411
+	*** 0004f6	8b 76 08 		mov	si,WORD PTR [bp+8]	;pIorb
+; Line 677
+	*** 0004f9	8e 46 0a 		mov	es,WORD PTR [bp+10]
+	*** 0004fc	26 80 4c 44 04 		or	BYTE PTR es:[si+68],4
+; Line 678
+	*** 000501	eb 0c 			jmp	SHORT $I1412
+	*** 000503	90 			nop	
+					$I1411:
+	*** 000504	8b 76 08 		mov	si,WORD PTR [bp+8]	;pIorb
+; Line 679
+	*** 000507	8e 46 0a 		mov	es,WORD PTR [bp+10]
+	*** 00050a	26 80 4c 44 03 		or	BYTE PTR es:[si+68],3
+					$I1412:
+; Line 681
+	*** 00050f	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000512	26 ff 45 02 		inc	WORD PTR es:[di+2]
+; Line 682
+	*** 000516	6a 00 			push	0
+	*** 000518	8b 46 0a 		mov	ax,WORD PTR [bp+10]
+	*** 00051b	50 			push	ax
+	*** 00051c	56 			push	si
+	*** 00051d	e8 00 00 		call	_NotifyIorb
+	*** 000520	83 c4 06 		add	sp,6
+; Line 684
+	*** 000523	5e 			pop	si
+	*** 000524	5f 			pop	di
+	*** 000525	c9 			leave	
+	*** 000526	c3 			ret	
+	*** 000527	90 			nop	
+
+GetUnitStatus	ENDP
+
+ArrayHandler	PROC NEAR
+; Line 706
+	*** 000528	55 			push	bp
+	*** 000529	8b ec 			mov	bp,sp
+	*** 00052b	56 			push	si
+;	pDrive = 4
+;	pIorb = 8
+;	register cx = CommandCode
+;	register si = CommandModifier
+; Line 707
+	*** 00052c	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;pIorb
+	*** 00052f	26 8b 4f 04 		mov	cx,WORD PTR es:[bx+4]
+; Line 708
+	*** 000533	26 8b 77 06 		mov	si,WORD PTR es:[bx+6]
+; Line 715
+	*** 000537	26 f6 47 08 02 		test	BYTE PTR es:[bx+8],2
+	*** 00053c	74 0c 			je	$I1421
+	*** 00053e	83 f9 04 		cmp	cx,4
+	*** 000541	74 07 			je	$I1421
+; Line 717
+	*** 000543	68 02 01 		push	258	;0102H
+	*** 000546	e9 e6 00 		jmp	$L1538
+	*** 000549	90 			nop	
+; Line 725
+					$I1421:
+	*** 00054a	8b c1 			mov	ax,cx
+; Line 935
+	*** 00054c	48 			dec	ax
+	*** 00054d	3d 07 00 		cmp	ax,7
+	*** 000550	76 03 			jbe	$JCC1360
+	*** 000552	e9 d7 00 		jmp	$SC1473
+					$JCC1360:
+	*** 000555	d1 e0 			shl	ax,1
+	*** 000557	93 			xchg	ax,bx
+	*** 000558	2e ff a7 5e 05 		jmp	WORD PTR cs:$L1530[bx]
+	*** 00055d	90 			nop	
+					$L1530:
+	*** 00055e	6e 05 				DW	$SC1426
+	*** 000560	92 05 				DW	$SC1434
+	*** 000562	d4 05 				DW	$SC1443
+	*** 000564	ec 05 				DW	$SC1450
+	*** 000566	2c 06 				DW	$SC1473
+	*** 000568	12 06 				DW	$SC1465
+	*** 00056a	2c 06 				DW	$SC1473
+	*** 00056c	2c 06 				DW	$SC1473
+; Line 727
+					$SC1426:
+; Line 728
+	*** 00056e	8b c6 			mov	ax,si
+; Line 754
+	*** 000570	48 			dec	ax
+	*** 000571	74 07 			je	$SC1431
+	*** 000573	48 			dec	ax
+	*** 000574	74 12 			je	$SC1432
+; Line 752
+	*** 000576	e9 b3 00 		jmp	$SC1473
+	*** 000579	90 			nop	
+; Line 735
+					$SC1431:
+; Line 736
+	*** 00057a	06 			push	es
+	*** 00057b	ff 76 08 		push	WORD PTR [bp+8]	;pIorb
+	*** 00057e	e8 75 fc 		call	GetDeviceTable
+					$L1540:
+	*** 000581	83 c4 04 		add	sp,4
+; Line 737
+	*** 000584	e9 b4 00 		jmp	$EX1418
+	*** 000587	90 			nop	
+; Line 745
+					$SC1432:
+; Line 746
+	*** 000588	06 			push	es
+	*** 000589	ff 76 08 		push	WORD PTR [bp+8]	;pIorb
+	*** 00058c	e8 00 00 		call	_CompleteInit
+	*** 00058f	eb f0 			jmp	SHORT $L1540
+	*** 000591	90 			nop	
+; Line 757
+					$SC1434:
+; Line 758
+	*** 000592	8b c6 			mov	ax,si
+; Line 797
+	*** 000594	48 			dec	ax
+	*** 000595	74 09 			je	$SC1439
+	*** 000597	48 			dec	ax
+	*** 000598	74 1a 			je	$SC1440
+	*** 00059a	48 			dec	ax
+	*** 00059b	74 27 			je	$SC1441
+; Line 795
+	*** 00059d	e9 8c 00 		jmp	$SC1473
+; Line 767
+					$SC1439:
+; Line 768
+	*** 0005a0	06 			push	es
+	*** 0005a1	ff 76 08 		push	WORD PTR [bp+8]	;pIorb
+	*** 0005a4	ff 76 06 		push	WORD PTR [bp+6]
+	*** 0005a7	ff 76 04 		push	WORD PTR [bp+4]	;pDrive
+	*** 0005aa	e8 85 fd 		call	AllocateUnit
+					$L1542:
+	*** 0005ad	83 c4 08 		add	sp,8
+; Line 769
+	*** 0005b0	e9 88 00 		jmp	$EX1418
+	*** 0005b3	90 			nop	
+; Line 777
+					$SC1440:
+; Line 778
+	*** 0005b4	06 			push	es
+	*** 0005b5	ff 76 08 		push	WORD PTR [bp+8]	;pIorb
+	*** 0005b8	ff 76 06 		push	WORD PTR [bp+6]
+	*** 0005bb	ff 76 04 		push	WORD PTR [bp+4]	;pDrive
+	*** 0005be	e8 a1 fd 		call	DeAllocateUnit
+	*** 0005c1	eb ea 			jmp	SHORT $L1542
+	*** 0005c3	90 			nop	
+; Line 788
+					$SC1441:
+; Line 789
+	*** 0005c4	06 			push	es
+	*** 0005c5	ff 76 08 		push	WORD PTR [bp+8]	;pIorb
+	*** 0005c8	ff 76 06 		push	WORD PTR [bp+6]
+	*** 0005cb	ff 76 04 		push	WORD PTR [bp+4]	;pDrive
+	*** 0005ce	e8 c1 fd 		call	ChangeUnitInfo
+	*** 0005d1	eb da 			jmp	SHORT $L1542
+	*** 0005d3	90 			nop	
+; Line 800
+					$SC1443:
+; Line 801
+	*** 0005d4	8b c6 			mov	ax,si
+; Line 820
+	*** 0005d6	48 			dec	ax
+	*** 0005d7	74 04 			je	$SC1448
+	*** 0005d9	48 			dec	ax
+	*** 0005da	48 			dec	ax
+	*** 0005db	75 4f 			jne	$SC1473
+; Line 810
+					$SC1448:
+; Line 812
+	*** 0005dd	06 			push	es
+	*** 0005de	ff 76 08 		push	WORD PTR [bp+8]	;pIorb
+	*** 0005e1	ff 76 06 		push	WORD PTR [bp+6]
+	*** 0005e4	ff 76 04 		push	WORD PTR [bp+4]	;pDrive
+	*** 0005e7	e8 de fd 		call	GetDeviceGeometry
+	*** 0005ea	eb c1 			jmp	SHORT $L1542
+; Line 823
+					$SC1450:
+; Line 824
+	*** 0005ec	8b c6 			mov	ax,si
+; Line 872
+	*** 0005ee	48 			dec	ax
+	*** 0005ef	74 10 			je	$SC1455
+	*** 0005f1	48 			dec	ax
+	*** 0005f2	74 0d 			je	$SC1455
+	*** 0005f4	48 			dec	ax
+	*** 0005f5	74 0a 			je	$SC1455
+	*** 0005f7	2d 01 00 		sub	ax,1
+	*** 0005fa	72 30 			jb	$SC1473
+	*** 0005fc	2d 01 00 		sub	ax,1
+	*** 0005ff	77 2b 			ja	$SC1473
+; Line 846
+					$SC1455:
+; Line 835
+	*** 000601	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 000604	ff 76 08 		push	WORD PTR [bp+8]	;pIorb
+	*** 000607	ff 76 06 		push	WORD PTR [bp+6]
+	*** 00060a	ff 76 04 		push	WORD PTR [bp+4]	;pDrive
+	*** 00060d	e8 b6 fa 		call	QueueDeviceIO
+	*** 000610	eb 9b 			jmp	SHORT $L1542
+					$SC1465:
+; Line 888
+	*** 000612	8b c6 			mov	ax,si
+; Line 911
+	*** 000614	48 			dec	ax
+	*** 000615	74 05 			je	$SC1470
+	*** 000617	2d 03 00 		sub	ax,3
+; Line 901
+	*** 00061a	eb 10 			jmp	SHORT $SC1473
+; Line 895
+					$SC1470:
+; Line 896
+	*** 00061c	06 			push	es
+	*** 00061d	ff 76 08 		push	WORD PTR [bp+8]	;pIorb
+	*** 000620	ff 76 06 		push	WORD PTR [bp+6]
+	*** 000623	ff 76 04 		push	WORD PTR [bp+4]	;pDrive
+	*** 000626	e8 b7 fe 		call	GetUnitStatus
+	*** 000629	eb 82 			jmp	SHORT $L1542
+	*** 00062b	90 			nop	
+; Line 914
+					$SC1473:
+; Line 882
+	*** 00062c	68 01 01 		push	257	;0101H
+					$L1538:
+	*** 00062f	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 000632	ff 76 08 		push	WORD PTR [bp+8]	;pIorb
+	*** 000635	e8 00 00 		call	_NotifyIorb
+	*** 000638	83 c4 06 		add	sp,6
+; Line 938
+					$EX1418:
+	*** 00063b	5e 			pop	si
+	*** 00063c	c9 			leave	
+	*** 00063d	c3 			ret	
+
+ArrayHandler	ENDP
+	PUBLIC	_NotifyIorb
+_NotifyIorb	PROC NEAR
+; Line 967
+	*** 00063e	55 			push	bp
+	*** 00063f	8b ec 			mov	bp,sp
+	*** 000641	56 			push	si
+;	pIorbh = 4
+;	ErrorCode = 8
+	*** 000642	8b 76 04 		mov	si,WORD PTR [bp+4]	;pIorbh
+; Line 981
+	*** 000645	8b 46 08 		mov	ax,WORD PTR [bp+8]	;ErrorCode
+	*** 000648	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 00064b	26 89 44 0c 		mov	WORD PTR es:[si+12],ax
+	*** 00064f	0b c0 			or	ax,ax
+	*** 000651	74 0f 			je	$L1531
+	*** 000653	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000656	26 f6 44 0a 04 		test	BYTE PTR es:[si+10],4
+	*** 00065b	75 05 			jne	$L1531
+	*** 00065d	bb 02 00 		mov	bx,2
+	*** 000660	eb 02 			jmp	SHORT $L1532
+					$L1531:
+	*** 000662	33 db 			xor	bx,bx
+					$L1532:
+	*** 000664	80 cb 01 		or	bl,1
+	*** 000667	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 00066a	26 09 5c 0a 		or	WORD PTR es:[si+10],bx
+; Line 983
+	*** 00066e	26 f6 44 08 01 		test	BYTE PTR es:[si+8],1
+	*** 000673	74 15 			je	$EX1484
+; Line 984
+	*** 000675	8b 46 06 		mov	ax,WORD PTR [bp+6]
+	*** 000678	50 			push	ax
+	*** 000679	56 			push	si
+	*** 00067a	8e c0 			mov	es,ax
+	*** 00067c	26 ff 74 1e 		push	WORD PTR es:[si+30]
+	*** 000680	26 ff 74 1c 		push	WORD PTR es:[si+28]
+	*** 000684	e8 00 00 		call	_CallADD
+	*** 000687	83 c4 08 		add	sp,8
+; Line 987
+					$EX1484:
+	*** 00068a	5e 			pop	si
+	*** 00068b	c9 			leave	
+	*** 00068c	c3 			ret	
+	*** 00068d	90 			nop	
+
+_NotifyIorb	ENDP
+	PUBLIC	_IorbEntry
+_IorbEntry	PROC FAR
+; Line 1011
+	*** 00068e	c8 04 00 00 		enter	4,0
+	*** 000692	56 			push	si
+	*** 000693	1e 			push	ds
+	*** 000694	b8 00 00 		mov	ax,DGROUP
+	*** 000697	8e d8 			mov	ds,ax
+	ASSUME DS: DGROUP
+;	pIorb = 6
+;	dpp = -4
+; Line 1012
+	*** 000699	c4 5e 06 		les	bx,DWORD PTR [bp+6]	;pIorb
+	*** 00069c	26 8b 47 02 		mov	ax,WORD PTR es:[bx+2]
+	*** 0006a0	8b f0 			mov	si,ax
+	*** 0006a2	8c 5e fe 		mov	WORD PTR [bp-2],ds
+; Line 1014
+	*** 0006a5	26 83 7f 04 01 		cmp	WORD PTR es:[bx+4],1
+	*** 0006aa	75 0e 			jne	$I1491
+; Line 1016
+	*** 0006ac	06 			push	es
+	*** 0006ad	53 			push	bx
+	*** 0006ae	6a 00 			push	0
+	*** 0006b0	6a 00 			push	0
+					$L1550:
+	*** 0006b2	e8 73 fe 		call	ArrayHandler
+					$L1551:
+	*** 0006b5	83 c4 08 		add	sp,8
+; Line 1018
+	*** 0006b8	eb 3f 			jmp	SHORT $EX1489
+					$I1491:
+	*** 0006ba	3d 00 00 		cmp	ax,OFFSET _apBDisk
+	*** 0006bd	72 17 			jb	$I1493
+	*** 0006bf	3d 60 00 		cmp	ax,OFFSET _apBDisk+96
+	*** 0006c2	73 12 			jae	$I1493
+; Line 1020
+	*** 0006c4	06 			push	es
+	*** 0006c5	53 			push	bx
+	*** 0006c6	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 0006c9	26 ff 74 02 		push	WORD PTR es:[si+2]
+	*** 0006cd	26 ff 34 		push	WORD PTR es:[si]
+	*** 0006d0	e8 00 00 		call	_FilterHandler
+	*** 0006d3	eb e0 			jmp	SHORT $L1551
+	*** 0006d5	90 			nop	
+					$I1493:
+	*** 0006d6	3d 00 00 		cmp	ax,OFFSET _apHDrv
+	*** 0006d9	72 13 			jb	$I1495
+	*** 0006db	3d 40 00 		cmp	ax,OFFSET _apHDrv+64
+	*** 0006de	73 0e 			jae	$I1495
+; Line 1024
+	*** 0006e0	06 			push	es
+	*** 0006e1	53 			push	bx
+	*** 0006e2	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 0006e5	26 ff 74 02 		push	WORD PTR es:[si+2]
+	*** 0006e9	26 ff 34 		push	WORD PTR es:[si]
+	*** 0006ec	eb c4 			jmp	SHORT $L1550
+					$I1495:
+; Line 1030
+	*** 0006ee	68 07 01 		push	263	;0107H
+	*** 0006f1	06 			push	es
+	*** 0006f2	53 			push	bx
+	*** 0006f3	e8 48 ff 		call	_NotifyIorb
+	*** 0006f6	83 c4 06 		add	sp,6
+; Line 1033
+					$EX1489:
+	*** 0006f9	1f 			pop	ds
+	*** 0006fa	5e 			pop	si
+	*** 0006fb	c9 			leave	
+	*** 0006fc	cb 			ret	
+	*** 0006fd	90 			nop	
+
+_IorbEntry	ENDP
+	PUBLIC	_Timer
+_Timer	PROC NEAR
+; Line 1068
+	*** 0006fe	c8 06 00 00 		enter	6,0
+	*** 000702	56 			push	si
+;	i = -2
+; Line 1076
+	*** 000703	c7 46 fe 00 00 		mov	WORD PTR [bp-2],0	;i
+	*** 000708	eb 2b 			jmp	SHORT $F1504
+; Line 1082
+					$I1508:
+	*** 00070a	c4 5e fa 		les	bx,DWORD PTR [bp-6]	;vrio
+	*** 00070d	06 			push	es
+	*** 00070e	53 			push	bx
+	*** 00070f	26 ff 77 02 		push	WORD PTR es:[bx+2]
+	*** 000713	26 ff 37 		push	WORD PTR es:[bx]
+	*** 000716	26 c4 37 		les	si,DWORD PTR es:[bx]
+	*** 000719	26 ff 54 11 		call	WORD PTR es:[si+17]
+	*** 00071d	83 c4 08 		add	sp,8
+	*** 000720	0b c0 			or	ax,ax
+	*** 000722	74 0e 			je	$FC1505
+; Line 1083
+; Line 1084
+	*** 000724	ff 76 fc 		push	WORD PTR [bp-4]
+	*** 000727	ff 76 fa 		push	WORD PTR [bp-6]	;vrio
+	*** 00072a	e8 00 00 		call	_InsertVrio
+	*** 00072d	83 c4 04 		add	sp,4
+; Line 1085
+	*** 000730	eb 16 			jmp	SHORT $FB1506
+; Line 1086
+; Line 1087
+					$FC1505:
+	*** 000732	ff 46 fe 		inc	WORD PTR [bp-2]	;i
+					$F1504:
+	*** 000735	83 7e fe 05 		cmp	WORD PTR [bp-2],5	;i
+	*** 000739	73 0d 			jae	$FB1506
+; Line 1077
+;	vrio = -6
+; Line 1080
+	*** 00073b	e8 00 00 		call	_DequeueVrio
+	*** 00073e	89 46 fa 		mov	WORD PTR [bp-6],ax	;vrio
+	*** 000741	89 56 fc 		mov	WORD PTR [bp-4],dx
+	*** 000744	0b d0 			or	dx,ax
+	*** 000746	75 c2 			jne	$I1508
+; Line 1081
+					$FB1506:
+; Line 1090
+	*** 000748	ff 0e 4a 00 		dec	WORD PTR $S1500_?frac@?1??Timer@@9@9
+	*** 00074c	74 03 			je	$JCC1868
+	*** 00074e	e9 9a 00 		jmp	$I1510
+					$JCC1868:
+; Line 1091
+; Line 1092
+	*** 000751	83 06 00 00 01 		add	WORD PTR _ulTimer,1
+	*** 000756	83 16 02 00 00 		adc	WORD PTR _ulTimer+2,0
+; Line 1093
+	*** 00075b	c7 06 4a 00 0a 00 	mov	WORD PTR $S1500_?frac@?1??Timer@@9@9,10	;000aH
+; Line 1103
+	*** 000761	f6 06 01 00 02 		test	BYTE PTR _fDriverFlags+1,2
+	*** 000766	74 37 			je	$I1512
+	*** 000768	f6 06 01 00 04 		test	BYTE PTR _fDriverFlags+1,4
+	*** 00076d	75 30 			jne	$I1512
+	*** 00076f	f6 06 00 00 10 		test	BYTE PTR _fDriverFlags,16	;0010H
+	*** 000774	75 29 			jne	$I1512
+	*** 000776	83 3e 00 00 00 		cmp	WORD PTR _cBuildProcess,0
+	*** 00077b	74 22 			je	$I1512
+	*** 00077d	83 3e 02 00 00 		cmp	WORD PTR _ulTimer+2,0
+	*** 000782	75 07 			jne	$L1533
+	*** 000784	83 3e 00 00 2d 		cmp	WORD PTR _ulTimer,45	;002dH
+	*** 000789	76 14 			jbe	$I1512
+					$L1533:
+; Line 1104
+; Line 1106
+	*** 00078b	6a 00 			push	0
+	*** 00078d	6a 00 			push	0
+	*** 00078f	ff 36 02 00 		push	WORD PTR _hdBuildHook+2
+	*** 000793	ff 36 00 00 		push	WORD PTR _hdBuildHook
+	*** 000797	9a 00 00 00 00 		call	FAR PTR DEVHELP_ARMCTXHOOK
+	*** 00079c	89 46 fe 		mov	WORD PTR [bp-2],ax	;i
+; Line 1107
+; Line 1109
+; Line 1110
+					$I1512:
+; Line 1113
+	*** 00079f	ff 0e 4c 00 		dec	WORD PTR $S1502_?beepfrac@?1??Timer@@9@9
+	*** 0007a3	75 1f 			jne	$I1513
+; Line 1114
+; Line 1118
+	*** 0007a5	83 3e 00 00 00 		cmp	WORD PTR _cBeeps,0
+	*** 0007aa	74 12 			je	$I1514
+	*** 0007ac	f6 06 00 00 40 		test	BYTE PTR _fDriverFlags,64	;0040H
+	*** 0007b1	75 0b 			jne	$I1514
+; Line 1119
+	*** 0007b3	68 70 03 		push	880	;0370H
+	*** 0007b6	68 c8 00 		push	200	;00c8H
+	*** 0007b9	9a 00 00 00 00 		call	FAR PTR DEVHELP_BEEP
+; Line 1120
+					$I1514:
+	*** 0007be	c7 06 4c 00 0a 00 	mov	WORD PTR $S1502_?beepfrac@?1??Timer@@9@9,10	;000aH
+; Line 1121
+; Line 1125
+					$I1513:
+	*** 0007c4	c7 46 fe 00 00 		mov	WORD PTR [bp-2],0	;i
+	*** 0007c9	eb 18 			jmp	SHORT $F1515
+	*** 0007cb	90 			nop	
+					$FC1516:
+; Line 1126
+	*** 0007cc	8b 5e fe 		mov	bx,WORD PTR [bp-2]	;i
+	*** 0007cf	c1 e3 02 		shl	bx,2
+	*** 0007d2	ff b7 02 00 		push	WORD PTR _apHDrv[bx+2]
+	*** 0007d6	ff b7 00 00 		push	WORD PTR _apHDrv[bx]
+	*** 0007da	e8 00 00 		call	_StartManyIorb
+	*** 0007dd	83 c4 04 		add	sp,4
+	*** 0007e0	ff 46 fe 		inc	WORD PTR [bp-2]	;i
+					$F1515:
+	*** 0007e3	a1 00 00 		mov	ax,WORD PTR _cHDrv
+	*** 0007e6	39 46 fe 		cmp	WORD PTR [bp-2],ax	;i
+	*** 0007e9	72 e1 			jb	$FC1516
+; Line 1127
+; Line 1129
+					$I1510:
+; Line 1130
+	*** 0007eb	5e 			pop	si
+	*** 0007ec	c9 			leave	
+	*** 0007ed	c3 			ret	
+
+_Timer	ENDP
+_TEXT	ENDS
+END

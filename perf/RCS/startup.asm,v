@@ -1,0 +1,151 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@;; @;
+
+
+1.2
+date	97.12.16.02.22.55;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	97.06.04.23.36.16;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Assembler Helper to order segments
+@
+
+
+1.2
+log
+@- made driver name public through _szDriverName
+@
+text
+@;*
+;* $Source: e:/source/driver/perf/RCS/startup.asm,v $
+;* $Revision: 1.1 $
+;* $Date: 1997/06/04 23:36:16 $
+;* $Locker$
+;*
+;* Assembler Helper to order segments
+;*
+;* $Log: startup.asm,v $
+;* Revision 1.1  1997/06/04 23:36:16  vitus
+;* Initial revision
+;* ----------------------------------------
+;* Author: Vitus Jensen, 2:2474/424, 1997
+;*
+.286c						; at least!
+
+	PUBLIC	_DiskDDHeader
+	PUBLIC	_szDriverName
+
+INCLUDE	devhdr.inc				; device header format
+
+
+	;; The very first segment has to contain the
+	;; device driver header.  Use own segment for
+	;; this purpose (but in DGROUP).
+
+DDHeader	SEGMENT DWORD PUBLIC 'CONST'
+
+_DiskDDHeader	DD	-1
+		DW	DEV_CHAR_DEV OR DEV_30 OR DEVLEV_3
+		DW	OFFSET AsmStrategy
+		DW	0
+_szDriverName	DB	"SCSIOPT$"
+		DW	0
+		DW	0
+		DW	0
+		DW	0
+		DD	DEV_INITCOMPLETE OR DEV_ADAPTER_DD OR DEV_16MB OR DEV_IOCTL2
+		DW	0
+
+DDHeader	ENDS
+
+CONST		SEGMENT DWORD PUBLIC 'CONST'	; places strings here
+CONST		ENDS
+
+LIBDATA		SEGMENT DWORD PUBLIC 'DATA'
+LIBDATA		ENDS
+
+_DATA		SEGMENT DWORD PUBLIC 'DATA'
+_DATA		ENDS
+
+_BSS		SEGMENT DWORD PUBLIC 'BSS'
+_BSS		ENDS
+
+
+
+	;; Start of code segments
+	;; There is really code contained: small stubs
+	;; to call C routines and save/restore registers.
+
+_TEXT		SEGMENT DWORD PUBLIC 'CODE'
+
+	EXTRN	_Strategy : NEAR		; C routines
+
+
+AsmStrategy	PROC	FAR
+		push	es
+		push	bx
+		call	_Strategy
+		add	sp, 4
+		retf
+AsmStrategy	ENDP
+
+
+_TEXT		ENDS
+
+CODE		SEGMENT DWORD PUBLIC 'CODE'
+CODE		ENDS
+
+LIBCODE		SEGMENT DWORD PUBLIC 'CODE'
+LIBCODE		ENDS
+
+
+	;; Group segments together
+
+DGROUP		GROUP	CONST, _BSS, DDHeader, LIBDATA, _DATA
+StaticGroup	GROUP	CODE, LIBCODE, _TEXT
+
+	END
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+;* $Source$
+;* $Revision$
+;* $Date$
+;* $Author$
+d9 3
+a11 1
+;* $Log$
+d13 1
+a13 1
+;* This code is Copyright Vitus Jensen 1996
+d18 1
+a18 1
+
+d33 1
+a33 1
+		DB	"DPERFS$ "
+d67 5
+a71 5
+	push	es
+	push	bx
+	call	_Strategy
+	add	sp, 4
+	retf
+@

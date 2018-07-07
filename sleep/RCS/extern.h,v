@@ -1,0 +1,267 @@
+head	1.8;
+access;
+symbols
+	DSLEEPv0_98:1.8
+	DSLEEPv0_95:1.6
+	DSLEEPv0_93:1.6
+	DSLEEPv0_92:1.6
+	DSLEEPv0_91:1.5
+	DSLEEPv0_80:1.3
+	DSLEEPv0_70:1.3
+	DSLEEPv0_60:1.2;
+locks; strict;
+comment	@ * @;
+
+
+1.8
+date	2001.02.27.02.25.33;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.02.16.02.11.03;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	97.09.03.01.08.17;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	97.06.03.23.30.15;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	97.05.07.23.49.27;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	96.11.04.00.11.11;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	96.10.23.23.44.42;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	96.09.27.03.36.20;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Data extern declarations
+@
+
+
+1.8
+log
+@- added DF_NOAPM flag
+- added fAPMSuspended
+@
+text
+@/*
+ * $Source: r:/source/driver/sleep/RCS/extern.h,v $
+ * $Revision: 1.7 $
+ * $Date: 2001/02/16 02:11:03 $
+ * $Author: vitus $
+ *
+ * Data extern declarations
+ * (keep in sync with data.c)
+ *
+ * $Log: extern.h,v $
+ * Revision 1.7  2001/02/16 02:11:03  vitus
+ * - DF_INITCOMPLETE to detect second INIT_COMPLETE IORB
+ *
+ * Revision 1.6  1997/09/03 01:08:17  vitus
+ * Added DF_SHUTDOWN
+ *
+ * Revision 1.5  1997/06/03 23:30:15  vitus
+ * Removed syntax error
+ *
+ * Revision 1.4  1997/05/07 23:49:27  vitus
+ * Added fDriverFlags 'register driver done'
+ *
+ * Revision 1.3  1996/11/04 00:11:11  vitus
+ * Removed global timeout value
+ *
+ * Revision 1.2  1996/10/23 23:44:42  vitus
+ * Added/changed bit definitions of fDriverFlags
+ *
+ * Revision 1.1  1996/09/27 03:36:20  vitus
+ * Initial revision
+ * ------------------------------------------------
+ * This code is Copyright Vitus Jensen 1996-97,2001
+ */
+
+
+extern PFN		Device_Help;
+extern struct InfoSegGDT FAR	*pGlobalInfoSeg;
+
+extern ULONG		ulTimer;
+
+extern USHORT		hdThisDriver;
+
+extern USHORT		cUnit;
+extern NPDEVICE		anpUnit[];
+
+extern USHORT		fDriverFlags;
+#define DF_VERBOSE	0x0001
+#define DF_DEBUG	0x0002
+#define DF_TESTOP	0x0004			/* start/stop during install */
+#define DF_SHUTDOWN	0x0008			/* don't stop after shutdown */
+#define DF_NOAPM	0x0010			/* don't register via APM */
+#define DF_REGISTERED	0x0080
+#define DF_INITDONE	0x0100
+#define DF_INITCOMPLETE	0x0200			/* IOCM_COMPLETE_INIT */
+#define DF_REGDEVCLASS	0x0400			/* RegisterDeviceClass() done */
+
+extern UCHAR		fAPMSuspended;
+extern char		szDriverName[];
+
+
+
+/* Initialization Data */
+
+extern NPUCHAR	npInitData;			/* allocate memory here */
+
+
+extern UCHAR	DeviceTable[MAX_DEVICETABLE_SIZE];
+
+extern UCHAR	szMsgBuffer[];		/* put ASCII messages in this buffer */
+extern MSGTABLE msgBuffer;		/* and use this to display */
+
+@
+
+
+1.7
+log
+@- DF_INITCOMPLETE to detect second INIT_COMPLETE IORB
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1997/09/03 01:08:17 $
+d11 3
+d31 2
+a32 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1996-97
+d51 1
+d57 1
+@
+
+
+1.6
+log
+@Added DF_SHUTDOWN
+@
+text
+@d2 3
+a4 3
+ * $Source: e:/source/driver/sleep/RCS/extern.h,v $
+ * $Revision: 1.5 $
+ * $Date: 1997/06/03 23:30:15 $
+d11 3
+d50 2
+a51 1
+#define DF_REGDEVCLASS	0x0200			/* RegisterDeviceClass() done */
+@
+
+
+1.5
+log
+@- removed syntax error
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1997/05/07 23:49:27 $
+d11 3
+d15 1
+a15 1
+ * - added fDriverFlags 'register driver done'
+d44 1
+@
+
+
+1.4
+log
+@- added fDriverFlags 'register driver done'
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1996/11/04 00:11:11 $
+d11 3
+a21 1
+ *
+d41 1
+a41 1
+#define DF_REGISTRATED	0x0080
+@
+
+
+1.3
+log
+@Removed global timeout value
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1996/10/23 23:44:42 $
+d11 3
+d20 2
+a21 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1996
+d41 1
+a41 1
+
+@
+
+
+1.2
+log
+@Added/changed bit definitions of fDriverFlags
+@
+text
+@d2 3
+a4 3
+ * $Source: e:/source/driver/sleep/extern.h,v $
+ * $Revision: 1.1 $
+ * $Date: 1996/09/27 03:36:20 $
+d11 3
+a25 1
+extern USHORT		usSleepSeconds;
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Author$
+d10 4
+a13 1
+ * $Log$
+d31 5
+a35 2
+#define DF_VERBOSE	0x01
+#define DF_INITDONE	0x10
+@

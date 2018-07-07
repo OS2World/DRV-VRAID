@@ -1,0 +1,64 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@ * @;
+
+
+1.1
+date	2008.09.23.06.20.51;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Interface to Caching
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@/*
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+ *
+ *	Interface to Caching
+ *
+ * $Log$
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 2001
+ */
+
+typedef struct _CACHEBLK {
+
+    /* Only used by cache module: */
+
+    PVOID	buffer;				/* of 'stripesize' bytes */
+    PVRIO	io;				/* allocated if 'inuse' */
+    struct {
+	int	inuse : 1;
+	int	valid : 1;
+	int	dirty : 1;
+    };
+
+    /* Public elements: */
+
+    PVRDEVHDR	drv;				/* data coming from this drive */
+    ULONG	secno;
+    
+} CACHEBLK, FAR * PCACHEBLK;
+
+
+extern USHORT	CacheCreate(PVRDEVHDR drv, USHORT stripesize);
+extern USHORT	CacheDestroy(PVRDEVHDR drv);
+
+extern USHORT	CacheRequestBlock(PVRDEVHDR child, ULONG secno, ULONG seccnt,
+				  PCACHEBLK allocated);
+extern USHORT	CacheProcessBlock(PCACHEBLK cblk);
+extern USHORT	CacheReleaseBlock(PCACHEBLK cblk);
+@

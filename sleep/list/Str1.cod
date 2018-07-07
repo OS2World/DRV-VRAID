@@ -1,0 +1,214 @@
+;	Static Name Aliases
+;
+;	$S170_id	EQU	id
+	TITLE   Str1.c
+	.286p
+	.287
+_TEXT	SEGMENT  WORD PUBLIC 'CODE'
+_TEXT	ENDS
+_DATA	SEGMENT  WORD PUBLIC 'DATA'
+_DATA	ENDS
+CONST	SEGMENT  WORD PUBLIC 'CONST'
+CONST	ENDS
+_BSS	SEGMENT  WORD PUBLIC 'BSS'
+_BSS	ENDS
+DGROUP	GROUP	CONST, _BSS, _DATA
+	ASSUME DS: DGROUP
+	ASSUME  SS: NOTHING
+EXTRN	_IssueStart:NEAR
+EXTRN	_APMEventHandler:FAR
+EXTRN	_InitBase:NEAR
+EXTRN	_GenIOCtl:NEAR
+EXTRN	_APMAttach:FAR
+EXTRN	_APMRegister:FAR
+EXTRN	_cUnit:WORD
+EXTRN	_anpUnit:BYTE
+EXTRN	_fDriverFlags:WORD
+_DATA      SEGMENT
+$S170_id	DB	'$Id: str1.c,v 1.10 2001/02/27 02:24:09 vitus Exp vitus $',  00H
+_DATA      ENDS
+_TEXT      SEGMENT
+	ASSUME	CS: _TEXT
+
+Shutdown	PROC NEAR
+; Line 155
+	*** 000000	55 			push	bp
+	*** 000001	8b ec 			mov	bp,sp
+	*** 000003	57 			push	di
+	*** 000004	56 			push	si
+;	rph = 4
+;	register cx = u
+; Line 158
+	*** 000005	f6 06 00 00 08 		test	BYTE PTR _fDriverFlags,8
+	*** 00000a	74 55 			je	$I1959
+; Line 160
+	*** 00000c	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rph
+	*** 00000f	26 80 7f 0d 00 		cmp	BYTE PTR es:[bx+13],0
+	*** 000014	75 28 			jne	$I1960
+; Line 166
+	*** 000016	33 c9 			xor	cx,cx
+	*** 000018	39 0e 00 00 		cmp	WORD PTR _cUnit,cx
+	*** 00001c	74 43 			je	$I1959
+	*** 00001e	bb 00 00 		mov	bx,OFFSET _anpUnit
+					$F1961:
+; Line 168
+	*** 000021	fa 			cli	
+; Line 169
+	*** 000022	8b 37 			mov	si,WORD PTR [bx]
+	*** 000024	c7 84 a2 00 00 00 	mov	WORD PTR [si+162],0
+; Line 170
+	*** 00002a	8b 37 			mov	si,WORD PTR [bx]
+	*** 00002c	c7 44 02 00 00 		mov	WORD PTR [si+2],0
+; Line 171
+	*** 000031	fb 			sti	
+	*** 000032	83 c3 02 		add	bx,2
+	*** 000035	41 			inc	cx
+	*** 000036	3b 0e 00 00 		cmp	cx,WORD PTR _cUnit
+	*** 00003a	72 e5 			jb	$F1961
+	*** 00003c	eb 23 			jmp	SHORT $I1959
+; Line 174
+					$I1960:
+; Line 181
+	*** 00003e	33 ff 			xor	di,di
+	*** 000040	39 3e 00 00 		cmp	WORD PTR _cUnit,di
+	*** 000044	74 1b 			je	$I1959
+	*** 000046	be 00 00 		mov	si,OFFSET _anpUnit
+					$F1965:
+; Line 183
+	*** 000049	8b 1c 			mov	bx,WORD PTR [si]
+	*** 00004b	f6 07 02 		test	BYTE PTR [bx],2
+	*** 00004e	74 07 			je	$FC1966
+; Line 184
+	*** 000050	53 			push	bx
+	*** 000051	e8 00 00 		call	_IssueStart
+	*** 000054	83 c4 02 		add	sp,2
+; Line 181
+					$FC1966:
+	*** 000057	83 c6 02 		add	si,2
+	*** 00005a	47 			inc	di
+	*** 00005b	3b 3e 00 00 		cmp	di,WORD PTR _cUnit
+	*** 00005f	72 e8 			jb	$F1965
+; Line 189
+					$I1959:
+	*** 000061	b8 00 01 		mov	ax,256	;0100H
+; Line 190
+	*** 000064	5e 			pop	si
+	*** 000065	5f 			pop	di
+	*** 000066	c9 			leave	
+	*** 000067	c3 			ret	
+
+Shutdown	ENDP
+	PUBLIC	_Strategy
+_Strategy	PROC NEAR
+; Line 220
+	*** 000068	55 			push	bp
+	*** 000069	8b ec 			mov	bp,sp
+	*** 00006b	56 			push	si
+;	rph = 4
+;	rc = -2
+	*** 00006c	8b 76 04 		mov	si,WORD PTR [bp+4]	;rph
+; Line 221
+	*** 00006f	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000072	26 8a 44 02 		mov	al,BYTE PTR es:[si+2]
+	*** 000076	2a e4 			sub	ah,ah
+; Line 273
+	*** 000078	2d 0d 00 		sub	ax,13	;000dH
+	*** 00007b	3d 12 00 		cmp	ax,18	;0012H
+	*** 00007e	77 2e 			ja	$SD1986
+	*** 000080	d1 e0 			shl	ax,1
+	*** 000082	93 			xchg	ax,bx
+	*** 000083	2e ff a7 88 00 		jmp	WORD PTR cs:$L1991[bx]
+					$L1991:
+	*** 000088	11 01 				DW	$I1980
+	*** 00008a	11 01 				DW	$I1980
+	*** 00008c	ae 00 				DW	$SD1986
+	*** 00008e	ba 00 				DW	$SC1985
+	*** 000090	ae 00 				DW	$SD1986
+	*** 000092	ae 00 				DW	$SD1986
+	*** 000094	ae 00 				DW	$SD1986
+	*** 000096	ae 00 				DW	$SD1986
+	*** 000098	ae 00 				DW	$SD1986
+	*** 00009a	ae 00 				DW	$SD1986
+	*** 00009c	ae 00 				DW	$SD1986
+	*** 00009e	ae 00 				DW	$SD1986
+	*** 0000a0	ae 00 				DW	$SD1986
+	*** 0000a2	ae 00 				DW	$SD1986
+	*** 0000a4	cc 00 				DW	$SC1976
+	*** 0000a6	da 00 				DW	$SC1983
+	*** 0000a8	ae 00 				DW	$SD1986
+	*** 0000aa	ae 00 				DW	$SD1986
+	*** 0000ac	e2 00 				DW	$SC1979
+; Line 269
+					$SD1986:
+; Line 271
+	*** 0000ae	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0000b1	26 c7 44 03 03 81 	mov	WORD PTR es:[si+3],-32509	;8103H
+; Line 272
+	*** 0000b7	eb 61 			jmp	SHORT $EX1971
+	*** 0000b9	90 			nop	
+					$SC1985:
+; Line 266
+	*** 0000ba	06 			push	es
+	*** 0000bb	56 			push	si
+	*** 0000bc	e8 00 00 		call	_GenIOCtl
+					$L1993:
+	*** 0000bf	83 c4 04 		add	sp,4
+	*** 0000c2	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0000c5	26 89 44 03 		mov	WORD PTR es:[si+3],ax
+; Line 267
+	*** 0000c9	eb 4f 			jmp	SHORT $EX1971
+	*** 0000cb	90 			nop	
+; Line 223
+					$SC1976:
+; Line 224
+	*** 0000cc	f6 06 01 00 01 		test	BYTE PTR _fDriverFlags+1,1
+	*** 0000d1	75 db 			jne	$SD1986
+; Line 227
+	*** 0000d3	06 			push	es
+	*** 0000d4	56 			push	si
+	*** 0000d5	e8 00 00 		call	_InitBase
+	*** 0000d8	eb e5 			jmp	SHORT $L1993
+; Line 256
+					$SC1983:
+; Line 257
+	*** 0000da	06 			push	es
+	*** 0000db	56 			push	si
+	*** 0000dc	e8 21 ff 		call	Shutdown
+	*** 0000df	eb de 			jmp	SHORT $L1993
+	*** 0000e1	90 			nop	
+; Line 230
+					$SC1979:
+; Line 232
+	*** 0000e2	f6 06 01 00 02 		test	BYTE PTR _fDriverFlags+1,2
+	*** 0000e7	75 28 			jne	$I1980
+; Line 234
+	*** 0000e9	f6 06 00 00 10 		test	BYTE PTR _fDriverFlags,16	;0010H
+	*** 0000ee	75 1c 			jne	$I1981
+	*** 0000f0	9a 00 00 00 00 		call	FAR PTR _APMAttach
+	*** 0000f5	0b c0 			or	ax,ax
+	*** 0000f7	75 13 			jne	$I1981
+; Line 247
+	*** 0000f9	50 			push	ax
+	*** 0000fa	50 			push	ax
+	*** 0000fb	68 40 03 		push	832	;0340H
+	*** 0000fe	68 00 00 		push	SEG _APMEventHandler
+	*** 000101	68 00 00 		push	OFFSET _APMEventHandler
+	*** 000104	9a 00 00 00 00 		call	FAR PTR _APMRegister
+	*** 000109	83 c4 0a 		add	sp,10	;000aH
+; Line 251
+					$I1981:
+	*** 00010c	80 0e 01 00 02 		or	BYTE PTR _fDriverFlags+1,2
+; Line 253
+					$I1980:
+	*** 000111	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000114	26 c7 44 03 00 01 	mov	WORD PTR es:[si+3],256	;0100H
+; Line 275
+					$EX1971:
+	*** 00011a	5e 			pop	si
+	*** 00011b	c9 			leave	
+	*** 00011c	c3 			ret	
+	*** 00011d	90 			nop	
+
+_Strategy	ENDP
+_TEXT	ENDS
+END

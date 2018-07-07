@@ -1,0 +1,2604 @@
+;	Static Name Aliases
+;
+;	$S1984_szNoDiskType	EQU	szNoDiskType
+;	$S1985_szRemovable	EQU	szRemovable
+;	$S1986_szDiskette	EQU	szDiskette
+;	$S1987_szDefective	EQU	szDefective
+;	$S1988_szAllocFailed	EQU	szAllocFailed
+;	$S1989_szDeallocFailed	EQU	szDeallocFailed
+;	$S1990_szChangeUInfoFailed	EQU	szChangeUInfoFailed
+;	$S1991_szNoTimer	EQU	szNoTimer
+;	$S1992_szRegDevClassFailed	EQU	szRegDevClassFailed
+;	$S1993_szNoDevices	EQU	szNoDevices
+;	$S1994_szTestStart	EQU	szTestStart
+;	$S1995_szTestComplete	EQU	szTestComplete
+;	$S1996_szStopFailed	EQU	szStopFailed
+;	$S1997_szNoStart	EQU	szNoStart
+;	$S1998_szStartFailed	EQU	szStartFailed
+;	$S1999_szStatusblock	EQU	szStatusblock
+;	$S2000_szAdapterDiag	EQU	szAdapterDiag
+;	$S2001_szSensedata	EQU	szSensedata
+;	$S2002_szHex	EQU	szHex
+;	$S2003_szCmdLineSyntax	EQU	szCmdLineSyntax
+;	$S2004_szMissingOption	EQU	szMissingOption
+;	$S2005_szUnknownOption	EQU	szUnknownOption
+;	$S2006_szCmdLineError	EQU	szCmdLineError
+;	$S2007_szFoundDevice	EQU	szFoundDevice
+;	$S2008_szProduct	EQU	szProduct
+;	$S2009_szLogo	EQU	szLogo
+;	$S2010_szNoReg	EQU	szNoReg
+;	$S2011_szReg	EQU	szReg
+;	$S2018_usSleepSeconds	EQU	usSleepSeconds
+;	$S170_id	EQU	id
+;	$S1979_szNoDriverTab	EQU	szNoDriverTab
+;	$S1980_szNoDevTab	EQU	szNoDevTab
+;	$S1981_szNoSCSI	EQU	szNoSCSI
+;	$S1982_szNo16M	EQU	szNo16M
+;	$S1983_szNoScGa	EQU	szNoScGa
+	TITLE   Init1.c
+	.286p
+	.287
+_TEXT	SEGMENT  WORD PUBLIC 'CODE'
+_TEXT	ENDS
+_DATA	SEGMENT  WORD PUBLIC 'DATA'
+_DATA	ENDS
+CONST	SEGMENT  WORD PUBLIC 'CONST'
+CONST	ENDS
+_BSS	SEGMENT  WORD PUBLIC 'BSS'
+_BSS	ENDS
+INITDATA	SEGMENT  WORD PUBLIC 'FAR_DATA'
+INITDATA	ENDS
+DGROUP	GROUP	CONST, _BSS, _DATA
+	ASSUME DS: DGROUP
+	ASSUME  SS: NOTHING
+PUBLIC  _opttable
+PUBLIC  _RegData
+PUBLIC  _OPT_VERBOSE
+PUBLIC  _OPT_NSR
+PUBLIC  _ToOption
+PUBLIC  _OPT_SR
+PUBLIC  _OPT_DEBUG_DEFAULT
+PUBLIC  _achDump
+PUBLIC  _OPT_DEBUG_NO
+PUBLIC  _OPT_TIME
+PUBLIC  _OPT_NUT
+PUBLIC  _OPT_UT
+PUBLIC  _OPT_NAPM
+PUBLIC  _OPT_APM
+PUBLIC  _OPT_END
+EXTRN	DEVHELP_BEEP:FAR
+EXTRN	_AsmTimer:NEAR
+EXTRN	_CallADD:NEAR
+EXTRN	_SaveMessage:NEAR
+EXTRN	DEVHELP_GETDOSVAR:FAR
+EXTRN	_IssueStart:NEAR
+EXTRN	_IssueStop:NEAR
+EXTRN	_FilterFunction:FAR
+EXTRN	_sprintk:NEAR
+EXTRN	DEVHELP_TICKCOUNT:FAR
+EXTRN	DEVHELP_PROCBLOCK:FAR
+EXTRN	_Command_Parser:FAR
+EXTRN	DEVHELP_REGISTERDEVICECLASS:FAR
+EXTRN	DEVHELP_PROCRUN:FAR
+EXTRN	_Device_Help:DWORD
+EXTRN	_pGlobalInfoSeg:DWORD
+EXTRN	_hdThisDriver:WORD
+EXTRN	_cUnit:WORD
+EXTRN	_anpUnit:BYTE
+EXTRN	_fDriverFlags:WORD
+EXTRN	_szDriverName:BYTE
+EXTRN	_npInitData:WORD
+EXTRN	_DeviceTable:BYTE
+EXTRN	_szMsgBuffer:BYTE
+_DATA      SEGMENT
+	ORG	$+254
+$SG2207	DB	'/V',  00H
+$SG2209	DB	'/!SR',  00H
+$SG2211	DB	'/SR',  00H
+$SG2213	DB	'/DEBUG',  00H
+$SG2215	DB	'/DEBUG:',  00H
+$SG2217	DB	'/T:',  00H
+$SG2219	DB	'/!UT:',  00H
+$SG2221	DB	'/UT:',  00H
+$SG2223	DB	'/!APM',  00H
+$SG2225	DB	'/APM',  00H
+$SG2227	DB	00H,  00H
+	ORG	$-309
+$S170_id	DB	'$Id: init1.c,v 1.24 2001/02/27 02:24:47 vitus Exp $',  00H
+_DATA      ENDS
+INITDATA      SEGMENT
+	ORG	$+200
+$S1979_szNoDriverTab	DB	'%s: error retrieving driver table',  00H
+$S1980_szNoDevTab	DB	'%s: error retrieving device table from ADD %u',  00H
+$S1981_szNoSCSI	DB	'%s: adapter %u has no SCSI bus (%04x)',  00H
+$S1982_szNo16M	DB	'%s: adapter %u doesn''t support memory above 16MB',  00H
+	ORG	$+1
+$S1983_szNoScGa	DB	'%s: adapter %u doesn''t support HW scatter/gather',  00H
+	ORG	$+1
+$S1984_szNoDiskType	DB	'%s: adapter %u, unit %u is no disk device',  00H
+$S1985_szRemovable	DB	'%s: adapter %u, unit %u is removable',  00H
+	ORG	$+1
+$S1986_szDiskette	DB	'%s: adapter %u, unit %u is diskette drive',  00H
+$S1987_szDefective	DB	'%s: adapter %u, unit %u is defect',  00H
+$S1988_szAllocFailed	DB	'%s: adapter %u, unit %u allocation failed',  00H
+$S1989_szDeallocFailed	DB	'%s: adapter %u, unit %u, deallocation failed',  00H
+	ORG	$+1
+$S1990_szChangeUInfoFailed	DB	'%s: adapter %u, unit %u, change unit info failed',  00H
+	ORG	$+1
+$S1991_szNoTimer	DB	'%s: couldn''t install timer handler',  00H
+	ORG	$+1
+$S1992_szRegDevClassFailed	DB	'%s: error registering device class',  00H
+	ORG	$+1
+$S1993_szNoDevices	DB	'%s: no devices found',  00H
+	ORG	$+1
+$S1994_szTestStart	DB	'%s: adapter %u, unit %u, device test starts...',  00H
+	ORG	$+1
+$S1995_szTestComplete	DB	'%s: adapter %u, unit %u, device test ended successfully',  00H
+$S1996_szStopFailed	DB	'%s: adapter %u, unit %u STOP UNIT failed (%04x)',  00H
+$S1997_szNoStart	DB	'%s: adapter %u, unit %u, cannot issue START UNIT command',  00H
+	ORG	$+1
+$S1998_szStartFailed	DB	'%s: adapter %u, unit %u, START UNIT failed (%04x)',  00H
+$S1999_szStatusblock	DB	'%s: StatusBlock, Flags %02x, Adapter Error %04x, Target Stat'
+	DB	'us %02x',  00H
+$S2000_szAdapterDiag	DB	'%s: adapter specific info [%s]',  00H
+	ORG	$+1
+$S2001_szSensedata	DB	'%s: sense data [%s]',  00H
+$S2002_szHex	DB	'%02x ',  00H
+$S2003_szCmdLineSyntax	DB	'%s: syntax error in command line',  00H
+	ORG	$+1
+$S2004_szMissingOption	DB	'%s: required option missing in command line',  00H
+$S2005_szUnknownOption	DB	'%s: unknown command line option',  00H
+$S2006_szCmdLineError	DB	'%s: command line option error %d',  00H
+	ORG	$+1
+$S2007_szFoundDevice	DB	'Adapter %u, Unit %u installed (%u min)',  00H
+	ORG	$+1
+$S2008_szProduct	DB	'SCSI Disk Sleeper',  00H
+$S2009_szLogo	DB	0aH,  0dH, '%s                                            Ve'
+	DB	'rsion %u.%02u',  0aH,  0dH, 'Copyright 1996-97 by Vitus Jens'
+	DB	'en (2:2474/424)               Mar  5 2001',  00H
+$S2010_szNoReg	DB	'Not registered for commercial use',  00H
+$S2011_szReg	DB	'Registered to: %s',  00H
+_RegData	DD	053a1b7f9H
+	DB	00H, 'T3456789012345678901234567890123456789',  00H
+	DB	'nfjhfjhfkjshffdsfsfsfjshfkjshfkjsfhsjkf',  00H
+	DD	058H
+_ToOption	DB	00H
+ 	DB	95 DUP(0)
+
+$S2018_usSleepSeconds	DW	0708H
+INITDATA      ENDS
+_DATA      SEGMENT
+_OPT_VERBOSE	DB	028H
+	DB	00H
+	DD	DGROUP:$SG2207
+	DB	01H
+	DW	00H
+	DW	0ffffH
+	DW	0ffffH
+	ORG	$+1
+_OPT_NSR	DB	038H
+	DB	00H
+	DD	DGROUP:$SG2209
+	DB	01H
+	DW	00H
+	DW	0ffffH
+	DW	0ffffH
+	ORG	$+1
+_OPT_SR	DB	037H
+	DB	00H
+	DD	DGROUP:$SG2211
+	DB	01H
+	DW	00H
+	DW	0ffffH
+	DW	0ffffH
+	ORG	$+1
+_OPT_DEBUG_DEFAULT	DB	036H
+	DB	00H
+	DD	DGROUP:$SG2213
+	DB	01H
+	DW	00H
+	DW	0ffffH
+	DW	0ffffH
+	ORG	$+1
+_OPT_DEBUG_NO	DB	036H
+	DB	00H
+	DD	DGROUP:$SG2215
+	DB	03H
+	DW	00H
+	DW	0ffffH
+	DW	0ffffH
+	ORG	$+1
+_OPT_TIME	DB	035H
+	DB	00H
+	DD	DGROUP:$SG2217
+	DB	0cH
+	DW	00H
+	DW	0ffffH
+	DW	0ffffH
+	ORG	$+1
+_OPT_NUT	DB	032H
+	DB	00H
+	DD	DGROUP:$SG2219
+	DB	0dH
+	DW	00H
+	DW	0ffffH
+	DW	0ffffH
+	ORG	$+1
+_OPT_UT	DB	031H
+	DB	00H
+	DD	DGROUP:$SG2221
+	DB	0dH
+	DW	00H
+	DW	0ffffH
+	DW	0ffffH
+	ORG	$+1
+_OPT_NAPM	DB	064H
+	DB	00H
+	DD	DGROUP:$SG2223
+	DB	01H
+	DW	00H
+	DW	0ffffH
+	DW	0ffffH
+	ORG	$+1
+_OPT_APM	DB	065H
+	DB	00H
+	DD	DGROUP:$SG2225
+	DB	01H
+	DW	00H
+	DW	0ffffH
+	DW	0ffffH
+	ORG	$+1
+_OPT_END	DB	0ffH
+	DB	00H
+	DD	DGROUP:$SG2227
+	DB	01H
+	DW	0fffeH
+	DW	0fffeH
+	DW	0fffeH
+	ORG	$+1
+_opttable	DW	00H
+	DW	02H
+	DD	DGROUP:_OPT_VERBOSE
+	DD	DGROUP:_OPT_NSR
+	DD	DGROUP:_OPT_SR
+	DD	DGROUP:_OPT_DEBUG_NO
+	DD	DGROUP:_OPT_DEBUG_DEFAULT
+	DD	DGROUP:_OPT_TIME
+	DD	DGROUP:_OPT_NUT
+	DD	DGROUP:_OPT_UT
+	DD	DGROUP:_OPT_NAPM
+	DD	DGROUP:_OPT_APM
+	DD	DGROUP:_OPT_END
+_DATA      ENDS
+INITDATA      SEGMENT
+	ORG	$-1770
+_achDump	DW 064H DUP (?)
+INITDATA      ENDS
+_TEXT      SEGMENT
+	ASSUME	CS: _TEXT
+
+Code_End	PROC NEAR
+; Line 149
+	*** 000000	c3 			ret	
+	*** 000001	90 			nop	
+
+Code_End	ENDP
+_TEXT      ENDS
+CONST      SEGMENT
+$T2314	DW INITDATA 
+CONST      ENDS
+_TEXT      SEGMENT
+	ASSUME	CS: _TEXT
+
+DumpStatusblock	PROC NEAR
+; Line 157
+	*** 000002	c8 08 00 00 		enter	8,0
+	*** 000006	57 			push	di
+	*** 000007	56 			push	si
+;	statusblock = 4
+;	register si = i
+;	register si = i
+;	sensedata = -4
+	*** 000008	8b 7e 04 		mov	di,WORD PTR [bp+4]	;statusblock
+; Line 162
+	*** 00000b	8a 45 04 		mov	al,BYTE PTR [di+4]
+	*** 00000e	2a e4 			sub	ah,ah
+	*** 000010	50 			push	ax
+	*** 000011	ff 75 02 		push	WORD PTR [di+2]
+	*** 000014	ff 35 			push	WORD PTR [di]
+	*** 000016	1e 			push	ds
+	*** 000017	68 00 00 		push	OFFSET _szDriverName
+	*** 00001a	68 00 00 		push	INITDATA
+	*** 00001d	68 2a 04 		push	OFFSET $S1999_szStatusblock
+	*** 000020	1e 			push	ds
+	*** 000021	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000024	e8 00 00 		call	_sprintk
+	*** 000027	83 c4 12 		add	sp,18	;0012H
+; Line 163
+	*** 00002a	e8 00 00 		call	_SaveMessage
+; Line 167
+	*** 00002d	f6 05 04 		test	BYTE PTR [di],4
+	*** 000030	74 63 			je	$I2026
+; Line 171
+	*** 000032	bb 00 00 		mov	bx,OFFSET _achDump
+	*** 000035	8e 06 00 00 		mov	es,WORD PTR $T2314
+	*** 000039	89 5e f8 		mov	WORD PTR [bp-8],bx
+	*** 00003c	8c 46 fa 		mov	WORD PTR [bp-6],es
+	*** 00003f	33 f6 			xor	si,si
+	*** 000041	26 c6 07 00 		mov	BYTE PTR es:[bx],0
+; Line 172
+					$F2028:
+; Line 174
+	*** 000045	8b 5e 04 		mov	bx,WORD PTR [bp+4]	;statusblock
+	*** 000048	8a 40 09 		mov	al,BYTE PTR [bx+9][si]
+	*** 00004b	2a e4 			sub	ah,ah
+	*** 00004d	50 			push	ax
+	*** 00004e	68 00 00 		push	INITDATA
+	*** 000051	68 a2 04 		push	OFFSET $S2002_szHex
+	*** 000054	c4 7e f8 		les	di,DWORD PTR [bp-8]
+	*** 000057	b9 ff ff 		mov	cx,-1	;ffffH
+	*** 00005a	33 c0 			xor	ax,ax
+	*** 00005c	f2 			repnz
+	*** 00005d	ae 			scasb
+	*** 00005e	f7 d1 			not	cx
+	*** 000060	49 			dec	cx
+	*** 000061	81 c1 00 00 		add	cx,OFFSET _achDump
+	*** 000065	68 00 00 		push	INITDATA
+	*** 000068	51 			push	cx
+	*** 000069	e8 00 00 		call	_sprintk
+	*** 00006c	83 c4 0a 		add	sp,10	;000aH
+	*** 00006f	46 			inc	si
+	*** 000070	83 fe 08 		cmp	si,8
+	*** 000073	72 d0 			jb	$F2028
+; Line 175
+	*** 000075	ff 76 fa 		push	WORD PTR [bp-6]
+	*** 000078	ff 76 f8 		push	WORD PTR [bp-8]
+	*** 00007b	1e 			push	ds
+	*** 00007c	68 00 00 		push	OFFSET _szDriverName
+	*** 00007f	68 00 00 		push	INITDATA
+	*** 000082	68 6e 04 		push	OFFSET $S2000_szAdapterDiag
+	*** 000085	1e 			push	ds
+	*** 000086	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000089	e8 00 00 		call	_sprintk
+	*** 00008c	83 c4 10 		add	sp,16	;0010H
+; Line 176
+	*** 00008f	e8 00 00 		call	_SaveMessage
+	*** 000092	8b 7e 04 		mov	di,WORD PTR [bp+4]	;statusblock
+; Line 181
+					$I2026:
+	*** 000095	f6 05 01 		test	BYTE PTR [di],1
+	*** 000098	74 74 			je	$EX2025
+; Line 184
+	*** 00009a	8b 45 13 		mov	ax,WORD PTR [di+19]
+	*** 00009d	8b 55 15 		mov	dx,WORD PTR [di+21]
+	*** 0000a0	89 46 fc 		mov	WORD PTR [bp-4],ax	;sensedata
+	*** 0000a3	89 56 fe 		mov	WORD PTR [bp-2],dx
+; Line 186
+	*** 0000a6	bb 00 00 		mov	bx,OFFSET _achDump
+	*** 0000a9	8e 06 00 00 		mov	es,WORD PTR $T2314
+	*** 0000ad	89 5e f8 		mov	WORD PTR [bp-8],bx
+	*** 0000b0	8c 46 fa 		mov	WORD PTR [bp-6],es
+	*** 0000b3	33 f6 			xor	si,si
+	*** 0000b5	26 c6 07 00 		mov	BYTE PTR es:[bx],0
+; Line 187
+	*** 0000b9	39 75 11 		cmp	WORD PTR [di+17],si
+	*** 0000bc	74 33 			je	$FB2036
+					$F2034:
+; Line 188
+	*** 0000be	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;sensedata
+	*** 0000c1	26 8a 00 		mov	al,BYTE PTR es:[bx][si]
+	*** 0000c4	2a e4 			sub	ah,ah
+	*** 0000c6	50 			push	ax
+	*** 0000c7	68 00 00 		push	INITDATA
+	*** 0000ca	68 a2 04 		push	OFFSET $S2002_szHex
+	*** 0000cd	c4 7e f8 		les	di,DWORD PTR [bp-8]
+	*** 0000d0	b9 ff ff 		mov	cx,-1	;ffffH
+	*** 0000d3	33 c0 			xor	ax,ax
+	*** 0000d5	f2 			repnz
+	*** 0000d6	ae 			scasb
+	*** 0000d7	f7 d1 			not	cx
+	*** 0000d9	49 			dec	cx
+	*** 0000da	81 c1 00 00 		add	cx,OFFSET _achDump
+	*** 0000de	68 00 00 		push	INITDATA
+	*** 0000e1	51 			push	cx
+	*** 0000e2	e8 00 00 		call	_sprintk
+	*** 0000e5	83 c4 0a 		add	sp,10	;000aH
+	*** 0000e8	46 			inc	si
+	*** 0000e9	8b 5e 04 		mov	bx,WORD PTR [bp+4]	;statusblock
+	*** 0000ec	39 77 11 		cmp	WORD PTR [bx+17],si
+	*** 0000ef	77 cd 			ja	$F2034
+					$FB2036:
+; Line 189
+	*** 0000f1	ff 76 fa 		push	WORD PTR [bp-6]
+	*** 0000f4	ff 76 f8 		push	WORD PTR [bp-8]
+	*** 0000f7	1e 			push	ds
+	*** 0000f8	68 00 00 		push	OFFSET _szDriverName
+	*** 0000fb	68 00 00 		push	INITDATA
+	*** 0000fe	68 8e 04 		push	OFFSET $S2001_szSensedata
+	*** 000101	1e 			push	ds
+	*** 000102	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000105	e8 00 00 		call	_sprintk
+	*** 000108	83 c4 10 		add	sp,16	;0010H
+; Line 190
+	*** 00010b	e8 00 00 		call	_SaveMessage
+; Line 193
+					$EX2025:
+	*** 00010e	5e 			pop	si
+	*** 00010f	5f 			pop	di
+	*** 000110	c9 			leave	
+	*** 000111	c3 			ret	
+
+DumpStatusblock	ENDP
+
+SendIORBNotify	PROC FAR
+; Line 214
+	*** 000112	60 			pusha	
+	*** 000113	1e 			push	ds
+	*** 000114	06 			push	es
+	*** 000115	8b ec 			mov	bp,sp
+	*** 000117	83 ec 02 		sub	sp,2
+	*** 00011a	b8 00 00 		mov	ax,DGROUP
+	*** 00011d	8e d8 			mov	ds,ax
+	ASSUME DS: DGROUP
+;	iorb = 24
+;	awoken = -2
+; Line 217
+	*** 00011f	ff 76 1a 		push	WORD PTR [bp+26]
+	*** 000122	ff 76 18 		push	WORD PTR [bp+24]	;iorb
+	*** 000125	8d 46 fe 		lea	ax,WORD PTR [bp-2]	;awoken
+	*** 000128	16 			push	ss
+	*** 000129	50 			push	ax
+	*** 00012a	9a 00 00 00 00 		call	FAR PTR DEVHELP_PROCRUN
+; Line 219
+	*** 00012f	89 46 12 		mov	WORD PTR [bp+18],ax
+	*** 000132	8b e5 			mov	sp,bp
+	*** 000134	07 			pop	es
+	*** 000135	1f 			pop	ds
+	ASSUME DS: DGROUP
+	*** 000136	61 			popa	
+	*** 000137	cb 			ret	
+
+SendIORBNotify	ENDP
+
+SendIORB	PROC NEAR
+; Line 246
+	*** 000138	c8 02 00 00 		enter	2,0
+;	rc = -2
+;	addentry = 8
+;	iorb = 4
+; Line 249
+	*** 00013c	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;iorb
+	*** 00013f	26 c7 47 1c 00 00 	mov	WORD PTR es:[bx+28],OFFSET SendIORBNotify
+	*** 000145	26 c7 47 1e 00 00 	mov	WORD PTR es:[bx+30],SEG SendIORBNotify
+; Line 250
+	*** 00014b	26 80 4f 08 01 		or	BYTE PTR es:[bx+8],1
+; Line 252
+	*** 000150	33 c0 			xor	ax,ax
+	*** 000152	89 46 fe 		mov	WORD PTR [bp-2],ax	;rc
+	*** 000155	26 89 47 0c 		mov	WORD PTR es:[bx+12],ax
+	*** 000159	26 89 47 0a 		mov	WORD PTR es:[bx+10],ax
+; Line 254
+	*** 00015d	06 			push	es
+	*** 00015e	53 			push	bx
+	*** 00015f	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 000162	ff 76 08 		push	WORD PTR [bp+8]	;addentry
+	*** 000165	e8 00 00 		call	_CallADD
+	*** 000168	83 c4 08 		add	sp,8
+; Line 256
+					$L2346:
+	*** 00016b	fa 			cli	
+; Line 257
+	*** 00016c	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;iorb
+	*** 00016f	26 f6 47 0a 01 		test	BYTE PTR es:[bx+10],1
+	*** 000174	75 14 			jne	$FB2051
+; Line 258
+; Line 260
+	*** 000176	06 			push	es
+	*** 000177	53 			push	bx
+	*** 000178	6a ff 			push	-1	;ffffH
+	*** 00017a	6a ff 			push	-1	;ffffH
+	*** 00017c	6a 00 			push	0
+	*** 00017e	9a 00 00 00 00 		call	FAR PTR DEVHELP_PROCBLOCK
+	*** 000183	89 46 fe 		mov	WORD PTR [bp-2],ax	;rc
+	*** 000186	0b c0 			or	ax,ax
+	*** 000188	74 e1 			je	$L2346
+; Line 261
+					$FB2051:
+; Line 264
+	*** 00018a	fb 			sti	
+; Line 267
+	*** 00018b	83 7e fe 00 		cmp	WORD PTR [bp-2],0	;rc
+	*** 00018f	74 05 			je	$L2315
+	*** 000191	b8 05 01 		mov	ax,261	;0105H
+	*** 000194	eb 12 			jmp	SHORT $L2318
+					$L2315:
+	*** 000196	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;iorb
+	*** 000199	26 f6 47 0a 02 		test	BYTE PTR es:[bx+10],2
+	*** 00019e	74 06 			je	$L2317
+	*** 0001a0	26 8b 47 0c 		mov	ax,WORD PTR es:[bx+12]
+	*** 0001a4	eb 02 			jmp	SHORT $L2318
+					$L2317:
+	*** 0001a6	33 c0 			xor	ax,ax
+					$L2318:
+; Line 268
+	*** 0001a8	c9 			leave	
+	*** 0001a9	c3 			ret	
+
+SendIORB	ENDP
+
+TestOperation	PROC NEAR
+; Line 296
+	*** 0001aa	55 			push	bp
+	*** 0001ab	8b ec 			mov	bp,sp
+	*** 0001ad	56 			push	si
+;	device = 4
+;	flag = -2
+	*** 0001ae	8b 76 04 		mov	si,WORD PTR [bp+4]	;device
+; Line 300
+	*** 0001b1	ff b4 a0 00 		push	WORD PTR [si+160]
+	*** 0001b5	ff b4 9e 00 		push	WORD PTR [si+158]
+	*** 0001b9	1e 			push	ds
+	*** 0001ba	68 00 00 		push	OFFSET _szDriverName
+	*** 0001bd	68 00 00 		push	INITDATA
+	*** 0001c0	68 26 03 		push	OFFSET $S1994_szTestStart
+	*** 0001c3	1e 			push	ds
+	*** 0001c4	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 0001c7	e8 00 00 		call	_sprintk
+	*** 0001ca	83 c4 10 		add	sp,16	;0010H
+; Line 301
+	*** 0001cd	e8 00 00 		call	_SaveMessage
+; Line 306
+	*** 0001d0	56 			push	si
+	*** 0001d1	e8 00 00 		call	_IssueStop
+	*** 0001d4	83 c4 02 		add	sp,2
+; Line 311
+	*** 0001d7	f6 04 04 		test	BYTE PTR [si],4
+	*** 0001da	74 10 			je	$FB2060
+					$FC2059:
+; Line 312
+	*** 0001dc	68 a8 61 		push	25000	;61a8H
+	*** 0001df	68 b8 0b 		push	3000	;0bb8H
+	*** 0001e2	9a 00 00 00 00 		call	FAR PTR DEVHELP_BEEP
+	*** 0001e7	f6 04 04 		test	BYTE PTR [si],4
+	*** 0001ea	75 f0 			jne	$FC2059
+					$FB2060:
+; Line 314
+	*** 0001ec	f6 04 02 		test	BYTE PTR [si],2
+	*** 0001ef	75 33 			jne	$I2061
+; Line 317
+	*** 0001f1	ff b4 ba 00 		push	WORD PTR [si+186]
+	*** 0001f5	ff b4 a0 00 		push	WORD PTR [si+160]
+	*** 0001f9	ff b4 9e 00 		push	WORD PTR [si+158]
+	*** 0001fd	1e 			push	ds
+	*** 0001fe	68 00 00 		push	OFFSET _szDriverName
+	*** 000201	68 00 00 		push	INITDATA
+	*** 000204	68 8e 03 		push	OFFSET $S1996_szStopFailed
+	*** 000207	1e 			push	ds
+	*** 000208	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 00020b	e8 00 00 		call	_sprintk
+	*** 00020e	83 c4 12 		add	sp,18	;0012H
+; Line 318
+	*** 000211	e8 00 00 		call	_SaveMessage
+; Line 319
+	*** 000214	8d 84 bc 00 		lea	ax,WORD PTR [si+188]
+	*** 000218	50 			push	ax
+	*** 000219	e8 e6 fd 		call	DumpStatusblock
+	*** 00021c	b8 02 00 		mov	ax,2
+	*** 00021f	03 e0 			add	sp,ax
+; Line 320
+	*** 000221	e9 a9 00 		jmp	$EX2056
+; Line 327
+					$I2061:
+	*** 000224	68 a8 61 		push	25000	;61a8H
+	*** 000227	68 e8 03 		push	1000	;03e8H
+	*** 00022a	9a 00 00 00 00 		call	FAR PTR DEVHELP_BEEP
+; Line 333
+	*** 00022f	56 			push	si
+	*** 000230	e8 00 00 		call	_IssueStart
+	*** 000233	83 c4 02 		add	sp,2
+	*** 000236	0b c0 			or	ax,ax
+	*** 000238	74 24 			je	$L2320
+; Line 336
+	*** 00023a	ff b4 a0 00 		push	WORD PTR [si+160]
+	*** 00023e	ff b4 9e 00 		push	WORD PTR [si+158]
+	*** 000242	1e 			push	ds
+	*** 000243	68 00 00 		push	OFFSET _szDriverName
+	*** 000246	68 00 00 		push	INITDATA
+	*** 000249	68 be 03 		push	OFFSET $S1997_szNoStart
+	*** 00024c	1e 			push	ds
+	*** 00024d	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000250	e8 00 00 		call	_sprintk
+	*** 000253	83 c4 10 		add	sp,16	;0010H
+; Line 337
+	*** 000256	e8 00 00 		call	_SaveMessage
+; Line 338
+	*** 000259	b8 03 00 		mov	ax,3
+	*** 00025c	eb 6f 			jmp	SHORT $EX2056
+					$L2320:
+; Line 343
+	*** 00025e	f6 04 04 		test	BYTE PTR [si],4
+	*** 000261	74 10 			je	$FB2065
+					$FC2064:
+; Line 344
+	*** 000263	68 a8 61 		push	25000	;61a8H
+	*** 000266	68 b8 0b 		push	3000	;0bb8H
+	*** 000269	9a 00 00 00 00 		call	FAR PTR DEVHELP_BEEP
+	*** 00026e	f6 04 04 		test	BYTE PTR [si],4
+	*** 000271	75 f0 			jne	$FC2064
+					$FB2065:
+; Line 346
+	*** 000273	f6 04 02 		test	BYTE PTR [si],2
+	*** 000276	74 34 			je	$I2066
+; Line 349
+	*** 000278	ff b4 ba 00 		push	WORD PTR [si+186]
+	*** 00027c	ff b4 a0 00 		push	WORD PTR [si+160]
+	*** 000280	ff b4 9e 00 		push	WORD PTR [si+158]
+	*** 000284	1e 			push	ds
+	*** 000285	68 00 00 		push	OFFSET _szDriverName
+	*** 000288	68 00 00 		push	INITDATA
+	*** 00028b	68 f8 03 		push	OFFSET $S1998_szStartFailed
+	*** 00028e	1e 			push	ds
+	*** 00028f	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000292	e8 00 00 		call	_sprintk
+	*** 000295	83 c4 12 		add	sp,18	;0012H
+; Line 350
+	*** 000298	e8 00 00 		call	_SaveMessage
+; Line 351
+	*** 00029b	8d 84 bc 00 		lea	ax,WORD PTR [si+188]
+	*** 00029f	50 			push	ax
+	*** 0002a0	e8 5f fd 		call	DumpStatusblock
+	*** 0002a3	83 c4 02 		add	sp,2
+; Line 352
+	*** 0002a6	b8 04 00 		mov	ax,4
+	*** 0002a9	eb 22 			jmp	SHORT $EX2056
+	*** 0002ab	90 			nop	
+; Line 359
+					$I2066:
+; Line 360
+	*** 0002ac	ff b4 a0 00 		push	WORD PTR [si+160]
+	*** 0002b0	ff b4 9e 00 		push	WORD PTR [si+158]
+	*** 0002b4	1e 			push	ds
+	*** 0002b5	68 00 00 		push	OFFSET _szDriverName
+	*** 0002b8	68 00 00 		push	INITDATA
+	*** 0002bb	68 56 03 		push	OFFSET $S1995_szTestComplete
+	*** 0002be	1e 			push	ds
+	*** 0002bf	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 0002c2	e8 00 00 		call	_sprintk
+	*** 0002c5	83 c4 10 		add	sp,16	;0010H
+; Line 361
+	*** 0002c8	e8 00 00 		call	_SaveMessage
+; Line 362
+	*** 0002cb	33 c0 			xor	ax,ax
+; Line 363
+					$EX2056:
+	*** 0002cd	5e 			pop	si
+	*** 0002ce	c9 			leave	
+	*** 0002cf	c3 			ret	
+
+TestOperation	ENDP
+
+CheckAdapterInfo	PROC NEAR
+; Line 386
+	*** 0002d0	55 			push	bp
+	*** 0002d1	8b ec 			mov	bp,sp
+	*** 0002d3	56 			push	si
+;	iAdapter = 4
+;	npAdapterInfo = 6
+;	register si = devbus
+; Line 387
+	*** 0002d4	8b 5e 06 		mov	bx,WORD PTR [bp+6]	;npAdapterInfo
+	*** 0002d7	8b 77 14 		mov	si,WORD PTR [bx+20]
+	*** 0002da	83 e6 0f 		and	si,15	;000fH
+; Line 390
+	*** 0002dd	f6 06 00 00 02 		test	BYTE PTR _fDriverFlags,2
+	*** 0002e2	74 20 			je	$I2074
+	*** 0002e4	f6 47 1a 01 		test	BYTE PTR [bx+26],1
+	*** 0002e8	75 1a 			jne	$I2074
+; Line 392
+	*** 0002ea	ff 76 04 		push	WORD PTR [bp+4]	;iAdapter
+	*** 0002ed	1e 			push	ds
+	*** 0002ee	68 00 00 		push	OFFSET _szDriverName
+	*** 0002f1	68 00 00 		push	INITDATA
+	*** 0002f4	68 3e 01 		push	OFFSET $S1982_szNo16M
+	*** 0002f7	1e 			push	ds
+	*** 0002f8	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 0002fb	e8 00 00 		call	_sprintk
+	*** 0002fe	83 c4 0e 		add	sp,14	;000eH
+; Line 393
+	*** 000301	e8 00 00 		call	_SaveMessage
+; Line 395
+					$I2074:
+; Line 396
+	*** 000304	f6 06 00 00 02 		test	BYTE PTR _fDriverFlags,2
+	*** 000309	74 23 			je	$I2075
+	*** 00030b	8b 5e 06 		mov	bx,WORD PTR [bp+6]	;npAdapterInfo
+	*** 00030e	f6 47 1a 04 		test	BYTE PTR [bx+26],4
+	*** 000312	75 1a 			jne	$I2075
+; Line 398
+	*** 000314	ff 76 04 		push	WORD PTR [bp+4]	;iAdapter
+	*** 000317	1e 			push	ds
+	*** 000318	68 00 00 		push	OFFSET _szDriverName
+	*** 00031b	68 00 00 		push	INITDATA
+	*** 00031e	68 70 01 		push	OFFSET $S1983_szNoScGa
+	*** 000321	1e 			push	ds
+	*** 000322	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000325	e8 00 00 		call	_sprintk
+	*** 000328	83 c4 0e 		add	sp,14	;000eH
+; Line 399
+	*** 00032b	e8 00 00 		call	_SaveMessage
+; Line 402
+					$I2075:
+; Line 403
+	*** 00032e	83 fe 05 		cmp	si,5
+	*** 000331	74 37 			je	$I2076
+	*** 000333	83 fe 06 		cmp	si,6
+	*** 000336	74 32 			je	$I2076
+	*** 000338	83 fe 07 		cmp	si,7
+	*** 00033b	74 2d 			je	$I2076
+; Line 408
+	*** 00033d	f6 06 00 00 02 		test	BYTE PTR _fDriverFlags,2
+	*** 000342	74 20 			je	$I2077
+; Line 411
+	*** 000344	8b 5e 06 		mov	bx,WORD PTR [bp+6]	;npAdapterInfo
+	*** 000347	ff 77 14 		push	WORD PTR [bx+20]
+	*** 00034a	ff 76 04 		push	WORD PTR [bp+4]	;iAdapter
+	*** 00034d	1e 			push	ds
+	*** 00034e	68 00 00 		push	OFFSET _szDriverName
+	*** 000351	68 00 00 		push	INITDATA
+	*** 000354	68 18 01 		push	OFFSET $S1981_szNoSCSI
+	*** 000357	1e 			push	ds
+	*** 000358	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 00035b	e8 00 00 		call	_sprintk
+	*** 00035e	83 c4 10 		add	sp,16	;0010H
+; Line 412
+	*** 000361	e8 00 00 		call	_SaveMessage
+; Line 414
+					$I2077:
+	*** 000364	b8 01 00 		mov	ax,1
+	*** 000367	eb 03 			jmp	SHORT $EX2072
+	*** 000369	90 			nop	
+; Line 417
+					$I2076:
+	*** 00036a	33 c0 			xor	ax,ax
+; Line 418
+					$EX2072:
+	*** 00036c	5e 			pop	si
+	*** 00036d	c9 			leave	
+	*** 00036e	c3 			ret	
+	*** 00036f	90 			nop	
+
+CheckAdapterInfo	ENDP
+
+CheckUnitInfo	PROC NEAR
+; Line 446
+	*** 000370	55 			push	bp
+	*** 000371	8b ec 			mov	bp,sp
+	*** 000373	56 			push	si
+;	iAdapter = 4
+;	npUnitInfo = 6
+;	utype = -2
+;	register bx = uflags
+	*** 000374	8b 76 06 		mov	si,WORD PTR [bp+6]	;npUnitInfo
+; Line 448
+	*** 000377	8b 5c 04 		mov	bx,WORD PTR [si+4]
+; Line 451
+	*** 00037a	83 7c 0c 00 		cmp	WORD PTR [si+12],0
+	*** 00037e	74 2a 			je	$I2086
+; Line 453
+	*** 000380	f6 06 00 00 02 		test	BYTE PTR _fDriverFlags,2
+	*** 000385	74 1d 			je	$I2087
+; Line 456
+	*** 000387	ff 74 02 		push	WORD PTR [si+2]
+	*** 00038a	ff 76 04 		push	WORD PTR [bp+4]	;iAdapter
+	*** 00038d	1e 			push	ds
+	*** 00038e	68 00 00 		push	OFFSET _szDriverName
+	*** 000391	68 00 00 		push	INITDATA
+	*** 000394	68 a2 01 		push	OFFSET $S1984_szNoDiskType
+	*** 000397	1e 			push	ds
+	*** 000398	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 00039b	e8 00 00 		call	_sprintk
+	*** 00039e	83 c4 10 		add	sp,16	;0010H
+; Line 457
+	*** 0003a1	e8 00 00 		call	_SaveMessage
+; Line 459
+					$I2087:
+	*** 0003a4	b8 01 00 		mov	ax,1
+	*** 0003a7	e9 8c 00 		jmp	$EX2083
+; Line 462
+					$I2086:
+	*** 0003aa	f6 c3 01 		test	bl,1
+	*** 0003ad	74 29 			je	$I2088
+; Line 464
+	*** 0003af	f6 06 00 00 02 		test	BYTE PTR _fDriverFlags,2
+	*** 0003b4	74 1d 			je	$I2089
+; Line 467
+	*** 0003b6	ff 74 02 		push	WORD PTR [si+2]
+	*** 0003b9	ff 76 04 		push	WORD PTR [bp+4]	;iAdapter
+	*** 0003bc	1e 			push	ds
+	*** 0003bd	68 00 00 		push	OFFSET _szDriverName
+	*** 0003c0	68 00 00 		push	INITDATA
+	*** 0003c3	68 cc 01 		push	OFFSET $S1985_szRemovable
+	*** 0003c6	1e 			push	ds
+	*** 0003c7	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 0003ca	e8 00 00 		call	_sprintk
+	*** 0003cd	83 c4 10 		add	sp,16	;0010H
+; Line 468
+	*** 0003d0	e8 00 00 		call	_SaveMessage
+; Line 470
+					$I2089:
+	*** 0003d3	b8 02 00 		mov	ax,2
+	*** 0003d6	eb 5e 			jmp	SHORT $EX2083
+; Line 473
+					$I2088:
+	*** 0003d8	f6 c3 18 		test	bl,24	;0018H
+	*** 0003db	74 29 			je	$I2090
+; Line 475
+	*** 0003dd	f6 06 00 00 02 		test	BYTE PTR _fDriverFlags,2
+	*** 0003e2	74 1d 			je	$I2091
+; Line 478
+	*** 0003e4	ff 74 02 		push	WORD PTR [si+2]
+	*** 0003e7	ff 76 04 		push	WORD PTR [bp+4]	;iAdapter
+	*** 0003ea	1e 			push	ds
+	*** 0003eb	68 00 00 		push	OFFSET _szDriverName
+	*** 0003ee	68 00 00 		push	INITDATA
+	*** 0003f1	68 f2 01 		push	OFFSET $S1986_szDiskette
+	*** 0003f4	1e 			push	ds
+	*** 0003f5	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 0003f8	e8 00 00 		call	_sprintk
+	*** 0003fb	83 c4 10 		add	sp,16	;0010H
+; Line 479
+	*** 0003fe	e8 00 00 		call	_SaveMessage
+; Line 481
+					$I2091:
+	*** 000401	b8 03 00 		mov	ax,3
+	*** 000404	eb 30 			jmp	SHORT $EX2083
+; Line 484
+					$I2090:
+	*** 000406	f6 c3 80 		test	bl,128	;0080H
+	*** 000409	74 29 			je	$I2092
+; Line 486
+	*** 00040b	f6 06 00 00 01 		test	BYTE PTR _fDriverFlags,1
+	*** 000410	74 1d 			je	$I2093
+; Line 489
+	*** 000412	ff 74 02 		push	WORD PTR [si+2]
+	*** 000415	ff 76 04 		push	WORD PTR [bp+4]	;iAdapter
+	*** 000418	1e 			push	ds
+	*** 000419	68 00 00 		push	OFFSET _szDriverName
+	*** 00041c	68 00 00 		push	INITDATA
+	*** 00041f	68 1c 02 		push	OFFSET $S1987_szDefective
+	*** 000422	1e 			push	ds
+	*** 000423	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000426	e8 00 00 		call	_sprintk
+	*** 000429	83 c4 10 		add	sp,16	;0010H
+; Line 490
+	*** 00042c	e8 00 00 		call	_SaveMessage
+; Line 492
+					$I2093:
+	*** 00042f	b8 04 00 		mov	ax,4
+	*** 000432	eb 02 			jmp	SHORT $EX2083
+; Line 495
+					$I2092:
+	*** 000434	33 c0 			xor	ax,ax
+; Line 496
+					$EX2083:
+	*** 000436	5e 			pop	si
+	*** 000437	c9 			leave	
+	*** 000438	c3 			ret	
+	*** 000439	90 			nop	
+
+CheckUnitInfo	ENDP
+
+InstallFilter	PROC NEAR
+; Line 527
+	*** 00043a	c8 06 00 00 		enter	6,0
+	*** 00043e	57 			push	di
+	*** 00043f	56 			push	si
+;	pIOUC = -2
+;	failed = -4
+;	npDevice = 4
+;	rc = -6
+;	pIOUC = -2
+;	failed = -4
+;	b = -8
+;	pIOUC = -2
+;	failed = -4
+	*** 000440	8b 76 04 		mov	si,WORD PTR [bp+4]	;npDevice
+; Line 528
+	*** 000443	c7 46 fa 00 00 		mov	WORD PTR [bp-6],0	;rc
+; Line 536
+	*** 000448	a1 00 00 		mov	ax,WORD PTR _npInitData
+	*** 00044b	89 46 fe 		mov	WORD PTR [bp-2],ax	;pIOUC
+; Line 539
+	*** 00044e	33 c0 			xor	ax,ax
+	*** 000450	8b 16 00 00 		mov	dx,WORD PTR _npInitData
+	*** 000454	b9 80 00 		mov	cx,128	;0080H
+	*** 000457	8b fa 			mov	di,dx
+	*** 000459	1e 			push	ds
+	*** 00045a	07 			pop	es
+	*** 00045b	f3 			rep
+	*** 00045c	aa 			stosb
+; Line 540
+	*** 00045d	8b 5e fe 		mov	bx,WORD PTR [bp-2]	;pIOUC
+	*** 000460	c7 07 4c 00 		mov	WORD PTR [bx],76	;004cH
+; Line 541
+	*** 000464	8b 84 88 00 		mov	ax,WORD PTR [si+136]
+	*** 000468	89 47 02 		mov	WORD PTR [bx+2],ax
+; Line 542
+	*** 00046b	c7 47 04 02 00 		mov	WORD PTR [bx+4],2
+; Line 543
+	*** 000470	c7 47 06 01 00 		mov	WORD PTR [bx+6],1
+; Line 545
+	*** 000475	ff b4 86 00 		push	WORD PTR [si+134]
+	*** 000479	ff b4 84 00 		push	WORD PTR [si+132]
+	*** 00047d	1e 			push	ds
+	*** 00047e	53 			push	bx
+	*** 00047f	e8 b6 fc 		call	SendIORB
+	*** 000482	83 c4 08 		add	sp,8
+	*** 000485	89 46 fc 		mov	WORD PTR [bp-4],ax	;failed
+; Line 547
+	*** 000488	c7 84 b6 00 01 00 	mov	WORD PTR [si+182],1
+; Line 548
+	*** 00048e	8b 5e fe 		mov	bx,WORD PTR [bp-2]	;pIOUC
+	*** 000491	8b 47 0a 		mov	ax,WORD PTR [bx+10]
+	*** 000494	89 84 b8 00 		mov	WORD PTR [si+184],ax
+; Line 549
+	*** 000498	8b 47 0c 		mov	ax,WORD PTR [bx+12]
+	*** 00049b	89 84 ba 00 		mov	WORD PTR [si+186],ax
+; Line 550
+	*** 00049f	83 7e fc 00 		cmp	WORD PTR [bp-4],0	;failed
+	*** 0004a3	74 25 			je	$I2101
+; Line 553
+	*** 0004a5	ff b4 a0 00 		push	WORD PTR [si+160]
+	*** 0004a9	ff b4 9e 00 		push	WORD PTR [si+158]
+	*** 0004ad	1e 			push	ds
+	*** 0004ae	68 00 00 		push	OFFSET _szDriverName
+	*** 0004b1	68 00 00 		push	INITDATA
+	*** 0004b4	68 3e 02 		push	OFFSET $S1988_szAllocFailed
+	*** 0004b7	1e 			push	ds
+	*** 0004b8	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 0004bb	e8 00 00 		call	_sprintk
+	*** 0004be	83 c4 10 		add	sp,16	;0010H
+; Line 554
+	*** 0004c1	e8 00 00 		call	_SaveMessage
+; Line 555
+	*** 0004c4	b8 01 00 		mov	ax,1
+	*** 0004c7	e9 84 01 		jmp	$EX2097
+; Line 557
+					$I2101:
+; Line 565
+	*** 0004ca	f6 06 00 00 04 		test	BYTE PTR _fDriverFlags,4
+	*** 0004cf	74 17 			je	$I2102
+	*** 0004d1	83 bc a2 00 00 		cmp	WORD PTR [si+162],0
+	*** 0004d6	74 10 			je	$I2102
+; Line 567
+	*** 0004d8	56 			push	si
+	*** 0004d9	e8 ce fc 		call	TestOperation
+	*** 0004dc	83 c4 02 		add	sp,2
+	*** 0004df	0b c0 			or	ax,ax
+	*** 0004e1	74 05 			je	$I2102
+; Line 568
+	*** 0004e3	c7 46 fa 02 00 		mov	WORD PTR [bp-6],2	;rc
+; Line 576
+					$I2102:
+	*** 0004e8	83 7e fa 00 		cmp	WORD PTR [bp-6],0	;rc
+	*** 0004ec	75 45 			jne	$I2104
+	*** 0004ee	f6 06 01 00 04 		test	BYTE PTR _fDriverFlags+1,4
+	*** 0004f3	75 3e 			jne	$I2104
+; Line 586
+	*** 0004f5	68 00 00 		push	OFFSET _szDriverName
+	*** 0004f8	68 00 00 		push	SEG _FilterFunction
+	*** 0004fb	68 00 00 		push	OFFSET _FilterFunction
+	*** 0004fe	6a 00 			push	0
+	*** 000500	6a 01 			push	1
+	*** 000502	1e 			push	ds
+	*** 000503	68 00 00 		push	OFFSET _hdThisDriver
+	*** 000506	9a 00 00 00 00 		call	FAR PTR DEVHELP_REGISTERDEVICECLASS
+	*** 00050b	0b c0 			or	ax,ax
+	*** 00050d	74 1f 			je	$I2106
+; Line 588
+	*** 00050f	1e 			push	ds
+	*** 000510	68 00 00 		push	OFFSET _szDriverName
+	*** 000513	68 00 00 		push	INITDATA
+	*** 000516	68 ec 02 		push	OFFSET $S1992_szRegDevClassFailed
+	*** 000519	1e 			push	ds
+	*** 00051a	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 00051d	e8 00 00 		call	_sprintk
+	*** 000520	83 c4 0c 		add	sp,12	;000cH
+; Line 589
+	*** 000523	e8 00 00 		call	_SaveMessage
+; Line 590
+	*** 000526	c7 46 fa 03 00 		mov	WORD PTR [bp-6],3	;rc
+; Line 592
+	*** 00052b	eb 06 			jmp	SHORT $I2104
+	*** 00052d	90 			nop	
+					$I2106:
+; Line 593
+	*** 00052e	80 0e 01 00 04 		or	BYTE PTR _fDriverFlags+1,4
+; Line 600
+					$I2104:
+	*** 000533	83 7e fa 00 		cmp	WORD PTR [bp-6],0	;rc
+	*** 000537	74 03 			je	$JCC1335
+	*** 000539	e9 94 00 		jmp	$I2108
+					$JCC1335:
+; Line 602
+	*** 00053c	a1 00 00 		mov	ax,WORD PTR _npInitData
+	*** 00053f	89 46 fe 		mov	WORD PTR [bp-2],ax	;pIOUC
+; Line 608
+	*** 000542	a1 00 00 		mov	ax,WORD PTR _hdThisDriver
+	*** 000545	89 84 96 00 		mov	WORD PTR [si+150],ax
+; Line 611
+	*** 000549	33 c0 			xor	ax,ax
+	*** 00054b	b9 80 00 		mov	cx,128	;0080H
+	*** 00054e	1e 			push	ds
+	*** 00054f	07 			pop	es
+	*** 000550	8b 7e fe 		mov	di,WORD PTR [bp-2]	;pIOUC
+	*** 000553	f3 			rep
+	*** 000554	aa 			stosb
+; Line 612
+	*** 000555	8b 5e fe 		mov	bx,WORD PTR [bp-2]	;pIOUC
+	*** 000558	c7 07 4c 00 		mov	WORD PTR [bx],76	;004cH
+; Line 613
+	*** 00055c	8b 84 88 00 		mov	ax,WORD PTR [si+136]
+	*** 000560	89 47 02 		mov	WORD PTR [bx+2],ax
+; Line 614
+	*** 000563	c7 47 04 02 00 		mov	WORD PTR [bx+4],2
+; Line 615
+	*** 000568	c7 47 06 03 00 		mov	WORD PTR [bx+6],3
+; Line 617
+	*** 00056d	8d 84 8c 00 		lea	ax,WORD PTR [si+140]
+	*** 000571	89 47 46 		mov	WORD PTR [bx+70],ax
+	*** 000574	8c 5f 48 		mov	WORD PTR [bx+72],ds
+; Line 618
+	*** 000577	c7 47 4a 12 00 		mov	WORD PTR [bx+74],18	;0012H
+; Line 620
+	*** 00057c	ff b4 86 00 		push	WORD PTR [si+134]
+	*** 000580	ff b4 84 00 		push	WORD PTR [si+132]
+	*** 000584	1e 			push	ds
+	*** 000585	53 			push	bx
+	*** 000586	e8 af fb 		call	SendIORB
+	*** 000589	83 c4 08 		add	sp,8
+	*** 00058c	89 46 fc 		mov	WORD PTR [bp-4],ax	;failed
+; Line 622
+	*** 00058f	c7 84 b6 00 03 00 	mov	WORD PTR [si+182],3
+; Line 623
+	*** 000595	8b 5e fe 		mov	bx,WORD PTR [bp-2]	;pIOUC
+	*** 000598	8b 47 0a 		mov	ax,WORD PTR [bx+10]
+	*** 00059b	89 84 b8 00 		mov	WORD PTR [si+184],ax
+; Line 624
+	*** 00059f	8b 47 0c 		mov	ax,WORD PTR [bx+12]
+	*** 0005a2	89 84 ba 00 		mov	WORD PTR [si+186],ax
+; Line 625
+	*** 0005a6	83 7e fc 00 		cmp	WORD PTR [bp-4],0	;failed
+	*** 0005aa	74 24 			je	$I2108
+; Line 628
+	*** 0005ac	ff b4 a0 00 		push	WORD PTR [si+160]
+	*** 0005b0	ff b4 9e 00 		push	WORD PTR [si+158]
+	*** 0005b4	1e 			push	ds
+	*** 0005b5	68 00 00 		push	OFFSET _szDriverName
+	*** 0005b8	68 00 00 		push	INITDATA
+	*** 0005bb	68 96 02 		push	OFFSET $S1990_szChangeUInfoFailed
+	*** 0005be	1e 			push	ds
+	*** 0005bf	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 0005c2	e8 00 00 		call	_sprintk
+	*** 0005c5	83 c4 10 		add	sp,16	;0010H
+; Line 629
+	*** 0005c8	e8 00 00 		call	_SaveMessage
+; Line 633
+	*** 0005cb	c7 46 fa 04 00 		mov	WORD PTR [bp-6],4	;rc
+; Line 637
+					$I2108:
+; Line 638
+	*** 0005d0	a1 00 00 		mov	ax,WORD PTR _npInitData
+	*** 0005d3	89 46 fe 		mov	WORD PTR [bp-2],ax	;pIOUC
+; Line 643
+	*** 0005d6	33 c0 			xor	ax,ax
+	*** 0005d8	8b 16 00 00 		mov	dx,WORD PTR _npInitData
+	*** 0005dc	b9 80 00 		mov	cx,128	;0080H
+	*** 0005df	8b fa 			mov	di,dx
+	*** 0005e1	1e 			push	ds
+	*** 0005e2	07 			pop	es
+	*** 0005e3	f3 			rep
+	*** 0005e4	aa 			stosb
+; Line 644
+	*** 0005e5	8b 5e fe 		mov	bx,WORD PTR [bp-2]	;pIOUC
+	*** 0005e8	c7 07 4c 00 		mov	WORD PTR [bx],76	;004cH
+; Line 645
+	*** 0005ec	8b 84 88 00 		mov	ax,WORD PTR [si+136]
+	*** 0005f0	89 47 02 		mov	WORD PTR [bx+2],ax
+; Line 647
+	*** 0005f3	b8 02 00 		mov	ax,2
+	*** 0005f6	89 47 04 		mov	WORD PTR [bx+4],ax
+	*** 0005f9	89 47 06 		mov	WORD PTR [bx+6],ax
+; Line 649
+	*** 0005fc	ff b4 86 00 		push	WORD PTR [si+134]
+	*** 000600	ff b4 84 00 		push	WORD PTR [si+132]
+	*** 000604	1e 			push	ds
+	*** 000605	53 			push	bx
+	*** 000606	e8 2f fb 		call	SendIORB
+	*** 000609	83 c4 08 		add	sp,8
+	*** 00060c	89 46 fc 		mov	WORD PTR [bp-4],ax	;failed
+; Line 651
+	*** 00060f	c7 84 b6 00 02 00 	mov	WORD PTR [si+182],2
+; Line 652
+	*** 000615	8b 5e fe 		mov	bx,WORD PTR [bp-2]	;pIOUC
+	*** 000618	8b 47 0a 		mov	ax,WORD PTR [bx+10]
+	*** 00061b	89 84 b8 00 		mov	WORD PTR [si+184],ax
+; Line 653
+	*** 00061f	8b 47 0c 		mov	ax,WORD PTR [bx+12]
+	*** 000622	89 84 ba 00 		mov	WORD PTR [si+186],ax
+; Line 654
+	*** 000626	83 7e fc 00 		cmp	WORD PTR [bp-4],0	;failed
+	*** 00062a	74 1f 			je	$I2114
+; Line 660
+	*** 00062c	ff b4 a0 00 		push	WORD PTR [si+160]
+	*** 000630	ff b4 9e 00 		push	WORD PTR [si+158]
+	*** 000634	1e 			push	ds
+	*** 000635	68 00 00 		push	OFFSET _szDriverName
+	*** 000638	68 00 00 		push	INITDATA
+	*** 00063b	68 68 02 		push	OFFSET $S1989_szDeallocFailed
+	*** 00063e	1e 			push	ds
+	*** 00063f	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000642	e8 00 00 		call	_sprintk
+	*** 000645	83 c4 10 		add	sp,16	;0010H
+; Line 661
+	*** 000648	e8 00 00 		call	_SaveMessage
+; Line 663
+					$I2114:
+; Line 666
+	*** 00064b	8b 46 fa 		mov	ax,WORD PTR [bp-6]	;rc
+; Line 667
+					$EX2097:
+	*** 00064e	5e 			pop	si
+	*** 00064f	5f 			pop	di
+	*** 000650	c9 			leave	
+	*** 000651	c3 			ret	
+
+InstallFilter	ENDP
+
+RemoveFilter	PROC NEAR
+; Line 689
+	*** 000652	c8 06 00 00 		enter	6,0
+	*** 000656	57 			push	di
+	*** 000657	56 			push	si
+;	npDevice = 4
+;	rc = -6
+;	pIOUC = -2
+;	failed = -4
+;	pIOUC = -2
+;	failed = -4
+;	pIOUC = -2
+;	failed = -4
+	*** 000658	8b 76 04 		mov	si,WORD PTR [bp+4]	;npDevice
+; Line 690
+	*** 00065b	c7 46 fa 00 00 		mov	WORD PTR [bp-6],0	;rc
+; Line 694
+	*** 000660	a1 00 00 		mov	ax,WORD PTR _npInitData
+	*** 000663	89 46 fe 		mov	WORD PTR [bp-2],ax	;pIOUC
+; Line 699
+	*** 000666	33 c0 			xor	ax,ax
+	*** 000668	8b 16 00 00 		mov	dx,WORD PTR _npInitData
+	*** 00066c	b9 80 00 		mov	cx,128	;0080H
+	*** 00066f	8b fa 			mov	di,dx
+	*** 000671	1e 			push	ds
+	*** 000672	07 			pop	es
+	*** 000673	f3 			rep
+	*** 000674	aa 			stosb
+; Line 700
+	*** 000675	8b 5e fe 		mov	bx,WORD PTR [bp-2]	;pIOUC
+	*** 000678	c7 07 4c 00 		mov	WORD PTR [bx],76	;004cH
+; Line 701
+	*** 00067c	8b 84 88 00 		mov	ax,WORD PTR [si+136]
+	*** 000680	89 47 02 		mov	WORD PTR [bx+2],ax
+; Line 702
+	*** 000683	c7 47 04 02 00 		mov	WORD PTR [bx+4],2
+; Line 703
+	*** 000688	c7 47 06 01 00 		mov	WORD PTR [bx+6],1
+; Line 705
+	*** 00068d	ff b4 86 00 		push	WORD PTR [si+134]
+	*** 000691	ff b4 84 00 		push	WORD PTR [si+132]
+	*** 000695	1e 			push	ds
+	*** 000696	53 			push	bx
+	*** 000697	e8 9e fa 		call	SendIORB
+	*** 00069a	83 c4 08 		add	sp,8
+	*** 00069d	89 46 fc 		mov	WORD PTR [bp-4],ax	;failed
+; Line 707
+	*** 0006a0	c7 84 b6 00 01 00 	mov	WORD PTR [si+182],1
+; Line 708
+	*** 0006a6	8b 5e fe 		mov	bx,WORD PTR [bp-2]	;pIOUC
+	*** 0006a9	8b 47 0a 		mov	ax,WORD PTR [bx+10]
+	*** 0006ac	89 84 b8 00 		mov	WORD PTR [si+184],ax
+; Line 709
+	*** 0006b0	8b 47 0c 		mov	ax,WORD PTR [bx+12]
+	*** 0006b3	89 84 ba 00 		mov	WORD PTR [si+186],ax
+; Line 710
+	*** 0006b7	83 7e fc 00 		cmp	WORD PTR [bp-4],0	;failed
+	*** 0006bb	74 25 			je	$I2122
+; Line 713
+	*** 0006bd	ff b4 a0 00 		push	WORD PTR [si+160]
+	*** 0006c1	ff b4 9e 00 		push	WORD PTR [si+158]
+	*** 0006c5	1e 			push	ds
+	*** 0006c6	68 00 00 		push	OFFSET _szDriverName
+	*** 0006c9	68 00 00 		push	INITDATA
+	*** 0006cc	68 3e 02 		push	OFFSET $S1988_szAllocFailed
+	*** 0006cf	1e 			push	ds
+	*** 0006d0	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 0006d3	e8 00 00 		call	_sprintk
+	*** 0006d6	83 c4 10 		add	sp,16	;0010H
+; Line 714
+	*** 0006d9	e8 00 00 		call	_SaveMessage
+; Line 715
+	*** 0006dc	b8 01 00 		mov	ax,1
+	*** 0006df	e9 1e 01 		jmp	$EX2118
+; Line 717
+					$I2122:
+; Line 721
+	*** 0006e2	8b 84 8a 00 		mov	ax,WORD PTR [si+138]
+	*** 0006e6	89 84 96 00 		mov	WORD PTR [si+150],ax
+; Line 722
+	*** 0006ea	8b 84 88 00 		mov	ax,WORD PTR [si+136]
+	*** 0006ee	89 84 94 00 		mov	WORD PTR [si+148],ax
+; Line 725
+	*** 0006f2	a1 00 00 		mov	ax,WORD PTR _npInitData
+	*** 0006f5	89 46 fe 		mov	WORD PTR [bp-2],ax	;pIOUC
+; Line 730
+	*** 0006f8	33 c0 			xor	ax,ax
+	*** 0006fa	8b 16 00 00 		mov	dx,WORD PTR _npInitData
+	*** 0006fe	b9 80 00 		mov	cx,128	;0080H
+	*** 000701	8b fa 			mov	di,dx
+	*** 000703	1e 			push	ds
+	*** 000704	07 			pop	es
+	*** 000705	f3 			rep
+	*** 000706	aa 			stosb
+; Line 731
+	*** 000707	8b 5e fe 		mov	bx,WORD PTR [bp-2]	;pIOUC
+	*** 00070a	c7 07 4c 00 		mov	WORD PTR [bx],76	;004cH
+; Line 732
+	*** 00070e	8b 84 88 00 		mov	ax,WORD PTR [si+136]
+	*** 000712	89 47 02 		mov	WORD PTR [bx+2],ax
+; Line 733
+	*** 000715	c7 47 04 02 00 		mov	WORD PTR [bx+4],2
+; Line 734
+	*** 00071a	c7 47 06 03 00 		mov	WORD PTR [bx+6],3
+; Line 736
+	*** 00071f	8d 84 8c 00 		lea	ax,WORD PTR [si+140]
+	*** 000723	89 47 46 		mov	WORD PTR [bx+70],ax
+	*** 000726	8c 5f 48 		mov	WORD PTR [bx+72],ds
+; Line 737
+	*** 000729	c7 47 4a 12 00 		mov	WORD PTR [bx+74],18	;0012H
+; Line 739
+	*** 00072e	ff b4 86 00 		push	WORD PTR [si+134]
+	*** 000732	ff b4 84 00 		push	WORD PTR [si+132]
+	*** 000736	1e 			push	ds
+	*** 000737	53 			push	bx
+	*** 000738	e8 fd f9 		call	SendIORB
+	*** 00073b	83 c4 08 		add	sp,8
+	*** 00073e	89 46 fc 		mov	WORD PTR [bp-4],ax	;failed
+; Line 741
+	*** 000741	c7 84 b6 00 03 00 	mov	WORD PTR [si+182],3
+; Line 742
+	*** 000747	8b 5e fe 		mov	bx,WORD PTR [bp-2]	;pIOUC
+	*** 00074a	8b 47 0a 		mov	ax,WORD PTR [bx+10]
+	*** 00074d	89 84 b8 00 		mov	WORD PTR [si+184],ax
+; Line 743
+	*** 000751	8b 47 0c 		mov	ax,WORD PTR [bx+12]
+	*** 000754	89 84 ba 00 		mov	WORD PTR [si+186],ax
+; Line 744
+	*** 000758	83 7e fc 00 		cmp	WORD PTR [bp-4],0	;failed
+	*** 00075c	74 24 			je	$I2125
+; Line 747
+	*** 00075e	ff b4 a0 00 		push	WORD PTR [si+160]
+	*** 000762	ff b4 9e 00 		push	WORD PTR [si+158]
+	*** 000766	1e 			push	ds
+	*** 000767	68 00 00 		push	OFFSET _szDriverName
+	*** 00076a	68 00 00 		push	INITDATA
+	*** 00076d	68 96 02 		push	OFFSET $S1990_szChangeUInfoFailed
+	*** 000770	1e 			push	ds
+	*** 000771	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000774	e8 00 00 		call	_sprintk
+	*** 000777	83 c4 10 		add	sp,16	;0010H
+; Line 748
+	*** 00077a	e8 00 00 		call	_SaveMessage
+; Line 752
+	*** 00077d	c7 46 fa 02 00 		mov	WORD PTR [bp-6],2	;rc
+; Line 754
+					$I2125:
+; Line 757
+	*** 000782	a1 00 00 		mov	ax,WORD PTR _npInitData
+	*** 000785	89 46 fe 		mov	WORD PTR [bp-2],ax	;pIOUC
+; Line 762
+	*** 000788	33 c0 			xor	ax,ax
+	*** 00078a	8b 16 00 00 		mov	dx,WORD PTR _npInitData
+	*** 00078e	b9 80 00 		mov	cx,128	;0080H
+	*** 000791	8b fa 			mov	di,dx
+	*** 000793	1e 			push	ds
+	*** 000794	07 			pop	es
+	*** 000795	f3 			rep
+	*** 000796	aa 			stosb
+; Line 763
+	*** 000797	8b 5e fe 		mov	bx,WORD PTR [bp-2]	;pIOUC
+	*** 00079a	c7 07 4c 00 		mov	WORD PTR [bx],76	;004cH
+; Line 764
+	*** 00079e	8b 84 88 00 		mov	ax,WORD PTR [si+136]
+	*** 0007a2	89 47 02 		mov	WORD PTR [bx+2],ax
+; Line 766
+	*** 0007a5	b8 02 00 		mov	ax,2
+	*** 0007a8	89 47 04 		mov	WORD PTR [bx+4],ax
+	*** 0007ab	89 47 06 		mov	WORD PTR [bx+6],ax
+; Line 768
+	*** 0007ae	ff b4 86 00 		push	WORD PTR [si+134]
+	*** 0007b2	ff b4 84 00 		push	WORD PTR [si+132]
+	*** 0007b6	1e 			push	ds
+	*** 0007b7	53 			push	bx
+	*** 0007b8	e8 7d f9 		call	SendIORB
+	*** 0007bb	83 c4 08 		add	sp,8
+	*** 0007be	89 46 fc 		mov	WORD PTR [bp-4],ax	;failed
+; Line 770
+	*** 0007c1	c7 84 b6 00 02 00 	mov	WORD PTR [si+182],2
+; Line 771
+	*** 0007c7	8b 5e fe 		mov	bx,WORD PTR [bp-2]	;pIOUC
+	*** 0007ca	8b 47 0a 		mov	ax,WORD PTR [bx+10]
+	*** 0007cd	89 84 b8 00 		mov	WORD PTR [si+184],ax
+; Line 772
+	*** 0007d1	8b 47 0c 		mov	ax,WORD PTR [bx+12]
+	*** 0007d4	89 84 ba 00 		mov	WORD PTR [si+186],ax
+; Line 773
+	*** 0007d8	83 7e fc 00 		cmp	WORD PTR [bp-4],0	;failed
+	*** 0007dc	74 1f 			je	$I2128
+; Line 779
+	*** 0007de	ff b4 a0 00 		push	WORD PTR [si+160]
+	*** 0007e2	ff b4 9e 00 		push	WORD PTR [si+158]
+	*** 0007e6	1e 			push	ds
+	*** 0007e7	68 00 00 		push	OFFSET _szDriverName
+	*** 0007ea	68 00 00 		push	INITDATA
+	*** 0007ed	68 68 02 		push	OFFSET $S1989_szDeallocFailed
+	*** 0007f0	1e 			push	ds
+	*** 0007f1	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 0007f4	e8 00 00 		call	_sprintk
+	*** 0007f7	83 c4 10 		add	sp,16	;0010H
+; Line 780
+	*** 0007fa	e8 00 00 		call	_SaveMessage
+; Line 782
+					$I2128:
+; Line 784
+	*** 0007fd	8b 46 fa 		mov	ax,WORD PTR [bp-6]	;rc
+; Line 785
+					$EX2118:
+	*** 000800	5e 			pop	si
+	*** 000801	5f 			pop	di
+	*** 000802	c9 			leave	
+	*** 000803	c3 			ret	
+
+RemoveFilter	ENDP
+
+Add2TOTable	PROC NEAR
+; Line 806
+	*** 000804	55 			push	bp
+	*** 000805	8b ec 			mov	bp,sp
+	*** 000807	57 			push	di
+	*** 000808	56 			push	si
+;	aidx = 4
+;	uidx = 6
+;	to = 8
+;	register di = i
+	*** 000809	8b 4e 04 		mov	cx,WORD PTR [bp+4]	;aidx
+; Line 809
+	*** 00080c	83 f9 7f 		cmp	cx,127	;007fH
+	*** 00080f	77 5a 			ja	$EX2136
+	*** 000811	81 7e 06 ff 00 		cmp	WORD PTR [bp+6],255	;00ffH	;uidx
+	*** 000816	77 53 			ja	$EX2136
+; Line 812
+	*** 000818	33 ff 			xor	di,di
+	*** 00081a	be 88 06 		mov	si,OFFSET _ToOption
+	*** 00081d	b8 00 00 		mov	ax,INITDATA
+	*** 000820	8e c0 			mov	es,ax
+					$F2140:
+; Line 814
+	*** 000822	26 f6 04 80 		test	BYTE PTR es:[si],128	;0080H
+	*** 000826	74 20 			je	$L2324
+; Line 822
+	*** 000828	26 8a 04 		mov	al,BYTE PTR es:[si]
+	*** 00082b	25 7f 00 		and	ax,127	;007fH
+	*** 00082e	3b c1 			cmp	ax,cx
+	*** 000830	75 0b 			jne	$FC2141
+	*** 000832	26 8a 44 01 		mov	al,BYTE PTR es:[si+1]
+	*** 000836	2a e4 			sub	ah,ah
+	*** 000838	3b 46 06 		cmp	ax,WORD PTR [bp+6]	;uidx
+	*** 00083b	74 23 			je	$L2325
+; Line 812
+					$FC2141:
+	*** 00083d	83 c6 04 		add	si,4
+	*** 000840	47 			inc	di
+	*** 000841	83 ff 18 		cmp	di,24	;0018H
+	*** 000844	7c dc 			jl	$F2140
+	*** 000846	eb 23 			jmp	SHORT $EX2136
+					$L2324:
+; Line 816
+	*** 000848	80 c9 80 		or	cl,128	;0080H
+	*** 00084b	c1 e7 02 		shl	di,2
+	*** 00084e	26 88 8d 88 06 		mov	BYTE PTR es:_ToOption[di],cl
+; Line 817
+	*** 000853	8a 46 06 		mov	al,BYTE PTR [bp+6]	;uidx
+	*** 000856	26 88 85 89 06 		mov	BYTE PTR es:_ToOption[di+1],al
+; Line 818
+	*** 00085b	8b 46 08 		mov	ax,WORD PTR [bp+8]	;to
+	*** 00085e	eb 06 			jmp	SHORT $L2347
+					$L2325:
+; Line 824
+	*** 000860	8b 46 08 		mov	ax,WORD PTR [bp+8]	;to
+	*** 000863	c1 e7 02 		shl	di,2
+					$L2347:
+	*** 000866	26 89 85 8a 06 		mov	WORD PTR es:_ToOption[di+2],ax
+; Line 830
+					$EX2136:
+	*** 00086b	5e 			pop	si
+	*** 00086c	5f 			pop	di
+	*** 00086d	c9 			leave	
+	*** 00086e	c3 			ret	
+	*** 00086f	90 			nop	
+
+Add2TOTable	ENDP
+
+QueryTOTable	PROC NEAR
+; Line 851
+	*** 000870	55 			push	bp
+	*** 000871	8b ec 			mov	bp,sp
+	*** 000873	57 			push	di
+	*** 000874	56 			push	si
+;	aidx = 4
+;	uidx = 6
+;	register cx = i
+	*** 000875	8b 7e 04 		mov	di,WORD PTR [bp+4]	;aidx
+; Line 854
+	*** 000878	83 ff 7f 		cmp	di,127	;007fH
+	*** 00087b	77 45 			ja	$I2154
+	*** 00087d	81 7e 06 ff 00 		cmp	WORD PTR [bp+6],255	;00ffH	;uidx
+	*** 000882	77 3e 			ja	$I2154
+; Line 857
+	*** 000884	33 c9 			xor	cx,cx
+	*** 000886	be 88 06 		mov	si,OFFSET _ToOption
+	*** 000889	b8 00 00 		mov	ax,INITDATA
+	*** 00088c	8e c0 			mov	es,ax
+					$F2155:
+; Line 861
+	*** 00088e	26 f6 04 80 		test	BYTE PTR es:[si],128	;0080H
+	*** 000892	74 15 			je	$FC2156
+	*** 000894	26 8a 04 		mov	al,BYTE PTR es:[si]
+	*** 000897	25 7f 00 		and	ax,127	;007fH
+	*** 00089a	3b c7 			cmp	ax,di
+	*** 00089c	75 0b 			jne	$FC2156
+	*** 00089e	26 8a 44 01 		mov	al,BYTE PTR es:[si+1]
+	*** 0008a2	2a e4 			sub	ah,ah
+	*** 0008a4	3b 46 06 		cmp	ax,WORD PTR [bp+6]	;uidx
+	*** 0008a7	74 0b 			je	$L2329
+; Line 857
+					$FC2156:
+	*** 0008a9	83 c6 04 		add	si,4
+	*** 0008ac	41 			inc	cx
+	*** 0008ad	83 f9 18 		cmp	cx,24	;0018H
+	*** 0008b0	7c dc 			jl	$F2155
+	*** 0008b2	eb 0e 			jmp	SHORT $I2154
+					$L2329:
+; Line 863
+	*** 0008b4	8b c1 			mov	ax,cx
+	*** 0008b6	c1 e0 02 		shl	ax,2
+	*** 0008b9	05 88 06 		add	ax,OFFSET _ToOption
+	*** 0008bc	ba 00 00 		mov	dx,INITDATA
+	*** 0008bf	eb 04 			jmp	SHORT $EX2151
+	*** 0008c1	90 			nop	
+; Line 854
+					$I2154:
+; Line 855
+	*** 0008c2	33 c0 			xor	ax,ax
+	*** 0008c4	99 			cwd	
+; Line 868
+					$EX2151:
+	*** 0008c5	5e 			pop	si
+	*** 0008c6	5f 			pop	di
+	*** 0008c7	c9 			leave	
+	*** 0008c8	c3 			ret	
+	*** 0008c9	90 			nop	
+
+QueryTOTable	ENDP
+
+ScanDevices	PROC NEAR
+; Line 895
+	*** 0008ca	c8 26 00 00 		enter	38,0
+	*** 0008ce	57 			push	di
+	*** 0008cf	56 			push	si
+;	j = -2
+;	k = -4
+;	fatal = -6
+;	add_count = -8
+;	add_index = -10
+;	adapter_index = -12
+;	pADDBaseEP = -16
+;	pDCE = -20
+;	pDCT = -24
+; Line 897
+	*** 0008d0	c7 46 fa 00 00 		mov	WORD PTR [bp-6],0	;fatal
+; Line 911
+	*** 0008d5	6a 0e 			push	14	;000eH
+	*** 0008d7	6a 01 			push	1
+	*** 0008d9	8d 46 e8 		lea	ax,WORD PTR [bp-24]	;pDCT
+	*** 0008dc	16 			push	ss
+	*** 0008dd	50 			push	ax
+	*** 0008de	9a 00 00 00 00 		call	FAR PTR DEVHELP_GETDOSVAR
+	*** 0008e3	0b c0 			or	ax,ax
+	*** 0008e5	74 1d 			je	$I2170
+; Line 912
+; Line 915
+	*** 0008e7	1e 			push	ds
+	*** 0008e8	68 00 00 		push	OFFSET _szDriverName
+	*** 0008eb	68 00 00 		push	INITDATA
+	*** 0008ee	68 c8 00 		push	OFFSET $S1979_szNoDriverTab
+	*** 0008f1	1e 			push	ds
+	*** 0008f2	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 0008f5	e8 00 00 		call	_sprintk
+	*** 0008f8	83 c4 0c 		add	sp,12	;000cH
+; Line 916
+	*** 0008fb	e8 00 00 		call	_SaveMessage
+; Line 917
+					$L2349:
+	*** 0008fe	b8 ff ff 		mov	ax,-1	;ffffH
+	*** 000901	e9 82 03 		jmp	$EX2160
+; Line 918
+; Line 920
+					$I2170:
+	*** 000904	c4 5e e8 		les	bx,DWORD PTR [bp-24]	;pDCT
+	*** 000907	26 8b 07 		mov	ax,WORD PTR es:[bx]
+	*** 00090a	89 46 f8 		mov	WORD PTR [bp-8],ax	;add_count
+; Line 928
+	*** 00090d	8d 47 04 		lea	ax,WORD PTR [bx+4]
+	*** 000910	89 46 ec 		mov	WORD PTR [bp-20],ax	;pDCE
+	*** 000913	8c 46 ee 		mov	WORD PTR [bp-18],es
+	*** 000916	33 c0 			xor	ax,ax
+	*** 000918	89 46 f6 		mov	WORD PTR [bp-10],ax	;add_index
+	*** 00091b	89 46 f4 		mov	WORD PTR [bp-12],ax	;adapter_index
+	*** 00091e	e9 90 02 		jmp	$F2171
+; Line 955
+	*** 000921	90 			nop	
+; Line 956
+					$I2175:
+; Line 964
+	*** 000922	c7 46 fe 00 00 		mov	WORD PTR [bp-2],0	;j
+	*** 000927	e9 4c 02 		jmp	$F2176
+					$I2187:
+; Line 999
+; Line 1000
+	*** 00092a	8b 46 f0 		mov	ax,WORD PTR [bp-16]	;pADDBaseEP
+	*** 00092d	8b 56 f2 		mov	dx,WORD PTR [bp-14]
+	*** 000930	89 46 e0 		mov	WORD PTR [bp-32],ax	;pADDEntry
+	*** 000933	89 56 e2 		mov	WORD PTR [bp-30],dx
+; Line 1001
+					$I2189:
+; Line 1003
+	*** 000936	ff 76 e4 		push	WORD PTR [bp-28]	;npUnitInfo
+	*** 000939	ff 76 f4 		push	WORD PTR [bp-12]	;adapter_index
+	*** 00093c	e8 31 fa 		call	CheckUnitInfo
+	*** 00093f	83 c4 04 		add	sp,4
+	*** 000942	0b c0 			or	ax,ax
+	*** 000944	74 48 			je	$I2190
+; Line 1004
+					$FC2183:
+	*** 000946	ff 46 fc 		inc	WORD PTR [bp-4]	;k
+	*** 000949	83 46 e4 12 		add	WORD PTR [bp-28],18	;0012H	;npUnitInfo
+					$F2182:
+	*** 00094d	8b 46 fc 		mov	ax,WORD PTR [bp-4]	;k
+	*** 000950	8b 5e e6 		mov	bx,WORD PTR [bp-26]	;pIOCF
+	*** 000953	39 47 12 		cmp	WORD PTR [bx+18],ax
+	*** 000956	77 03 			ja	$JCC2390
+	*** 000958	e9 15 02 		jmp	$FC2177
+					$JCC2390:
+; Line 980
+;	pADDEntry = -32
+;	FilterADDHandle = -34
+; Line 988
+	*** 00095b	8b 5e e4 		mov	bx,WORD PTR [bp-28]	;npUnitInfo
+	*** 00095e	8b 47 0a 		mov	ax,WORD PTR [bx+10]
+	*** 000961	89 46 de 		mov	WORD PTR [bp-34],ax	;FilterADDHandle
+	*** 000964	0b c0 			or	ax,ax
+	*** 000966	74 c2 			je	$I2187
+; Line 989
+;	pDCEFilter = -38
+; Line 993
+	*** 000968	6b c0 16 		imul	ax,ax,22	;0016H
+	*** 00096b	03 46 e8 		add	ax,WORD PTR [bp-24]	;pDCT
+	*** 00096e	8b 56 ea 		mov	dx,WORD PTR [bp-22]
+	*** 000971	2d 12 00 		sub	ax,18	;0012H
+	*** 000974	89 46 da 		mov	WORD PTR [bp-38],ax	;pDCEFilter
+	*** 000977	89 56 dc 		mov	WORD PTR [bp-36],dx
+; Line 995
+	*** 00097a	8e c2 			mov	es,dx
+	*** 00097c	8b d8 			mov	bx,ax
+	*** 00097e	26 8b 4f 02 		mov	cx,WORD PTR es:[bx+2]
+	*** 000982	26 8b 37 		mov	si,WORD PTR es:[bx]
+	*** 000985	89 76 e0 		mov	WORD PTR [bp-32],si	;pADDEntry
+	*** 000988	89 4e e2 		mov	WORD PTR [bp-30],cx
+; Line 997
+; Line 998
+	*** 00098b	eb a9 			jmp	SHORT $I2189
+	*** 00098d	90 			nop	
+; Line 1013
+					$I2190:
+	*** 00098e	a1 00 00 		mov	ax,WORD PTR _npInitData
+	*** 000991	81 06 00 00 6d 01 	add	WORD PTR _npInitData,365	;016dH
+	*** 000997	8b 1e 00 00 		mov	bx,WORD PTR _cUnit
+	*** 00099b	d1 e3 			shl	bx,1
+	*** 00099d	89 87 00 00 		mov	WORD PTR _anpUnit[bx],ax
+; Line 1014
+	*** 0009a1	33 c0 			xor	ax,ax
+	*** 0009a3	8b 97 00 00 		mov	dx,WORD PTR _anpUnit[bx]
+	*** 0009a7	b9 6d 01 		mov	cx,365	;016dH
+	*** 0009aa	8b fa 			mov	di,dx
+	*** 0009ac	1e 			push	ds
+	*** 0009ad	07 			pop	es
+	*** 0009ae	f3 			rep
+	*** 0009af	aa 			stosb
+; Line 1017
+	*** 0009b0	8b 46 e0 		mov	ax,WORD PTR [bp-32]	;pADDEntry
+	*** 0009b3	8b 56 e2 		mov	dx,WORD PTR [bp-30]
+	*** 0009b6	8b 1e 00 00 		mov	bx,WORD PTR _cUnit
+	*** 0009ba	d1 e3 			shl	bx,1
+	*** 0009bc	8b 9f 00 00 		mov	bx,WORD PTR _anpUnit[bx]
+	*** 0009c0	89 87 84 00 		mov	WORD PTR [bx+132],ax
+	*** 0009c4	89 97 86 00 		mov	WORD PTR [bx+134],dx
+; Line 1018
+	*** 0009c8	8b 5e e4 		mov	bx,WORD PTR [bp-28]	;npUnitInfo
+	*** 0009cb	8b 47 08 		mov	ax,WORD PTR [bx+8]
+	*** 0009ce	8b 1e 00 00 		mov	bx,WORD PTR _cUnit
+	*** 0009d2	d1 e3 			shl	bx,1
+	*** 0009d4	8b 9f 00 00 		mov	bx,WORD PTR _anpUnit[bx]
+	*** 0009d8	89 87 88 00 		mov	WORD PTR [bx+136],ax
+; Line 1019
+	*** 0009dc	8b 46 de 		mov	ax,WORD PTR [bp-34]	;FilterADDHandle
+	*** 0009df	8b 1e 00 00 		mov	bx,WORD PTR _cUnit
+	*** 0009e3	d1 e3 			shl	bx,1
+	*** 0009e5	8b 9f 00 00 		mov	bx,WORD PTR _anpUnit[bx]
+	*** 0009e9	89 87 8a 00 		mov	WORD PTR [bx+138],ax
+; Line 1022
+	*** 0009ed	fc 			cld	
+; Line 1024
+	*** 0009ee	8b 1e 00 00 		mov	bx,WORD PTR _cUnit
+	*** 0009f2	d1 e3 			shl	bx,1
+	*** 0009f4	8b 9f 00 00 		mov	bx,WORD PTR _anpUnit[bx]
+	*** 0009f8	8b 46 e4 		mov	ax,WORD PTR [bp-28]	;npUnitInfo
+	*** 0009fb	8d bf 8c 00 		lea	di,WORD PTR [bx+140]
+	*** 0009ff	8b f0 			mov	si,ax
+	*** 000a01	1e 			push	ds
+	*** 000a02	07 			pop	es
+	*** 000a03	b9 09 00 		mov	cx,9
+	*** 000a06	f3 			rep
+	*** 000a07	a5 			movsw
+; Line 1026
+	*** 000a08	8b 1e 00 00 		mov	bx,WORD PTR _cUnit
+	*** 000a0c	d1 e3 			shl	bx,1
+	*** 000a0e	8b 8f 00 00 		mov	cx,WORD PTR _anpUnit[bx]
+	*** 000a12	8b d9 			mov	bx,cx
+	*** 000a14	89 8f 94 00 		mov	WORD PTR [bx+148],cx
+; Line 1027
+	*** 000a18	8b 4e f4 		mov	cx,WORD PTR [bp-12]	;adapter_index
+	*** 000a1b	8b 1e 00 00 		mov	bx,WORD PTR _cUnit
+	*** 000a1f	d1 e3 			shl	bx,1
+	*** 000a21	8b 9f 00 00 		mov	bx,WORD PTR _anpUnit[bx]
+	*** 000a25	89 8f 9e 00 		mov	WORD PTR [bx+158],cx
+; Line 1028
+	*** 000a29	8b d8 			mov	bx,ax
+	*** 000a2b	8b 4f 02 		mov	cx,WORD PTR [bx+2]
+	*** 000a2e	8b 36 00 00 		mov	si,WORD PTR _cUnit
+	*** 000a32	d1 e6 			shl	si,1
+	*** 000a34	8b b4 00 00 		mov	si,WORD PTR _anpUnit[si]
+	*** 000a38	89 8c a0 00 		mov	WORD PTR [si+160],cx
+; Line 1030
+	*** 000a3c	8b 36 00 00 		mov	si,WORD PTR _cUnit
+	*** 000a40	d1 e6 			shl	si,1
+	*** 000a42	8b b4 00 00 		mov	si,WORD PTR _anpUnit[si]
+	*** 000a46	c6 84 aa 00 1b 		mov	BYTE PTR [si+170],27	;001bH
+; Line 1031
+	*** 000a4b	8a 4f 11 		mov	cl,BYTE PTR [bx+17]
+	*** 000a4e	c0 e1 05 		shl	cl,5
+	*** 000a51	8b 36 00 00 		mov	si,WORD PTR _cUnit
+	*** 000a55	d1 e6 			shl	si,1
+	*** 000a57	8b b4 00 00 		mov	si,WORD PTR _anpUnit[si]
+	*** 000a5b	88 8c ab 00 		mov	BYTE PTR [si+171],cl
+; Line 1032
+	*** 000a5f	8b 36 00 00 		mov	si,WORD PTR _cUnit
+	*** 000a63	d1 e6 			shl	si,1
+	*** 000a65	8b b4 00 00 		mov	si,WORD PTR _anpUnit[si]
+	*** 000a69	c6 84 ae 00 01 		mov	BYTE PTR [si+174],1
+; Line 1034
+	*** 000a6e	8b 36 00 00 		mov	si,WORD PTR _cUnit
+	*** 000a72	d1 e6 			shl	si,1
+	*** 000a74	8b b4 00 00 		mov	si,WORD PTR _anpUnit[si]
+	*** 000a78	c6 84 a4 00 1b 		mov	BYTE PTR [si+164],27	;001bH
+; Line 1035
+	*** 000a7d	8a 4f 11 		mov	cl,BYTE PTR [bx+17]
+	*** 000a80	c0 e1 05 		shl	cl,5
+	*** 000a83	8b 36 00 00 		mov	si,WORD PTR _cUnit
+	*** 000a87	d1 e6 			shl	si,1
+	*** 000a89	8b b4 00 00 		mov	si,WORD PTR _anpUnit[si]
+	*** 000a8d	88 8c a5 00 		mov	BYTE PTR [si+165],cl
+; Line 1036
+	*** 000a91	8b 36 00 00 		mov	si,WORD PTR _cUnit
+	*** 000a95	d1 e6 			shl	si,1
+	*** 000a97	8b b4 00 00 		mov	si,WORD PTR _anpUnit[si]
+	*** 000a9b	c6 84 a8 00 00 		mov	BYTE PTR [si+168],0
+; Line 1038
+	*** 000aa0	8b 36 00 00 		mov	si,WORD PTR _cUnit
+	*** 000aa4	d1 e6 			shl	si,1
+	*** 000aa6	8b b4 00 00 		mov	si,WORD PTR _anpUnit[si]
+	*** 000aaa	c6 84 b0 00 00 		mov	BYTE PTR [si+176],0
+; Line 1039
+	*** 000aaf	8a 4f 11 		mov	cl,BYTE PTR [bx+17]
+	*** 000ab2	c0 e1 05 		shl	cl,5
+	*** 000ab5	8b 1e 00 00 		mov	bx,WORD PTR _cUnit
+	*** 000ab9	d1 e3 			shl	bx,1
+	*** 000abb	8b 9f 00 00 		mov	bx,WORD PTR _anpUnit[bx]
+	*** 000abf	88 8f b1 00 		mov	BYTE PTR [bx+177],cl
+; Line 1041
+;	p = -38
+; Line 1045
+	*** 000ac3	8b 1e 00 00 		mov	bx,WORD PTR _cUnit
+	*** 000ac7	d1 e3 			shl	bx,1
+	*** 000ac9	8b 9f 00 00 		mov	bx,WORD PTR _anpUnit[bx]
+	*** 000acd	ff b7 a0 00 		push	WORD PTR [bx+160]
+	*** 000ad1	ff b7 9e 00 		push	WORD PTR [bx+158]
+	*** 000ad5	e8 98 fd 		call	QueryTOTable
+	*** 000ad8	83 c4 04 		add	sp,4
+	*** 000adb	89 46 da 		mov	WORD PTR [bp-38],ax	;pDCEFilter
+	*** 000ade	89 56 dc 		mov	WORD PTR [bp-36],dx
+	*** 000ae1	0b d0 			or	dx,ax
+	*** 000ae3	74 09 			je	$I2192
+; Line 1046
+	*** 000ae5	c4 5e da 		les	bx,DWORD PTR [bp-38]	;pDCEFilter
+	*** 000ae8	26 8b 47 02 		mov	ax,WORD PTR es:[bx+2]
+	*** 000aec	eb 08 			jmp	SHORT $L2350
+					$I2192:
+; Line 1048
+	*** 000aee	8e 06 00 00 		mov	es,WORD PTR $T2314
+	*** 000af2	26 a1 e8 06 		mov	ax,WORD PTR es:$S2018_usSleepSeconds
+					$L2350:
+	*** 000af6	8b 1e 00 00 		mov	bx,WORD PTR _cUnit
+	*** 000afa	d1 e3 			shl	bx,1
+	*** 000afc	8b 9f 00 00 		mov	bx,WORD PTR _anpUnit[bx]
+	*** 000b00	89 87 a2 00 		mov	WORD PTR [bx+162],ax
+; Line 1049
+; Line 1051
+	*** 000b04	8b 1e 00 00 		mov	bx,WORD PTR _cUnit
+	*** 000b08	d1 e3 			shl	bx,1
+	*** 000b0a	ff b7 00 00 		push	WORD PTR _anpUnit[bx]
+	*** 000b0e	e8 29 f9 		call	InstallFilter
+	*** 000b11	83 c4 02 		add	sp,2
+	*** 000b14	0b c0 			or	ax,ax
+	*** 000b16	74 18 			je	$I2194
+; Line 1052
+; Line 1057
+	*** 000b18	8b 1e 00 00 		mov	bx,WORD PTR _cUnit
+	*** 000b1c	d1 e3 			shl	bx,1
+	*** 000b1e	c7 87 00 00 00 00 	mov	WORD PTR _anpUnit[bx],0
+; Line 1058
+	*** 000b24	81 2e 00 00 6d 01 	sub	WORD PTR _npInitData,365	;016dH
+; Line 1059
+	*** 000b2a	ff 46 fa 		inc	WORD PTR [bp-6]	;fatal
+; Line 1060
+	*** 000b2d	e9 16 fe 		jmp	$FC2183
+; Line 1061
+; Line 1063
+					$I2194:
+	*** 000b30	f6 06 00 00 01 		test	BYTE PTR _fDriverFlags,1
+	*** 000b35	74 31 			je	$I2195
+; Line 1064
+; Line 1067
+	*** 000b37	8b 1e 00 00 		mov	bx,WORD PTR _cUnit
+	*** 000b3b	d1 e3 			shl	bx,1
+	*** 000b3d	8b 9f 00 00 		mov	bx,WORD PTR _anpUnit[bx]
+	*** 000b41	8b 87 a2 00 		mov	ax,WORD PTR [bx+162]
+	*** 000b45	b9 3c 00 		mov	cx,60	;003cH
+	*** 000b48	2b d2 			sub	dx,dx
+	*** 000b4a	f7 f1 			div	cx
+	*** 000b4c	50 			push	ax
+	*** 000b4d	ff b7 a0 00 		push	WORD PTR [bx+160]
+	*** 000b51	ff b7 9e 00 		push	WORD PTR [bx+158]
+	*** 000b55	68 00 00 		push	INITDATA
+	*** 000b58	68 38 05 		push	OFFSET $S2007_szFoundDevice
+	*** 000b5b	1e 			push	ds
+	*** 000b5c	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000b5f	e8 00 00 		call	_sprintk
+	*** 000b62	83 c4 0e 		add	sp,14	;000eH
+; Line 1068
+	*** 000b65	e8 00 00 		call	_SaveMessage
+; Line 1069
+; Line 1071
+					$I2195:
+	*** 000b68	ff 06 00 00 		inc	WORD PTR _cUnit
+; Line 1072
+	*** 000b6c	e9 d7 fd 		jmp	$FC2183
+; Line 1073
+	*** 000b6f	90 			nop	
+					$FC2177:
+	*** 000b70	ff 46 fe 		inc	WORD PTR [bp-2]	;j
+	*** 000b73	ff 46 f4 		inc	WORD PTR [bp-12]	;adapter_index
+					$F2176:
+	*** 000b76	a1 04 00 		mov	ax,WORD PTR _DeviceTable+4
+	*** 000b79	39 46 fe 		cmp	WORD PTR [bp-2],ax	;j
+	*** 000b7c	73 2c 			jae	$FC2172
+; Line 965
+;	npAdapterInfo = -26
+;	npUnitInfo = -28
+; Line 971
+	*** 000b7e	8b 5e fe 		mov	bx,WORD PTR [bp-2]	;j
+	*** 000b81	d1 e3 			shl	bx,1
+	*** 000b83	8b 87 06 00 		mov	ax,WORD PTR _DeviceTable[bx+6]
+	*** 000b87	89 46 e6 		mov	WORD PTR [bp-26],ax	;pIOCF
+	*** 000b8a	50 			push	ax
+	*** 000b8b	ff 76 f4 		push	WORD PTR [bp-12]	;adapter_index
+	*** 000b8e	e8 3f f7 		call	CheckAdapterInfo
+	*** 000b91	83 c4 04 		add	sp,4
+	*** 000b94	0b c0 			or	ax,ax
+	*** 000b96	75 d8 			jne	$FC2177
+; Line 979
+	*** 000b98	8b 46 e6 		mov	ax,WORD PTR [bp-26]	;pIOCF
+	*** 000b9b	05 22 00 		add	ax,34	;0022H
+	*** 000b9e	89 46 e4 		mov	WORD PTR [bp-28],ax	;npUnitInfo
+	*** 000ba1	c7 46 fc 00 00 		mov	WORD PTR [bp-4],0	;k
+	*** 000ba6	e9 a4 fd 		jmp	$F2182
+; Line 1074
+	*** 000ba9	90 			nop	
+					$FC2172:
+	*** 000baa	ff 46 f6 		inc	WORD PTR [bp-10]	;add_index
+	*** 000bad	83 46 ec 16 		add	WORD PTR [bp-20],22	;0016H	;pDCE
+					$F2171:
+	*** 000bb1	8b 46 f8 		mov	ax,WORD PTR [bp-8]	;add_count
+	*** 000bb4	39 46 f6 		cmp	WORD PTR [bp-10],ax	;add_index
+	*** 000bb7	73 73 			jae	$FB2173
+; Line 929
+; Line 930
+;	pIOCF = -26
+; Line 931
+	*** 000bb9	a1 00 00 		mov	ax,WORD PTR _npInitData
+	*** 000bbc	89 46 e6 		mov	WORD PTR [bp-26],ax	;pIOCF
+; Line 935
+	*** 000bbf	33 c0 			xor	ax,ax
+	*** 000bc1	8b 16 00 00 		mov	dx,WORD PTR _npInitData
+	*** 000bc5	b9 80 00 		mov	cx,128	;0080H
+	*** 000bc8	8b fa 			mov	di,dx
+	*** 000bca	1e 			push	ds
+	*** 000bcb	07 			pop	es
+	*** 000bcc	f3 			rep
+	*** 000bcd	aa 			stosb
+; Line 936
+	*** 000bce	8b 5e e6 		mov	bx,WORD PTR [bp-26]	;pIOCF
+	*** 000bd1	c7 07 4a 00 		mov	WORD PTR [bx],74	;004aH
+; Line 937
+	*** 000bd5	89 47 02 		mov	WORD PTR [bx+2],ax
+; Line 939
+	*** 000bd8	b8 01 00 		mov	ax,1
+	*** 000bdb	89 47 04 		mov	WORD PTR [bx+4],ax
+	*** 000bde	89 47 06 		mov	WORD PTR [bx+6],ax
+; Line 941
+	*** 000be1	c7 47 44 00 00 		mov	WORD PTR [bx+68],OFFSET _DeviceTable
+	*** 000be6	8c 5f 46 		mov	WORD PTR [bx+70],ds
+; Line 942
+	*** 000be9	c7 47 48 00 04 		mov	WORD PTR [bx+72],1024	;0400H
+; Line 946
+	*** 000bee	c4 76 ec 		les	si,DWORD PTR [bp-20]	;pDCE
+	*** 000bf1	26 8b 54 02 		mov	dx,WORD PTR es:[si+2]
+	*** 000bf5	26 8b 0c 		mov	cx,WORD PTR es:[si]
+	*** 000bf8	89 4e f0 		mov	WORD PTR [bp-16],cx	;pADDBaseEP
+	*** 000bfb	89 56 f2 		mov	WORD PTR [bp-14],dx
+	*** 000bfe	52 			push	dx
+	*** 000bff	51 			push	cx
+	*** 000c00	1e 			push	ds
+	*** 000c01	53 			push	bx
+	*** 000c02	e8 33 f5 		call	SendIORB
+	*** 000c05	83 c4 08 		add	sp,8
+	*** 000c08	0b c0 			or	ax,ax
+	*** 000c0a	75 03 			jne	$JCC3082
+	*** 000c0c	e9 13 fd 		jmp	$I2175
+					$JCC3082:
+; Line 947
+; Line 952
+	*** 000c0f	ff 76 f6 		push	WORD PTR [bp-10]	;add_index
+	*** 000c12	1e 			push	ds
+	*** 000c13	68 00 00 		push	OFFSET _szDriverName
+	*** 000c16	68 00 00 		push	INITDATA
+	*** 000c19	68 ea 00 		push	OFFSET $S1980_szNoDevTab
+	*** 000c1c	1e 			push	ds
+	*** 000c1d	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000c20	e8 00 00 		call	_sprintk
+	*** 000c23	83 c4 0e 		add	sp,14	;000eH
+; Line 953
+	*** 000c26	e8 00 00 		call	_SaveMessage
+; Line 954
+	*** 000c29	e9 7e ff 		jmp	$FC2172
+					$FB2173:
+; Line 1077
+	*** 000c2c	83 7e fa 00 		cmp	WORD PTR [bp-6],0	;fatal
+	*** 000c30	74 28 			je	$I2196
+; Line 1078
+;	i = -38
+; Line 1087
+	*** 000c32	c7 46 da 00 00 		mov	WORD PTR [bp-38],0	;pDCEFilter
+	*** 000c37	eb 04 			jmp	SHORT $F2198
+	*** 000c39	90 			nop	
+					$FC2199:
+	*** 000c3a	ff 46 da 		inc	WORD PTR [bp-38]	;pDCEFilter
+					$F2198:
+	*** 000c3d	a1 00 00 		mov	ax,WORD PTR _cUnit
+	*** 000c40	39 46 da 		cmp	WORD PTR [bp-38],ax	;pDCEFilter
+	*** 000c43	72 03 			jb	$JCC3139
+	*** 000c45	e9 b6 fc 		jmp	$L2349
+					$JCC3139:
+; Line 1088
+	*** 000c48	8b 5e da 		mov	bx,WORD PTR [bp-38]	;pDCEFilter
+	*** 000c4b	d1 e3 			shl	bx,1
+	*** 000c4d	ff b7 00 00 		push	WORD PTR _anpUnit[bx]
+	*** 000c51	e8 fe f9 		call	RemoveFilter
+	*** 000c54	83 c4 02 		add	sp,2
+	*** 000c57	eb e1 			jmp	SHORT $FC2199
+	*** 000c59	90 			nop	
+					$I2196:
+	*** 000c5a	83 3e 00 00 00 		cmp	WORD PTR _cUnit,0
+	*** 000c5f	75 23 			jne	$I2201
+; Line 1092
+; Line 1093
+	*** 000c61	f6 06 00 00 01 		test	BYTE PTR _fDriverFlags,1
+	*** 000c66	74 17 			je	$I2202
+; Line 1094
+; Line 1095
+	*** 000c68	1e 			push	ds
+	*** 000c69	68 00 00 		push	OFFSET _szDriverName
+	*** 000c6c	68 00 00 		push	INITDATA
+	*** 000c6f	68 10 03 		push	OFFSET $S1993_szNoDevices
+	*** 000c72	1e 			push	ds
+	*** 000c73	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000c76	e8 00 00 		call	_sprintk
+	*** 000c79	83 c4 0c 		add	sp,12	;000cH
+; Line 1096
+	*** 000c7c	e8 00 00 		call	_SaveMessage
+; Line 1097
+; Line 1098
+					$I2202:
+	*** 000c7f	b8 01 00 		mov	ax,1
+	*** 000c82	eb 02 			jmp	SHORT $EX2160
+; Line 1099
+; Line 1100
+					$I2201:
+	*** 000c84	33 c0 			xor	ax,ax
+; Line 1101
+					$EX2160:
+	*** 000c86	5e 			pop	si
+	*** 000c87	5f 			pop	di
+	*** 000c88	c9 			leave	
+	*** 000c89	c3 			ret	
+
+ScanDevices	ENDP
+
+InstallTimer	PROC NEAR
+; Line 1123
+; Line 1126
+	*** 000c8a	68 00 00 		push	OFFSET _AsmTimer
+	*** 000c8d	b8 10 27 		mov	ax,10000	;2710H
+	*** 000c90	c4 1e 00 00 		les	bx,DWORD PTR _pGlobalInfoSeg
+	*** 000c94	2b d2 			sub	dx,dx
+	*** 000c96	26 f7 77 0e 		div	WORD PTR es:[bx+14]
+	*** 000c9a	50 			push	ax
+	*** 000c9b	9a 00 00 00 00 		call	FAR PTR DEVHELP_TICKCOUNT
+	*** 000ca0	0b c0 			or	ax,ax
+	*** 000ca2	74 1c 			je	$I2205
+; Line 1128
+	*** 000ca4	1e 			push	ds
+	*** 000ca5	68 00 00 		push	OFFSET _szDriverName
+	*** 000ca8	68 00 00 		push	INITDATA
+	*** 000cab	68 c8 02 		push	OFFSET $S1991_szNoTimer
+	*** 000cae	1e 			push	ds
+	*** 000caf	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000cb2	e8 00 00 		call	_sprintk
+	*** 000cb5	83 c4 0c 		add	sp,12	;000cH
+; Line 1129
+	*** 000cb8	e8 00 00 		call	_SaveMessage
+; Line 1130
+	*** 000cbb	b8 01 00 		mov	ax,1
+	*** 000cbe	eb 02 			jmp	SHORT $EX2204
+; Line 1132
+					$I2205:
+	*** 000cc0	33 c0 			xor	ax,ax
+; Line 1133
+					$EX2204:
+	*** 000cc2	c3 			ret	
+	*** 000cc3	90 			nop	
+
+InstallTimer	ENDP
+
+AnalyseCmdLine	PROC NEAR
+; Line 1232
+	*** 000cc4	c8 0a 00 00 		enter	10,0
+	*** 000cc8	57 			push	di
+	*** 000cc9	56 			push	si
+;	code = -14
+;	time = -2
+;	time = -18
+;	pszLine = 4
+;	parse_rc = -10
+;	cp = -6
+;	register si = i
+;	TokenId = -1
+; Line 1243
+	*** 000cca	68 00 04 		push	1024	;0400H
+	*** 000ccd	1e 			push	ds
+	*** 000cce	68 00 00 		push	OFFSET _DeviceTable
+	*** 000cd1	1e 			push	ds
+	*** 000cd2	68 ce 00 		push	OFFSET DGROUP:_opttable
+	*** 000cd5	ff 76 06 		push	WORD PTR [bp+6]
+	*** 000cd8	ff 76 04 		push	WORD PTR [bp+4]	;pszLine
+	*** 000cdb	9a 00 00 00 00 		call	FAR PTR _Command_Parser
+	*** 000ce0	83 c4 0e 		add	sp,14	;000eH
+	*** 000ce3	89 46 f6 		mov	WORD PTR [bp-10],ax	;parse_rc
+; Line 1287
+	*** 000ce6	0b c0 			or	ax,ax
+	*** 000ce8	74 65 			je	$SB2237
+	*** 000cea	48 			dec	ax
+	*** 000ceb	74 25 			je	$SC2240
+	*** 000ced	2d 04 00 		sub	ax,4
+	*** 000cf0	74 5d 			je	$SB2237
+	*** 000cf2	48 			dec	ax
+	*** 000cf3	74 29 			je	$SC2241
+	*** 000cf5	48 			dec	ax
+	*** 000cf6	74 3c 			je	$SC2242
+; Line 1282
+	*** 000cf8	ff 76 f6 		push	WORD PTR [bp-10]	;parse_rc
+	*** 000cfb	1e 			push	ds
+	*** 000cfc	68 00 00 		push	OFFSET _szDriverName
+	*** 000cff	68 00 00 		push	INITDATA
+	*** 000d02	68 16 05 		push	OFFSET $S2006_szCmdLineError
+	*** 000d05	1e 			push	ds
+	*** 000d06	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000d09	e8 00 00 		call	_sprintk
+	*** 000d0c	83 c4 0e 		add	sp,14	;000eH
+	*** 000d0f	eb 3b 			jmp	SHORT $L2351
+	*** 000d11	90 			nop	
+; Line 1255
+					$SC2240:
+; Line 1256
+	*** 000d12	1e 			push	ds
+	*** 000d13	68 00 00 		push	OFFSET _szDriverName
+	*** 000d16	68 00 00 		push	INITDATA
+	*** 000d19	68 a8 04 		push	OFFSET $S2003_szCmdLineSyntax
+	*** 000d1c	eb 0a 			jmp	SHORT $L2352
+; Line 1263
+					$SC2241:
+; Line 1264
+	*** 000d1e	1e 			push	ds
+	*** 000d1f	68 00 00 		push	OFFSET _szDriverName
+	*** 000d22	68 00 00 		push	INITDATA
+	*** 000d25	68 ca 04 		push	OFFSET $S2004_szMissingOption
+					$L2352:
+	*** 000d28	1e 			push	ds
+	*** 000d29	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000d2c	e8 00 00 		call	_sprintk
+	*** 000d2f	83 c4 0c 		add	sp,12	;000cH
+	*** 000d32	eb 18 			jmp	SHORT $L2351
+; Line 1271
+					$SC2242:
+; Line 1273
+	*** 000d34	1e 			push	ds
+	*** 000d35	68 00 00 		push	OFFSET _DeviceTable
+	*** 000d38	1e 			push	ds
+	*** 000d39	68 00 00 		push	OFFSET _szDriverName
+	*** 000d3c	68 00 00 		push	INITDATA
+	*** 000d3f	68 f6 04 		push	OFFSET $S2005_szUnknownOption
+	*** 000d42	1e 			push	ds
+	*** 000d43	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000d46	e8 00 00 		call	_sprintk
+	*** 000d49	83 c4 10 		add	sp,16	;0010H
+; Line 1274
+					$L2351:
+	*** 000d4c	e8 00 00 		call	_SaveMessage
+; Line 1287
+					$SB2237:
+; Line 1291
+	*** 000d4f	b8 00 00 		mov	ax,OFFSET _DeviceTable
+	*** 000d52	8b f8 			mov	di,ax
+	*** 000d54	8c 5e fc 		mov	WORD PTR [bp-4],ds
+	*** 000d57	e9 85 01 		jmp	$L2353
+					$F2245:
+; Line 1293
+	*** 000d5a	8a 46 ff 		mov	al,BYTE PTR [bp-1]	;TokenId
+	*** 000d5d	2a e4 			sub	ah,ah
+; Line 1384
+	*** 000d5f	3d 65 00 		cmp	ax,101	;0065H
+	*** 000d62	75 03 			jne	$JCC3426
+	*** 000d64	e9 69 01 		jmp	$SC2253
+					$JCC3426:
+	*** 000d67	76 03 			jbe	$JCC3431
+	*** 000d69	e9 69 01 		jmp	$FC2246
+					$JCC3431:
+	*** 000d6c	3c 35 			cmp	al,53	;0035H
+	*** 000d6e	75 03 			jne	$JCC3438
+	*** 000d70	e9 fb 00 		jmp	$SC2278
+					$JCC3438:
+	*** 000d73	7f 13 			jg	$L2339
+	*** 000d75	2c 28 			sub	al,40	;0028H
+	*** 000d77	74 2f 			je	$SC2252
+	*** 000d79	2c 09 			sub	al,9
+	*** 000d7b	74 33 			je	$SC2266
+	*** 000d7d	fe c8 			dec	al
+	*** 000d7f	75 03 			jne	$JCC3455
+	*** 000d81	e9 8c 00 		jmp	$SC2272
+					$JCC3455:
+	*** 000d84	e9 4e 01 		jmp	$FC2246
+	*** 000d87	90 			nop	
+					$L2339:
+	*** 000d88	2c 36 			sub	al,54	;0036H
+	*** 000d8a	75 03 			jne	$JCC3466
+	*** 000d8c	e9 ef 00 		jmp	$SC2257
+					$JCC3466:
+	*** 000d8f	fe c8 			dec	al
+	*** 000d91	75 03 			jne	$JCC3473
+	*** 000d93	e9 22 01 		jmp	$SC2255
+					$JCC3473:
+	*** 000d96	fe c8 			dec	al
+	*** 000d98	75 03 			jne	$JCC3480
+	*** 000d9a	e9 23 01 		jmp	$SC2256
+					$JCC3480:
+	*** 000d9d	2c 2c 			sub	al,44	;002cH
+	*** 000d9f	75 03 			jne	$JCC3487
+	*** 000da1	e9 24 01 		jmp	$SC2254
+					$JCC3487:
+	*** 000da4	e9 2e 01 		jmp	$FC2246
+	*** 000da7	90 			nop	
+; Line 1295
+					$SC2252:
+; Line 1296
+	*** 000da8	80 0e 00 00 01 		or	BYTE PTR _fDriverFlags,1
+; Line 1297
+	*** 000dad	e9 25 01 		jmp	$FC2246
+; Line 1338
+					$SC2266:
+; Line 1341
+	*** 000db0	33 f6 			xor	si,si
+	*** 000db2	26 8a 05 		mov	al,BYTE PTR es:[di]
+	*** 000db5	2a e4 			sub	ah,ah
+	*** 000db7	2d 02 00 		sub	ax,2
+	*** 000dba	0b c0 			or	ax,ax
+	*** 000dbc	7f 03 			jg	$JCC3516
+	*** 000dbe	e9 14 01 		jmp	$FC2246
+					$JCC3516:
+					$F2267:
+; Line 1343
+	*** 000dc1	8e 06 00 00 		mov	es,WORD PTR $T2314
+	*** 000dc5	26 a1 e8 06 		mov	ax,WORD PTR es:$S2018_usSleepSeconds
+	*** 000dc9	89 46 fe 		mov	WORD PTR [bp-2],ax	;time
+; Line 1345
+	*** 000dcc	8b df 			mov	bx,di
+	*** 000dce	8e 46 fc 		mov	es,WORD PTR [bp-4]
+	*** 000dd1	03 de 			add	bx,si
+	*** 000dd3	26 83 7f 06 00 		cmp	WORD PTR es:[bx+6],0
+	*** 000dd8	74 0c 			je	$I2271
+; Line 1346
+	*** 000dda	8b df 			mov	bx,di
+	*** 000ddc	03 de 			add	bx,si
+	*** 000dde	26 6b 47 06 3c 		imul	ax,WORD PTR es:[bx+6],60	;003cH
+	*** 000de3	89 46 fe 		mov	WORD PTR [bp-2],ax	;time
+; Line 1348
+					$I2271:
+; Line 1349
+	*** 000de6	ff 76 fe 		push	WORD PTR [bp-2]	;time
+	*** 000de9	8b df 			mov	bx,di
+	*** 000deb	03 de 			add	bx,si
+	*** 000ded	26 ff 77 04 		push	WORD PTR es:[bx+4]
+	*** 000df1	26 ff 77 02 		push	WORD PTR es:[bx+2]
+	*** 000df5	e8 0c fa 		call	Add2TOTable
+	*** 000df8	83 c4 06 		add	sp,6
+	*** 000dfb	8e 46 fc 		mov	es,WORD PTR [bp-4]
+	*** 000dfe	26 8a 05 		mov	al,BYTE PTR es:[di]
+	*** 000e01	2a e4 			sub	ah,ah
+	*** 000e03	2d 02 00 		sub	ax,2
+	*** 000e06	83 c6 06 		add	si,6
+	*** 000e09	3b c6 			cmp	ax,si
+	*** 000e0b	7f b4 			jg	$F2267
+	*** 000e0d	e9 c5 00 		jmp	$FC2246
+; Line 1353
+					$SC2272:
+; Line 1356
+	*** 000e10	33 f6 			xor	si,si
+	*** 000e12	26 8a 05 		mov	al,BYTE PTR es:[di]
+	*** 000e15	2a e4 			sub	ah,ah
+	*** 000e17	2d 02 00 		sub	ax,2
+	*** 000e1a	0b c0 			or	ax,ax
+	*** 000e1c	7f 03 			jg	$JCC3612
+	*** 000e1e	e9 b4 00 		jmp	$FC2246
+					$JCC3612:
+					$F2273:
+; Line 1358
+	*** 000e21	8b df 			mov	bx,di
+	*** 000e23	03 de 			add	bx,si
+	*** 000e25	26 83 7f 06 00 		cmp	WORD PTR es:[bx+6],0
+	*** 000e2a	74 1a 			je	$I2276
+; Line 1360
+	*** 000e2c	1e 			push	ds
+	*** 000e2d	68 00 00 		push	OFFSET _szDriverName
+	*** 000e30	68 00 00 		push	INITDATA
+	*** 000e33	68 a8 04 		push	OFFSET $S2003_szCmdLineSyntax
+	*** 000e36	1e 			push	ds
+	*** 000e37	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000e3a	e8 00 00 		call	_sprintk
+	*** 000e3d	83 c4 0c 		add	sp,12	;000cH
+; Line 1361
+	*** 000e40	e8 00 00 		call	_SaveMessage
+; Line 1363
+	*** 000e43	eb 15 			jmp	SHORT $FC2274
+	*** 000e45	90 			nop	
+					$I2276:
+; Line 1366
+	*** 000e46	6a 00 			push	0
+	*** 000e48	8b df 			mov	bx,di
+	*** 000e4a	03 de 			add	bx,si
+	*** 000e4c	26 ff 77 04 		push	WORD PTR es:[bx+4]
+	*** 000e50	26 ff 77 02 		push	WORD PTR es:[bx+2]
+	*** 000e54	e8 ad f9 		call	Add2TOTable
+	*** 000e57	83 c4 06 		add	sp,6
+; Line 1356
+					$FC2274:
+	*** 000e5a	8e 46 fc 		mov	es,WORD PTR [bp-4]
+	*** 000e5d	26 8a 05 		mov	al,BYTE PTR es:[di]
+	*** 000e60	2a e4 			sub	ah,ah
+	*** 000e62	2d 02 00 		sub	ax,2
+	*** 000e65	83 c6 06 		add	si,6
+	*** 000e68	3b c6 			cmp	ax,si
+	*** 000e6a	7f b5 			jg	$F2273
+	*** 000e6c	eb 67 			jmp	SHORT $FC2246
+; Line 1370
+					$SC2278:
+; Line 1374
+	*** 000e6e	26 6b 45 02 3c 		imul	ax,WORD PTR es:[di+2],60	;003cH
+	*** 000e73	8e 06 00 00 		mov	es,WORD PTR $T2314
+	*** 000e77	26 a3 e8 06 		mov	WORD PTR es:$S2018_usSleepSeconds,ax
+; Line 1376
+	*** 000e7b	eb 58 			jmp	SHORT $FC2246
+	*** 000e7d	90 			nop	
+; Line 1315
+					$SC2257:
+; Line 1317
+	*** 000e7e	80 0e 00 00 03 		or	BYTE PTR _fDriverFlags,3
+; Line 1319
+	*** 000e83	26 80 3d 03 		cmp	BYTE PTR es:[di],3
+	*** 000e87	75 4c 			jne	$FC2246
+; Line 1323
+	*** 000e89	26 8a 45 02 		mov	al,BYTE PTR es:[di+2]
+	*** 000e8d	2a e4 			sub	ah,ah
+; Line 1334
+	*** 000e8f	48 			dec	ax
+	*** 000e90	74 1e 			je	$SC2264
+; Line 1331
+	*** 000e92	1e 			push	ds
+	*** 000e93	68 00 00 		push	OFFSET _DeviceTable
+	*** 000e96	1e 			push	ds
+	*** 000e97	68 00 00 		push	OFFSET _szDriverName
+	*** 000e9a	68 00 00 		push	INITDATA
+	*** 000e9d	68 f6 04 		push	OFFSET $S2005_szUnknownOption
+	*** 000ea0	1e 			push	ds
+	*** 000ea1	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000ea4	e8 00 00 		call	_sprintk
+	*** 000ea7	83 c4 10 		add	sp,16	;0010H
+; Line 1332
+	*** 000eaa	e8 00 00 		call	_SaveMessage
+; Line 1333
+	*** 000ead	eb 26 			jmp	SHORT $FC2246
+	*** 000eaf	90 			nop	
+; Line 1325
+					$SC2264:
+; Line 1326
+	*** 000eb0	80 0e 00 00 04 		or	BYTE PTR _fDriverFlags,4
+; Line 1327
+	*** 000eb5	eb 1e 			jmp	SHORT $FC2246
+	*** 000eb7	90 			nop	
+; Line 1307
+					$SC2255:
+; Line 1308
+	*** 000eb8	80 0e 00 00 08 		or	BYTE PTR _fDriverFlags,8
+; Line 1309
+	*** 000ebd	eb 16 			jmp	SHORT $FC2246
+	*** 000ebf	90 			nop	
+; Line 1311
+					$SC2256:
+; Line 1312
+	*** 000ec0	80 26 00 00 f7 		and	BYTE PTR _fDriverFlags,247	;00f7H
+; Line 1313
+	*** 000ec5	eb 0e 			jmp	SHORT $FC2246
+	*** 000ec7	90 			nop	
+; Line 1303
+					$SC2254:
+; Line 1304
+	*** 000ec8	80 0e 00 00 10 		or	BYTE PTR _fDriverFlags,16	;0010H
+; Line 1305
+	*** 000ecd	eb 06 			jmp	SHORT $FC2246
+	*** 000ecf	90 			nop	
+; Line 1299
+					$SC2253:
+; Line 1300
+	*** 000ed0	80 26 00 00 ef 		and	BYTE PTR _fDriverFlags,239	;00efH
+; Line 1291
+					$FC2246:
+	*** 000ed5	8e 46 fc 		mov	es,WORD PTR [bp-4]
+	*** 000ed8	26 8a 05 		mov	al,BYTE PTR es:[di]
+	*** 000edb	2a e4 			sub	ah,ah
+	*** 000edd	03 f8 			add	di,ax
+					$L2353:
+	*** 000edf	8e 46 fc 		mov	es,WORD PTR [bp-4]
+	*** 000ee2	26 8a 45 01 		mov	al,BYTE PTR es:[di+1]
+	*** 000ee6	88 46 ff 		mov	BYTE PTR [bp-1],al	;TokenId
+	*** 000ee9	3c ff 			cmp	al,255	;00ffH
+	*** 000eeb	74 03 			je	$JCC3819
+	*** 000eed	e9 6a fe 		jmp	$F2245
+					$JCC3819:
+; Line 1387
+	*** 000ef0	33 c0 			xor	ax,ax
+; Line 1388
+	*** 000ef2	5e 			pop	si
+	*** 000ef3	5f 			pop	di
+	*** 000ef4	c9 			leave	
+	*** 000ef5	c3 			ret	
+
+AnalyseCmdLine	ENDP
+
+CheckRegistration	PROC NEAR
+; Line 1409
+	*** 000ef6	c8 34 00 00 		enter	52,0
+	*** 000efa	57 			push	di
+	*** 000efb	56 			push	si
+;	code = -52
+;	c = -1
+;	i = -12
+;	p = -6
+;	k = -10
+; Line 1415
+	*** 000efc	33 c0 			xor	ax,ax
+	*** 000efe	b9 28 00 		mov	cx,40	;0028H
+	*** 000f01	8d 7e cc 		lea	di,WORD PTR [bp-52]	;code
+	*** 000f04	16 			push	ss
+	*** 000f05	07 			pop	es
+	*** 000f06	f3 			rep
+	*** 000f07	aa 			stosb
+; Line 1418
+	*** 000f08	89 46 f4 		mov	WORD PTR [bp-12],ax	;i
+	*** 000f0b	b8 34 06 		mov	ax,OFFSET _RegData+4
+	*** 000f0e	b9 00 00 		mov	cx,INITDATA
+	*** 000f11	8b f0 			mov	si,ax
+	*** 000f13	89 4e fc 		mov	WORD PTR [bp-4],cx
+	*** 000f16	ba 60 05 		mov	dx,OFFSET $S2008_szProduct
+	*** 000f19	89 56 f6 		mov	WORD PTR [bp-10],dx	;k
+	*** 000f1c	89 4e f8 		mov	WORD PTR [bp-8],cx
+	*** 000f1f	8e c1 			mov	es,cx
+	*** 000f21	8b d8 			mov	bx,ax
+	*** 000f23	26 80 3f 00 		cmp	BYTE PTR es:[bx],0
+	*** 000f27	74 4f 			je	$FB2291
+	*** 000f29	8b fa 			mov	di,dx
+					$F2289:
+; Line 1420
+	*** 000f2b	26 8a 04 		mov	al,BYTE PTR es:[si]
+	*** 000f2e	8b c8 			mov	cx,ax
+	*** 000f30	c0 e8 04 		shr	al,4
+	*** 000f33	0a c1 			or	al,cl
+	*** 000f35	24 0f 			and	al,15	;000fH
+	*** 000f37	88 46 ff 		mov	BYTE PTR [bp-1],al	;c
+; Line 1421
+	*** 000f3a	8e 46 f8 		mov	es,WORD PTR [bp-8]
+	*** 000f3d	26 f6 25 		mul	BYTE PTR es:[di]
+	*** 000f40	88 46 ff 		mov	BYTE PTR [bp-1],al	;c
+; Line 1423
+	*** 000f43	26 02 05 		add	al,BYTE PTR es:[di]
+	*** 000f46	8b 5e f4 		mov	bx,WORD PTR [bp-12]	;i
+	*** 000f49	8d 4e cc 		lea	cx,WORD PTR [bp-52]	;code
+	*** 000f4c	03 d9 			add	bx,cx
+	*** 000f4e	36 88 07 		mov	BYTE PTR ss:[bx],al
+; Line 1418
+	*** 000f51	46 			inc	si
+	*** 000f52	ff 46 f4 		inc	WORD PTR [bp-12]	;i
+	*** 000f55	26 80 7d 01 00 		cmp	BYTE PTR es:[di+1],0
+	*** 000f5a	75 08 			jne	$L2340
+	*** 000f5c	b8 60 05 		mov	ax,OFFSET $S2008_szProduct
+	*** 000f5f	b9 00 00 		mov	cx,INITDATA
+	*** 000f62	eb 06 			jmp	SHORT $L2354
+					$L2340:
+	*** 000f64	8d 45 01 		lea	ax,WORD PTR [di+1]
+	*** 000f67	8b 4e f8 		mov	cx,WORD PTR [bp-8]
+					$L2354:
+	*** 000f6a	8b f8 			mov	di,ax
+	*** 000f6c	89 4e f8 		mov	WORD PTR [bp-8],cx
+	*** 000f6f	8e 46 fc 		mov	es,WORD PTR [bp-4]
+	*** 000f72	26 80 3c 00 		cmp	BYTE PTR es:[si],0
+	*** 000f76	75 b3 			jne	$F2289
+; Line 1424
+					$FB2291:
+; Line 1425
+	*** 000f78	83 7e f4 00 		cmp	WORD PTR [bp-12],0	;i
+	*** 000f7c	74 27 			je	$EX2283
+	*** 000f7e	b8 00 00 		mov	ax,INITDATA
+	*** 000f81	8b 4e f4 		mov	cx,WORD PTR [bp-12]	;i
+	*** 000f84	1e 			push	ds
+	*** 000f85	bf 5c 06 		mov	di,OFFSET _RegData+44
+	*** 000f88	8d 76 cc 		lea	si,WORD PTR [bp-52]	;code
+	*** 000f8b	8e c0 			mov	es,ax
+	*** 000f8d	16 			push	ss
+	*** 000f8e	1f 			pop	ds
+	ASSUME DS: DGROUP
+	*** 000f8f	d1 e9 			shr	cx,1
+	*** 000f91	1b c0 			sbb	ax,ax
+	*** 000f93	3b c9 			cmp	cx,cx
+	*** 000f95	f3 			repz
+	*** 000f96	a7 			cmpsw
+	*** 000f97	75 04 			jne	$L2344
+	*** 000f99	2b c8 			sub	cx,ax
+	*** 000f9b	f3 			repz
+	*** 000f9c	a6 			cmpsb
+					$L2344:
+	*** 000f9d	1f 			pop	ds
+	ASSUME DS: DGROUP
+	*** 000f9e	75 05 			jne	$EX2283
+; Line 1426
+	*** 000fa0	80 0e 00 00 80 		or	BYTE PTR _fDriverFlags,128	;0080H
+; Line 1428
+					$EX2283:
+	*** 000fa5	5e 			pop	si
+	*** 000fa6	5f 			pop	di
+	*** 000fa7	c9 			leave	
+	*** 000fa8	c3 			ret	
+	*** 000fa9	90 			nop	
+
+CheckRegistration	ENDP
+	PUBLIC	_InitBase
+_InitBase	PROC NEAR
+; Line 1459
+	*** 000faa	c8 10 00 00 		enter	16,0
+	*** 000fae	57 			push	di
+	*** 000faf	56 			push	si
+;	pRPI = 4
+;	pInfoSegSel = -16
+;	register di = rc
+;	pRPO = -8
+;	pInitParms = -12
+;	pCmdLine = -4
+; Line 1463
+	*** 000fb0	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;pRPI
+	*** 000fb3	8b f3 			mov	si,bx
+	*** 000fb5	8c 46 fa 		mov	WORD PTR [bp-6],es
+	*** 000fb8	26 8b 47 12 		mov	ax,WORD PTR es:[bx+18]
+	*** 000fbc	26 8b 57 14 		mov	dx,WORD PTR es:[bx+20]
+	*** 000fc0	89 46 f4 		mov	WORD PTR [bp-12],ax	;pInitParms
+	*** 000fc3	89 56 f6 		mov	WORD PTR [bp-10],dx
+; Line 1470
+	*** 000fc6	26 8b 47 0e 		mov	ax,WORD PTR es:[bx+14]
+	*** 000fca	26 8b 57 10 		mov	dx,WORD PTR es:[bx+16]
+	*** 000fce	a3 00 00 		mov	WORD PTR _Device_Help,ax
+	*** 000fd1	89 16 02 00 		mov	WORD PTR _Device_Help+2,dx
+; Line 1471
+	*** 000fd5	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;pInitParms
+	*** 000fd8	26 8b 47 06 		mov	ax,WORD PTR es:[bx+6]
+	*** 000fdc	8c c2 			mov	dx,es
+	*** 000fde	8b f8 			mov	di,ax
+	*** 000fe0	89 56 fe 		mov	WORD PTR [bp-2],dx
+; Line 1473
+	*** 000fe3	6a 01 			push	1
+	*** 000fe5	6a 00 			push	0
+	*** 000fe7	8d 46 f0 		lea	ax,WORD PTR [bp-16]	;pInfoSegSel
+	*** 000fea	16 			push	ss
+	*** 000feb	50 			push	ax
+	*** 000fec	9a 00 00 00 00 		call	FAR PTR DEVHELP_GETDOSVAR
+; Line 1474
+	*** 000ff1	c4 5e f0 		les	bx,DWORD PTR [bp-16]	;pInfoSegSel
+	*** 000ff4	26 8b 07 		mov	ax,WORD PTR es:[bx]
+	*** 000ff7	c7 06 00 00 00 00 	mov	WORD PTR _pGlobalInfoSeg,0
+	*** 000ffd	a3 02 00 		mov	WORD PTR _pGlobalInfoSeg+2,ax
+; Line 1479
+	*** 001000	ff 76 fe 		push	WORD PTR [bp-2]
+	*** 001003	57 			push	di
+	*** 001004	e8 bd fc 		call	AnalyseCmdLine
+	*** 001007	83 c4 04 		add	sp,4
+; Line 1481
+	*** 00100a	e8 e9 fe 		call	CheckRegistration
+; Line 1483
+	*** 00100d	f6 06 00 00 80 		test	BYTE PTR _fDriverFlags,128	;0080H
+	*** 001012	75 05 			jne	$I2301
+; Line 1484
+	*** 001014	80 0e 00 00 01 		or	BYTE PTR _fDriverFlags,1
+; Line 1485
+					$I2301:
+	*** 001019	f6 06 00 00 01 		test	BYTE PTR _fDriverFlags,1
+	*** 00101e	74 4f 			je	$I2302
+; Line 1487
+	*** 001020	6a 63 			push	99	;0063H
+	*** 001022	6a 00 			push	0
+	*** 001024	68 00 00 		push	INITDATA
+	*** 001027	68 60 05 		push	OFFSET $S2008_szProduct
+	*** 00102a	68 00 00 		push	INITDATA
+	*** 00102d	68 72 05 		push	OFFSET $S2009_szLogo
+	*** 001030	1e 			push	ds
+	*** 001031	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 001034	e8 00 00 		call	_sprintk
+	*** 001037	83 c4 10 		add	sp,16	;0010H
+; Line 1488
+	*** 00103a	e8 00 00 		call	_SaveMessage
+; Line 1489
+	*** 00103d	f6 06 00 00 80 		test	BYTE PTR _fDriverFlags,128	;0080H
+	*** 001042	74 18 			je	$I2303
+; Line 1491
+	*** 001044	68 00 00 		push	INITDATA
+	*** 001047	68 34 06 		push	OFFSET _RegData+4
+	*** 00104a	68 00 00 		push	INITDATA
+	*** 00104d	68 1e 06 		push	OFFSET $S2011_szReg
+	*** 001050	1e 			push	ds
+	*** 001051	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 001054	e8 00 00 		call	_sprintk
+	*** 001057	83 c4 0c 		add	sp,12	;000cH
+	*** 00105a	eb 10 			jmp	SHORT $L2355
+					$I2303:
+; Line 1496
+	*** 00105c	68 00 00 		push	INITDATA
+	*** 00105f	68 fc 05 		push	OFFSET $S2010_szNoReg
+	*** 001062	1e 			push	ds
+	*** 001063	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 001066	e8 00 00 		call	_sprintk
+	*** 001069	83 c4 08 		add	sp,8
+; Line 1497
+					$L2355:
+	*** 00106c	e8 00 00 		call	_SaveMessage
+; Line 1502
+					$I2302:
+; Line 1503
+	*** 00106f	e8 58 f8 		call	ScanDevices
+	*** 001072	8b f8 			mov	di,ax
+	*** 001074	0b ff 			or	di,di
+	*** 001076	75 05 			jne	$I2305
+; Line 1505
+	*** 001078	e8 0f fc 		call	InstallTimer
+	*** 00107b	8b f8 			mov	di,ax
+; Line 1511
+					$I2305:
+	*** 00107d	0b ff 			or	di,di
+	*** 00107f	75 2b 			jne	$I2306
+; Line 1516
+	*** 001081	8e 46 fa 		mov	es,WORD PTR [bp-6]
+	*** 001084	26 c6 44 0d 00 		mov	BYTE PTR es:[si+13],0
+; Line 1517
+	*** 001089	b8 00 00 		mov	ax,OFFSET Code_End
+	*** 00108c	24 f0 			and	al,240	;00f0H
+	*** 00108e	05 10 00 		add	ax,16	;0010H
+	*** 001091	26 89 44 0e 		mov	WORD PTR es:[si+14],ax
+; Line 1518
+	*** 001095	a1 00 00 		mov	ax,WORD PTR _npInitData
+	*** 001098	24 f0 			and	al,240	;00f0H
+	*** 00109a	05 10 00 		add	ax,16	;0010H
+	*** 00109d	26 89 44 10 		mov	WORD PTR es:[si+16],ax
+; Line 1521
+	*** 0010a1	80 0e 01 00 01 		or	BYTE PTR _fDriverFlags+1,1
+; Line 1522
+	*** 0010a6	b8 00 01 		mov	ax,256	;0100H
+	*** 0010a9	eb 1e 			jmp	SHORT $L2345
+	*** 0010ab	90 			nop	
+; Line 1524
+					$I2306:
+; Line 1526
+	*** 0010ac	8e 46 fa 		mov	es,WORD PTR [bp-6]
+	*** 0010af	33 c0 			xor	ax,ax
+	*** 0010b1	26 88 44 0d 		mov	BYTE PTR es:[si+13],al
+; Line 1528
+	*** 0010b5	26 89 44 0e 		mov	WORD PTR es:[si+14],ax
+	*** 0010b9	26 89 44 10 		mov	WORD PTR es:[si+16],ax
+; Line 1531
+	*** 0010bd	0b ff 			or	di,di
+	*** 0010bf	7d 05 			jge	$I2308
+	*** 0010c1	b8 0c 81 		mov	ax,-32500	;810cH
+	*** 0010c4	eb 03 			jmp	SHORT $L2345
+					$I2308:
+	*** 0010c6	b8 15 81 		mov	ax,-32491	;8115H
+					$L2345:
+; Line 1536
+	*** 0010c9	5e 			pop	si
+	*** 0010ca	5f 			pop	di
+	*** 0010cb	c9 			leave	
+	*** 0010cc	c3 			ret	
+	*** 0010cd	90 			nop	
+
+_InitBase	ENDP
+_TEXT	ENDS
+END

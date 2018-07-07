@@ -1,0 +1,202 @@
+head	1.3;
+access;
+symbols
+	VSETUPv0_84:1.3
+	VSETUP_82:1.3
+	VSETUPv0_80:1.3
+	VSETUPv0_71:1.3
+	VSETUPv0_70:1.3
+	VSETUPv0_60:1.2
+	VSETUPv0_52:1.1
+	VSETUPv0_51:1.1
+	VSETUPv0_50:1.1
+	VSETUPv0_20:1.1;
+locks; strict;
+comment	@ * @;
+
+
+1.3
+date	99.02.09.02.51.36;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.12.13.22.39.45;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.04.29.00.44.00;	author vitus;	state Stab;
+branches;
+next	;
+
+
+desc
+@Dialog box to select directory for .ini file.
+@
+
+
+1.3
+log
+@- switched to C++
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/iniloc.cpp,v $
+ * $Revision: 1.2 $
+ * $Date: 1998/12/13 22:39:45 $
+ * $Locker: vitus $
+ *
+ *	Dialog box to select directory for .ini file.
+ *
+ * $Log: iniloc.cpp,v $
+ * Revision 1.2  1998/12/13 22:39:45  vitus
+ * - changed as global headers moved to /source/Lib
+ *
+ * Revision 1.1  1998/04/29 00:44:00  vitus
+ * Initial revision
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+ */
+static char vcid[]="$Id: iniloc.cpp,v 1.2 1998/12/13 22:39:45 vitus Exp vitus $";
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define __IBMC__	0
+#define INCL_WIN
+#include <os2.h>
+
+#include "../../../Lib/defines.h"
+#include "resources.h"
+#include "vsetup.h"
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	InidirDialogProc(hwnd,msg,mp1,mp2)
+ * PARAMETER
+ *	hwnd,msg,mp1,mp2	standard parameter
+ *	WM_INITDLG		mp2 contains pointer to defaul dir
+ *
+ * RETURNS
+ *	MRESULT			standard result code
+ *	dialog handling returns id of control which ended dialog
+ *
+ * DESPRIPTION
+ *	Nothing special, selfcontained dialog procedure.
+ *
+ * REMARKS
+ */
+PUBLIC MRESULT EXPENTRY
+InilocDialogProc(HWND hwnd,ULONG msg,MPARAM mp1,MPARAM mp2)
+{
+    static char *pszDir;			/* copied from parameter */
+
+    switch( msg )
+    {
+      case WM_INITDLG:
+	pszDir = (char *)PVOIDFROMMP(mp2);
+	WinSetWindowText(WinWindowFromID(hwnd, EF_INILOCATION), pszDir);
+	break;
+
+      case WM_COMMAND:
+	switch( SHORT1FROMMP(mp1) )
+	{
+	  case DID_OK:
+	    {
+		char  chText[_MAX_PATH];
+		LONG  cbText;
+
+		cbText = WinQueryWindowText(WinWindowFromID(hwnd, EF_INILOCATION),
+					    sizeof(chText), chText);
+		chText[cbText] = '\0';
+		if( CheckValidDir(hwnd, chText) != 0 )
+		{
+						/* set input to entry field */
+		    return 0;			/* redo from start */
+		}
+		strcpy(pszDir, chText);		/* copy to caller */
+		WinDismissDlg(hwnd, DID_OK);
+	    }
+	    return 0;
+
+	  case DID_CANCEL:
+	    WinDismissDlg(hwnd, DID_CANCEL);
+	    return 0;
+	}
+	break;
+
+      default:
+	break;
+    }
+    return WinDefDlgProc( hwnd, msg, mp1, mp2 );
+}
+
+@
+
+
+1.2
+log
+@- changed as global headers moved to /source/Lib
+@
+text
+@d2 4
+a5 4
+ * $Source: r:/source/driver/raid/setup/RCS/iniloc.c,v $
+ * $Revision: 1.1 $
+ * $Date: 1998/04/29 00:44:00 $
+ * $Locker$
+d9 4
+a12 1
+ * $Log: iniloc.c,v $
+d15 2
+a16 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+d18 1
+a18 1
+static char vcid[]="$Id: iniloc.c,v 1.1 1998/04/29 00:44:00 vitus Stab vitus $";
+d24 1
+d59 1
+a59 1
+	pszDir = PVOIDFROMMP(mp2);
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source: e:/source/disks/bench/RCS/iniloc.c,v $
+ * $Revision: 1.2 $
+ * $Date: 1996/03/19 00:05:21 $
+ * $Author: vitus $
+d7 1
+a7 1
+ * Dialog box to select directory for .ini file.
+d9 3
+a11 1
+ * $Log$
+d15 1
+a15 1
+static char vcid[]="$Id: iniloc.c,v 1.2 1996/03/19 00:05:21 vitus Exp $";
+d24 1
+a24 1
+#include "../../../tools/defines.h"
+d31 1
+a31 1
+/*
+d37 1
+d41 1
+a41 2
+ * GLOBAL
+ *	none
+d44 1
+@

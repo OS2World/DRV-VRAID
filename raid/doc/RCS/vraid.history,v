@@ -1,0 +1,315 @@
+head	1.9;
+access;
+symbols
+	VRAID_REL23:1.9
+	REL22:1.9
+	VRAIDv0_70:1.9
+	VRAIDv0_60:1.6
+	VRAIDv0_51:1.4
+	VRAIDv0_50:1.3
+	VRAIDv0_40:1.1
+	VRAIDv0_30:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.9
+date	99.06.09.01.57.51;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.04.30.18.54.53;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.03.25.00.43.00;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	98.12.22.00.35.03;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	98.11.24.01.40.27;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	98.11.05.23.35.33;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.10.07.23.45.54;	author vitus;	state Stab;
+branches;
+next	1.2;
+
+1.2
+date	98.10.07.23.24.06;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.06.26.23.24.37;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@VRAID - Driver History
+@
+
+
+1.9
+log
+@- added description of VRAID >0.66, drive which implements RAID 1
+- added description of VSETUP >0.71, RAID 1 create/destroy/add code
+@
+text
+@-*- Mode: indented-text -*-
+--- $Id: vraid.history,v 1.8 1999/04/30 18:54:53 vitus Exp vitus $
+
+	VRAID - Driver History
+
+
+Version 0.70 -  
+
+    - changed the way a registration key is build and checked.  Old keys
+      won't work with this driver release and vice versa!
+    - added demo key code (timebombed)
+
+Version 0.66 -  02/06-1999
+
+    - build process saves state on shutdown and completion
+    - tested RAID 1 code: OK, drive failure has to be tested
+    - ignores disks with VRAID partition but no PHYSDEVICE
+      configuration.  That way you don't have to remove VRAID.FLT from
+      Config.Sys when removing a disk from VRAID's disk pool.
+
+
+Version 0.60 -  22/12-1998, published
+
+    - added IOCtls to support VSETUP's detection "OS/2 device = Array Drive"
+    - Memory is now allocated as "LOCKTYPE_LONG_ANYMEM", should work
+      on machines with less than 16MB, too
+    - actually implemented registration code
+
+
+Version 0.51 -  6/11-1998, published
+
+    - smaller changes (WAIT_IS_INTERRUPTABLE)
+    - switched from timebomb to "not registered" mode
+
+
+Version 0.50 -	7/10-1998, published
+
+    - added IOCtls to allow VSetup.exe access disks when vraid.flt is
+      installed.  Incomplete but needs some information about kernel
+      and OS2DASD working.
+    - added "timebomb" code
+
+Version 0.40 -	September 1998
+
+    - fixed nasty bug causing hangs or traps with HPFS386.  Didn't happen
+      with simple HPFS...
+
+Version 0.30 -	25/6-1998
+
+    - stable enough to install it on a working machine (HPFS386)
+    - changed to HOSTDRIVE -> VRAIDRIVE -> PHYSDEVICE workers because
+      setup program happened to work that way (tip: write setup first and
+      driver afterwards, seems to eliminate a rework :-).
+
+Version 0.20 -	29/5-1998
+
+    - changed layout of administrative sectors
+
+Version 0.10 -	8/4-1998
+
+    - accepts single,stripe,chain
+
+
+======================================================================
+
+	VSetup - Setup History
+
+
+    - add disk space to Mirror/Chain with DnD
+    - remove members of Mirror
+
+
+Version 0.71 -  30/4-1998, published
+
+    - fixed a nasty bug which could lead to overwriting other partitions
+      or even the MBR!  Don't use any vsetup.exe below 0.71!
+    - doesn't accept partition sizes below 10MB
+
+
+Version 0.70 -  25/3-1998, published
+
+    - asks user whether it's OK to write to a "non-lockable" disk.  Suggestion
+      from pdd@@os2ss.com
+    - completely recoded in C++, all arrays/container icons are objects!
+    - displays internal IDs in icon descriptions.  Will be used when
+      drag'n drop is implemented.
+    - corrected Drives->Dump code
+
+
+Version 0.60 -  22/12-1998, published
+
+    - added code to detect OS/2 devices which are array drives.
+      Hopefully this will work in any situation.  The effect is that
+      you no longer need to remove VRAID.flt if you want to modify or
+      create array drives.
+    - displays which OS/2 devices are array drives
+    - removed that "beta, beta" warning
+
+
+Version 0.52 -  24/11-1998, published
+
+    - BUGFIX: the code which searches OS/2 devices was removed from
+      0.51.  Sorry about that, hopefully this version will finally
+      work (?)
+
+
+Version 0.51 -  6/11-1998, published
+
+    - modifies PHYSDEVICEs when VRAID.FLT is installed but new
+      PYHSDEVICEs can't be defined (OS/2 device aren't scanned at all)
+    - BUGFIX: see above, modify all already created PHYSDEVICEs
+    - BUGFIX: removed SYS3175 when not specifying array type or
+      partition position
+    - BUGFIX: 0.50 was published as debug version :-(
+
+
+Version 0.50 -	7/10-1998, published
+
+    - added "beta, beta" messages
+    - added code to *display* configuration when vraid.flt is loaded
+
+Version 0.30 -	August 1998
+
+    - working code
+
+
+======================================================================
+@
+
+
+1.8
+log
+@- added description of VSetup 0.71
+@
+text
+@d2 1
+a2 1
+--- $Id: vraid.history,v 1.7 1999/03/25 00:43:00 vitus Exp vitus $
+d7 13
+a19 1
+    - tested RAID 1 code: OK, build/rebuild still missing
+d68 5
+d125 3
+@
+
+
+1.7
+log
+@- added description of VSetup 0.70
+@
+text
+@d2 1
+a2 1
+--- $Id: vraid.history,v 1.6 1998/12/22 00:35:03 vitus Exp vitus $
+d56 7
+d71 1
+@
+
+
+1.6
+log
+@- added description of vraid 0.60 and vsetup 0.60, release candidates
+@
+text
+@d2 1
+a2 1
+--- $Id: vraid.history,v 1.5 1998/11/24 01:40:27 vitus Exp vitus $
+d7 3
+d33 1
+a33 1
+    - fixed nasty bug causing hangs or traps with HPFS.  Didn't happen
+d55 9
+@
+
+
+1.5
+log
+@- added vsetup 0.52, description of bugfixed _b2 (-> _b3)
+@
+text
+@d2 1
+a2 1
+--- $Id: vraid.history,v 1.4 1998/11/05 23:35:33 vitus Exp vitus $
+d7 8
+a27 1
+
+d52 9
+@
+
+
+1.4
+log
+@- added vraid.flt 0.51, vsetup.exe 0.51
+@
+text
+@d2 1
+a2 1
+--- $Id: vraid.history,v 1.3 1998/10/07 23:45:54 vitus Stab vitus $
+d45 7
+@
+
+
+1.3
+log
+@- added section "VSetup - Setup History"
+@
+text
+@d2 1
+a2 1
+--- $Id: vraid.history,v 1.2 1998/10/07 23:24:06 vitus Exp vitus $
+d7 7
+a13 1
+Version 0.50 -	7/10-1998
+d20 1
+d47 11
+a57 1
+Version 0.50 -	7/10-1998
+@
+
+
+1.2
+log
+@- version 0.40
+- version 0.50
+@
+text
+@d2 1
+a2 1
+--- $Id: vraid.history,v 1.1 1998/06/26 23:24:37 vitus Exp vitus $
+d34 14
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 1
+a2 1
+--- $Id$
+d5 13
+@

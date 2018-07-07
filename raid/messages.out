@@ -1,0 +1,145 @@
+
+/VERBOSE
+/!SHARE
+!!!Registration level 0003 detected!!!
+--- screen --- 
+Visual RAID Filter                                            Version 0.85
+Copyright 1998-2001 by Vitus Jensen (2:2474/424)              Sep  6 2001
+--- screen --- Registered to: Demonstration key, valid until 12/2001 (level 3)
+[BuildWorkmem] entry
+ppWorkMem == 00E73000
+[SearchPhysDevices] Looking for physical devices...
+[CheckAdapterInfo] Adapter 0: hardware doesn't support scatter/gather
+[SearchPhysDevices] looking for units on adapter 0000
+[SearchPhysDevices] new PHYSDEVICE: 0648:467A
+[CheckUnitInfo] Adapter 0, Unit 0: diskette drive
+[SearchPhysDevices] looking for units on adapter 0001
+[SearchPhysDevices] new PHYSDEVICE: 0648:467A
+[LocalAllocateUnit] PPHYSDEVICE 0648:467A
+[VerifyDiskData] 0648:467A
+[FindVRaidPartition] 0648:467A
+[VerifyDiskData] no VRAID partition
+[LocalDeallocateUnit] PPHYSDEVICE 0648:467A
+[SearchPhysDevices] looking for units on adapter 0002
+[SearchPhysDevices] new PHYSDEVICE: 0648:467A
+[LocalAllocateUnit] PPHYSDEVICE 0648:467A
+[VerifyDiskData] 0648:467A
+[FindVRaidPartition] 0648:467A
+[FindVRaidPartition] found starting at 00000800
+[VerifyDiskData] Adapter 2, Unit 0: found PHYSDEVICE
+--- screen --- Adapter 2, Unit 0: found PHYSDEVICE
+[PhysdevCreate] at 0648:4692 for phys 0648:467A
+                ID 0658:9A44  4B 9C F9 DD 8C 3B                                K....;
+[SearchPhysDevices] new PHYSDEVICE: 0648:46AF
+[LocalAllocateUnit] PPHYSDEVICE 0648:46AF
+[VerifyDiskData] 0648:46AF
+[FindVRaidPartition] 0648:46AF
+[FindVRaidPartition] found starting at 00000020
+[VerifyDiskData] Adapter 2, Unit 1: found PHYSDEVICE
+--- screen --- Adapter 2, Unit 1: found PHYSDEVICE
+[PhysdevCreate] at 0648:46C7 for phys 0648:46AF
+                ID 0658:9A44  F7 93 4F 7C 6B 3A                                ..O|k:
+[SearchPhysDevices] new PHYSDEVICE: 0648:46E4
+[LocalAllocateUnit] PPHYSDEVICE 0648:46E4
+[VerifyDiskData] 0648:46E4
+[FindVRaidPartition] 0648:46E4
+[FindVRaidPartition] found starting at 00000800
+[VerifyDiskData] Adapter 2, Unit 2: found PHYSDEVICE
+--- screen --- Adapter 2, Unit 2: found PHYSDEVICE
+[PhysdevCreate] at 0648:46FC for phys 0648:46E4
+                ID 0658:9A44  F2 FE 4D 80 56 3B                                ..M.V;
+[SearchPhysDevices] new PHYSDEVICE: 0648:4719
+[LocalAllocateUnit] PPHYSDEVICE 0648:4719
+[VerifyDiskData] 0648:4719
+[FindVRaidPartition] 0648:4719
+[FindVRaidPartition] found starting at 00000020
+[VerifyDiskData] Adapter 2, Unit 3: found PHYSDEVICE
+--- screen --- Adapter 2, Unit 3: found PHYSDEVICE
+[PhysdevCreate] at 0648:4731 for phys 0648:4719
+                ID 0658:9A44  F7 93 41 7C 6B 3A                                ..A|k:
+[InitBase] Found 4 PHYSDEVICE's
+--- screen --- Found 4 PHYSDEVICE's
+[InitBase] allocating timer
+[BuildDevTree] Building device tree...
+[BuildDevTree] reading index 0000
+[ProcessAdminIO] dev 0648:4692, sector 00000001
+[AnalyseVRDev2] Creating RAID 5...
+--- screen --- Creating RAID 5...
+[Raid5Create] at 0648:474E
+[Raid5Create] admin data
+0658:9A30  56 52 41 49 44 44 45 56-49 43 45 32 20 20 20 20  VRAIDDEVICE2    
+0658:9A40  E0 D8 A6 3B 4B 9C E0 D8-A6 3B 06 81 03 00 F7 93  ...;K....;......
+0658:9A50  4F 7C 6B 3A 01 00 FF FF-FF FF C0 6F 86 00 F7 93  O|k:.......o....
+0658:9A60  41 7C 6B 3A 01 00 FF FF-FF FF C0 6F 86 00 4B 9C  A|k:.......o..K.
+0658:9A70  F9 DD 8C 3B 01 00 FF FF-FF FF C0 6F 86 00 00 00  ...;.......o....
+0658:9A80  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9A90  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9AA0  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9AB0  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9AC0  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9AD0  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9AE0  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9AF0  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9B00  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9B10  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9B20  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9B30  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9B40  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9B50  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9B60  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9B70  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9B80  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9B90  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9BA0  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9BB0  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9BC0  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9BD0  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9BE0  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9BF0  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9C00  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9C10  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00  ................
+0658:9C20  00 00 00 00 00 00 00 00-00 00 00 00 00 00 91 B0  ................
+[ValidateVSec2] checking 0648:46C7
+[ProcessAdminIO] dev 0648:46C7, sector 00000001
+[ValidateVSec2] checking 0648:4731
+[ProcessAdminIO] dev 0648:4731, sector 00000001
+[ValidateVSec2] checking 0648:4692
+[ProcessAdminIO] dev 0648:4692, sector 00000001
+[Raid5Create] sector says BUILD, all childs valid -> clear BUILD
+[AddHostDrive] creating at 0648:4789 for 0648:474E
+[AddHostDrive] Creating array drive
+[BuildDevTree] reading index 0002
+[ProcessAdminIO] dev 0648:46FC, sector 00000001
+[BuildDevTree] PHYSDEVICE-only (index 0002)
+[BuildDevTree] Found 1 array drive(s)
+--- screen --- Found 1 array drive(s)
+[RegisterDriver] entry
+[InitBase] driver installed (0001 array, 0000 basedisks)
+[Raid5Notify] starting UpdateCfg()
+[UpdateCfg] entry
+[UpdateCfg] SETUPACTIVE|!INIT2DONE, update delayed!
+[Raid5Notify] starting UpdateCfg()
+[UpdateCfg] entry
+[UpdateCfg] SETUPACTIVE|!INIT2DONE, update delayed!
+InitLevel2()
+SCSI Disk Sleeper                                            Version 0.96
+Copyright 1996-97 by Vitus Jensen (2:2474/424)               Nov 23 1997
+Not registered for commercial use
+Adapter 1, Unit 0 installed (20 min)
+Adapter 2, Unit 0 installed (20 min)
+Adapter 2, Unit 1 installed (20 min)
+Adapter 2, Unit 2 installed (20 min)
+Adapter 2, Unit 3 installed (20 min)
+Visual RAID Filter                                            Version 0.85
+Copyright 1998-2001 by Vitus Jensen (2:2474/424)              Sep  6 2001
+Registered to: Demonstration key, valid until 12/2001 (level 3)
+Adapter 2, Unit 0: found PHYSDEVICE
+Adapter 2, Unit 1: found PHYSDEVICE
+Adapter 2, Unit 2: found PHYSDEVICE
+Adapter 2, Unit 3: found PHYSDEVICE
+Found 4 PHYSDEVICE's
+Creating RAID 5...
+Found 1 array drive(s)
+
+[Raid5Notify] starting UpdateCfg()
+[UpdateCfg] entry

@@ -1,0 +1,967 @@
+;	Static Name Aliases
+;
+;	$S1317_szBuildStart	EQU	szBuildStart
+;	$S1318_szBuildMemFail	EQU	szBuildMemFail
+;	$S170_id	EQU	id
+	TITLE   Build.c
+	.286p
+	.287
+_TEXT	SEGMENT  WORD PUBLIC 'CODE'
+_TEXT	ENDS
+_DATA	SEGMENT  WORD PUBLIC 'DATA'
+_DATA	ENDS
+CONST	SEGMENT  WORD PUBLIC 'CONST'
+CONST	ENDS
+_BSS	SEGMENT  WORD PUBLIC 'BSS'
+_BSS	ENDS
+INITDATA	SEGMENT  WORD PUBLIC 'FAR_DATA'
+INITDATA	ENDS
+DGROUP	GROUP	CONST, _BSS, _DATA
+	ASSUME DS: DGROUP
+	ASSUME  SS: NOTHING
+EXTRN	_SaveMessage:NEAR
+EXTRN	_MemFree:NEAR
+EXTRN	_MemAlloc:NEAR
+EXTRN	_AllocateVrio:NEAR
+EXTRN	_FreeVrio:NEAR
+EXTRN	DEVHELP_VIRTTOLIN:FAR
+EXTRN	_AllocateFixed:NEAR
+EXTRN	DEVHELP_ARMCTXHOOK:FAR
+EXTRN	__aNulmul:NEAR
+EXTRN	_QueueVrio:NEAR
+EXTRN	__aNuldiv:NEAR
+EXTRN	DEVHELP_LINTOPAGELIST:FAR
+EXTRN	_sprintk:NEAR
+EXTRN	_ppWorkMem:DWORD
+EXTRN	_hdMemHook:DWORD
+EXTRN	_hdBuildHook:DWORD
+EXTRN	_aBuildProcess:BYTE
+EXTRN	_cBuildProcess:WORD
+EXTRN	_vrioBuild:BYTE
+EXTRN	_vrioUpdate:BYTE
+EXTRN	_fDriverFlags:WORD
+EXTRN	_szMsgBuffer:BYTE
+_DATA      SEGMENT
+	ORG	$+52
+$SG1426	DB	're',  00H
+$SG1427	DB	00H
+	ORG	$-56
+$S170_id	DB	'$Id: build.c,v 1.13 2001/07/22 00:26:01 vitus Exp $',  00H
+_DATA      ENDS
+CONST      SEGMENT
+$S1317_szBuildStart	DB	'Starting %sbuild process (at %u%%)',  00H
+	ORG	$+1
+$S1318_szBuildMemFail	DB	'Out of memory while starting [re]build process',  00H
+CONST      ENDS
+_TEXT      SEGMENT
+	ASSUME	CS: _TEXT
+	PUBLIC	_UpdateNotify
+_UpdateNotify	PROC NEAR
+; Line 128
+	*** 000000	c8 06 00 00 		enter	6,0
+	*** 000004	57 			push	di
+	*** 000005	56 			push	si
+;	keep_data = -2
+;	io = 4
+; Line 129
+	*** 000006	c7 46 fe 00 00 		mov	WORD PTR [bp-2],0	;keep_data
+; Line 133
+; Line 135
+	*** 00000b	9c 			pushf	
+; Line 136
+	*** 00000c	fa 			cli	
+; Line 138
+	*** 00000d	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 000010	26 83 7f 12 00 		cmp	WORD PTR es:[bx+18],0
+	*** 000015	74 03 			je	$JCC21
+	*** 000017	e9 e3 00 		jmp	$SD1336
+					$JCC21:
+; Line 139
+; Line 140
+	*** 00001a	26 8b 47 14 		mov	ax,WORD PTR es:[bx+20]
+	*** 00001e	2d 11 00 		sub	ax,17	;0011H
+	*** 000021	74 05 			je	$SC1331
+	*** 000023	48 			dec	ax
+	*** 000024	e9 d6 00 		jmp	$SD1336
+; Line 141
+	*** 000027	90 			nop	
+; Line 142
+					$SC1331:
+; Line 143
+;	writeio = -6
+; Line 150
+	*** 000028	26 c4 77 18 		les	si,DWORD PTR es:[bx+24]
+	*** 00002c	26 8b 04 		mov	ax,WORD PTR es:[si]
+	*** 00002f	2b 06 00 00 		sub	ax,WORD PTR _ppWorkMem
+	*** 000033	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000036	26 8b 4f 1a 		mov	cx,WORD PTR es:[bx+26]
+	*** 00003a	8b f9 			mov	di,cx
+	*** 00003c	2b f6 			sub	si,si
+	*** 00003e	8b d1 			mov	dx,cx
+	*** 000040	52 			push	dx
+	*** 000041	50 			push	ax
+	*** 000042	26 ff 77 02 		push	WORD PTR es:[bx+2]
+	*** 000046	26 ff 37 		push	WORD PTR es:[bx]
+	*** 000049	26 c4 1f 		les	bx,DWORD PTR es:[bx]
+	*** 00004c	26 ff 57 13 		call	WORD PTR es:[bx+19]
+	*** 000050	83 c4 08 		add	sp,8
+	*** 000053	0b c0 			or	ax,ax
+	*** 000055	75 03 			jne	$JCC85
+	*** 000057	e9 a3 00 		jmp	$SD1336
+					$JCC85:
+; Line 158
+	*** 00005a	1e 			push	ds
+	*** 00005b	68 00 00 		push	OFFSET _vrioUpdate
+	*** 00005e	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 000061	26 ff 77 02 		push	WORD PTR es:[bx+2]
+	*** 000065	26 ff 37 		push	WORD PTR es:[bx]
+	*** 000068	e8 00 00 		call	_AllocateVrio
+	*** 00006b	83 c4 08 		add	sp,8
+	*** 00006e	89 46 fa 		mov	WORD PTR [bp-6],ax	;writeio
+	*** 000071	89 56 fc 		mov	WORD PTR [bp-4],dx
+	*** 000074	0b d0 			or	dx,ax
+	*** 000076	75 03 			jne	$JCC118
+	*** 000078	e9 82 00 		jmp	$SD1336
+					$JCC118:
+; Line 161
+	*** 00007b	c4 5e fa 		les	bx,DWORD PTR [bp-6]	;writeio
+	*** 00007e	26 c7 47 14 12 00 	mov	WORD PTR es:[bx+20],18	;0012H
+; Line 163
+	*** 000084	c4 76 04 		les	si,DWORD PTR [bp+4]	;io
+	*** 000087	26 8b 44 16 		mov	ax,WORD PTR es:[si+22]
+	*** 00008b	c4 5e fa 		les	bx,DWORD PTR [bp-6]	;writeio
+	*** 00008e	26 89 47 16 		mov	WORD PTR es:[bx+22],ax
+; Line 164
+	*** 000092	c4 76 04 		les	si,DWORD PTR [bp+4]	;io
+	*** 000095	26 8b 44 18 		mov	ax,WORD PTR es:[si+24]
+	*** 000099	26 8b 54 1a 		mov	dx,WORD PTR es:[si+26]
+	*** 00009d	c4 5e fa 		les	bx,DWORD PTR [bp-6]	;writeio
+	*** 0000a0	26 89 47 18 		mov	WORD PTR es:[bx+24],ax
+	*** 0000a4	26 89 57 1a 		mov	WORD PTR es:[bx+26],dx
+; Line 165
+	*** 0000a8	c4 76 04 		les	si,DWORD PTR [bp+4]	;io
+	*** 0000ab	26 8b 44 1c 		mov	ax,WORD PTR es:[si+28]
+	*** 0000af	26 8b 54 1e 		mov	dx,WORD PTR es:[si+30]
+	*** 0000b3	c4 5e fa 		les	bx,DWORD PTR [bp-6]	;writeio
+	*** 0000b6	26 89 47 1c 		mov	WORD PTR es:[bx+28],ax
+	*** 0000ba	26 89 57 1e 		mov	WORD PTR es:[bx+30],dx
+; Line 167
+	*** 0000be	c4 76 04 		les	si,DWORD PTR [bp+4]	;io
+	*** 0000c1	26 8b 44 20 		mov	ax,WORD PTR es:[si+32]
+	*** 0000c5	c4 5e fa 		les	bx,DWORD PTR [bp-6]	;writeio
+	*** 0000c8	26 89 47 20 		mov	WORD PTR es:[bx+32],ax
+; Line 168
+	*** 0000cc	c4 76 04 		les	si,DWORD PTR [bp+4]	;io
+	*** 0000cf	26 8b 44 24 		mov	ax,WORD PTR es:[si+36]
+	*** 0000d3	26 8b 54 26 		mov	dx,WORD PTR es:[si+38]
+	*** 0000d7	c4 5e fa 		les	bx,DWORD PTR [bp-6]	;writeio
+	*** 0000da	26 89 47 24 		mov	WORD PTR es:[bx+36],ax
+	*** 0000de	26 89 57 26 		mov	WORD PTR es:[bx+38],dx
+; Line 169
+	*** 0000e2	c4 76 04 		les	si,DWORD PTR [bp+4]	;io
+	*** 0000e5	26 8b 44 22 		mov	ax,WORD PTR es:[si+34]
+	*** 0000e9	c4 5e fa 		les	bx,DWORD PTR [bp-6]	;writeio
+	*** 0000ec	26 89 47 22 		mov	WORD PTR es:[bx+34],ax
+; Line 170
+	*** 0000f0	06 			push	es
+	*** 0000f1	53 			push	bx
+	*** 0000f2	e8 00 00 		call	_QueueVrio
+	*** 0000f5	83 c4 04 		add	sp,4
+; Line 171
+	*** 0000f8	c7 46 fe 01 00 		mov	WORD PTR [bp-2],1	;keep_data
+; Line 172
+; Line 178
+					$SD1336:
+; Line 179
+; Line 180
+; Line 182
+; Line 185
+	*** 0000fd	9d 			popf	
+; Line 188
+	*** 0000fe	83 7e fe 01 		cmp	WORD PTR [bp-2],1	;keep_data
+	*** 000102	74 2e 			je	$I1338
+; Line 189
+; Line 191
+; Line 193
+; Line 194
+	*** 000104	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 000107	26 c4 77 18 		les	si,DWORD PTR es:[bx+24]
+	*** 00010b	26 8b 04 		mov	ax,WORD PTR es:[si]
+	*** 00010e	2b 06 00 00 		sub	ax,WORD PTR _ppWorkMem
+	*** 000112	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000115	26 8b 57 1a 		mov	dx,WORD PTR es:[bx+26]
+	*** 000119	52 			push	dx
+	*** 00011a	50 			push	ax
+	*** 00011b	e8 00 00 		call	_MemFree
+	*** 00011e	83 c4 04 		add	sp,4
+; Line 195
+	*** 000121	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 000124	26 ff 77 1a 		push	WORD PTR es:[bx+26]
+	*** 000128	26 ff 77 18 		push	WORD PTR es:[bx+24]
+	*** 00012c	e8 00 00 		call	_MemFree
+	*** 00012f	83 c4 04 		add	sp,4
+; Line 196
+					$I1338:
+; Line 198
+	*** 000132	5e 			pop	si
+	*** 000133	5f 			pop	di
+	*** 000134	c9 			leave	
+	*** 000135	c3 			ret	
+
+_UpdateNotify	ENDP
+	PUBLIC	_BuildNotify
+_BuildNotify	PROC NEAR
+; Line 225
+	*** 000136	c8 0c 00 00 		enter	12,0
+	*** 00013a	56 			push	si
+;	i = -8
+;	proc = -4
+;	keep_data = -6
+;	io = 4
+; Line 226
+	*** 00013b	2b c0 			sub	ax,ax
+	*** 00013d	89 46 fe 		mov	WORD PTR [bp-2],ax
+	*** 000140	89 46 fc 		mov	WORD PTR [bp-4],ax	;proc
+; Line 227
+	*** 000143	89 46 fa 		mov	WORD PTR [bp-6],ax	;keep_data
+; Line 232
+; Line 234
+	*** 000146	9c 			pushf	
+; Line 235
+	*** 000147	fa 			cli	
+; Line 239
+	*** 000148	c7 46 f8 00 00 		mov	WORD PTR [bp-8],0	;i
+	*** 00014d	eb 04 			jmp	SHORT $F1345
+; Line 245
+; Line 246
+	*** 00014f	90 			nop	
+					$FC1346:
+	*** 000150	ff 46 f8 		inc	WORD PTR [bp-8]	;i
+					$F1345:
+	*** 000153	83 7e f8 0c 		cmp	WORD PTR [bp-8],12	;000cH	;i
+	*** 000157	73 2e 			jae	$FB1347
+; Line 240
+; Line 241
+	*** 000159	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 00015c	26 8b 07 		mov	ax,WORD PTR es:[bx]
+	*** 00015f	26 8b 57 02 		mov	dx,WORD PTR es:[bx+2]
+	*** 000163	8b 5e f8 		mov	bx,WORD PTR [bp-8]	;i
+	*** 000166	8b cb 			mov	cx,bx
+	*** 000168	d1 e3 			shl	bx,1
+	*** 00016a	03 d9 			add	bx,cx
+	*** 00016c	c1 e3 02 		shl	bx,2
+	*** 00016f	03 d9 			add	bx,cx
+	*** 000171	39 87 00 00 		cmp	WORD PTR _aBuildProcess[bx],ax
+	*** 000175	75 d9 			jne	$FC1346
+	*** 000177	39 97 02 00 		cmp	WORD PTR _aBuildProcess[bx+2],dx
+	*** 00017b	75 d3 			jne	$FC1346
+; Line 242
+; Line 243
+	*** 00017d	81 c3 00 00 		add	bx,OFFSET _aBuildProcess
+	*** 000181	89 5e fc 		mov	WORD PTR [bp-4],bx	;proc
+	*** 000184	8c 5e fe 		mov	WORD PTR [bp-2],ds
+; Line 244
+					$FB1347:
+; Line 247
+; Line 250
+	*** 000187	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 00018a	26 83 7f 12 00 		cmp	WORD PTR es:[bx+18],0
+	*** 00018f	74 03 			je	$JCC399
+	*** 000191	e9 f5 00 		jmp	$SB1351
+					$JCC399:
+; Line 251
+; Line 252
+	*** 000194	26 8b 47 14 		mov	ax,WORD PTR es:[bx+20]
+	*** 000198	e9 e5 00 		jmp	$S1350
+; Line 253
+	*** 00019b	90 			nop	
+; Line 254
+					$SC1354:
+; Line 255
+;	writeio = -12
+; Line 265
+	*** 00019c	1e 			push	ds
+	*** 00019d	68 00 00 		push	OFFSET _vrioBuild
+	*** 0001a0	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;proc
+	*** 0001a3	26 ff 77 02 		push	WORD PTR es:[bx+2]
+	*** 0001a7	26 ff 37 		push	WORD PTR es:[bx]
+	*** 0001aa	e8 00 00 		call	_AllocateVrio
+	*** 0001ad	83 c4 08 		add	sp,8
+	*** 0001b0	89 46 f4 		mov	WORD PTR [bp-12],ax	;writeio
+	*** 0001b3	89 56 f6 		mov	WORD PTR [bp-10],dx
+	*** 0001b6	0b d0 			or	dx,ax
+	*** 0001b8	75 03 			jne	$JCC440
+	*** 0001ba	e9 cc 00 		jmp	$SB1351
+					$JCC440:
+; Line 268
+	*** 0001bd	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;writeio
+	*** 0001c0	26 c7 47 14 02 00 	mov	WORD PTR es:[bx+20],2
+; Line 270
+	*** 0001c6	c4 76 04 		les	si,DWORD PTR [bp+4]	;io
+	*** 0001c9	26 8b 44 16 		mov	ax,WORD PTR es:[si+22]
+	*** 0001cd	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;writeio
+	*** 0001d0	26 89 47 16 		mov	WORD PTR es:[bx+22],ax
+; Line 271
+	*** 0001d4	c4 76 04 		les	si,DWORD PTR [bp+4]	;io
+	*** 0001d7	26 8b 44 18 		mov	ax,WORD PTR es:[si+24]
+	*** 0001db	26 8b 54 1a 		mov	dx,WORD PTR es:[si+26]
+	*** 0001df	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;writeio
+	*** 0001e2	26 89 47 18 		mov	WORD PTR es:[bx+24],ax
+	*** 0001e6	26 89 57 1a 		mov	WORD PTR es:[bx+26],dx
+; Line 272
+	*** 0001ea	c4 76 04 		les	si,DWORD PTR [bp+4]	;io
+	*** 0001ed	26 8b 44 1c 		mov	ax,WORD PTR es:[si+28]
+	*** 0001f1	26 8b 54 1e 		mov	dx,WORD PTR es:[si+30]
+	*** 0001f5	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;writeio
+	*** 0001f8	26 89 47 1c 		mov	WORD PTR es:[bx+28],ax
+	*** 0001fc	26 89 57 1e 		mov	WORD PTR es:[bx+30],dx
+; Line 274
+	*** 000200	c4 76 04 		les	si,DWORD PTR [bp+4]	;io
+	*** 000203	26 8b 44 20 		mov	ax,WORD PTR es:[si+32]
+	*** 000207	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;writeio
+	*** 00020a	26 89 47 20 		mov	WORD PTR es:[bx+32],ax
+; Line 275
+	*** 00020e	c4 76 04 		les	si,DWORD PTR [bp+4]	;io
+	*** 000211	26 8b 44 24 		mov	ax,WORD PTR es:[si+36]
+	*** 000215	26 8b 54 26 		mov	dx,WORD PTR es:[si+38]
+	*** 000219	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;writeio
+	*** 00021c	26 89 47 24 		mov	WORD PTR es:[bx+36],ax
+	*** 000220	26 89 57 26 		mov	WORD PTR es:[bx+38],dx
+; Line 276
+	*** 000224	c4 76 04 		les	si,DWORD PTR [bp+4]	;io
+	*** 000227	26 8b 44 22 		mov	ax,WORD PTR es:[si+34]
+	*** 00022b	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;writeio
+	*** 00022e	26 89 47 22 		mov	WORD PTR es:[bx+34],ax
+; Line 277
+	*** 000232	06 			push	es
+	*** 000233	53 			push	bx
+	*** 000234	e8 00 00 		call	_QueueVrio
+	*** 000237	83 c4 04 		add	sp,4
+; Line 278
+	*** 00023a	c7 46 fa 01 00 		mov	WORD PTR [bp-6],1	;keep_data
+; Line 279
+; Line 280
+	*** 00023f	eb 48 			jmp	SHORT $SB1351
+	*** 000241	90 			nop	
+; Line 282
+					$SC1357:
+; Line 283
+	*** 000242	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 000245	26 8b 47 24 		mov	ax,WORD PTR es:[bx+36]
+	*** 000249	26 8b 57 26 		mov	dx,WORD PTR es:[bx+38]
+	*** 00024d	26 03 47 22 		add	ax,WORD PTR es:[bx+34]
+	*** 000251	83 d2 00 		adc	dx,0
+	*** 000254	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;proc
+	*** 000257	26 89 47 04 		mov	WORD PTR es:[bx+4],ax
+	*** 00025b	26 89 57 06 		mov	WORD PTR es:[bx+6],dx
+; Line 285
+	*** 00025f	26 8b 47 04 		mov	ax,WORD PTR es:[bx+4]
+	*** 000263	26 c4 37 		les	si,DWORD PTR es:[bx]
+	*** 000266	26 39 44 0b 		cmp	WORD PTR es:[si+11],ax
+	*** 00026a	75 1d 			jne	$SB1351
+	*** 00026c	26 39 54 0d 		cmp	WORD PTR es:[si+13],dx
+	*** 000270	75 17 			jne	$SB1351
+; Line 286
+; Line 295
+	*** 000272	ff 76 fe 		push	WORD PTR [bp-2]
+	*** 000275	ff 76 fc 		push	WORD PTR [bp-4]	;proc
+	*** 000278	e8 00 00 		call	BuildEnd
+	*** 00027b	83 c4 04 		add	sp,4
+; Line 296
+; Line 297
+	*** 00027e	eb 09 			jmp	SHORT $SB1351
+; Line 299
+					$S1350:
+	*** 000280	48 			dec	ax
+	*** 000281	75 03 			jne	$JCC641
+	*** 000283	e9 16 ff 		jmp	$SC1354
+					$JCC641:
+	*** 000286	48 			dec	ax
+	*** 000287	74 b9 			je	$SC1357
+; Line 300
+; Line 301
+					$SB1351:
+; Line 303
+; Line 306
+	*** 000289	9d 			popf	
+; Line 309
+	*** 00028a	83 7e fa 01 		cmp	WORD PTR [bp-6],1	;keep_data
+	*** 00028e	74 2d 			je	$I1361
+; Line 310
+; Line 312
+; Line 314
+; Line 315
+	*** 000290	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 000293	26 ff 77 1a 		push	WORD PTR es:[bx+26]
+	*** 000297	26 ff 77 18 		push	WORD PTR es:[bx+24]
+	*** 00029b	e8 00 00 		call	_MemFree
+	*** 00029e	83 c4 04 		add	sp,4
+; Line 316
+	*** 0002a1	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;proc
+	*** 0002a4	26 c6 47 08 00 		mov	BYTE PTR es:[bx+8],0
+; Line 319
+	*** 0002a9	6a 00 			push	0
+	*** 0002ab	6a 00 			push	0
+	*** 0002ad	ff 36 02 00 		push	WORD PTR _hdBuildHook+2
+	*** 0002b1	ff 36 00 00 		push	WORD PTR _hdBuildHook
+	*** 0002b5	9a 00 00 00 00 		call	FAR PTR DEVHELP_ARMCTXHOOK
+	*** 0002ba	89 46 f8 		mov	WORD PTR [bp-8],ax	;i
+; Line 320
+; Line 322
+; Line 323
+					$I1361:
+; Line 325
+	*** 0002bd	5e 			pop	si
+	*** 0002be	c9 			leave	
+	*** 0002bf	c3 			ret	
+
+_BuildNotify	ENDP
+
+BuildWorker	PROC NEAR
+; Line 345
+	*** 0002c0	c8 1a 00 00 		enter	26,0
+	*** 0002c4	57 			push	di
+	*** 0002c5	56 			push	si
+;	proc = 4
+;	scga = -14
+;	vrio = -4
+;	this_bcnt = -10
+;	sgl_size = -12
+;	lin_of_scga = -18
+;	register di = error
+;	ul = -22
+; Line 356
+	*** 0002c6	8b 76 04 		mov	si,WORD PTR [bp+4]	;proc
+; Line 360
+	*** 0002c9	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0002cc	26 c4 1c 		les	bx,DWORD PTR es:[si]
+	*** 0002cf	26 8b 47 0b 		mov	ax,WORD PTR es:[bx+11]
+	*** 0002d3	26 8b 57 0d 		mov	dx,WORD PTR es:[bx+13]
+	*** 0002d7	89 46 e6 		mov	WORD PTR [bp-26],ax
+	*** 0002da	89 56 e8 		mov	WORD PTR [bp-24],dx
+	*** 0002dd	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0002e0	26 2b 44 04 		sub	ax,WORD PTR es:[si+4]
+	*** 0002e4	26 1b 54 06 		sbb	dx,WORD PTR es:[si+6]
+	*** 0002e8	0b d2 			or	dx,dx
+	*** 0002ea	75 05 			jne	$L1440
+	*** 0002ec	3d 80 00 		cmp	ax,128	;0080H
+	*** 0002ef	76 05 			jbe	$L1435
+					$L1440:
+	*** 0002f1	bf 80 00 		mov	di,128	;0080H
+	*** 0002f4	eb 07 			jmp	SHORT $L1436
+					$L1435:
+	*** 0002f6	8b 7e e6 		mov	di,WORD PTR [bp-26]
+	*** 0002f9	26 2b 7c 04 		sub	di,WORD PTR es:[si+4]
+					$L1436:
+; Line 369
+	*** 0002fd	68 88 00 		push	136	;0088H
+	*** 000300	e8 00 00 		call	_MemAlloc
+	*** 000303	83 c4 02 		add	sp,2
+	*** 000306	89 46 f2 		mov	WORD PTR [bp-14],ax	;scga
+	*** 000309	89 56 f4 		mov	WORD PTR [bp-12],dx	;sgl_size
+; Line 370
+	*** 00030c	8b c2 			mov	ax,dx
+	*** 00030e	0b 46 f2 		or	ax,WORD PTR [bp-14]	;scga
+	*** 000311	75 03 			jne	$JCC785
+	*** 000313	e9 ed 00 		jmp	$EX1366
+					$JCC785:
+	*** 000316	89 7e f6 		mov	WORD PTR [bp-10],di	;this_bcnt
+; Line 374
+	*** 000319	1e 			push	ds
+	*** 00031a	68 00 00 		push	OFFSET _vrioBuild
+	*** 00031d	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000320	26 ff 74 02 		push	WORD PTR es:[si+2]
+	*** 000324	26 ff 34 		push	WORD PTR es:[si]
+	*** 000327	e8 00 00 		call	_AllocateVrio
+	*** 00032a	83 c4 08 		add	sp,8
+	*** 00032d	89 46 fc 		mov	WORD PTR [bp-4],ax	;vrio
+	*** 000330	89 56 fe 		mov	WORD PTR [bp-2],dx
+	*** 000333	0b d0 			or	dx,ax
+	*** 000335	74 56 			je	$L1453
+; Line 386
+	*** 000337	ff 76 f4 		push	WORD PTR [bp-12]	;sgl_size
+	*** 00033a	6a 00 			push	0
+	*** 00033c	ff 76 f2 		push	WORD PTR [bp-14]	;scga
+	*** 00033f	8d 46 ee 		lea	ax,WORD PTR [bp-18]	;lin_of_scga
+	*** 000342	16 			push	ss
+	*** 000343	50 			push	ax
+	*** 000344	9a 00 00 00 00 		call	FAR PTR DEVHELP_VIRTTOLIN
+	*** 000349	8b f8 			mov	di,ax
+	*** 00034b	0b ff 			or	di,di
+	*** 00034d	75 2e 			jne	$I1379
+; Line 389
+	*** 00034f	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000352	26 ff 74 0b 		push	WORD PTR es:[si+11]
+	*** 000356	26 ff 74 09 		push	WORD PTR es:[si+9]
+	*** 00035a	8b 46 f6 		mov	ax,WORD PTR [bp-10]	;this_bcnt
+	*** 00035d	2b d2 			sub	dx,dx
+	*** 00035f	8a d4 			mov	dl,ah
+	*** 000361	8a e0 			mov	ah,al
+	*** 000363	2a c0 			sub	al,al
+	*** 000365	d1 e0 			shl	ax,1
+	*** 000367	d1 d2 			rcl	dx,1
+	*** 000369	52 			push	dx
+	*** 00036a	50 			push	ax
+	*** 00036b	ff 76 f0 		push	WORD PTR [bp-16]
+	*** 00036e	ff 76 ee 		push	WORD PTR [bp-18]	;lin_of_scga
+	*** 000371	8d 46 ea 		lea	ax,WORD PTR [bp-22]	;ul
+	*** 000374	16 			push	ss
+	*** 000375	50 			push	ax
+	*** 000376	9a 00 00 00 00 		call	FAR PTR DEVHELP_LINTOPAGELIST
+	*** 00037b	8b f8 			mov	di,ax
+; Line 390
+					$I1379:
+	*** 00037d	0b ff 			or	di,di
+	*** 00037f	74 17 			je	$I1380
+; Line 393
+	*** 000381	ff 76 fe 		push	WORD PTR [bp-2]
+	*** 000384	ff 76 fc 		push	WORD PTR [bp-4]	;vrio
+	*** 000387	e8 00 00 		call	_FreeVrio
+	*** 00038a	83 c4 04 		add	sp,4
+; Line 394
+					$L1453:
+	*** 00038d	ff 76 f4 		push	WORD PTR [bp-12]	;sgl_size
+	*** 000390	ff 76 f2 		push	WORD PTR [bp-14]	;scga
+	*** 000393	e8 00 00 		call	_MemFree
+	*** 000396	eb 68 			jmp	SHORT $L1452
+; Line 398
+					$I1380:
+	*** 000398	8b 46 f2 		mov	ax,WORD PTR [bp-14]	;scga
+	*** 00039b	8b 56 f4 		mov	dx,WORD PTR [bp-12]	;sgl_size
+	*** 00039e	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;vrio
+	*** 0003a1	26 89 47 18 		mov	WORD PTR es:[bx+24],ax
+	*** 0003a5	26 89 57 1a 		mov	WORD PTR es:[bx+26],dx
+; Line 399
+	*** 0003a9	a1 00 00 		mov	ax,WORD PTR _ppWorkMem
+	*** 0003ac	8b 16 02 00 		mov	dx,WORD PTR _ppWorkMem+2
+	*** 0003b0	03 46 f2 		add	ax,WORD PTR [bp-14]	;scga
+	*** 0003b3	83 d2 00 		adc	dx,0
+	*** 0003b6	26 89 47 1c 		mov	WORD PTR es:[bx+28],ax
+	*** 0003ba	26 89 57 1e 		mov	WORD PTR es:[bx+30],dx
+; Line 400
+	*** 0003be	8b 46 ea 		mov	ax,WORD PTR [bp-22]	;ul
+	*** 0003c1	26 89 47 16 		mov	WORD PTR es:[bx+22],ax
+; Line 402
+	*** 0003c5	26 c7 47 14 01 00 	mov	WORD PTR es:[bx+20],1
+; Line 403
+	*** 0003cb	26 c7 47 20 00 00 	mov	WORD PTR es:[bx+32],0
+; Line 404
+	*** 0003d1	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0003d4	26 8b 44 04 		mov	ax,WORD PTR es:[si+4]
+	*** 0003d8	26 8b 54 06 		mov	dx,WORD PTR es:[si+6]
+	*** 0003dc	8c c1 			mov	cx,es
+	*** 0003de	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;vrio
+	*** 0003e1	26 89 47 24 		mov	WORD PTR es:[bx+36],ax
+	*** 0003e5	26 89 57 26 		mov	WORD PTR es:[bx+38],dx
+; Line 405
+	*** 0003e9	8b 46 f6 		mov	ax,WORD PTR [bp-10]	;this_bcnt
+	*** 0003ec	26 89 47 22 		mov	WORD PTR es:[bx+34],ax
+; Line 407
+	*** 0003f0	8e c1 			mov	es,cx
+	*** 0003f2	26 c6 44 08 01 		mov	BYTE PTR es:[si+8],1
+; Line 408
+	*** 0003f7	ff 76 fe 		push	WORD PTR [bp-2]
+	*** 0003fa	ff 76 fc 		push	WORD PTR [bp-4]	;vrio
+	*** 0003fd	e8 00 00 		call	_QueueVrio
+					$L1452:
+	*** 000400	83 c4 04 		add	sp,4
+; Line 413
+					$EX1366:
+	*** 000403	5e 			pop	si
+	*** 000404	5f 			pop	di
+	*** 000405	c9 			leave	
+	*** 000406	c3 			ret	
+	*** 000407	90 			nop	
+
+BuildWorker	ENDP
+	PUBLIC	_UpdateCfg
+_UpdateCfg	PROC NEAR
+; Line 449
+	*** 000408	c8 0e 00 00 		enter	14,0
+	*** 00040c	56 			push	si
+;	vrd = 4
+;	forced = 8
+;	buffer = -10
+;	scga = -14
+;	vrio = -4
+;	started = -6
+; Line 453
+	*** 00040d	c7 46 fa 00 00 		mov	WORD PTR [bp-6],0	;started
+; Line 459
+	*** 000412	83 7e 08 00 		cmp	WORD PTR [bp+8],0	;forced
+	*** 000416	75 14 			jne	$D1392
+	*** 000418	f6 06 01 00 02 		test	BYTE PTR _fDriverFlags+1,2
+	*** 00041d	74 07 			je	$I1391
+	*** 00041f	f6 06 00 00 10 		test	BYTE PTR _fDriverFlags,16	;0010H
+	*** 000424	74 06 			je	$D1392
+					$I1391:
+; Line 462
+	*** 000426	33 c0 			xor	ax,ax
+	*** 000428	e9 fa 00 		jmp	$EX1385
+	*** 00042b	90 			nop	
+; Line 465
+					$D1392:
+; Line 467
+	*** 00042c	68 00 02 		push	512	;0200H
+	*** 00042f	e8 00 00 		call	_MemAlloc
+	*** 000432	83 c4 02 		add	sp,2
+	*** 000435	89 46 f6 		mov	WORD PTR [bp-10],ax	;buffer
+	*** 000438	89 56 f8 		mov	WORD PTR [bp-8],dx
+; Line 468
+	*** 00043b	8b c2 			mov	ax,dx
+	*** 00043d	0b 46 f6 		or	ax,WORD PTR [bp-10]	;buffer
+	*** 000440	75 03 			jne	$JCC1088
+	*** 000442	e9 dd 00 		jmp	$DB1394
+					$JCC1088:
+; Line 471
+	*** 000445	6a 08 			push	8
+	*** 000447	e8 00 00 		call	_MemAlloc
+	*** 00044a	83 c4 02 		add	sp,2
+	*** 00044d	89 46 f2 		mov	WORD PTR [bp-14],ax	;scga
+	*** 000450	89 56 f4 		mov	WORD PTR [bp-12],dx
+; Line 472
+	*** 000453	8b c2 			mov	ax,dx
+	*** 000455	0b 46 f2 		or	ax,WORD PTR [bp-14]	;scga
+	*** 000458	75 10 			jne	$I1396
+; Line 474
+	*** 00045a	ff 76 f8 		push	WORD PTR [bp-8]
+	*** 00045d	ff 76 f6 		push	WORD PTR [bp-10]	;buffer
+					$L1454:
+	*** 000460	e8 00 00 		call	_MemFree
+	*** 000463	83 c4 04 		add	sp,4
+; Line 475
+	*** 000466	e9 b9 00 		jmp	$DB1394
+	*** 000469	90 			nop	
+; Line 478
+					$I1396:
+; Line 479
+	*** 00046a	1e 			push	ds
+	*** 00046b	68 00 00 		push	OFFSET _vrioUpdate
+	*** 00046e	ff 76 06 		push	WORD PTR [bp+6]
+	*** 000471	ff 76 04 		push	WORD PTR [bp+4]	;vrd
+	*** 000474	e8 00 00 		call	_AllocateVrio
+	*** 000477	83 c4 08 		add	sp,8
+	*** 00047a	8b f0 			mov	si,ax
+	*** 00047c	89 56 fe 		mov	WORD PTR [bp-2],dx
+	*** 00047f	0b d0 			or	dx,ax
+	*** 000481	75 15 			jne	$I1397
+; Line 481
+	*** 000483	ff 76 f8 		push	WORD PTR [bp-8]
+	*** 000486	ff 76 f6 		push	WORD PTR [bp-10]	;buffer
+	*** 000489	e8 00 00 		call	_MemFree
+	*** 00048c	83 c4 04 		add	sp,4
+; Line 482
+	*** 00048f	ff 76 f4 		push	WORD PTR [bp-12]
+	*** 000492	ff 76 f2 		push	WORD PTR [bp-14]	;scga
+	*** 000495	eb c9 			jmp	SHORT $L1454
+	*** 000497	90 			nop	
+; Line 488
+					$I1397:
+	*** 000498	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 00049b	26 c7 44 14 11 00 	mov	WORD PTR es:[si+20],17	;0011H
+; Line 490
+	*** 0004a1	8b 46 f2 		mov	ax,WORD PTR [bp-14]	;scga
+	*** 0004a4	8b 56 f4 		mov	dx,WORD PTR [bp-12]
+	*** 0004a7	26 89 44 18 		mov	WORD PTR es:[si+24],ax
+	*** 0004ab	26 89 54 1a 		mov	WORD PTR es:[si+26],dx
+; Line 491
+	*** 0004af	a1 00 00 		mov	ax,WORD PTR _ppWorkMem
+	*** 0004b2	8b 16 02 00 		mov	dx,WORD PTR _ppWorkMem+2
+	*** 0004b6	03 46 f2 		add	ax,WORD PTR [bp-14]	;scga
+	*** 0004b9	83 d2 00 		adc	dx,0
+	*** 0004bc	26 89 44 1c 		mov	WORD PTR es:[si+28],ax
+	*** 0004c0	26 89 54 1e 		mov	WORD PTR es:[si+30],dx
+; Line 492
+	*** 0004c4	26 c7 44 16 01 00 	mov	WORD PTR es:[si+22],1
+; Line 493
+	*** 0004ca	8c c0 			mov	ax,es
+	*** 0004cc	26 c4 5c 18 		les	bx,DWORD PTR es:[si+24]
+	*** 0004d0	8b 0e 00 00 		mov	cx,WORD PTR _ppWorkMem
+	*** 0004d4	8b 16 02 00 		mov	dx,WORD PTR _ppWorkMem+2
+	*** 0004d8	03 4e f6 		add	cx,WORD PTR [bp-10]	;buffer
+	*** 0004db	83 d2 00 		adc	dx,0
+	*** 0004de	26 89 0f 		mov	WORD PTR es:[bx],cx
+	*** 0004e1	26 89 57 02 		mov	WORD PTR es:[bx+2],dx
+; Line 494
+	*** 0004e5	8e c0 			mov	es,ax
+	*** 0004e7	26 c4 5c 18 		les	bx,DWORD PTR es:[si+24]
+	*** 0004eb	26 c7 47 04 00 02 	mov	WORD PTR es:[bx+4],512	;0200H
+	*** 0004f1	26 c7 47 06 00 00 	mov	WORD PTR es:[bx+6],0
+; Line 496
+	*** 0004f7	8e c0 			mov	es,ax
+	*** 0004f9	26 c7 44 20 00 00 	mov	WORD PTR es:[si+32],0
+; Line 497
+	*** 0004ff	26 c7 44 22 01 00 	mov	WORD PTR es:[si+34],1
+; Line 498
+	*** 000505	2b c9 			sub	cx,cx
+	*** 000507	26 89 4c 26 		mov	WORD PTR es:[si+38],cx
+	*** 00050b	26 89 4c 24 		mov	WORD PTR es:[si+36],cx
+; Line 500
+	*** 00050f	26 c7 44 12 ff ff 	mov	WORD PTR es:[si+18],-1	;ffffH
+; Line 502
+	*** 000515	50 			push	ax
+	*** 000516	56 			push	si
+	*** 000517	e8 00 00 		call	_QueueVrio
+	*** 00051a	83 c4 04 		add	sp,4
+; Line 503
+	*** 00051d	c7 46 fa 01 00 		mov	WORD PTR [bp-6],1	;started
+; Line 505
+					$DB1394:
+; Line 507
+	*** 000522	8b 46 fa 		mov	ax,WORD PTR [bp-6]	;started
+; Line 508
+					$EX1385:
+	*** 000525	5e 			pop	si
+	*** 000526	c9 			leave	
+	*** 000527	c3 			ret	
+
+_UpdateCfg	ENDP
+	PUBLIC	_UpdateBuilds
+_UpdateBuilds	PROC NEAR
+; Line 540
+	*** 000528	57 			push	di
+	*** 000529	56 			push	si
+;	i = -2
+	*** 00052a	be 00 00 		mov	si,OFFSET _aBuildProcess
+	*** 00052d	bf 0c 00 		mov	di,12	;000cH
+; Line 543
+					$F1400:
+; Line 545
+	*** 000530	8b 44 02 		mov	ax,WORD PTR [si+2]
+	*** 000533	0b 04 			or	ax,WORD PTR [si]
+	*** 000535	74 0e 			je	$FC1401
+	*** 000537	80 7c 08 00 		cmp	BYTE PTR [si+8],0
+	*** 00053b	75 08 			jne	$FC1401
+; Line 546
+	*** 00053d	1e 			push	ds
+	*** 00053e	56 			push	si
+	*** 00053f	e8 7e fd 		call	BuildWorker
+	*** 000542	83 c4 04 		add	sp,4
+; Line 543
+					$FC1401:
+	*** 000545	83 c6 0d 		add	si,13	;000dH
+	*** 000548	4f 			dec	di
+	*** 000549	75 e5 			jne	$F1400
+; Line 550
+	*** 00054b	5e 			pop	si
+	*** 00054c	5f 			pop	di
+	*** 00054d	c3 			ret	
+
+_UpdateBuilds	ENDP
+
+BuildEnd	PROC NEAR
+; Line 567
+	*** 00054e	55 			push	bp
+	*** 00054f	8b ec 			mov	bp,sp
+	*** 000551	57 			push	di
+	*** 000552	56 			push	si
+;	proc = 4
+;	rc = -2
+	*** 000553	8b 76 04 		mov	si,WORD PTR [bp+4]	;proc
+; Line 570
+	*** 000556	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000559	26 ff 74 0b 		push	WORD PTR es:[si+11]
+	*** 00055d	26 ff 74 09 		push	WORD PTR es:[si+9]
+	*** 000561	ff 36 02 00 		push	WORD PTR _hdMemHook+2
+	*** 000565	ff 36 00 00 		push	WORD PTR _hdMemHook
+	*** 000569	8c c7 			mov	di,es
+	*** 00056b	9a 00 00 00 00 		call	FAR PTR DEVHELP_ARMCTXHOOK
+; Line 576
+	*** 000570	8e c7 			mov	es,di
+	*** 000572	2b c0 			sub	ax,ax
+	*** 000574	26 89 44 0b 		mov	WORD PTR es:[si+11],ax
+	*** 000578	26 89 44 09 		mov	WORD PTR es:[si+9],ax
+; Line 577
+	*** 00057c	26 c4 1c 		les	bx,DWORD PTR es:[si]
+	*** 00057f	26 80 67 06 f6 		and	BYTE PTR es:[bx+6],246	;00f6H
+; Line 578
+	*** 000584	8e c7 			mov	es,di
+	*** 000586	26 89 44 02 		mov	WORD PTR es:[si+2],ax
+	*** 00058a	26 89 04 		mov	WORD PTR es:[si],ax
+; Line 585
+	*** 00058d	5e 			pop	si
+	*** 00058e	5f 			pop	di
+	*** 00058f	c9 			leave	
+	*** 000590	c3 			ret	
+	*** 000591	90 			nop	
+
+BuildEnd	ENDP
+	PUBLIC	_BuildCreate
+_BuildCreate	PROC NEAR
+; Line 615
+	*** 000592	c8 08 00 00 		enter	8,0
+	*** 000596	57 			push	di
+	*** 000597	56 			push	si
+;	vrd = 4
+;	next_sector = 8
+;	mode = 12
+;	register di = i
+;	error = -6
+; Line 617
+	*** 000598	c7 46 fa 09 81 		mov	WORD PTR [bp-6],-32503	;8109H	;error
+; Line 619
+	*** 00059d	33 ff 			xor	di,di
+	*** 00059f	bb 00 00 		mov	bx,OFFSET _aBuildProcess
+					$F1418:
+; Line 621
+	*** 0005a2	8b 47 02 		mov	ax,WORD PTR [bx+2]
+	*** 0005a5	0b 07 			or	ax,WORD PTR [bx]
+	*** 0005a7	74 0f 			je	$L1446
+; Line 619
+	*** 0005a9	83 c3 0d 		add	bx,13	;000dH
+	*** 0005ac	47 			inc	di
+	*** 0005ad	83 ff 0c 		cmp	di,12	;000cH
+	*** 0005b0	72 f0 			jb	$F1418
+	*** 0005b2	8b 76 fa 		mov	si,WORD PTR [bp-6]	;error
+	*** 0005b5	e9 d5 00 		jmp	$FB1420
+					$L1446:
+; Line 628
+	*** 0005b8	8b 46 04 		mov	ax,WORD PTR [bp+4]	;vrd
+	*** 0005bb	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 0005be	8b df 			mov	bx,di
+	*** 0005c0	d1 e3 			shl	bx,1
+	*** 0005c2	03 df 			add	bx,di
+	*** 0005c4	c1 e3 02 		shl	bx,2
+	*** 0005c7	03 df 			add	bx,di
+	*** 0005c9	8b cb 			mov	cx,bx
+	*** 0005cb	81 c3 00 00 		add	bx,OFFSET _aBuildProcess
+	*** 0005cf	89 5e f8 		mov	WORD PTR [bp-8],bx
+	*** 0005d2	89 07 			mov	WORD PTR [bx],ax
+	*** 0005d4	89 57 02 		mov	WORD PTR [bx+2],dx
+; Line 629
+	*** 0005d7	8b d9 			mov	bx,cx
+	*** 0005d9	8b 46 08 		mov	ax,WORD PTR [bp+8]	;next_sector
+	*** 0005dc	8b 56 0a 		mov	dx,WORD PTR [bp+10]
+	*** 0005df	89 87 04 00 		mov	WORD PTR _aBuildProcess[bx+4],ax
+	*** 0005e3	89 97 06 00 		mov	WORD PTR _aBuildProcess[bx+6],dx
+; Line 630
+	*** 0005e7	c6 87 08 00 00 		mov	BYTE PTR _aBuildProcess[bx+8],0
+; Line 634
+	*** 0005ec	81 c1 09 00 		add	cx,OFFSET _aBuildProcess+9
+	*** 0005f0	1e 			push	ds
+	*** 0005f1	51 			push	cx
+	*** 0005f2	6a 01 			push	1
+	*** 0005f4	6a 00 			push	0
+	*** 0005f6	e8 00 00 		call	_AllocateFixed
+	*** 0005f9	83 c4 08 		add	sp,8
+	*** 0005fc	8b f0 			mov	si,ax
+	*** 0005fe	0b f6 			or	si,si
+	*** 000600	74 36 			je	$I1422
+; Line 636
+	*** 000602	8b 5e f8 		mov	bx,WORD PTR [bp-8]
+	*** 000605	2b c0 			sub	ax,ax
+	*** 000607	89 47 02 		mov	WORD PTR [bx+2],ax
+	*** 00060a	89 07 			mov	WORD PTR [bx],ax
+; Line 638
+	*** 00060c	f6 06 01 00 01 		test	BYTE PTR _fDriverFlags+1,1
+	*** 000611	75 18 			jne	$I1423
+; Line 640
+	*** 000613	1e 			push	ds
+	*** 000614	68 24 00 		push	OFFSET DGROUP:$S1318_szBuildMemFail
+	*** 000617	1e 			push	ds
+	*** 000618	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 00061b	e8 00 00 		call	_sprintk
+	*** 00061e	83 c4 08 		add	sp,8
+; Line 642
+	*** 000621	f6 06 00 00 01 		test	BYTE PTR _fDriverFlags,1
+	*** 000626	74 03 			je	$I1423
+; Line 643
+	*** 000628	e8 00 00 		call	_SaveMessage
+; Line 646
+					$I1423:
+	*** 00062b	8b 5e f8 		mov	bx,WORD PTR [bp-8]
+	*** 00062e	2b c0 			sub	ax,ax
+	*** 000630	89 47 02 		mov	WORD PTR [bx+2],ax
+	*** 000633	89 07 			mov	WORD PTR [bx],ax
+; Line 647
+	*** 000635	eb 56 			jmp	SHORT $FB1420
+	*** 000637	90 			nop	
+; Line 650
+					$I1422:
+	*** 000638	f6 06 01 00 01 		test	BYTE PTR _fDriverFlags+1,1
+	*** 00063d	75 4a 			jne	$I1425
+; Line 654
+	*** 00063f	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;vrd
+	*** 000642	26 ff 77 0d 		push	WORD PTR es:[bx+13]
+	*** 000646	26 ff 77 0b 		push	WORD PTR es:[bx+11]
+	*** 00064a	6a 00 			push	0
+	*** 00064c	6a 64 			push	100	;0064H
+	*** 00064e	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 000651	ff 76 08 		push	WORD PTR [bp+8]	;next_sector
+	*** 000654	e8 00 00 		call	__aNulmul
+	*** 000657	52 			push	dx
+	*** 000658	50 			push	ax
+	*** 000659	e8 00 00 		call	__aNuldiv
+	*** 00065c	52 			push	dx
+	*** 00065d	50 			push	ax
+	*** 00065e	83 7e 0c 00 		cmp	WORD PTR [bp+12],0	;mode
+	*** 000662	74 06 			je	$L1443
+	*** 000664	b8 34 00 		mov	ax,OFFSET DGROUP:$SG1426
+	*** 000667	eb 04 			jmp	SHORT $L1444
+	*** 000669	90 			nop	
+					$L1443:
+	*** 00066a	b8 37 00 		mov	ax,OFFSET DGROUP:$SG1427
+					$L1444:
+	*** 00066d	8b f8 			mov	di,ax
+	*** 00066f	1e 			push	ds
+	*** 000670	50 			push	ax
+	*** 000671	1e 			push	ds
+	*** 000672	68 00 00 		push	OFFSET DGROUP:$S1317_szBuildStart
+	*** 000675	1e 			push	ds
+	*** 000676	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 000679	e8 00 00 		call	_sprintk
+	*** 00067c	83 c4 10 		add	sp,16	;0010H
+; Line 656
+	*** 00067f	f6 06 00 00 01 		test	BYTE PTR _fDriverFlags,1
+	*** 000684	74 03 			je	$I1425
+; Line 657
+	*** 000686	e8 00 00 		call	_SaveMessage
+; Line 661
+					$I1425:
+	*** 000689	ff 06 00 00 		inc	WORD PTR _cBuildProcess
+; Line 664
+					$FB1420:
+; Line 666
+	*** 00068d	8b c6 			mov	ax,si
+; Line 667
+	*** 00068f	5e 			pop	si
+	*** 000690	5f 			pop	di
+	*** 000691	c9 			leave	
+	*** 000692	c3 			ret	
+	*** 000693	90 			nop	
+
+_BuildCreate	ENDP
+	PUBLIC	_SaveArrayInfos
+_SaveArrayInfos	PROC NEAR
+; Line 687
+	*** 000694	57 			push	di
+	*** 000695	56 			push	si
+;	i = -2
+	*** 000696	be 00 00 		mov	si,OFFSET _aBuildProcess
+	*** 000699	bf 0c 00 		mov	di,12	;000cH
+; Line 691
+					$F1431:
+; Line 693
+	*** 00069c	8b 44 02 		mov	ax,WORD PTR [si+2]
+	*** 00069f	0b 04 			or	ax,WORD PTR [si]
+	*** 0006a1	74 0d 			je	$FC1432
+; Line 695
+	*** 0006a3	6a 00 			push	0
+	*** 0006a5	ff 74 02 		push	WORD PTR [si+2]
+	*** 0006a8	ff 34 			push	WORD PTR [si]
+	*** 0006aa	e8 5b fd 		call	_UpdateCfg
+	*** 0006ad	83 c4 06 		add	sp,6
+; Line 691
+					$FC1432:
+	*** 0006b0	83 c6 0d 		add	si,13	;000dH
+	*** 0006b3	4f 			dec	di
+	*** 0006b4	75 e6 			jne	$F1431
+; Line 699
+	*** 0006b6	5e 			pop	si
+	*** 0006b7	5f 			pop	di
+	*** 0006b8	c3 			ret	
+	*** 0006b9	90 			nop	
+
+_SaveArrayInfos	ENDP
+_TEXT	ENDS
+END

@@ -1,0 +1,1768 @@
+head	1.15;
+access;
+symbols
+	vrflt031113:1.15
+	vrflt010903:1.15
+	PREV010803:1.15
+	VRAIDv0_85:1.15
+	VRAIDv0_84:1.15
+	VRAIDv0_82:1.13
+	VRAIDv0_70:1.9
+	VRAIDv0_60:1.4
+	VRAIDv0_51:1.4
+	VRAIDv0_50:1.3
+	VRAIDv0_40:1.3
+	VRAIDv0_30:1.2;
+locks; strict;
+comment	@ * @;
+
+
+1.15
+date	2000.10.24.23.59.37;	author vitus;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2000.08.29.01.05.55;	author vitus;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	99.10.01.00.51.35;	author vitus;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	99.09.23.02.44.38;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	99.08.09.23.21.06;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.07.08.01.53.09;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.05.26.00.49.13;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.05.12.01.48.02;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.04.28.01.43.10;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.04.21.00.31.53;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	99.02.07.17.59.01;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	98.11.05.22.35.23;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.09.20.14.06.20;	author vitus;	state Stab;
+branches;
+next	1.2;
+
+1.2
+date	98.06.26.22.37.06;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.06.15.02.06.43;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@How to do I/O to a PHYSDEVICE, the lowest level structure
+@
+
+
+1.15
+log
+@- more debugging output
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/RCS/physdev.c,v $
+ * $Revision: 1.14 $
+ * $Date: 2000/08/29 01:05:55 $
+ * $Locker: vitus $
+ *
+ *	How to do I/O to a PHYSDEVICE, the lowest level structure.
+ *
+ *	Remember that all retries are up to ADDs.  Any error
+ *	is fatal (strictly spoken).
+ *
+ * $Log: physdev.c,v $
+ * Revision 1.14  2000/08/29 01:05:55  vitus
+ * - very minor DEBMSGx() change
+ *
+ * Revision 1.13  1999/10/01 00:51:35  vitus
+ * - updates new iocnt and busycnt fields in VRDEVHDR
+ *
+ * Revision 1.12  1999/09/23 02:44:38  vitus
+ * - defined all DBGMSG() strings as located in CONST segment
+ *
+ * Revision 1.11  1999/08/09 23:21:06  vitus
+ * - PhysdevCreate: initialize new VRDPHYS structure with 0
+ *
+ * Revision 1.10  1999/07/08 01:53:09  vitus
+ * - IorbNotification: workaround for WatCom C bug
+ *
+ * Revision 1.9  1999/05/26 00:49:13  vitus
+ * - PhysdevCreate: return value now 'int', but as it is always 0...
+ *
+ * Revision 1.8  1999/05/12 01:48:02  vitus
+ * - dummy PhysdevUpdate() implemented
+ *
+ * Revision 1.7  1999/04/28 01:43:10  vitus
+ * - merged PhysdevAdmin() code with Worker, IOCMD_A* commands
+ * - PhysdevNotify() uses CompleteVrio()
+ *
+ * Revision 1.6  1999/04/21 00:31:53  vitus
+ * - PhysdevPartIO() removed: replaced by admin I/Os
+ *
+ * Revision 1.5  1999/02/07 17:59:01  vitus
+ * - implemented PhysdevAdmin() method
+ * - changed for iorb -> vrio transition
+ *
+ * Revision 1.4  1998/11/05 22:35:23  vitus
+ * - DevHelp_ProcBlock() now uses WAIT_IS_INTERRUPTABLE
+ *
+ * Revision 1.3  1998/09/20 14:06:20  vitus
+ * - modified for AllocateIorb(sgcnt)
+ * - added casts to correct 32bit calculation
+ * - BuildSGList() returns error code if S/G list can't be built
+ * - added debugging code to detect above calculation error
+ *
+ * Revision 1.2  1998/06/26 22:37:06  vitus
+ * - switched to DDK macros (cli, sti, pushf)
+ * - worker,notifyy get const pointers
+ *
+ * Revision 1.1  1998/06/15 02:06:43  vitus
+ * Initial revision
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+ */
+#if defined(__WATCOMC__)
+# pragma off (unreferenced)
+#endif
+static char const id[]="$Id: physdev.c,v 1.14 2000/08/29 01:05:55 vitus Exp vitus $";
+#if defined(__WATCOMC__)
+# pragma on (unreferenced)
+#endif
+
+#include <string.h>
+
+#define INCL_NOBASEAPI
+#define INCL_INITRP_ONLY
+#include "os2intf.h"
+
+#include "vraid.h"
+#include "proto.h"
+#include "extern.h"
+
+
+
+
+/*
+ * Our object: the single drive.
+ */
+typedef struct _VRDPHYS {
+
+    VRDEVHDR	header;				/* ALWAYS FIRST! */
+    PPHYSDEVICE	phys;
+
+    USHORT	offset;				/* offset in PHYSDEVICE */
+} VRDPHYS, FAR * PVRDPHYS;
+
+
+
+
+/*
+ * On commands to lower level drivers we have to link back to out VRIOs.  As
+ * those commands don't have a DMD the workspace is free.
+ */
+typedef union _VRAID_LOWER_DMDSPACE {
+    struct {
+	char	dummy[DM_WORKSPACE_SIZE-1];
+	UCHAR	chk;
+    };
+    struct {
+	PPHYSDEVICE	self;
+	PVRIO		vrio;
+
+
+	PIORB	pOS2Request;			/* generated on behalf of
+						   this OS/2 IORB */
+    };
+} VRAID_LOWER_DMDSPACE, FAR * PVRAID_LOWER_DMDSPACE;
+
+
+
+
+PRIVATE USHORT NEAR _Cdecl	PhysdevWorker(PVRDEVHDR const self,PVRIO const myio);
+PRIVATE USHORT NEAR _Cdecl	PhysdevUpdate(PVRDEVHDR const self,PVOID const sec);
+
+
+
+
+#if defined(DEBUG)
+CONSTMSG dszIorbNotification[]=	"\r\n[IorbNotification] iorb %p";
+CONSTMSG dszINoteError[]=	"\r\nthis iorb %p, error %w from adapter %w/unit %w";
+CONSTMSG dszIorbDump[]=		"\r\niorb dump\r\n%z";
+CONSTMSG dszNoSGList[]=		"\r\n0 Sc/Ga 0 elements (%p)";
+CONSTMSG dszSGDump[]=		"\r\nSc/Ga dump\r\n%z";
+CONSTMSG dszVrioDump[]=		"\r\nVRIO dump\r\n%z";
+CONSTMSG dszMasterIorb[]=	"\r\nmaster iorb %p, error %w";
+CONSTMSG dszMasterDump[]=	"\r\nmaster dump\r\n%z";
+CONSTMSG dszINoteWakeup[]=	"\r\n[IorbNotification] wakeup %p, error %w";
+CONSTMSG dszPhysSendIORB[]=	"\r\n[PhysSendIORB] pdev %p, vrio %p, iorb %p";
+CONSTMSG dszBSGL[]=		"\r\n[BSGL] input %p, start %lx";
+CONSTMSG dszBSGLDump[]=		"\r\n[BSGL] input Sc/Ga dump\r\n%z";
+CONSTMSG dszBSGLSkip[]=		"\r\n[BSGL] skipping %lx";
+CONSTMSG dszBSGLIndex[]=	"\r\n[BSGL] !index %w >= size %w!";
+CONSTMSG dszBSGLInput[]=	"\r\n[BSGL] input %p, start %lx, cb %lx";
+CONSTMSG dszBSGLSGList[]=	"\r\n[BSGL] out->cSGList %w";
+CONSTMSG dszBSGLCurrent[]=	"\r\n[BSGL] current 0x%lx, copied 0x%lx";
+CONSTMSG dszBSGLAdd[]=		"\r\n[BSGL] added %lx from %lx";
+CONSTMSG dszPhysdevNotify[]=	"\r\n[PhysdevNotify] myio %p";
+CONSTMSG dszPhysdevWorker[]=	"\r\n[PhysdevWorker] vrio %p, iorb %p";
+CONSTMSG dszPWorkerNoAlloc[]=	"\r\n[PhysdevWorker] couldn't allocate IORB";
+CONSTMSG dszPWorkerInvalid[]=	"\r\n[PhysdevWorker] invalid iocmd %w";
+CONSTMSG dszPWorkerBlocks[]=	"\r\n[PhysdevWorker] %w blocks from/to %lx";
+CONSTMSG dszPhysdevCreate[]=	"\r\n[PhysdevCreate] at %p for phys %p"
+                                "\r\n                ID %z";
+CONSTMSG dszPCreateDump[]=	"\r\n[PhysdevCreate] SEC_PHYSDEV\r\n%z";
+#endif
+
+
+
+
+
+
+#if defined(DEBUG)
+PRIVATE UCHAR
+Chksum(PVOID const buf,USHORT l)
+{
+    PUCHAR	p = buf;
+    UCHAR	c = 0;
+
+    while( l-- )
+	c += *(p++);
+    return c;
+}
+#endif /* ?DEBUG */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * IorbNotification(iorb)
+ *
+ * PARAMETER
+ *	iorb
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Notification routine to be called from ADD to signal that
+ *	an IORB has completed.
+ *	Converts information to VRIO format, frees IORB and calls
+ *	VRIO notification routine.
+ *
+ * REMARKS
+ *	This functions should do any special error handling, that's
+ *	up to VRDEVICE devices.  PHYSDEVICEs should always be
+ *	responsive to callers, no matter how badly broken the hardware is.
+ */
+PRIVATE PIORB FAR _loadds _Cdecl
+IorbNotification(PIORB iorb)
+{
+    PVRAID_LOWER_DMDSPACE const ws = (PVRAID_LOWER_DMDSPACE)iorb->DMWorkSpace;
+    PVRIO const			vrio = ws->vrio;
+
+
+    DEBMSG1(DBG_PATH,dszIorbNotification,iorb);
+
+    ASSERT( ws->chk == Chksum(ws, DM_WORKSPACE_SIZE-1) );
+    ASSERT( ws->self != NULL );
+    ASSERT( (iorb->Status & IORB_DONE) != 0 );	/* HAS to be completed! */
+
+#if defined(DEBUG)
+    if( (iorb->Status & IORB_ERROR)  &&  vrio != 0 )
+    {
+	PIORB_EXECUTEIO const	servant = (PVOID)iorb;
+
+	DEBMSG4(DBG_LEVEL1,dszINoteError,(PVOID)iorb,iorb->ErrorCode,ws->self->iAdapter,ws->self->iUnit);
+	DEBMSG2(DBG_LEVEL1,dszIorbDump,(PVOID)iorb,iorb->Length);
+	if( servant->cSGList == 0 )
+	    DEBMSG1(DBG_LEVEL1,dszNoSGList,servant->pSGList);
+	else
+	    DEBMSG2(DBG_LEVEL1,dszSGDump,
+		    servant->pSGList,servant->cSGList*sizeof(SCATGATENTRY));
+
+	DEBMSG2(DBG_LEVEL1,dszVrioDump,(PVOID)vrio,sizeof(*vrio));
+
+	if( vrio->iorb != NULL )
+	{
+	    PIORB_EXECUTEIO const	master = vrio->iorb;
+
+	    DEBMSG2(DBG_LEVEL1,dszMasterIorb,(PVOID)master,master->iorbh.ErrorCode);
+	    DEBMSG2(DBG_LEVEL1,dszMasterDump,(PVOID)master,master->iorbh.Length);
+	    DEBMSG2(DBG_LEVEL1,dszSGDump,
+		    (PVOID)master->pSGList,master->cSGList*sizeof(SCATGATENTRY));
+	}
+	if( servant->cSGList == 0 )
+	    DBSTOP();
+    }
+#endif
+
+    if( vrio == NULL )
+    {
+	USHORT	cnt = 0;
+
+	DEBMSG2(DBG_ALL,dszINoteWakeup,(PVOID)iorb,
+		(iorb->Status & IORB_ERROR ? iorb->ErrorCode : 0));
+	DevHelp_ProcRun((ULONG)iorb, &cnt);	/* just wakeup task-time thread */
+    }
+    else
+    {
+	PVRDEVHDR const	vrd = vrio->vrd;
+
+	ASSERT( vrd != NULL );
+	if( (iorb->Status & IORB_ERROR) )
+	    vrio->oserr = iorb->ErrorCode;
+	else
+	    vrio->oserr = 0;
+
+	/* Don't need the IORB anymore: free it's memory. */
+#if 1
+	{
+	    PVOID volatile p = iorb;
+	    FreeIorb(p);
+	}
+#else
+	/* WatCom only pushes offset and adjusts for 4 bytes afterwards. */
+	FreeIorb((PVOID)iorb);
+#endif
+	DO( iorb = NULL );
+
+	vrd->notify(vrio);
+    }
+    return NULL;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * PhysSendIORB(pdev,io,iorb)
+ *
+ * PARAMETER
+ *	pdev		PPHYSDEVICE
+ *	vrio		PVRIO (or 0: internal I/O)
+ *	iorb		IORB to send to ADD
+ *
+ * RETURNS
+ *	0		OK
+ *
+ * DESCRIPTION
+ *	Initializes DMWorkSpace and other administrative fileds
+ *	in IORB and calls ADD.
+ *
+ * REMARKS
+ *	Only PUBLIC as we want to use this routine from initialization
+ *	code (do not create any special code there).
+ */
+PRIVATE USHORT NEAR _Cdecl
+PhysSendIORB(PPHYSDEVICE const pdev,PVRIO const vrio,PIORB const iorb)
+{
+    DEBMSG3(DBG_PATH,dszPhysSendIORB,pdev,vrio,iorb);
+    iorb->NotifyAddress = IorbNotification;
+    iorb->RequestControl |= IORB_ASYNC_POST;
+    iorb->ErrorCode =	0;
+    iorb->Status =	0;
+
+    /* Initialize WorkSpace. */
+    {
+	((PVRAID_LOWER_DMDSPACE)iorb->DMWorkSpace)->self
+	    = pdev;				/* link back to device */
+	((PVRAID_LOWER_DMDSPACE)iorb->DMWorkSpace)->vrio
+	    = vrio;				/* link to active VRIO */
+#if defined(DEBUG)
+	((PVRAID_LOWER_DMDSPACE)iorb->DMWorkSpace)->chk
+	    = Chksum(iorb->DMWorkSpace, DM_WORKSPACE_SIZE-1);
+#endif
+    }
+
+    CallADD(pdev->pADDEntry, iorb);
+
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * BuildSGList(out,in,offset)
+ *
+ * PARAMETER
+ *	out		output S/G list
+ *	in		input S/G list
+ *	offset		byte offset in 'in' to start at
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		IOERR_CMD_SGLIST_BAD
+ *
+ * DESCRIPTION
+ *	Take S/G list from 'in' and build a new list in 'out' starting
+ *	'offset' * 512 bytes into 'in'.
+ *	Length of I/O is out->BlockCount.
+ *
+ * REMARKS
+ */
+PRIVATE USHORT NEAR
+BuildSGList(PIORB_EXECUTEIO const out,
+	    USHORT const clist,PSCATGATENTRY const plist,USHORT const offset)
+{
+    /* start		byte offset in 'in' I/O 
+     * cb		bytes to copy
+     * copied		bytes in S/G already copied
+     * current		current byte offset in I/O */
+
+    ULONG const	start = (ULONG)offset * SECTOR_SIZE;
+    ULONG const	cb = (ULONG)out->BlockCount * SECTOR_SIZE;
+    ULONG	copied = 0;
+    ULONG	current = 0;
+    USHORT	i, rc = 0;
+
+    DEBMSG2(DBG_LEVEL2,dszBSGL,(PVOID)plist,(PVOID)&start);
+    DEBMSG2(DBG_LEVEL4,dszBSGLDump,(PVOID)plist,clist*sizeof(*plist));
+    out->cSGList = 0;				/* no entry so far */
+
+    /* Scan S/G list for first entry containing 'start' offset. */
+
+    for( i = 0; i < clist; ++i )
+    {
+	ULONG const	ul = plist[i].XferBufLen;
+
+	if( current+ul > start )		/* >= is wrong!  s.b. */
+	    break;
+	DEBMSG1(DBG_LEVEL3,dszBSGLSkip,(PVOID)&ul);
+	current += ul;
+    }
+
+    /* Now copy entries from S/G list until we got enough bytes
+     * to satisfy our 'out' list. */
+
+    for(; copied != cb; ++i )
+    {
+#if defined(DEBUG)
+	if( i >= clist )
+	{
+
+	    DEBMSG2(DBG_ALL,dszBSGLIndex,i,clist);
+	    DEBMSG3(DBG_ALL,dszBSGLInput,(PVOID)plist,(PVOID)&start,(PVOID)&cb);
+	    DEBMSG1(DBG_ALL,dszBSGLSGList,out->cSGList);
+	    DEBMSG2(DBG_ALL,dszBSGLCurrent,(PVOID)&current,(PVOID)&copied);
+	    DEBMSG2(DBG_ALL,dszBSGLDump,(PVOID)plist,clist*sizeof(*plist));
+	    DBSTOP();
+	    rc = IOERR_CMD_SGLIST_BAD;
+	    break;
+	}
+#endif
+
+	if( current < start )
+	{
+	    /* Only 1st loop if ever: begin of element may be skipped */
+
+	    ASSERT( out->cSGList == 0 );
+	    out->pSGList[out->cSGList].ppXferBuf
+		= plist[i].ppXferBuf + start - current;
+	}
+	else
+	{
+	    ASSERT( out->cSGList == 0 ? current == start : 1 );
+	    out->pSGList[out->cSGList].ppXferBuf = plist[i].ppXferBuf;
+	}
+
+	if( plist[i].XferBufLen + copied > out->BlockCount * (ULONG)SECTOR_SIZE )
+	{
+	    out->pSGList[out->cSGList].XferBufLen
+		= out->BlockCount * (ULONG)SECTOR_SIZE - copied;
+	}
+	else
+	{
+	    out->pSGList[out->cSGList].XferBufLen = plist[i].XferBufLen;
+	}
+	DEBMSG2(DBG_LEVEL3,dszBSGLAdd,(PVOID)&out->pSGList[out->cSGList].XferBufLen,
+		(PVOID)&out->pSGList[out->cSGList].ppXferBuf);
+
+	copied += out->pSGList[out->cSGList].XferBufLen;
+	current += plist[i].XferBufLen;
+	++out->cSGList;
+    }
+
+    ASSERT( out->cSGList != 0 );
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * PhysdevNotify(vrio)
+ *
+ * PARAMETER
+ *	dummy		there is no child!
+ *	io		from DMWorkSpace
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESPRIPTION
+ *	A device notifies it's PHYSDEV VRDEVICE of completion
+ *	of an I/O.
+ *	Process errors (?) and call parent.
+ *
+ * REMARKS
+ *	This code is different from higher layers as it get passed it's
+ *	own VRIO.  Don't cut-n-paste!!!
+ */
+PRIVATE VOID NEAR _Cdecl
+PhysdevNotify(PVRIO const myio)
+{
+    DEBMSG1(DBG_PATH,dszPhysdevNotify,(PVOID)myio);
+
+    ASSERT( myio->link == NULL );
+    ASSERT( myio->bcnt != 0 );
+    ASSERT( myio->vrd->size != 0 );
+    ASSERT( myio->vrd->notify == PhysdevNotify );
+    ASSERT( myio->vrd->worker == PhysdevWorker );
+
+
+    /* Process errors!  (Nothing to do?) */
+
+    CompleteVrio(myio);
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * PhysdevWorker(self,myio)
+ *
+ * PARAMETER
+ *	self		our single device
+ *	myio		VRIO describing I/O
+ *
+ * RETURNS
+ *	0		OK, I/O started
+ *	/0		please queue I/O for later processing
+ *
+ * DESPRIPTION
+ *	Build iorb from myio and pass it to the underlying device
+ *	via PhysSendIORB().  Easy?
+ *
+ * REMARKS
+ */
+PRIVATE USHORT NEAR _Cdecl
+PhysdevWorker(PVRDEVHDR const self,PVRIO const myio)
+{
+    PVRDPHYS const	physdev = (PVRDPHYS)self;
+    PIORB_EXECUTEIO const iorb = AllocateIorb(myio->cSGList);
+    USHORT		rc;
+
+
+    DEBMSG2(DBG_PATH,dszPhysdevWorker,(PVOID)myio,(PVOID)iorb);
+
+    ASSERT( myio->vrd == self );
+    ASSERT( myio->link == NULL );
+    ASSERT( myio->bcnt != 0 );
+    ASSERT( physdev->header.size != 0 );
+    ASSERT( physdev->header.notify == PhysdevNotify );
+    ASSERT( physdev->header.worker == PhysdevWorker );
+    ASSERT( physdev->header.update == PhysdevUpdate );
+
+    ++self->iocnt;
+    if( iorb == 0 )
+    {
+	DEBMSG(DBG_ALL,dszPWorkerNoAlloc);
+	++self->busycnt;
+	return !0;
+    }
+
+
+    /* Only things != 0 */
+
+    iorb->iorbh.Length = sizeof(IORB_EXECUTEIO);
+    iorb->iorbh.UnitHandle = physdev->phys->hdADDUnit;
+
+    switch( myio->iocmd )
+    {
+      case IOCMD_READ:
+	iorb->iorbh.CommandCode = IOCC_EXECUTE_IO;
+	iorb->iorbh.CommandModifier = IOCM_READ;
+	iorb->RBA = myio->blk + physdev->offset; /* add size of VRAID sectors */
+	iorb->RBA += physdev->phys->ulVRStart;	/* add start of partition */
+	break;
+
+      case IOCMD_WRITE:
+	iorb->iorbh.CommandCode = IOCC_EXECUTE_IO;
+	iorb->iorbh.CommandModifier = IOCM_WRITE;
+	iorb->RBA = myio->blk + physdev->offset; /* add size of VRAID sectors */
+	iorb->RBA += physdev->phys->ulVRStart;	/* add start of partition */
+	break;
+
+      case IOCMD_AREAD:
+	iorb->iorbh.CommandCode = IOCC_EXECUTE_IO;
+	iorb->iorbh.CommandModifier = IOCM_READ;
+	iorb->RBA = myio->blk + physdev->phys->ulVRStart; /* add start of partition*/
+	break;
+
+      case IOCMD_AWRITE:
+	iorb->iorbh.CommandCode = IOCC_EXECUTE_IO;
+	iorb->iorbh.CommandModifier = IOCM_WRITE;
+	iorb->RBA = myio->blk + physdev->phys->ulVRStart; /* add start of partition*/
+	break;
+
+      default:
+	DEBMSG1(DBG_ALL,dszPWorkerInvalid,myio->iocmd);
+	DBSTOP();
+	break;
+    }
+
+    iorb->BlockCount = myio->bcnt;
+    iorb->BlockSize = SECTOR_SIZE;
+
+    if( (rc = BuildSGList(iorb, myio->cSGList, myio->pSGList, myio->offset)) != 0 )
+    {
+	myio->oserr = rc;
+	if( myio->mother != NULL )
+	    myio->mother->vrd->notify(myio);
+	else if( myio->iorb != NULL )
+	    HostdriveNotify(myio);
+	else
+	{
+	    USHORT	awoken;
+
+	    DevHelp_ProcRun((ULONG)myio, &awoken);
+	}
+	return 0;
+    }
+
+    DEBMSG2(DBG_LEVEL3,dszPWorkerBlocks,iorb->BlockCount,(PVOID)&iorb->RBA);
+    PhysSendIORB(physdev->phys, myio, &iorb->iorbh);
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * PhysdevUpdate(self,sec)
+ *
+ * PARAMETER
+ *	self		a VRD which is a PHYSDEV
+ *	sec		sector contains configuration
+ *
+ * RETURNS
+ *	0		don't write back, nothing changed
+ *
+ * DESCRIPTION
+ *	Do nothing.
+ *
+ * REMARKS
+ */
+PRIVATE USHORT NEAR _Cdecl
+PhysdevUpdate(PVRDEVHDR const self,PVOID const sec)
+{
+    return 0;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Public Entries **************************************************
+ * ******************************************************************* */
+
+
+/*# ----------------------------------------------------------------------
+ * PhysdevCreate(pVrh,pPhys,sec,pSize)
+ *
+ * PARAMETER
+ *	pVrh		room to create device structure
+ *	pPhys		physical device to create for
+ *	sec		contents of configuration sector
+ *	pSize		return: size used at '*pVrh'
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		couldn't create
+ *
+ * DESCRIPTION
+ *	Creates a VRAID device at location pointed to by 'pVrh' which
+ *	relates to
+ *	- the VRAID partition			-> admin
+ *	- the data part of that partition	-> worker
+ *
+ * REMARKS
+ *	-> admin should make 'PhysdevPartIO()' unneccessary.
+ */
+PUBLIC int NEAR _Cdecl
+PhysdevCreate(PVRDEVHDR pVrh,PPHYSDEVICE pPhys,PSEC_PHYSDEV sec,PUSHORT pSize)
+{
+    PVRDPHYS physdev = (PVRDPHYS)pVrh;
+
+    DEBMSG4(DBG_INIT1,dszPhysdevCreate,(PVOID)pVrh,(PVOID)pPhys,(PVOID)sec->u.s.id,6);
+    _fmemset(physdev, 0, sizeof(*physdev));
+
+
+    /* Initialize header elements */
+
+    physdev->header.notify = PhysdevNotify;
+    physdev->header.worker = PhysdevWorker;
+    physdev->header.update = PhysdevUpdate;
+    physdev->header.size = sec->u.s.size;
+    physdev->header.flags = 0;
+    _fmemcpy(physdev->header.id, sec->u.s.id, sizeof(physdev->header.id));
+    DEBMSG2(DBG_INIT3,dszPCreateDump,(PVOID)sec,64);
+
+    physdev->phys = pPhys;			/* linking */
+    pPhys->parent = &physdev->header;
+
+    physdev->offset = sec->u.s.adminspace;	/* reserved for VRAID */
+
+    *pSize = sizeof(*physdev);
+    return 0;
+} /* end[PhysdevCreate] */
+@
+
+
+1.14
+log
+@- very minor DEBMSGx() change
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.13 $
+ * $Date: 1999/10/01 00:51:35 $
+d13 3
+d66 1
+a66 1
+static char const id[]="$Id: physdev.c,v 1.13 1999/10/01 00:51:35 vitus Exp vitus $";
+d128 1
+a128 1
+CONSTMSG dszINoteError[]=	"\r\nthis iorb %p, error %w";
+d214 1
+a214 1
+	DEBMSG2(DBG_LEVEL1,dszINoteError,(PVOID)iorb,iorb->ErrorCode);
+@
+
+
+1.13
+log
+@- updates new iocnt and busycnt fields in VRDEVHDR
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.12 $
+ * $Date: 1999/09/23 02:44:38 $
+d13 3
+d63 1
+a63 1
+static char const id[]="$Id: physdev.c,v 1.12 1999/09/23 02:44:38 vitus Exp vitus $";
+d147 2
+a148 2
+CONSTMSG dszPhysdevCreate[]=	"\r\n[PhysdevCreate] at %p for phys %p";
+CONSTMSG dszPCreateID[]=	"\r\n[PhysdevCreate] ID %z";
+d199 1
+d493 1
+d637 1
+a637 1
+    DEBMSG2(DBG_INIT1,dszPhysdevCreate,(PVOID)pVrh,(PVOID)pPhys);
+a648 1
+    DEBMSG2(DBG_INIT3,dszPCreateID,(PVOID)physdev->header.id,6);
+@
+
+
+1.12
+log
+@- defined all DBGMSG() strings as located in CONST segment
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.11 $
+ * $Date: 1999/08/09 23:21:06 $
+d13 3
+d60 1
+a60 1
+static char const id[]="$Id: physdev.c,v 1.11 1999/08/09 23:21:06 vitus Exp vitus $";
+d499 1
+d503 1
+@
+
+
+1.11
+log
+@- PhysdevCreate: initialize new VRDPHYS structure with 0
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/07/08 01:53:09 $
+d13 3
+d57 1
+a57 1
+static char const id[]="$Id: physdev.c,v 1.10 1999/07/08 01:53:09 vitus Exp vitus $";
+d118 34
+d187 1
+a187 1
+PRIVATE VOID FAR _loadds _Cdecl
+d193 1
+a193 1
+    DEBMSG1(DBG_PATH,"\r\n[IorbNotification] iorb %p",iorb);
+d204 2
+a205 2
+	DEBMSG2(DBG_LEVEL1,"\r\nthis iorb %p, error %w",(PVOID)iorb,iorb->ErrorCode);
+	DEBMSG2(DBG_LEVEL1,"\r\niorb dump\r\n%z",(PVOID)iorb,iorb->Length);
+d207 1
+a207 1
+	    DEBMSG1(DBG_LEVEL1,"\r\n0 Sc/Ga 0 elements (%p)",servant->pSGList);
+d209 1
+a209 1
+	    DEBMSG2(DBG_LEVEL1,"\r\nSc/Ga dump\r\n%z",
+d212 1
+a212 1
+	DEBMSG2(DBG_LEVEL1,"\r\nVRIO dump\r\n%z",(PVOID)vrio,sizeof(*vrio));
+d218 3
+a220 5
+	    DEBMSG2(DBG_LEVEL1,"\r\nmaster iorb %p, error %w",
+		    (PVOID)master,master->iorbh.ErrorCode);
+	    DEBMSG2(DBG_LEVEL1,"\r\nmaster dump\r\n%z",
+		    (PVOID)master,master->iorbh.Length);
+	    DEBMSG2(DBG_LEVEL1,"\r\nSc/Ga dump\r\n%z",
+d232 2
+a233 2
+	DEBMSG2(DBG_ALL,"\r\n[IorbNotification] wakeup %p, error %w",
+		(PVOID)iorb,(iorb->Status & IORB_ERROR ? iorb->ErrorCode : 0));
+d260 1
+a260 1
+    return;
+d288 1
+a288 1
+    DEBMSG3(DBG_PATH,"\r\n[PhysSendIORB] pdev %p, vrio %p, iorb %p",pdev,vrio,iorb);
+d348 2
+a349 2
+    DEBMSG2(DBG_LEVEL2,"\r\n[BSGL] input %p, start %lx",(PVOID)plist,(PVOID)&start);
+    DEBMSG2(DBG_LEVEL4,"\r\n[BSGL] input Sc/Ga dump\r\n%z",(PVOID)plist,clist*sizeof(*plist));
+d360 1
+a360 1
+	DEBMSG1(DBG_LEVEL3,"\r\n[BSGL] skipping %lx",(PVOID)&ul);
+d373 5
+a377 5
+	    DEBMSG2(DBG_ALL,"\r\n[BSGL] !index %w >= size %w!",i,clist);
+	    DEBMSG3(DBG_ALL,"\r\n[BSGL] input %p, start %lx, cb %lx",(PVOID)plist,(PVOID)&start,(PVOID)&cb);
+	    DEBMSG1(DBG_ALL,"\r\n[BSGL] out->cSGList %w",out->cSGList);
+	    DEBMSG2(DBG_ALL,"\r\n[BSGL] current 0x%lx, copied 0x%lx",(PVOID)&current,(PVOID)&copied);
+	    DEBMSG2(DBG_ALL,"\r\n[BSGL] input Sc/Ga dump\r\n%z",(PVOID)plist,clist*sizeof(*plist));
+d407 2
+a408 1
+	DEBMSG2(DBG_LEVEL3,"\r\n[BSGL] added %lx from %lx",(PVOID)&out->pSGList[out->cSGList].XferBufLen,(PVOID)&out->pSGList[out->cSGList].ppXferBuf);
+d444 1
+a444 1
+    DEBMSG1(DBG_PATH,"\r\n[PhysdevNotify] myio %p",(PVOID)myio);
+d486 1
+a486 1
+    DEBMSG2(DBG_PATH,"\r\n[PhysdevWorker] vrio %p, iorb %p",(PVOID)myio,(PVOID)iorb);
+d498 1
+a498 1
+	DEBMSG(DBG_ALL,"\r\n[PhysdevWorker] couldn't allocate IORB");
+d537 1
+a537 1
+	DEBMSG1(DBG_ALL,"\r\n[PhysdevWorker] invalid iocmd %w",myio->iocmd);
+d561 1
+a561 1
+    DEBMSG2(DBG_LEVEL3,"\r\n[PhysdevWorker] %w blocks from/to %lx",iorb->BlockCount,(PVOID)&iorb->RBA);
+d627 1
+a627 1
+    DEBMSG2(DBG_INIT1,"\r\n[PhysdevCreate] at %p for phys %p",(PVOID)pVrh,(PVOID)pPhys);
+d639 2
+a640 1
+
+@
+
+
+1.10
+log
+@- IorbNotification: workaround for WatCom C bug
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/05/26 00:49:13 $
+d13 3
+d54 1
+a54 1
+static char const id[]="$Id: physdev.c,v 1.9 1999/05/26 00:49:13 vitus Exp vitus $";
+d592 4
+d604 1
+d612 1
+a612 1
+}
+@
+
+
+1.9
+log
+@- PhysdevCreate: return value now 'int', but as it is always 0...
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/05/12 01:48:02 $
+d13 3
+d51 1
+a51 1
+static char const id[]="$Id: physdev.c,v 1.8 1999/05/12 01:48:02 vitus Exp vitus $";
+d207 11
+a217 1
+	FreeIorb((PVOID)iorb);			/* don't need it anymore */
+a249 2
+    PVRAID_LOWER_DMDSPACE const ws = (PVRAID_LOWER_DMDSPACE)iorb->DMWorkSpace;
+
+d257 5
+a261 3
+
+    ws->self = pdev;				/* link back to device */
+    ws->vrio = vrio;				/* link to active VRIO */
+d263 2
+a264 1
+    ws->chk = Chksum(ws, DM_WORKSPACE_SIZE-1);
+d266 1
+@
+
+
+1.8
+log
+@- dummy PhysdevUpdate() implemented
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/04/28 01:43:10 $
+d13 3
+d48 1
+a48 1
+static char const id[]="$Id: physdev.c,v 1.7 1999/04/28 01:43:10 vitus Exp vitus $";
+d125 1
+a125 2
+ * CALL
+ *	IorbNotification(iorb)
+d216 1
+a216 2
+ * CALL
+ *	PhysSendIORB(pdev,io,iorb)
+d262 1
+a262 2
+ * CALL
+ *	BuildSGList(out,in,offset)
+d369 1
+a369 2
+ * CALL
+ *	PhysdevNotify(vrio)
+d409 1
+a409 2
+ * CALL
+ *	PhysdevWorker(self,myio)
+d516 1
+a516 2
+ * CALL
+ *	PhysdevUpdate(self,sec)
+d547 1
+a547 2
+ * CALL
+ *	PhysdevCreate(pVrh,pPhys,sec,pSize)
+d568 1
+a568 1
+PUBLIC USHORT NEAR _Cdecl
+d573 1
+a573 1
+    DEBMSG2(DBG_LEVEL1,"\r\n[PhysdevCreate] at %p for phys %p",(PVOID)pVrh,(PVOID)pPhys);
+@
+
+
+1.7
+log
+@- merged PhysdevAdmin() code with Worker, IOCMD_A* commands
+- PhysdevNotify() uses CompleteVrio()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1999/04/21 00:31:53 $
+d13 4
+d45 1
+a45 1
+static char const id[]="$Id: physdev.c,v 1.6 1999/04/21 00:31:53 vitus Exp vitus $";
+d100 1
+d442 1
+d517 25
+d579 1
+d581 1
+a581 1
+    physdev->header.notify = PhysdevNotify;
+@
+
+
+1.6
+log
+@- PhysdevPartIO() removed: replaced by admin I/Os
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1999/02/07 17:59:01 $
+d13 3
+d41 1
+a41 1
+static char const id[]="$Id: physdev.c,v 1.5 1999/02/07 17:59:01 vitus Exp vitus $";
+d96 2
+a97 1
+PRIVATE USHORT NEAR _Cdecl	PhysdevAdmin(PVRDEVHDR const self,PVRIO const myio);
+a391 1
+    ASSERT( myio->vrd->admin == PhysdevAdmin );
+d394 1
+d397 1
+a397 24
+    if( myio->mother != NULL )
+    {
+	PVRDEVHDR const	parent = myio->mother->vrd;
+
+	/* Call parent's notification (I/O to child has completed). */
+
+	DEBMSG2(DBG_LEVEL3,"\r\n[PhysdevNotify] mother %p, parent %p",(PVOID)myio->mother,(PVOID)parent);
+	parent->notify(myio);
+	FreeVrio(myio);				/* don't need this anymore */
+    }
+    else if( myio->iorb != NULL )
+    {
+	DEBMSG(DBG_LEVEL3,"\r\n[PhysdevNotify] iorb != 0 -> Host Drive (?)");
+	HostdriveNotify(myio);
+	FreeVrio(myio);				/* don't need this anymore */
+    }
+    else
+    {
+	USHORT	awoken;
+
+	DEBMSG(DBG_LEVEL2,"\r\n[PhysdevNotify] nothing -> IOCtl");
+	DevHelp_ProcRun((ULONG)myio, &awoken);	/* *nicht* freigeben! */
+    }
+
+d406 1
+a406 1
+ *	PhysdevAdmin(self,myio)
+d423 1
+a423 1
+PhysdevAdmin(PVRDEVHDR const self,PVRIO const myio)
+d429 1
+a429 1
+    DEBMSG2(DBG_PATH,"\r\n[PhysdevAdmin] vrio %p, new iorb %p",(PVOID)myio,(PVOID)iorb);
+a435 1
+    ASSERT( physdev->header.admin == PhysdevAdmin );
+d440 1
+a440 1
+	DEBMSG(DBG_ALL,"\r\n[PhysdevAdmin] couldn't allocate IORB");
+d444 1
+d449 1
+d455 2
+d462 2
+d466 1
+a466 83
+      default:
+	DEBMSG1(DBG_ALL,"\r\n[PhysdevAdmin] invalid iocmd %w",myio->iocmd);
+	DBSTOP();
+	break;
+    }
+
+    iorb->RBA = myio->blk + physdev->phys->ulVRStart; /* add start of partition */
+    iorb->BlockCount = myio->bcnt;
+    iorb->BlockSize = SECTOR_SIZE;
+
+    if( (rc = BuildSGList(iorb, myio->cSGList, myio->pSGList, myio->offset)) != 0 )
+    {
+	myio->oserr = rc;
+	if( myio->mother != NULL )
+	    myio->mother->vrd->notify(myio);
+	else if( myio->iorb != NULL )
+	    HostdriveNotify(myio);
+	else
+	{
+	    USHORT	awoken;
+
+	    DevHelp_ProcRun((ULONG)myio, &awoken);
+	}
+	return 0;
+    }
+
+    DEBMSG2(DBG_LEVEL2,"\r\n[PhysdevAdmin] %w blocks from/to %lx",iorb->BlockCount,(PVOID)&iorb->RBA);
+    PhysSendIORB(physdev->phys, myio, &iorb->iorbh);
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	PhysdevWorker(self,myio)
+ *
+ * PARAMETER
+ *	self		our single device
+ *	myio		VRIO describing I/O
+ *
+ * RETURNS
+ *	0		OK, I/O started
+ *	/0		please queue I/O for later processing
+ *
+ * DESPRIPTION
+ *	Build iorb from myio and pass it to the underlying device
+ *	via PhysSendIORB().  Easy?
+ *
+ * REMARKS
+ */
+PRIVATE USHORT NEAR _Cdecl
+PhysdevWorker(PVRDEVHDR const self,PVRIO const myio)
+{
+    PVRDPHYS const	physdev = (PVRDPHYS)self;
+    PIORB_EXECUTEIO const iorb = AllocateIorb(myio->cSGList);
+    USHORT		rc;
+
+    DEBMSG2(DBG_PATH,"\r\n[PhysdevWorker] vrio %p, iorb %p",(PVOID)myio,(PVOID)iorb);
+
+    ASSERT( myio->vrd == self );
+    ASSERT( myio->link == NULL );
+    ASSERT( myio->bcnt != 0 );
+    ASSERT( physdev->header.size != 0 );
+    ASSERT( physdev->header.notify == PhysdevNotify );
+    ASSERT( physdev->header.admin == PhysdevAdmin );
+    ASSERT( physdev->header.worker == PhysdevWorker );
+
+    if( iorb == 0 )
+    {
+	DEBMSG(DBG_ALL,"\r\n[PhysdevWorker] couldn't allocate IORB");
+	return !0;
+    }
+
+    /* Only things != 0 */
+
+    iorb->iorbh.Length = sizeof(IORB_EXECUTEIO);
+    iorb->iorbh.UnitHandle = physdev->phys->hdADDUnit;
+
+    switch( myio->iocmd )
+    {
+      case IOCMD_READ:
+d469 1
+d472 1
+a472 1
+      case IOCMD_WRITE:
+d475 1
+a483 2
+    iorb->RBA = myio->blk + physdev->offset;	/* add size of VRAID sectors */
+    iorb->RBA += physdev->phys->ulVRStart;	/* add start of partition */
+a547 1
+    physdev->header.admin = PhysdevAdmin;	/* required */
+@
+
+
+1.5
+log
+@- implemented PhysdevAdmin() method
+- changed for iorb -> vrio transition
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1998/11/05 22:35:23 $
+d13 4
+d38 1
+a38 1
+static char const id[]="$Id: physdev.c,v 1.4 1998/11/05 22:35:23 vitus Exp vitus $";
+d382 1
+a382 1
+    DEBMSG1(DBG_PATH,"\r\n[PhysdevNotify] %p",(PVOID)myio);
+d448 1
+a448 1
+    DEBMSG2(DBG_PATH,"\r\n[PhysdevAdmin] vrio %p, iorb %p",(PVOID)myio,(PVOID)iorb);
+a611 73
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	PhysdevPartIO(self,io)
+ * PARAMETER
+ *	self		our device
+ *	io		VRIO describing I/O
+ * RETURNS
+ *	IOERR_*
+ *
+ * DESPRIPTION
+ *	Handle complete I/O to VRAID partition.  Only usable at
+ *	INIT or task time.
+ *
+ * REMARKS
+ */
+PUBLIC USHORT NEAR _Cdecl
+PhysdevPartIO(PVRDEVHDR self,BOOL write,ULONG blk,USHORT bcnt,ULONG phys)
+{
+    PVRDPHYS		physdev = (PVRDPHYS)self;
+    PIORB_EXECUTEIO	iorb = AllocateIorb(1);
+    USHORT	rc;
+
+    DEBMSG3(DBG_ALL,"\r\n[PhysdevPartIO] blk %lx bcnt %w to/from %lx)",(PVOID)&blk,bcnt,(PVOID)&phys);
+    if( iorb == 0 )
+    {
+	DEBMSG(DBG_ALL,"\r\n[PhysdevPartIO] couldn't allocate IORB");
+	return IOERR_CMD_SW_RESOURCE;
+    }
+
+    /* Only things != 0 */
+
+    iorb->iorbh.Length = sizeof(IORB_EXECUTEIO);
+    iorb->iorbh.UnitHandle = physdev->phys->hdADDUnit;
+    iorb->iorbh.CommandCode = IOCC_EXECUTE_IO;
+    iorb->iorbh.CommandModifier = (write ? IOCM_WRITE : IOCM_READ);
+
+    iorb->RBA = blk + physdev->phys->ulVRStart;	/* add start of partition */
+    iorb->BlockCount = bcnt;
+    iorb->BlockSize = SECTOR_SIZE;
+
+    iorb->cSGList = 1;
+    iorb->pSGList->ppXferBuf = phys;
+    iorb->pSGList->XferBufLen = bcnt * (ULONG)SECTOR_SIZE;
+
+    DEBMSG2(DBG_LEVEL3,"\r\n[PhysdevPartIO] %w blocks from/to %lx",iorb->BlockCount,(PVOID)&iorb->RBA);
+    PhysSendIORB(physdev->phys, 0, &iorb->iorbh);
+
+    cli();
+    while( (iorb->iorbh.Status & IORB_DONE) == 0 )
+    {
+	USHORT	us;
+
+	DEBMSG1(DBG_ALL,"\r\n[PhysdevPartIO] waiting on %p",(PVOID)iorb);
+	us = DevHelp_ProcBlock((ULONG)iorb, -1, WAIT_IS_INTERRUPTABLE);
+	if( us == WAIT_INTERRUPTED )
+	{
+	    DEBMSG1(DBG_ALL,"\r\n[PhysdevPartIO] ProcBlock - rc %w",rc);
+	    iorb->iorbh.Status = IORB_DONE | IORB_ERROR;
+	    iorb->iorbh.ErrorCode = IOERR_CMD_ABORTED;
+	}
+	cli();
+    }
+    sti();
+
+    rc = (iorb->iorbh.Status & IORB_ERROR ? iorb->iorbh.ErrorCode : 0);
+    FreeIorb(iorb);
+    DO( iorb = NULL );
+
+    return rc;
+}
+
+
+@
+
+
+1.4
+log
+@- DevHelp_ProcBlock() now uses WAIT_IS_INTERRUPTABLE
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1998/09/20 14:06:20 $
+d7 1
+a7 1
+ * How to do I/O to a PHYSDEVICE, the lowest level structure.
+d9 2
+a10 2
+ * Remember that all retries are up to ADDs.  Any error
+ * is fatal (strictly spoken).
+d13 3
+d28 2
+a29 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+d34 1
+a34 1
+static char const id[]="$Id: physdev.c,v 1.3 1998/09/20 14:06:20 vitus Stab vitus $";
+d89 1
+d108 1
+a108 1
+/*#
+d111 1
+d114 1
+d117 1
+a117 1
+ * GLOBAL
+a144 1
+	PIORB_EXECUTEIO const	master = vrio->request;
+d146 2
+a147 2
+	DEBMSG2(DBG_LEVEL1,"\r\nthis iorb %p, error %w",(PVOID)servant,servant->iorbh.ErrorCode);
+	DEBMSG2(DBG_LEVEL1,"\r\niorb dump\r\n%z",(PVOID)servant,servant->iorbh.Length);
+d149 1
+a149 1
+	    DEBMSG1(DBG_LEVEL1,"\r\nSc/Ga contains 0 elements (%p)",(PVOID)servant->pSGList);
+d151 16
+a166 4
+	    DEBMSG2(DBG_LEVEL1,"\r\nSc/Ga dump\r\n%z",(PVOID)servant->pSGList,servant->cSGList*sizeof(SCATGATENTRY));
+	DEBMSG2(DBG_LEVEL1,"\r\nmaster iorb %p, error %w",(PVOID)master,master->iorbh.ErrorCode);
+	DEBMSG2(DBG_LEVEL1,"\r\nmaster dump\r\n%z",(PVOID)master,master->iorbh.Length);
+	DEBMSG2(DBG_LEVEL1,"\r\nSc/Ga dump\r\n%z",(PVOID)master->pSGList,master->cSGList*sizeof(SCATGATENTRY));
+d172 1
+a172 1
+    if( vrio == 0 )
+d200 1
+a200 1
+/*#
+d203 1
+d208 1
+d211 1
+a211 1
+ * GLOBAL
+d247 1
+a247 1
+/*#
+d250 1
+d255 1
+d259 1
+a259 1
+ * GLOBAL
+d268 2
+a269 1
+BuildSGList(PIORB_EXECUTEIO const out,PIORB_EXECUTEIO const in,USHORT const offset)
+d271 9
+a279 4
+    ULONG const	start = (ULONG)offset * SECTOR_SIZE;	/* byte offset in 'in' I/O */
+    ULONG const	cb = (ULONG)out->BlockCount * SECTOR_SIZE; /* bytes to copy */
+    ULONG	copied = 0;			/* bytes in S/G already copied */
+    ULONG	current = 0;			/* current byte offset in I/O */
+d282 2
+a283 2
+    DEBMSG2(DBG_LEVEL2,"\r\n[BSGL] input %p, start %lx",(PVOID)in->pSGList,(PVOID)&start);
+    DEBMSG2(DBG_LEVEL4,"\r\n[BSGL] input Sc/Ga dump\r\n%z",(PVOID)in->pSGList,in->cSGList*sizeof(*in->pSGList));
+d288 1
+a288 1
+    for( i = 0; i < in->cSGList; ++i )
+d290 1
+a290 1
+	ULONG const	ul = in->pSGList[i].XferBufLen;
+d304 1
+a304 1
+	if( i >= in->cSGList )
+d307 2
+a308 2
+	    DEBMSG2(DBG_ALL,"\r\n[BSGL] !index %w >= size %w!",i,in->cSGList);
+	    DEBMSG3(DBG_ALL,"\r\n[BSGL] input %p, start %lx, cb %lx",(PVOID)in->pSGList,(PVOID)&start,(PVOID)&cb);
+d311 1
+a311 1
+	    DEBMSG2(DBG_ALL,"\r\n[BSGL] input Sc/Ga dump\r\n%z",(PVOID)in->pSGList,in->cSGList*sizeof(*in->pSGList));
+d324 1
+a324 1
+		= in->pSGList[i].ppXferBuf + start - current;
+d329 1
+a329 1
+	    out->pSGList[out->cSGList].ppXferBuf = in->pSGList[i].ppXferBuf;
+d332 1
+a332 1
+	if( in->pSGList[i].XferBufLen + copied > out->BlockCount * (ULONG)SECTOR_SIZE )
+d339 1
+a339 1
+	    out->pSGList[out->cSGList].XferBufLen = in->pSGList[i].XferBufLen;
+d344 1
+a344 1
+	current += in->pSGList[i].XferBufLen;
+d355 1
+a355 1
+/*#
+d358 1
+d362 1
+d365 1
+a365 1
+ * GLOBAL
+a380 1
+    ASSERT( myio->request != NULL );
+d384 1
+d397 7
+d407 4
+a410 2
+	DEBMSG(DBG_LEVEL3,"\r\n[PhysdevNotify] no mother -> Host Drive (?)");
+	HostdriveNotify(myio);
+a412 1
+    FreeVrio(myio);				/* don't need this anymore */
+d419 92
+a510 1
+/*#
+d513 1
+d517 1
+d521 1
+a521 1
+ * GLOBAL
+d523 2
+a524 1
+ *	Pass iorb to underlying device.  Nothing more.
+d532 1
+a532 1
+    PIORB_EXECUTEIO const iorb = AllocateIorb(myio->request->cSGList);
+a538 1
+    ASSERT( myio->request != NULL );
+d542 1
+d555 18
+a572 2
+    iorb->iorbh.CommandCode = myio->request->iorbh.CommandCode;
+    iorb->iorbh.CommandModifier = myio->request->iorbh.CommandModifier;
+d579 1
+a579 1
+    if( (rc = BuildSGList(iorb, myio->request, myio->offset)) != 0 )
+d584 2
+d587 5
+a591 1
+	    HostdriveNotify(myio);
+d609 1
+a609 1
+/*#
+d617 1
+a617 1
+ * GLOBAL
+d683 1
+a683 1
+/*#
+d686 1
+d692 1
+d696 1
+a696 1
+ * GLOBAL
+d698 5
+d704 1
+d713 2
+a714 1
+    physdev->header.worker = PhysdevWorker;	/* required */
+@
+
+
+1.3
+log
+@- modified for AllocateIorb(sgcnt)
+- added casts to correct 32bit calculation
+- BuildSGList() returns error code if S/G list can't be built
+- added debugging code to detect above calculation error
+@
+text
+@d3 3
+a5 3
+ * $Revision: 1.2 $
+ * $Date: 1998/06/26 22:37:06 $
+ * Im Editor bei $Locker: vitus $
+d13 6
+d31 1
+a31 1
+static char const id[]="$Id: physdev.c,v 1.2 1998/06/26 22:37:06 vitus Exp vitus $";
+a469 2
+ *	ProcBlock/ProcRun isn't possible at INIT time.  Recode to
+ *	to busy waiting w/o DF_INIT1DONE!
+d509 1
+a509 1
+	us = DevHelp_ProcBlock((ULONG)iorb, -1, 0);
+d512 1
+@
+
+
+1.2
+log
+@- switched to DDK macros (cli, sti, pushf)
+- worker,notifyy get const pointers
+@
+text
+@d3 3
+a5 3
+ * $Revision: 1.1 $
+ * $Date: 1998/06/15 02:06:43 $
+ * $Locker: vitus $
+d13 4
+d22 7
+a28 3
+#pragma off (unreferenced)
+static char const id[]="$Id: physdev.c,v 1.1 1998/06/15 02:06:43 vitus Exp vitus $";
+#pragma on (unreferenced)
+d62 4
+a65 1
+    char	dummy[DM_WORKSPACE_SIZE];
+d79 17
+a121 1
+    /*PPHYSDEVICE const		self = ws->self;*/
+d123 4
+d129 20
+d155 1
+a155 1
+	DevHelp_ProcRun((ULONG)iorb, &cnt);		/* just wakeup task time thread */
+d159 3
+d167 1
+d169 1
+a169 1
+	vrio->vrd->notify(vrio);
+a198 1
+    PVOID volatile		p = iorb;
+d200 1
+a200 1
+    DEBMSG3(DBG_LEVEL3,"\r\n[PhysSendIORB] pdev %p, vrio %p, iorb %p",pdev,vrio,iorb);
+d210 3
+d214 1
+a214 1
+    CallADD(pdev->pADDEntry, p);
+d230 2
+a231 1
+ *	(nothing)
+d240 1
+a240 1
+PRIVATE VOID NEAR
+d243 2
+a244 2
+    ULONG const	start = offset * SECTOR_SIZE;		/* byte offset in 'in' I/O */
+    ULONG const	cb = out->BlockCount * SECTOR_SIZE;	/* bytes to copy */
+d247 1
+a247 1
+    USHORT	i;
+d249 2
+a250 2
+    DEBMSG2(DBG_LEVEL3,"\r\n[BSGL] (%p, offset %w)",(PVOID)in->pSGList,start);
+    DEBMSG2(DBG_LEVEL4,"\r\n%z",(PVOID)in->pSGList,in->cSGList*sizeof(*in->pSGList));
+d259 1
+a259 1
+	if( current+ul > start )
+d270 14
+a283 1
+	ASSERT( i < in->cSGList );
+d286 4
+d292 1
+d294 2
+d297 1
+d299 1
+a299 1
+	if( in->pSGList[i].XferBufLen + copied > out->BlockCount * SECTOR_SIZE )
+d302 1
+a302 1
+		= out->BlockCount * SECTOR_SIZE - copied;
+d314 3
+d341 1
+a341 1
+PhysdevNotify(PVRIO const io)
+d343 8
+a350 1
+    DEBMSG1(DBG_LEVEL2,"\r\n[PhysdevNotify] entry (%p)",(PVOID)io);
+d354 1
+a354 1
+    if( io->mother != NULL )
+d356 1
+a356 1
+	PVRDEVHDR const	parent = io->mother->vrd;
+d360 2
+a361 2
+	DEBMSG2(DBG_LEVEL3,"\r\n[PhysdevNotify] mother %p, parent %p",(PVOID)io->mother,(PVOID)parent);
+	parent->notify(io);
+d366 1
+a366 1
+	HostdriveNotify(io);
+d369 1
+a369 1
+    FreeVrio(io);				/* don't need this anymore */
+d378 1
+a378 1
+ *	PhysdevWorker(self,io)
+d381 1
+a381 1
+ *	io		VRIO describing I/O
+d392 1
+a392 1
+PhysdevWorker(PVRDEVHDR const self,PVRIO const io)
+d395 12
+a406 1
+    PIORB_EXECUTEIO const iorb = AllocateIorb();
+a407 1
+    DEBMSG1(DBG_LEVEL3,"\r\n[PhysdevWorker] entry (%p)",(PVOID)io);
+d418 2
+a419 2
+    iorb->iorbh.CommandCode = io->request->iorbh.CommandCode;
+    iorb->iorbh.CommandModifier = io->request->iorbh.CommandModifier;
+d421 1
+a421 1
+    iorb->RBA = io->blk + physdev->offset;	/* add size of VRAID sectors */
+d423 1
+a423 1
+    iorb->BlockCount = io->bcnt;
+d426 9
+a434 1
+    BuildSGList(iorb, io->request, io->offset);
+d437 1
+a437 1
+    PhysSendIORB(physdev->phys, io, &iorb->iorbh);
+d471 1
+a471 1
+    PIORB_EXECUTEIO	iorb = AllocateIorb();
+d474 1
+a474 1
+    DEBMSG3(DBG_LEVEL3,"\r\n[PhysdevPartIO] blk %lx bcnt %w to/from %lx)",(PVOID)&blk,bcnt,(PVOID)&phys);
+d494 1
+a494 1
+    iorb->pSGList->XferBufLen = bcnt * SECTOR_SIZE;
+d517 1
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d12 3
+a14 1
+ * $Log$
+d19 1
+a19 1
+static char const vcid[]="$Id$";
+d72 1
+a72 1
+ *	NotifyIORB(iorb)
+d89 2
+a90 2
+PRIVATE void FAR _saveregs _loadds _Cdecl
+NotifyIORB(PIORB iorb)
+d92 3
+a94 3
+    PVRAID_LOWER_DMDSPACE ws = (PVRAID_LOWER_DMDSPACE)iorb->DMWorkSpace;
+    PVRIO		vrio = ws->vrio;
+    /*PPHYSDEVICE		self = ws->self;*/
+d96 1
+a96 1
+    ASSERT( (iorb->Status & IORB_DONE) != 0 );	/* HAS to be complete! */
+d102 1
+a102 1
+	DEBMSG2(DBG_ALL,"\r\n[NotifyIORB] wakeup %p, error %w",
+d140 2
+a141 2
+PRIVATE USHORT NEAR
+PhysSendIORB(PPHYSDEVICE pdev,PVRIO vrio,PIORB iorb)
+d143 2
+a144 1
+    PVRAID_LOWER_DMDSPACE ws = (PVRAID_LOWER_DMDSPACE)iorb->DMWorkSpace;
+d146 2
+a147 1
+    iorb->NotifyAddress = (PVOID)NotifyIORB;
+d157 1
+a157 3
+    SAVE_REGS();
+    (pdev->pADDEntry)(iorb);
+    RESTORE_REGS();
+d183 1
+a183 1
+BuildSGList(PIORB_EXECUTEIO out,PIORB_EXECUTEIO in,USHORT offset)
+d189 1
+a189 1
+    int		i;
+d191 2
+a192 2
+    DEBMSG2(DBG_LEVEL2,"\r\n[BSGL] (%p, offset %w)",(PVOID)in->pSGList,start);
+    DEBMSG2(DBG_LEVEL3,"\r\n%z",(PVOID)in->pSGList,in->cSGList*sizeof(*in->pSGList));
+d203 1
+a203 1
+	DEBMSG1(DBG_LEVEL2,"\r\n[BSGL] skipping %lx",(PVOID)&ul);
+d229 1
+a229 1
+	DEBMSG2(DBG_LEVEL2,"\r\n[BSGL] added %lx from %lx",(PVOID)&out->pSGList[out->cSGList].XferBufLen,(PVOID)&out->pSGList[out->cSGList].ppXferBuf);
+d255 2
+d258 2
+a259 2
+PRIVATE VOID NEAR
+PhysdevNotify(PVRIO io)
+d267 1
+a267 1
+	PVRDEVHDR	parent = io->mother->vrd;
+d271 1
+a271 1
+	DEBMSG2(DBG_LEVEL2,"\r\n[PhysdevNotify] mother %p, parent %p",(PVOID)io->mother,(PVOID)parent);
+d276 1
+a276 3
+	extern void	HostdriveNotify(PVRIO io);
+
+	DEBMSG(DBG_LEVEL2,"\r\n[PhysdevNotify] no mother -> Host Drive");
+d302 2
+a303 2
+PRIVATE USHORT NEAR
+PhysdevWorker(PVRDEVHDR self,PVRIO io)
+d305 2
+a306 2
+    PVRDPHYS		physdev = (PVRDPHYS)self;
+    PIORB_EXECUTEIO	iorb = AllocateIorb();
+d308 1
+a308 1
+    DEBMSG1(DBG_LEVEL2,"\r\n[PhysdevWorker] entry (%p)",(PVOID)io);
+d329 1
+a329 1
+    DEBMSG2(DBG_LEVEL2,"\r\n[PhysdevWorker] %w blocks from/to %lx",iorb->BlockCount,(PVOID)&iorb->RBA);
+d367 1
+a367 1
+    DEBMSG3(DBG_LEVEL2,"\r\n[PhysdevPartIO] blk %lx bcnt %w to/from %lx)",(PVOID)&blk,bcnt,(PVOID)&phys);
+d389 1
+a389 1
+    DEBMSG2(DBG_LEVEL2,"\r\n[PhysdevPartIO] %w blocks from/to %lx",iorb->BlockCount,(PVOID)&iorb->RBA);
+d392 1
+a392 1
+    DISABLE();
+d404 1
+a404 1
+	DISABLE();
+d406 1
+@

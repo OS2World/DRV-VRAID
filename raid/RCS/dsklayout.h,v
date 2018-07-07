@@ -1,0 +1,533 @@
+head	1.11;
+access;
+symbols
+	vrflt031113:1.11
+	vrflt010903:1.11
+	PREV010803:1.11
+	VRAIDv0_85:1.10
+	VRAIDv0_84:1.10
+	VRAIDv0_82:1.9
+	VRAIDv0_70:1.8
+	VRAIDv0_60:1.5
+	VRAIDv0_51:1.4
+	VRAIDv0_50:1.4
+	VRAIDv0_40:1.4
+	VRAIDv0_30:1.4
+	ALPHA1:1.3;
+locks; strict;
+comment	@ * @;
+
+
+1.11
+date	2001.07.20.01.14.21;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2000.07.24.23.54.18;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2000.03.17.02.07.23;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.06.21.02.34.17;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.05.12.01.38.06;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.01.22.02.54.08;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	98.12.22.00.03.10;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	98.06.26.22.11.22;	author vitus;	state Stab;
+branches;
+next	1.3;
+
+1.3
+date	98.05.29.01.39.53;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.04.08.01.05.01;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.03.10.02.25.09;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Describes layout of administrative disk sectors
+@
+
+
+1.11
+log
+@- added RDFLAG_STATEMASK, mask all state bits
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/RCS/dsklayout.h,v $
+ * $Revision: 1.10 $
+ * $Date: 2000/07/24 23:54:18 $
+ * $Locker: vitus $
+ *
+ *	Describes layout of administrative disk sectors.
+ *
+ * $Log: dsklayout.h,v $
+ * Revision 1.10  2000/07/24 23:54:18  vitus
+ * - struct _SEC_VRDEV2 now supports rebuild state
+ *
+ * Revision 1.9  2000/03/17 02:07:23  vitus
+ * - added EXTENDED_PARTTYPE
+ *
+ * Revision 1.8  1999/06/21 02:34:17  vitus
+ * - corrected my english (spelling)
+ *
+ * Revision 1.7  1999/05/12 01:38:06  vitus
+ * - SEC_VRDEV2: new layout
+ * - moved RDFLAGS_* from driver specific header
+ *
+ * Revision 1.6  1999/01/22 02:54:08  vitus
+ * - added VRAIDEVICE2 sectors (preliminary)
+ *
+ * Revision 1.5  1998/12/22 00:03:10  vitus
+ * - added missing "#pragma pack()".  Silly bug.
+ *
+ * Revision 1.4  1998/06/26 22:11:22  vitus
+ * - removed flags from SEC_PHYSDEV
+ *
+ * Revision 1.3  1998/05/29 01:39:53  vitus
+ * - changed definition of STRIPE,CHAIN
+ * - SINGLE is now valid type of VRAIDDEVICE sector
+ *
+ * Revision 1.2  1998/04/08 01:05:01  vitus
+ * - changed unnamed to named structures (IBM Compiler)
+ * - added size to child definition
+ * - removed bitfield usage (probs with different compilers)
+ *
+ * Revision 1.1  1998/03/10 02:25:09  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1997-2001
+ */
+
+#ifndef _DSKSLAYOUT_H
+#define _DSKSLAYOUT_H
+#pragma pack(1)
+
+#define SECTOR_SIZE		512
+
+
+/*
+ * Absolute sector 0 contains a standard partition table.
+ * A single partition is defined starting at absolute sector 1
+ * and including the rest of physical disk space.
+ */
+#define VRAID_PARTTYPE		0x7C
+#if !defined(EXTENDED_PARTTYPE)
+# define EXTENDED_PARTTYPE	0x05
+#endif
+
+
+/*
+ * Relative sectors 1 to n in partition are used for administrative data.
+ * May become variable in non-alpha versions...
+ */
+#define VRAID_ADMINSECTORS	32
+
+
+/*
+ * Layout of master boot record sector,
+ * imported from OS2DASD header file.
+ */
+typedef struct _PARTITIONENTRY {
+    UCHAR	BootIndicator;
+    UCHAR	BegHead;
+    UCHAR	BegSector;			/* plus 2 bits BegCylinder */
+    UCHAR	BegCylinder;
+    UCHAR	SysIndicator;
+    UCHAR	EndHead;
+    UCHAR	EndSector;			/* plus 2 bits EndCylinder */
+    UCHAR	EndCylinder;
+    ULONG	RelativeSectors;
+    ULONG	NumSectors;
+} PARTITIONENTRY, FAR * PPARTITIONENTRY;
+
+
+typedef struct _MBR {
+    UCHAR	Pad[0x1BE];
+    PARTITIONENTRY PartitionTable[4];
+    USHORT	Signature;
+} MBR, FAR * PMBR;
+
+
+
+
+/*
+ * All devices are marked with an unique ID.
+ * This could be build from two byte host ID (sum of BIOS image) and
+ * a time stamp (UNIX time = seconds since 1.1.1970) at creation of device.
+ */
+typedef UCHAR		DEVID[6];
+typedef DEVID FAR *	PDEVID;
+
+
+/*
+ * First configuration sector defines this physical device.  Currently
+ * only an ID is defined.
+ * Sector type: "PHYSDEVICE      "
+ */
+typedef struct _SEC_PHYSDEV {
+    UCHAR	sectype[16];			/* R: type of sector */
+    ULONG	timestamp;			/* R: when written */
+    union {
+	char		dummy[490];
+	struct {
+	    DEVID	id;
+	    USHORT	adminspace;		/* will be VRAID_ADMINSECTORS */
+	    ULONG	size;			/* user size [sectors]} */
+	} s;
+    } u;
+    USHORT		crc;			/* CRC16 */
+} SEC_PHYSDEV, FAR * PSEC_PHYSDEV;
+
+
+
+
+/*
+ * Second and all further configuration sectors define
+ * the VRDEVICES build upon this disk.
+ * Sector type: "VRAIDDEVICE     ":
+ */
+typedef struct _SEC_VRDEV {
+    UCHAR	sectype[16];			/* R: type of sector */
+    ULONG	timestamp;			/* R: when written */
+    union {
+	char		dummy[490];
+	struct {
+	    DEVID	id;
+	    UCHAR	type;			/* RDTYPE_* */
+	    UCHAR	flags;			/* RDFLAG_* */
+	    USHORT	children;		/* entries in following table */
+	    struct {
+		DEVID	id;
+		ULONG	size;			/* [sectors] */
+	    } child[1];
+	} s;
+    } u;
+    USHORT		crc;			/* CRC16 */
+} SEC_VRDEV, FAR * PSEC_VRDEV;
+
+
+/* Sector type: "VRAIDDEVICE2    " */
+typedef struct _SEC_VRDEV2 {
+    UCHAR	sectype[16];			/* R: type of sector */
+    ULONG	timestamp;			/* R: when written */
+    union {
+	char		dummy[486];
+	struct {
+	    DEVID	id;
+	    UCHAR	type;			/* RDTYPE_* */
+	    UCHAR	flags;			/* RDFLAG_* */
+	    USHORT	children;		/* entries in following table */
+	    struct {
+		DEVID	id;
+		UCHAR	flags;			/* bit 0: completely valid child */
+		UCHAR	reserved;		/* to be defined */
+		ULONG	valid;			/* valid sector range
+						   (flags & 0x01) != 0 -> Build runs
+						   (flags & 0x01) == 0 -> Rebuild */
+		ULONG	size;			/* [sectors] */
+	    } child[1];
+	} s;
+    } u;
+
+    ULONG	rebuild;			/* restart rebuild here [sector] */
+    USHORT	crc;				/* CRC16 */
+} SEC_VRDEV2, FAR * PSEC_VRDEV2;
+
+#define RDTYPE_SINGLE	1
+#define RDTYPE_CHAIN	2
+#define RDTYPE_STRIPE	3
+#define RDTYPE_MIRROR	4
+#define RDTYPE_RAID4	5
+#define RDTYPE_RAID5	6
+
+
+#define RDFLAG_STATEMASK	0x0F		/* reserved for array states */
+
+#define RDFLAG_BUILDING		0x01		/* build running */
+#define RDFLAG_ERROR		0x02		/* array in ERROR state,
+						   no more I/Os possible */
+#define RDFLAG_FAIL		0x04		/* redundancy lost */
+#define RDFLAG_REBUILD		0x08		/* rebuild running */
+
+#define RDFLAG_HOSTDRIVE	0x80		/* a hostdrive, stop scanning */
+
+
+#pragma pack()
+#endif /* _DSKSLAYOUT_H */
+@
+
+
+1.10
+log
+@- struct _SEC_VRDEV2 now supports rebuild state
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 2000/03/17 02:07:23 $
+d10 3
+d44 1
+a44 1
+ * This code is Copyright Vitus Jensen 1997-2000
+d188 3
+@
+
+
+1.9
+log
+@- added EXTENDED_PARTTYPE
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/06/21 02:34:17 $
+d10 3
+d157 1
+a157 1
+	char		dummy[490];
+d165 1
+a165 1
+		UCHAR	flags;			/* bit 0: valid */
+d167 3
+a169 1
+		ULONG	valid;			/* valid sector if(flags & 0x01)=0 */
+d174 3
+a176 1
+    USHORT		crc;			/* CRC16 */
+d186 1
+a186 1
+#define RDFLAG_BUILDING		0x01		/* build or rebuild */
+d190 1
+@
+
+
+1.8
+log
+@- corrected my english (spelling)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/05/12 01:38:06 $
+d10 3
+d37 2
+a38 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1997-99
+d54 4
+d81 1
+a81 1
+} PARTITIONENTRY;
+@
+
+
+1.7
+log
+@- SEC_VRDEV2: new layout
+- moved RDFLAGS_* from driver specific header
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1999/01/22 02:54:08 $
+d10 4
+d35 1
+a35 1
+ * This code is Copyright Vitus Jensen 1997-98
+d131 1
+a131 1
+	    USHORT	childs;			/* entries in following table */
+d152 1
+a152 1
+	    USHORT	childs;			/* entries in following table */
+@
+
+
+1.6
+log
+@- added VRAIDEVICE2 sectors (preliminary)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1998/12/22 00:03:10 $
+d10 3
+a147 1
+	    ULONG	bdone;			/* when building: next sector */
+d153 1
+d168 7
+a174 2
+#define RDFLAG_BUILDING		0x01
+#define RDFLAG_HOSTDRIVE	0x80
+@
+
+
+1.5
+log
+@- added missing "#pragma pack()".  Silly bug.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1998/06/26 22:11:22 $
+d10 3
+d113 1
+a113 1
+ * Sector type: "VRAIDDEVICE     "
+d123 1
+a123 1
+	    UCHAR	flags;			/* bit 7: host drive */
+d135 23
+d164 3
+@
+
+
+1.4
+log
+@- removed flags from SEC_PHYSDEV
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/raid/RCS/dsklayout.h,v $
+ * $Revision: 1.3 $
+ * $Date: 1998/05/29 01:39:53 $
+d7 1
+a7 1
+ * Describes layout of administrative disk sectors.
+d10 3
+d139 1
+@
+
+
+1.3
+log
+@- changed definition of STRIPE,CHAIN
+- SINGLE is now valid type of VRAIDDEVICE sector
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1998/04/08 01:05:01 $
+d10 4
+d40 1
+a40 1
+ * Absolute sectors 1 to n are used for administrative data.
+d43 1
+a43 1
+#define VRAID_ADMINSECTORS	16
+a93 2
+	    UCHAR	flags;			/* bit 7: host drive */
+
+@
+
+
+1.2
+log
+@- changed unnamed to named structures (IBM Compiler)
+- added size to child definition
+- removed bitfield usage (probs with different compilers)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1998/03/10 02:25:09 $
+d10 5
+d127 3
+a129 3
+/*#define RDTYPE_SINGLE	1*/
+#define RDTYPE_STRIPE	2
+#define RDTYPE_CHAIN	3
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 3
+a11 1
+ * $Log$
+d16 4
+d44 2
+a45 2
+    USHORT	BegSector:6;
+    USHORT	BegCylinder:10;
+d48 1
+a48 1
+    UCHAR	EndSector;
+d65 3
+a67 3
+ * All devices are marked with an unique ID, which is build
+ * from two byte host ID (sum of BIOS image) and time stamp
+ * (UNIX time = seconds since 1.1.1970) at creation of drive set.
+d70 1
+a70 1
+
+d86 5
+a90 2
+	};
+    };
+d109 1
+a109 3
+	    UCHAR	type;			/* RDTYPE_*, bit 7 marks
+						   end of SEC_VRDEV (it's a
+						   host device!). */
+d114 4
+a117 4
+		UCHAR	reserved[2];
+	    } child[];
+	};
+    };
+d124 1
+a124 1
+#define RDTYPE_SPAN	3
+d128 2
+@

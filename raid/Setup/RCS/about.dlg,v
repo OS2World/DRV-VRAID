@@ -1,0 +1,64 @@
+head	1.2;
+access;
+symbols
+	VSETUPv0_84:1.2
+	VSETUP_82:1.2
+	VSETUPv0_80:1.2
+	VSETUPv0_71:1.2
+	VSETUPv0_70:1.2
+	VSETUPv0_60:1.2
+	VSETUPv0_52:1.2
+	VSETUPv0_51:1.2
+	VSETUPv0_50:1.2
+	VSETUPv0_20:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	98.06.09.01.27.01;	author vitus;	state Stab;
+branches;
+next	1.1;
+
+1.1
+date	98.04.28.22.28.18;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Dialog "Product Information"
+@
+
+
+1.2
+log
+@- removed unneccessary PRESPARAMS
+@
+text
+@#ifndef OS2_INCLUDED
+   #include <os2.h>
+#endif
+DLGINCLUDE 5 "D:\SOURCE\driver\raid\Setup\resources.H"
+
+DLGTEMPLATE IDW_ABOUT LOADONCALL MOVEABLE DISCARDABLE
+BEGIN
+    DIALOG  "Product Information", IDW_ABOUT, 121, 56, 200, 91, 
+            FS_NOBYTEALIGN | WS_VISIBLE, FCF_TITLEBAR
+    BEGIN
+        DEFPUSHBUTTON   "OK", DID_OK, 80, 5, 38, 12, WS_GROUP
+        LTEXT           "<empty>", ST_DESCRIPTION, 10, 22, 179, 60, 
+                        DT_WORDBREAK
+    END
+END
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@a9 1
+            PRESPARAMS 0x00008000L, 0x65482E38L, 0x0000766CL
+@

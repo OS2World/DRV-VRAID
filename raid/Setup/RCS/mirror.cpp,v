@@ -1,0 +1,2556 @@
+head	2.1;
+access;
+symbols
+	VSETUPv0_84:1.18
+	VSETUP_82:1.13
+	VSETUPv0_80:1.10
+	VSETUPv0_71:1.4
+	VSETUPv0_70:1.4;
+locks; strict;
+comment	@// @;
+
+
+2.1
+date	2005.06.17.06.09.03;	author vitus;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2001.07.08.18.33.25;	author vitus;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2001.01.30.00.34.01;	author vitus;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2001.01.23.01.40.33;	author vitus;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2001.01.15.01.35.27;	author vitus;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2000.08.17.02.25.42;	author vitus;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2000.08.07.01.24.57;	author vitus;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2000.04.10.00.54.49;	author vitus;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	99.12.14.00.26.40;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	99.07.05.00.45.18;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.06.21.01.33.40;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.06.19.22.06.40;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.06.02.01.43.11;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.05.13.22.40.27;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.05.12.01.30.43;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	99.04.13.01.25.03;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	99.03.24.23.01.06;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	99.03.23.00.50.14;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	99.03.22.01.59.33;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.03.06.20.09.47;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Implements VMirror class
+@
+
+
+2.1
+log
+@- new setSize() method
+- added New BSD license statement
+- removed tabs
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/mirror.cpp,v $
+ * $Revision: 1.19 $
+ * $Date: 2001/07/08 18:33:25 $
+ * $Locker: vitus $
+ *
+ *      Implements VMirror class.
+ *
+ * $Log: mirror.cpp,v $
+ * Revision 1.19  2001/07/08 18:33:25  vitus
+ * - ioInvalidChild: next state is Build now Rebuild
+ *
+ * Revision 1.18  2001/01/30 00:34:01  vitus
+ * - code correctly distinguishes between build and rebuild
+ *
+ * Revision 1.17  2001/01/23 01:40:33  vitus
+ * - VMirror::ioStartRebuild: lokale Variable flt_hd umbenannt
+ *
+ * Revision 1.16  2001/01/15 01:35:27  vitus
+ * - VMirror::ioInvalidChild: modifies child[i].valid
+ *
+ * Revision 1.15  2000/08/17 02:25:42  vitus
+ * - method addChild() parameter 'datav' changed to sector no.
+ * - method querySize() removed (now inline)
+ * - implemented ioInvalidChild(), ioStartRebuild()
+ *
+ * Revision 1.14  2000/08/07 01:24:57  vitus
+ * - adding support for rebuild state
+ *
+ * Revision 1.13  2000/04/10 00:54:49  vitus
+ * - include VSetup.h instead of proto.h
+ * - converted C++ to C comments
+ *
+ * Revision 1.12  1999/12/14 00:26:40  vitus
+ * - more error logging
+ *
+ * Revision 1.11  1999/07/05 00:45:18  vitus
+ * - addChild() gets additional flag "config sector valid"
+ * - modifications to keep this flag in child table and honour it when reading
+ *   from admin space
+ * - ioSync: updates current config sector if it's still the same array.
+ *   Recreating it did change the size of the array.
+ *
+ * Revision 1.10  1999/06/21 01:33:40  vitus
+ * - corrected english spelling
+ *
+ * Revision 1.9  1999/06/19 22:06:40  vitus
+ * - minor corrections to keep compiler happy
+ * - detected states include now ready, fail and build
+ *
+ * Revision 1.8  1999/06/02 01:43:11  vitus
+ * - queryIcon() returns ICO_INVCHILDARRAY if parent says that this
+ *   child is invalid
+ * - isValidChild(int/VRDev *) now located here
+ * - allocateDescription: adds "building" to text
+ * - addChild: set building flag if child is invalid
+ *
+ * Revision 1.7  1999/05/13 22:40:27  vitus
+ * - array description includes "building" or "ready"
+ * - adding an invalid child causes building state
+ * - ioRemoveParent: clear parent's admin sector
+ * - ioDeleteYourself: no disk i/o
+ * - ioRemoveChild() implemented
+ *
+ * Revision 1.6  1999/05/12 01:30:43  vitus
+ * - ioSync: new sector layout
+ *
+ * Revision 1.5  1999/04/13 01:25:03  vitus
+ * - child[] now static member of object
+ *
+ * Revision 1.4  1999/03/24 23:01:06  vitus
+ * - allocateDescription() displays drive ID
+ *
+ * Revision 1.3  1999/03/23 00:50:14  vitus
+ * - read method reads all childs and compares.  Currently differences are
+ *   only logged.  Better ideas?
+ *
+ * Revision 1.2  1999/03/22 01:59:33  vitus
+ * - ioDeleteYourself: first clear own sector and afterwards call childs
+ *
+ * Revision 1.1  1999/03/06 20:09:47  vitus
+ * Initial revision
+ * ---------------------------------------------
+ *      Copyright (c) 1998-2001,2005, Vitus Jensen
+ *      All rights reserved.
+ *
+ *      Redistribution and use in source and binary forms, with or without
+ *      modification, are permitted provided that the following conditions are
+ *      met:
+ *
+ *          * Redistributions of source code must retain the above copyright
+ *            notice, this list of conditions and the following disclaimer.
+ *          * Redistributions in binary form must reproduce the above copyright
+ *            notice, this list of conditions and the following disclaimer in
+ *            the documentation and/or other materials provided with the
+ *            distribution.
+ *          * Neither the name of Vitus Jensen nor the names of its
+ *            contributors may be used to endorse or promote products derived
+ *            from this software without specific prior written permission.
+ *
+ *      THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *      "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *      LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *      A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *      OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *      SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *      LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *      DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *      THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *      (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *      OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+static char const vcid[]="$Id: mirror.cpp,v 1.19 2001/07/08 18:33:25 vitus Exp vitus $";
+
+#include <assert.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <limits.h>
+
+#define __IBMC__        0
+#define INCL_WINPOINTERS
+#define INCL_DOS
+#define INCL_DOSDEVIOCTL
+#define INCL_ERRORS
+#include <os2.h>
+
+extern "C" {
+#include "../../../Lib/defines.h"
+#include "../../../Lib/verbose.h"
+}
+#include "VSetup.h"
+#include "resources.h"
+#include "drvif.h"
+
+#include "dskinfo.hpp"
+#include "Mirror.hpp"
+
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::VMirror(drive_id,nchd)
+ *
+ * PARAMETER
+ *      drive_id        ID of this chain
+ *      nchd            child count
+ *
+ * RETURNS
+ *      (nothing, C++)
+ *
+ * DESCRIPTION
+ *      Creates a new VRAID object in memory.
+ *
+ * REMARKS
+ */
+VMirror::VMirror(DEVID drive_id, int nchd)
+{
+    parent = NULL;
+    children = 0;
+    size = -1ul;
+    hostdrive = False;
+    writable = True;
+    state = Ready;
+    memcpy(id, drive_id, sizeof(DEVID));
+
+    inv_icon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_INVCHILDARRAY);
+    rw_icon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_RAIDDRIVE);
+    ro_icon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_DISABLEDARRAY);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::~VMirror()
+ *
+ * PARAMETER
+ *      (none, C++)
+ * RETURNS
+ *      (nothing, C++)
+ *
+ * DESCRIPTION
+ *      Destroys VRAID memory object.
+ *
+ * REMARKS
+ */
+VMirror::~VMirror()
+{
+    WinDestroyPointer(rw_icon);
+    WinDestroyPointer(ro_icon);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::setBuild(nextsec,[rebuild])
+ *
+ * PARAMETER
+ *      nextsec         where to restart the buildimg process
+ *                      (0: complete restart)
+ * RETURNS
+ *      (nothing)
+ * DESCRIPTION
+ *      Configures the BUILD process for this array.  Either when reading
+ *      the configuration sector or when adding devices etc.
+ *
+ * REMARKS
+ */
+void
+VMirror::setBuild(ULONG nextsec, Boolean redo)
+{
+    if( redo )
+        state = Rebuild;
+    else
+        state = Build;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::queryChildren()
+ *
+ * PARAMETER
+ *      (none)
+ * RETURNS
+ *      count
+ * DESCRIPTION
+ *      Returns count of children.
+ *
+ * REMARKS
+ */
+int
+VMirror::queryChildren()
+{
+    return children;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::getChild(index)
+ *
+ * PARAMETER
+ *      index           which child
+ * RETURNS
+ *      pointer
+ *
+ * DESCRIPTION
+ *      Returns pointer to a child.
+ *
+ * REMARKS
+ */
+VRDev *
+VMirror::getChild(int index)
+{
+    if( index >= children )
+        return 0;
+    return child[index].rdev;
+}
+
+
+
+
+Boolean
+VMirror::isValidChild(int which)
+{
+    assert( which < children );
+    return (Boolean)(child[which].valid == -1ul);
+}
+
+
+
+
+Boolean
+VMirror::isValidChild(VRDev * which)
+{
+    for( int i = 0; i < children; ++i )
+        if( which == child[i].rdev )
+            return (Boolean)(child[i].valid == -1ul);
+    assert( 0 );
+    return False;                               /* xxx? */
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::allocateDescription()
+ *
+ * PARAMETER
+ *      (none)
+ * RETURNS
+ *      ASCIIZ
+ *
+ * DESCRIPTION
+ *      Allocates buffer and fills it with description of this object.
+ *
+ * REMARKS
+ */
+char *
+VMirror::allocateDescription()
+{
+    static char * State2Str[] = { "ready", "build", "rebuild", "fail", "error" };
+    char *      descr = new char[80];
+    int         found = 0;
+
+    for( int i = 0; i < children; ++i )
+        if( child[i].rdev != 0  &&  child[i].rdev->isArray() != 0xFF )
+            ++found;
+    if( found < children )
+        state = Fail;                           /* always! */
+
+    sprintf(descr, "RAID 1 (Mirroring, %s)", State2Str[state]);
+
+    if( hostdrive == True  &&  os2access != -1UL )
+        sprintf(&descr[strlen(descr)], " (OS/2 Drive %lu)", os2access);
+
+    sprintf(&descr[strlen(descr)], "\nID %02X%02X%02X%02X%02X%02X    %lu MByte",
+            id[0],id[1],id[2],id[3],id[4],id[5], size / 2 / 1024);
+    return descr;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::queryIcon()
+ *
+ * PARAMETER
+ *      (none)
+ * RETURNS
+ *      HPOINTER to display
+ * DESCRIPTION
+ *      Returns icon to reflect the logical state of this drive.
+ *
+ * REMARKS
+ */
+HPOINTER
+VMirror::queryIcon()
+{
+    if( parent != 0  &&  parent->isValidChild(this) == False )
+        return inv_icon;
+    else if( writable == True )
+        return rw_icon;
+    else
+        return ro_icon;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::setHostdrive(os2idx)
+ *
+ * PARAMETER
+ *      os2idx          accessable through this PDsk*() index
+ *                      or -1 if it isn't accessable.
+ *
+ * RETURNS
+ *      (nothing)
+ *
+ * DESCRIPTION
+ *      Marks this array as a host drive with or w/o
+ *      OS/2 access.
+ *
+ * REMARKS
+ */
+void
+VMirror::setHostdrive(ULONG os2idx)
+{
+    hostdrive = True;
+    os2access = os2idx;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::setSize(newsize)
+ *
+ * PARAMETER
+ *      newsize         new size of array
+ *
+ * RETURNS
+ *      (nothing)
+ *
+ * DESCRIPTION
+ *      RAID 1 devices may be smaller than any part of it (but not larger)
+ *
+ * REMARKS
+ *      This method could be avoided if the constructor would analyze
+ *      the "VRAIDDEVICE2" itself.  Redesign the device scanner?        xxx
+ */
+void
+VMirror::setSize(ULONG newsize)
+{
+    if( newsize < size )
+        size = newsize;                         /* smaller is possible */
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::addChild(newchild, cfgv, datav)
+ *
+ * PARAMETER
+ *      newchild        pointer to child to add
+ *      cfgv            configuration already written?
+ *      datav           whether data of this child is valid (uptodate)
+ *
+ * RETURNS
+ *      (nothing)
+ *
+ * DESCRIPTION
+ *      Adds a new child to our VRAID object.
+ *
+ * REMARKS
+ */
+void
+VMirror::addChild(VRDev * newchild, Boolean cfgv, ULONG datav)
+{
+    assert( newchild != NULL );
+
+    /* Set double link between child and parent. */
+
+    child[children].rdev = newchild;
+    child[children].cfgok = cfgv;
+    child[children].valid = datav;
+    newchild->setParent(this);
+
+    /* Update our object with child's information. */
+
+    ULONG       childsize = newchild->querySize();
+    if( size > childsize )
+        size = childsize;
+    if( newchild->isWritable() == False )
+        writable = False;                       /* oups, it isn't 'changable' */
+
+    if( state == Ready )
+    {
+        if( !cfgv )
+            state = Build;
+        else if( datav != -1ul )
+            state = Fail;
+    }
+    ++children;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::ioRemoveChild(rdev)
+ *
+ * PARAMETER
+ *      rdev            child, to be removed
+ *
+ * RETURNS
+ *      count of errors
+ *
+ * DESCRIPTION
+ *      Remove any traces of ourself from physical storage.
+ *      This is done by telling all children that we are about
+ *      to be killed (they might set the "HOSTDRIVE" in their
+ *      configuration sectors) and clearing our own sector.
+ *
+ * REMARKS
+ */
+int
+VMirror::ioRemoveChild(VRDev * rdev)
+{
+    int         i;
+    int         errors = 0;
+    Boolean     found = False;
+
+
+    do
+    {
+        /* Search this child in internal tables. */
+
+        for( i = 0; i < children; ++i )
+        {
+            if( child[i].rdev == rdev )
+            {
+                int     j, k;
+
+                errors += child[i].rdev->ioRemoveParent();
+                for( j = i, k = i+1; k < children; ++j, ++k )
+                {
+                    child[j].rdev = child[k].rdev;
+                    child[j].valid = child[k].valid;
+                }
+                --children;
+                found = True;
+                break;
+            }
+        }
+        if( !found )
+        {
+            Verbose(1, "VMirror", "can't find child to remove!");
+            ++errors;
+            break;
+        }
+
+
+        /* Now update configuration sector. */
+
+        errors += ioSync();
+    }
+    while(0);
+
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::ioDeleteYourself()
+ *
+ * PARAMETER
+ *      this            to be removed
+ *
+ * RETURNS
+ *      count of errors
+ *
+ * DESCRIPTION
+ *      Remove any traces of ourself from physical storage.
+ *      This is done by telling all children that we are about
+ *      to be killed (they might set the "HOSTDRIVE" in their
+ *      configuration sectors) and clearing our own sector.
+ *
+ * REMARKS
+ */
+int
+VMirror::ioDeleteYourself()
+{
+    int         i;
+    int         errors = 0;
+
+    /* Update all children (parent removed -> marked in sectors). */
+
+    for( i = 0; i < children; ++i )
+    {
+        errors += child[i].rdev->ioRemoveParent();
+        child[i].rdev = NULL;
+    }
+
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::ioRemoveParent()
+ *
+ * PARAMETER
+ *      (none, C++)
+ * RETURNS
+ *      0               OK
+ *
+ * DESCRIPTION
+ *      Removes any traces of parent from configuration sectors.  Means
+ *      this array becomes hostdrive!
+ *
+ * REMARKS
+ */
+int
+VMirror::ioRemoveParent()
+{
+    PSEC_VRDEV2 sec = new SEC_VRDEV2;
+    int         errors = 0;
+    APIRET      rc;
+
+
+    /* 1st: clear administrative sector of old parent. */
+
+    memset(sec, 0, SECTOR_SIZE);
+    rc = write(1, 1, sec);
+    if( rc != 0 )
+    {
+        Verbose(1, "VMirror::ioRemoveParent", "can't clear parent SEC_VRDEV - rc %lu", rc);
+        ++errors;
+    }
+
+
+    /* 2nd: update FDFLAG_HOSTDRIVE */
+
+    do
+    {
+        rc = read(0, 1, sec);                   /* remember: 0 defines ourself */
+        if( rc != 0 )
+        {
+            Verbose(1, "VMirror::ioRemoveParent", "can't read own SEC_VRDEV2 - rc %lu", rc);
+            ++errors;
+            break;
+        }
+
+        sec->u.s.flags |= RDFLAG_HOSTDRIVE;     /* no parent means hostdrive */
+        sec->timestamp = time(NULL);            /* UTC of change */
+        sec->crc = Crc16(sec, SECTOR_SIZE-2);   /* !!! */
+
+        rc = write(0, 1, sec);
+        if( rc != 0 )
+        {
+            Verbose(1, "VMirror::ioRemoveParent", "can't write own SEC_VRDEV2 - rc %lu", rc);
+            ++errors;
+            break;
+        }
+
+        parent = NULL;                          /* none */
+    }
+    while(0);
+
+    delete sec;
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::ioChangeID(newid)
+ *
+ * PARAMETER
+ *      newid           new ID
+ * RETURNS
+ *      count of errors
+ *
+ * DESCRIPTION
+ *      Changes it's own DEVID.
+ *
+ * REMARKS
+ */
+int
+VMirror::ioChangeID(DEVID newid)
+{
+    PSEC_VRDEV2 sec = new SEC_VRDEV2;
+    int         errors = 0;
+
+    memcpy(id, newid, sizeof(DEVID));           /* update object */
+
+    do
+    {
+        APIRET  rc;
+
+        rc = read(0, 1, sec);                   /* remember: 0 defines ourself */
+        if( rc != 0 )
+        {
+            Verbose(1, "VMirror::ioChangeID", "can't read own SEC_VRDEV2 - rc %lu", rc);
+            ++errors;
+            break;
+        }
+
+        memcpy(sec->u.s.id, newid, sizeof(DEVID));
+        sec->timestamp = time(NULL);            /* UTC of change */
+        sec->crc = Crc16(sec, SECTOR_SIZE-2);   /* !!! */
+
+        rc = write(0, 1, sec);
+        if( rc != 0 )
+        {
+            Verbose(1, "VMirror::ioChangeID", "can't write own SEC_VRDEV2 - rc %lu", rc);
+            ++errors;
+            break;
+        }
+    }
+    while(0);
+
+    delete sec;
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::ioInvalidChild(id_of_invalid_child, from_this_sector_on)
+ *
+ * PARAMETER
+ *      id_of_invalid_child     DEVID
+ *      from_this_sector_on     first sector which needs update
+ *
+ * RETURNS
+ *      0               OK
+ *      /0              something went wrong (I/O or internal error)
+ *
+ * DESCRIPTION
+ *      Someone detected that a child of ours has an invalid sector
+ *      and tells us via this method.
+ *      If VRAID.FLT is running and this array is known to it just
+ *      tell it and the FLT will modify it's structures and start a
+ *      build.
+ *      If VRAID.FLT is not running just modify the configuration
+ *      sector.
+ *
+ * REMARKS
+ */
+int
+VMirror::ioInvalidChild(DEVID const id_of_invalid, ULONG from_this_sector_on)
+{
+    int child_idx = -1;
+
+    for( int i = 0; i < children; ++i )
+    {
+        if( memcmp(child[i].rdev->queryID(), id_of_invalid, sizeof(DEVID)) == 0 )
+        {
+            child_idx = i;
+            break;
+        }
+    }
+    assert( child_idx != -1 );
+
+    if( child[child_idx].valid != -1ul
+        &&  from_this_sector_on >= child[child_idx].valid )
+    {
+        /* This child is already invalid, we have nothing to do. */
+
+        return 0;
+    }
+    child[child_idx].valid = from_this_sector_on;
+    if( state == Ready )
+        state = Build;
+
+
+    if( queryFltHd() != -1u )
+    {
+        VRAID_CHILD_PARAM       param;
+
+        /* Tell VRAID.FLT that our array has an invalid child. */
+
+        param.handle = queryFltHd();
+        memcpy(param.id, id_of_invalid, sizeof(DEVID));
+        param.flags = 0;                        /* not valid */
+        param.secno = from_this_sector_on;
+
+        return (DriverArrayChild(&param) != 0);
+    }
+    else
+    {
+        return ioSync();
+    }
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::ioStartRebuild(start_sector)
+ *
+ * PARAMETER
+ *      start_sector            sector number on array
+ *
+ * RETURNS
+ *      0               OK
+ *      1               vraid.flt not loaded
+ *      2               vraid.flt dos not know this array
+ *
+ * DESCRIPTION
+ *      Starts a rebuild process on an array w/o invalid children.
+ *
+ * REMARKS
+ */
+int
+VMirror::ioStartRebuild(ULONG start_sector)
+{
+    USHORT const hd = queryFltHd();
+
+    if( hd == 0xFFFF )
+    {
+        MyMessageBox(0, HWND_DESKTOP,
+                     "The array you selected isn't known to"
+                     " vraid.flt.  Therefore it can't be rebuild"
+                     " by the driver.  Please reboot to let"
+                     " vraid.flt analyze the new situation and"
+                     " retry the operation.");
+        return 1;
+    }
+
+    APIRET      rc;
+    rc = DriverArrayRebuild(hd, start_sector);
+    if( rc != 0 )
+    {
+        MyMessageBox(0, HWND_DESKTOP,
+                     "The array you selected can't be rebuild"
+                     " by vraid.flt.  You need to reboot"
+                     " to let vraid.flt analyze a new situation.");
+        return 2;
+    }
+    setBuild(start_sector, True);               /* _re_build */
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::ioSync()
+ *
+ * PARAMETER
+ *      (none, C++)
+ * RETURNS
+ *      count of errors
+ *
+ * DESCRIPTION
+ *      'this' has been changed by the user -> update physical storage.
+ *
+ * REMARKS
+ */
+int
+VMirror::ioSync()
+{
+    PSEC_VRDEV2 sec = new SEC_VRDEV2;
+    USHORT      i;
+    ULONG       ul;
+    int         errors = 0;
+    Boolean     update = False;                 /* True: modify sector */
+    APIRET      rc;
+
+    do
+    {
+        rc = read(0, 1, sec);
+        if( rc != 0 )
+            break;                      /* read error?  Assume no cfg sectors */
+        if( memcmp(sec->sectype, "VRAIDDEVICE2    ", 16) != 0 )
+            break;
+        if( Crc16(sec, sizeof(*sec)-2) != sec->crc )
+            break;
+        if( memcmp(sec->u.s.id, id, sizeof(DEVID)) != 0 )
+            break;
+        if( sec->u.s.type != RDTYPE_MIRROR )
+            break;
+
+        update = True;
+    }
+    while( 0 );
+
+
+    if( update == True )
+    {
+        Verbose(1, "VMirror", "updating current configuration sector");
+
+        /* Update configuration sector with new contents.  Keep
+         * in mind, that the outside view should be unchanged. */
+
+        sec->timestamp = time(NULL);
+        sec->u.s.flags = (UCHAR)(parent != 0 ? 0 : 0x80);
+        sec->u.s.children = children;
+
+
+        /* 2nd: keep drive size, keep size of children.
+         * The current values shouldn't be changed! */
+
+        ul = sec->u.s.child[0].size;            /* drive size = size of any child */
+        size = ul;
+    }
+    else
+    {
+        /* New sector contents. */
+
+        Verbose(1, "VMirror", "creating new configuration sector");
+
+
+        /* First: fill configuration sector of current level. */
+
+        memset(sec, 0, sizeof(*sec));
+        memcpy(sec->sectype, "VRAIDDEVICE2    ", 16);
+        sec->timestamp = time(NULL);
+
+        memcpy(sec->u.s.id, id, sizeof(DEVID));
+        sec->u.s.type = RDTYPE_MIRROR;
+        sec->u.s.flags = (UCHAR)(parent != 0 ? 0 : 0x80);
+
+        sec->u.s.children = children;
+
+
+        /* 2nd: recalculate drive size, correct size of children.
+         * The current values were only wild guesses. */
+
+        ul = (ULONG)ULONG_MAX;
+        for( i = 0; i < children; ++i )
+            ul = min(ul, child[i].rdev->querySize());
+        size = ul;
+    }
+
+
+    /* 3rd: update all children and record their IDs and flags. */
+
+    for( i = 0; i < children; ++i )
+    {
+        child[i].rdev->ioSync();
+        memcpy(sec->u.s.child[i].id, child[i].rdev->queryID(), sizeof(DEVID));
+        sec->u.s.child[i].size = size;
+        if( (sec->u.s.child[i].valid = child[i].valid) == -1ul )
+            sec->u.s.child[i].flags |= 0x01;    /* child is valid */
+    }
+    if( state == Build )
+        sec->u.s.flags |= RDFLAG_BUILDING;
+    else if( state == Rebuild )
+        sec->u.s.flags |= RDFLAG_REBUILD;
+
+
+    /* Last: write administrative sector of current level. */
+
+    sec->crc = Crc16(sec, SECTOR_SIZE-2);
+    rc = write(0, 1, sec);
+    if( rc != 0 )
+    {
+        Verbose(1, "VMirror::ioSync", "write(0,1,...) - rc %lu, not updated", rc);
+        ++errors;
+    }
+
+    delete sec;
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::read(offset,count,buffer)
+ *
+ * PARAMETER
+ *      offset          offset in configuratoin space
+ *      count           sector count
+ *      buffer          sector data
+ *
+ * RETURNS
+ *      0               OK
+ *      /0              APIRET
+ *
+ * DESCRIPTION
+ *      Reads data from configuration sectors of this VRAID drive.
+ *
+ * REMARKS
+ *      Should read all children and compare. xxx
+ *      Should test 'valid'. xxx
+ */
+APIRET
+VMirror::read(ULONG offset, ULONG count, PVOID buffer)
+{
+    PUCHAR      copybuf = new UCHAR[count];
+    int         goodchildren = 0;
+    APIRET      rc = VERROR_NO_CONTENTS;
+
+    for( int i = 0; i < children; ++i )
+    {
+        if( !child[i].cfgok )
+            continue;                           /* nothing on this child */
+
+        rc = child[i].rdev->read(offset+1, count, buffer);
+        if( rc != 0 )
+            continue;                           /* Verbose() already called */
+        if( goodchildren == 0 )
+            memcpy(copybuf, buffer, (size_t)count);
+        else if( memcmp(copybuf, buffer, (size_t)count) != 0 )
+            Verbose(0, "VMirror", "Data error when reading child %d, ignored", i);
+        ++goodchildren;
+    }
+
+    delete[] copybuf;
+    return (goodchildren == 0 ? rc : 0);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::write(offset,count,buffer)
+ *
+ * PARAMETER
+ *      offset          offset in configuratoin space
+ *      count           sector count
+ *      buffer          sector data
+ *
+ * RETURNS
+ *      0               OK
+ *      /0              APIRET
+ *
+ * DESCRIPTION
+ *      Writes data to configuration sectors of this VRAID drive.
+ *
+ * REMARKS
+ *      Should test 'valid'. xxx
+ */
+APIRET
+VMirror::write(ULONG offset, ULONG count, PVOID buffer)
+{
+    APIRET      rc = 0;
+
+    for( int i = 0; i < children; ++i )
+        rc |= child[i].rdev->write(offset+1, count, buffer);
+    return rc;
+}
+@
+
+
+1.19
+log
+@- ioInvalidChild: next state is Build now Rebuild
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.18 $
+ * $Date: 2001/01/30 00:34:01 $
+d7 1
+a7 1
+ *	Implements VMirror class.
+d10 3
+d84 28
+a111 1
+ * This code is Copyright Vitus Jensen 1999-2001
+d113 1
+a113 1
+static char const vcid[]="$Id: mirror.cpp,v 1.18 2001/01/30 00:34:01 vitus Exp vitus $";
+d122 1
+a122 1
+#define __IBMC__	0
+d148 2
+a149 2
+ *	drive_id	ID of this chain
+ *	nchd		child count
+d152 1
+a152 1
+ *	(nothing, C++)
+d155 1
+a155 1
+ *	Creates a new VRAID object in memory.
+d181 1
+a181 1
+ *	(none, C++)
+d183 1
+a183 1
+ *	(nothing, C++)
+d186 1
+a186 1
+ *	Destroys VRAID memory object.
+d203 2
+a204 2
+ *	nextsec		where to restart the buildimg process
+ *			(0: complete restart)
+d206 1
+a206 1
+ *	(nothing)
+d208 2
+a209 2
+ *	Configures the BUILD process for this array.  Either when reading
+ *	the configuration sector or when adding devices etc.
+d217 1
+a217 1
+	state = Rebuild;
+d219 1
+a219 1
+	state = Build;
+d229 1
+a229 1
+ *	(none)
+d231 1
+a231 1
+ *	count
+d233 1
+a233 1
+ *	Returns count of children.
+d250 1
+a250 1
+ *	index		which child
+d252 1
+a252 1
+ *	pointer
+d255 1
+a255 1
+ *	Returns pointer to a child.
+d263 1
+a263 1
+	return 0;
+d284 2
+a285 2
+	if( which == child[i].rdev )
+	    return (Boolean)(child[i].valid == -1ul);
+d287 1
+a287 1
+    return False;				/* xxx? */
+d297 1
+a297 1
+ *	(none)
+d299 1
+a299 1
+ *	ASCIIZ
+d302 1
+a302 1
+ *	Allocates buffer and fills it with description of this object.
+d310 2
+a311 2
+    char *	descr = new char[80];
+    int		found = 0;
+d314 2
+a315 2
+	if( child[i].rdev != 0  &&  child[i].rdev->isArray() != 0xFF )
+	    ++found;
+d317 1
+a317 1
+	state = Fail;				/* always! */
+d322 1
+a322 1
+	sprintf(&descr[strlen(descr)], " (OS/2 Drive %lu)", os2access);
+d325 1
+a325 1
+	    id[0],id[1],id[2],id[3],id[4],id[5], size / 2 / 1024);
+d336 1
+a336 1
+ *	(none)
+d338 1
+a338 1
+ *	HPOINTER to display
+d340 1
+a340 1
+ *	Returns icon to reflect the logical state of this drive.
+d348 1
+a348 1
+	return inv_icon;
+d350 1
+a350 1
+	return rw_icon;
+d352 1
+a352 1
+	return ro_icon;
+d362 2
+a363 2
+ *	os2idx		accessable through this PDsk*() index
+ *			or -1 if it isn't accessable.
+d366 1
+a366 1
+ *	(nothing)
+d369 2
+a370 2
+ *	Marks this array as a host drive with or w/o
+ *	OS/2 access.
+d385 27
+d415 3
+a417 3
+ *	newchild	pointer to child to add
+ *	cfgv		configuration already written?
+ *	datav		whether data of this child is valid (uptodate)
+d420 1
+a420 1
+ *	(nothing)
+d423 1
+a423 1
+ *	Adds a new child to our VRAID object.
+d441 1
+a441 1
+    ULONG	childsize = newchild->querySize();
+d443 1
+a443 1
+	size = childsize;
+d445 1
+a445 1
+	writable = False;			/* oups, it isn't 'changable' */
+d449 4
+a452 4
+	if( !cfgv )
+	    state = Build;
+	else if( datav != -1ul )
+	    state = Fail;
+d464 1
+a464 1
+ *	rdev		child, to be removed
+d467 1
+a467 1
+ *	count of errors
+d470 4
+a473 4
+ *	Remove any traces of ourself from physical storage.
+ *	This is done by telling all children that we are about
+ *	to be killed (they might set the "HOSTDRIVE" in their
+ *	configuration sectors) and clearing our own sector.
+d480 3
+a482 3
+    int		i;
+    int		errors = 0;
+    Boolean	found = False;
+d487 1
+a487 1
+	/* Search this child in internal tables. */
+d489 23
+a511 23
+	for( i = 0; i < children; ++i )
+	{
+	    if( child[i].rdev == rdev )
+	    {
+		int	j, k;
+
+		errors += child[i].rdev->ioRemoveParent();
+		for( j = i, k = i+1; k < children; ++j, ++k )
+		{
+		    child[j].rdev = child[k].rdev;
+		    child[j].valid = child[k].valid;
+		}
+		--children;
+		found = True;
+		break;
+	    }
+	}
+	if( !found )
+	{
+	    Verbose(1, "VMirror", "can't find child to remove!");
+	    ++errors;
+	    break;
+	}
+d514 1
+a514 1
+	/* Now update configuration sector. */
+d516 1
+a516 1
+	errors += ioSync();
+d530 1
+a530 1
+ *	this		to be removed
+d533 1
+a533 1
+ *	count of errors
+d536 4
+a539 4
+ *	Remove any traces of ourself from physical storage.
+ *	This is done by telling all children that we are about
+ *	to be killed (they might set the "HOSTDRIVE" in their
+ *	configuration sectors) and clearing our own sector.
+d546 2
+a547 2
+    int		i;
+    int		errors = 0;
+d553 2
+a554 2
+	errors += child[i].rdev->ioRemoveParent();
+	child[i].rdev = NULL;
+d567 1
+a567 1
+ *	(none, C++)
+d569 1
+a569 1
+ *	0		OK
+d572 2
+a573 2
+ *	Removes any traces of parent from configuration sectors.  Means
+ *	this array becomes hostdrive!
+d580 3
+a582 3
+    PSEC_VRDEV2	sec = new SEC_VRDEV2;
+    int		errors = 0;
+    APIRET	rc;
+d591 2
+a592 2
+	Verbose(1, "VMirror::ioRemoveParent", "can't clear parent SEC_VRDEV - rc %lu", rc);
+	++errors;
+d600 19
+a618 19
+	rc = read(0, 1, sec);			/* remember: 0 defines ourself */
+	if( rc != 0 )
+	{
+	    Verbose(1, "VMirror::ioRemoveParent", "can't read own SEC_VRDEV2 - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	sec->u.s.flags |= RDFLAG_HOSTDRIVE;	/* no parent means hostdrive */
+	sec->timestamp = time(NULL);		/* UTC of change */
+	sec->crc = Crc16(sec, SECTOR_SIZE-2);	/* !!! */
+
+	rc = write(0, 1, sec);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VMirror::ioRemoveParent", "can't write own SEC_VRDEV2 - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+d620 1
+a620 1
+	parent = NULL;				/* none */
+d635 1
+a635 1
+ *	newid		new ID
+d637 1
+a637 1
+ *	count of errors
+d640 1
+a640 1
+ *	Changes it's own DEVID.
+d647 2
+a648 2
+    PSEC_VRDEV2	sec = new SEC_VRDEV2;
+    int		errors = 0;
+d650 1
+a650 1
+    memcpy(id, newid, sizeof(DEVID));		/* update object */
+d654 1
+a654 1
+	APIRET	rc;
+d656 19
+a674 19
+	rc = read(0, 1, sec);			/* remember: 0 defines ourself */
+	if( rc != 0 )
+	{
+	    Verbose(1, "VMirror::ioChangeID", "can't read own SEC_VRDEV2 - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	memcpy(sec->u.s.id, newid, sizeof(DEVID));
+	sec->timestamp = time(NULL);		/* UTC of change */
+	sec->crc = Crc16(sec, SECTOR_SIZE-2);	/* !!! */
+
+	rc = write(0, 1, sec);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VMirror::ioChangeID", "can't write own SEC_VRDEV2 - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+d689 2
+a690 2
+ *	id_of_invalid_child	DEVID
+ *	from_this_sector_on	first sector which needs update
+d693 2
+a694 2
+ *	0		OK
+ *	/0		something went wrong (I/O or internal error)
+d697 7
+a703 7
+ *	Someone detected that a child of ours has an invalid sector
+ *	and tells us via this method.
+ *	If VRAID.FLT is running and this array is known to it just
+ *	tell it and the FLT will modify it's structures and start a
+ *	build.
+ *	If VRAID.FLT is not running just modify the configuration
+ *	sector.
+d714 5
+a718 5
+	if( memcmp(child[i].rdev->queryID(), id_of_invalid, sizeof(DEVID)) == 0 )
+	{
+	    child_idx = i;
+	    break;
+	}
+d723 1
+a723 1
+	&&  from_this_sector_on >= child[child_idx].valid )
+d725 1
+a725 1
+	/* This child is already invalid, we have nothing to do. */
+d727 1
+a727 1
+	return 0;
+d731 1
+a731 1
+	state = Build;
+d736 1
+a736 1
+	VRAID_CHILD_PARAM	param;
+d738 1
+a738 1
+	/* Tell VRAID.FLT that our array has an invalid child. */
+d740 4
+a743 4
+	param.handle = queryFltHd();
+	memcpy(param.id, id_of_invalid, sizeof(DEVID));
+	param.flags = 0;			/* not valid */
+	param.secno = from_this_sector_on;
+d745 1
+a745 1
+	return (DriverArrayChild(&param) != 0);
+d749 1
+a749 1
+	return ioSync();
+d760 1
+a760 1
+ *	start_sector		sector number on array
+d763 3
+a765 3
+ *	0		OK
+ *	1		vraid.flt not loaded
+ *	2		vraid.flt dos not know this array
+d768 1
+a768 1
+ *	Starts a rebuild process on an array w/o invalid children.
+d779 7
+a785 7
+	MyMessageBox(0, HWND_DESKTOP,
+		     "The array you selected isn't known to"
+		     " vraid.flt.  Therefore it can't be rebuild"
+		     " by the driver.  Please reboot to let"
+		     " vraid.flt analyze the new situation and"
+		     " retry the operation.");
+	return 1;
+d788 1
+a788 1
+    APIRET	rc;
+d792 5
+a796 5
+	MyMessageBox(0, HWND_DESKTOP,
+		     "The array you selected can't be rebuild"
+		     " by vraid.flt.  You need to reboot"
+		     " to let vraid.flt analyze a new situation.");
+	return 2;
+d798 1
+a798 1
+    setBuild(start_sector, True);		/* _re_build */
+d809 1
+a809 1
+ *	(none, C++)
+d811 1
+a811 1
+ *	count of errors
+d814 1
+a814 1
+ *	'this' has been changed by the user -> update physical storage.
+d821 6
+a826 6
+    PSEC_VRDEV2	sec = new SEC_VRDEV2;
+    USHORT	i;
+    ULONG	ul;
+    int		errors = 0;
+    Boolean	update = False;			/* True: modify sector */
+    APIRET	rc;
+d830 11
+a840 11
+	rc = read(0, 1, sec);
+	if( rc != 0 )
+	    break;			/* read error?  Assume no cfg sectors */
+	if( memcmp(sec->sectype, "VRAIDDEVICE2    ", 16) != 0 )
+	    break;
+	if( Crc16(sec, sizeof(*sec)-2) != sec->crc )
+	    break;
+	if( memcmp(sec->u.s.id, id, sizeof(DEVID)) != 0 )
+	    break;
+	if( sec->u.s.type != RDTYPE_MIRROR )
+	    break;
+d842 1
+a842 1
+	update = True;
+d849 1
+a849 1
+	Verbose(1, "VMirror", "updating current configuration sector");
+d851 2
+a852 2
+	/* Update configuration sector with new contents.  Keep
+	 * in mind, that the outside view should be unchanged. */
+d854 3
+a856 3
+	sec->timestamp = time(NULL);
+	sec->u.s.flags = (UCHAR)(parent != 0 ? 0 : 0x80);
+	sec->u.s.children = children;
+d859 2
+a860 2
+	/* 2nd: keep drive size, keep size of children.
+	 * The current values shouldn't be changed! */
+d862 2
+a863 2
+	ul = sec->u.s.child[0].size;		/* drive size = size of any child */
+	size = ul;
+d867 1
+a867 1
+	/* New sector contents. */
+d869 1
+a869 1
+	Verbose(1, "VMirror", "creating new configuration sector");
+d872 1
+a872 1
+	/* First: fill configuration sector of current level. */
+d874 3
+a876 3
+	memset(sec, 0, sizeof(*sec));
+	memcpy(sec->sectype, "VRAIDDEVICE2    ", 16);
+	sec->timestamp = time(NULL);
+d878 3
+a880 3
+	memcpy(sec->u.s.id, id, sizeof(DEVID));
+	sec->u.s.type = RDTYPE_MIRROR;
+	sec->u.s.flags = (UCHAR)(parent != 0 ? 0 : 0x80);
+d882 1
+a882 1
+	sec->u.s.children = children;
+d885 2
+a886 2
+	/* 2nd: recalculate drive size, correct size of children.
+	 * The current values were only wild guesses. */
+d888 4
+a891 4
+	ul = (ULONG)ULONG_MAX;
+	for( i = 0; i < children; ++i )
+	    ul = min(ul, child[i].rdev->querySize());
+	size = ul;
+d899 5
+a903 5
+	child[i].rdev->ioSync();
+	memcpy(sec->u.s.child[i].id, child[i].rdev->queryID(), sizeof(DEVID));
+	sec->u.s.child[i].size = size;
+	if( (sec->u.s.child[i].valid = child[i].valid) == -1ul )
+	    sec->u.s.child[i].flags |= 0x01;	/* child is valid */
+d906 1
+a906 1
+	sec->u.s.flags |= RDFLAG_BUILDING;
+d908 1
+a908 1
+	sec->u.s.flags |= RDFLAG_REBUILD;
+d917 2
+a918 2
+	Verbose(1, "VMirror::ioSync", "write(0,1,...) - rc %lu, not updated", rc);
+	++errors;
+d932 3
+a934 3
+ *	offset		offset in configuratoin space
+ *	count		sector count
+ *	buffer		sector data
+d937 2
+a938 2
+ *	0		OK
+ *	/0		APIRET
+d941 1
+a941 1
+ *	Reads data from configuration sectors of this VRAID drive.
+d944 2
+a945 2
+ *	Should read all children and compare. xxx
+ *	Should test 'valid'. xxx
+d950 3
+a952 3
+    PUCHAR	copybuf = new UCHAR[count];
+    int		goodchildren = 0;
+    APIRET	rc = VERROR_NO_CONTENTS;
+d956 2
+a957 2
+	if( !child[i].cfgok )
+	    continue;				/* nothing on this child */
+d959 8
+a966 8
+	rc = child[i].rdev->read(offset+1, count, buffer);
+	if( rc != 0 )
+	    continue;				/* Verbose() already called */
+	if( goodchildren == 0 )
+	    memcpy(copybuf, buffer, (size_t)count);
+	else if( memcmp(copybuf, buffer, (size_t)count) != 0 )
+	    Verbose(0, "VMirror", "Data error when reading child %d, ignored", i);
+	++goodchildren;
+d980 3
+a982 3
+ *	offset		offset in configuratoin space
+ *	count		sector count
+ *	buffer		sector data
+d985 2
+a986 2
+ *	0		OK
+ *	/0		APIRET
+d989 1
+a989 1
+ *	Writes data to configuration sectors of this VRAID drive.
+d992 1
+a992 1
+ *	Should test 'valid'. xxx
+d997 1
+a997 1
+    APIRET	rc = 0;
+d1000 1
+a1000 1
+	rc |= child[i].rdev->write(offset+1, count, buffer);
+@
+
+
+1.18
+log
+@- code correctly distinguishes between build and rebuild
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.17 $
+ * $Date: 2001/01/23 01:40:33 $
+d10 3
+d83 1
+a83 1
+static char const vcid[]="$Id: mirror.cpp,v 1.17 2001/01/23 01:40:33 vitus Exp vitus $";
+d674 1
+a674 1
+	state = Rebuild;
+@
+
+
+1.17
+log
+@- VMirror::ioStartRebuild: lokale Variable flt_hd umbenannt
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.16 $
+ * $Date: 2001/01/15 01:35:27 $
+d10 3
+d80 1
+a80 1
+static char const vcid[]="$Id: mirror.cpp,v 1.16 2001/01/15 01:35:27 vitus Exp vitus $";
+d641 1
+a641 1
+ *	rebuild.
+d670 2
+d697 1
+a697 1
+ * <fkt>
+d700 2
+d703 4
+d708 2
+d845 1
+a845 1
+    if( state == Build  ||  state == Rebuild )
+d847 2
+@
+
+
+1.16
+log
+@- VMirror::ioInvalidChild: modifies child[i].valid
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.15 $
+ * $Date: 2000/08/17 02:25:42 $
+d10 3
+d77 1
+a77 1
+static char const vcid[]="$Id: mirror.cpp,v 1.15 2000/08/17 02:25:42 vitus Exp vitus $";
+d702 3
+a704 2
+    USHORT const 	flt_hd = queryFltHd();
+    if( flt_hd == 0xFFFF )
+d716 1
+a716 1
+    rc = DriverArrayRebuild(flt_hd, start_sector);
+@
+
+
+1.15
+log
+@- method addChild() parameter 'datav' changed to sector no.
+- method querySize() removed (now inline)
+- implemented ioInvalidChild(), ioStartRebuild()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.14 $
+ * $Date: 2000/08/07 01:24:57 $
+d10 5
+d72 1
+a72 1
+ * This code is Copyright Vitus Jensen 1999-2000
+d74 1
+a74 1
+static char const vcid[]="$Id: mirror.cpp,v 1.14 2000/08/07 01:24:57 vitus Exp vitus $";
+d642 1
+a642 1
+VMirror::ioInvalidChild(DEVID id_of_invalid_child, ULONG from_this_sector_on)
+d648 1
+a648 1
+	if( memcmp(child[i].rdev->queryID(),id_of_invalid_child,sizeof(DEVID)) == 0 )
+d663 1
+d673 1
+a673 1
+	memcpy(id_of_invalid_child, param.id, sizeof(DEVID));
+@
+
+
+1.14
+log
+@- adding support for rebuild state
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.13 $
+ * $Date: 2000/04/10 00:54:49 $
+d10 3
+d69 1
+a69 1
+static char const vcid[]="$Id: mirror.cpp,v 1.13 2000/04/10 00:54:49 vitus Exp vitus $";
+d230 1
+a230 1
+    return child[which].valid;
+d241 1
+a241 1
+	    return child[i].valid;
+d243 1
+a243 1
+    return False;				/* xxx */
+d341 1
+a341 1
+ * VMirror::addChild(newchild,cfgv,datav)
+d357 1
+a357 1
+VMirror::addChild(VRDev * newchild, Boolean cfgv, Boolean datav)
+d380 1
+a380 1
+	else if( !datav )
+d615 108
+d819 2
+a820 10
+	if( child[i].valid == True )
+	{
+	    sec->u.s.child[i].flags |= 0x01;
+	    sec->u.s.child[i].valid = (ULONG)-1; /* better clear field */
+	}
+	else
+	{
+	    sec->u.s.child[i].valid = 0;	/* start from beginning */
+	    sec->u.s.flags |= RDFLAG_BUILDING;
+	}
+d822 2
+a837 22
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VMirror::querySize()
+ *
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	size of array
+ *
+ * DESCRIPTION
+ *	Guess!
+ *
+ * REMARKS
+ */
+ULONG
+VMirror::querySize()
+{
+    return size;
+@
+
+
+1.13
+log
+@- include VSetup.h instead of proto.h
+- converted C++ to C comments
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.12 $
+ * $Date: 1999/12/14 00:26:40 $
+d10 4
+d66 1
+a66 1
+static char const vcid[]="$Id: mirror.cpp,v 1.12 1999/12/14 00:26:40 vitus Exp vitus $";
+d112 1
+a112 1
+VMirror::VMirror(DEVID drive_id,int nchd)
+d153 1
+a153 1
+ * VMirror::setBuild(nextsec)
+d167 1
+a167 1
+VMirror::setBuild(ULONG nextsec)
+d169 4
+a172 1
+    state = Build;
+d262 1
+a262 1
+    static char * State2Str[] = { "ready", "build", "fail", "error" };
+d354 1
+a354 1
+VMirror::addChild(VRDev * newchild,Boolean cfgv,Boolean datav)
+d780 1
+a780 1
+VMirror::read(ULONG offset,ULONG count,PVOID buffer)
+d827 1
+a827 1
+VMirror::write(ULONG offset,ULONG count,PVOID buffer)
+@
+
+
+1.12
+log
+@- more error logging
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.11 $
+ * $Date: 1999/07/05 00:45:18 $
+d10 3
+d59 2
+a60 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1999
+d62 1
+a62 1
+static char const vcid[]="$Id: mirror.cpp,v 1.11 1999/07/05 00:45:18 vitus Exp vitus $";
+d82 1
+a84 1
+#include "proto.h"
+d94 2
+a95 2
+ * CALL
+ *	VMirror::VMirror(drive_id,nchd)
+d127 2
+a128 2
+ * CALL
+ *	VMirror::~VMirror()
+d149 2
+a150 2
+ * CALL
+ *	VMirror::setBuild(nextsec)
+d172 2
+a173 2
+ * CALL
+ *	VMirror::queryChildren()
+d193 2
+a194 2
+ * CALL
+ *	VMirror::getChild(index)
+d240 2
+a241 2
+ * CALL
+ *	VMirror::allocateDescription()
+d263 1
+a263 1
+	state = Fail;				// always!
+d279 2
+a280 2
+ * CALL
+ *	VMirror::queryIcon()
+d305 2
+a306 2
+ * CALL
+ *	VMirror::setHostdrive(os2idx)
+d331 2
+a332 2
+ * CALL
+ *	VMirror::addChild(newchild,cfgv,datav)
+d380 2
+a381 2
+ * CALL
+ *	VMirror::ioRemoveChild(rdev)
+d446 2
+a447 2
+ * CALL
+ *	VMirror::ioDeleteYourself()
+d483 2
+a484 2
+ * CALL
+ *	VMirror::ioRemoveParent()
+d519 1
+a519 1
+	rc = read(0, 1, sec);			// remember: 0 defines ourself
+d527 3
+a529 3
+	sec->u.s.flags |= RDFLAG_HOSTDRIVE;	// no parent means hostdrive
+	sec->timestamp = time(NULL);		// UTC of change
+	sec->crc = Crc16(sec, SECTOR_SIZE-2);	// !!!
+d539 1
+a539 1
+	parent = NULL;				// none
+d551 2
+a552 2
+ * CALL
+ *	VMirror::ioChangeID(newid)
+d569 1
+a569 1
+    memcpy(id, newid, sizeof(DEVID));		// update object
+d575 1
+a575 1
+	rc = read(0, 1, sec);			// remember: 0 defines ourself
+d584 2
+a585 2
+	sec->timestamp = time(NULL);		// UTC of change
+	sec->crc = Crc16(sec, SECTOR_SIZE-2);	// !!!
+d605 2
+a606 2
+ * CALL
+ *	VMirror::ioSync()
+d624 1
+a624 1
+    Boolean	update = False;			// True: modify sector
+d631 1
+a631 1
+	    break;				// read error?  Assume no cfg sectors
+d661 1
+a661 1
+	ul = sec->u.s.child[0].size;		// drive size = size of any child
+d704 1
+a704 1
+	    sec->u.s.child[i].valid = (ULONG)-1; // better clear field
+d708 1
+a708 1
+	    sec->u.s.child[i].valid = 0;	// start from beginning
+d732 2
+a733 2
+ * CALL
+ *	VMirror::querySize()
+d754 2
+a755 2
+ * CALL
+ *	VMirror::read(offset,count,buffer)
+d782 1
+a782 1
+	    continue;				// nothing on this child
+d802 2
+a803 2
+ * CALL
+ *	VMirror::write(offset,count,buffer)
+@
+
+
+1.11
+log
+@- addChild() gets additional flag "config sector valid"
+- modifications to keep this flag in child table and honour it when reading
+  from admin space
+- ioSync: updates current config sector if it's still the same array.
+  Recreating it did change the size of the array.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/06/21 01:33:40 $
+d10 7
+d59 1
+a59 1
+static char const vcid[]="$Id: mirror.cpp,v 1.10 1999/06/21 01:33:40 vitus Exp vitus $";
+d498 1
+d504 4
+a507 1
+    if( write(1, 1, sec) != 0 )
+d509 1
+a515 2
+	APIRET	rc;
+
+d519 1
+a519 1
+	    Verbose(1, "VMirror", "can't read own SEC_VRDEV2 - rc %lu", rc);
+d531 1
+a531 1
+	    Verbose(1, "VMirror", "can't write own SEC_VRDEV2 - rc %lu", rc);
+d575 1
+a575 1
+	    Verbose(1, "VMirror", "can't read own SEC_VRDEV2 - rc %lu", rc);
+d587 1
+a587 1
+	    Verbose(1, "VMirror", "can't write own SEC_VRDEV2 - rc %lu", rc);
+d715 1
+a715 1
+    if( rc )
+d717 1
+a717 1
+	Verbose(1, "VMirror", "write(0,1,...) - rc %lu, not updated", rc);
+@
+
+
+1.10
+log
+@- corrected english spelling
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/06/19 22:06:40 $
+d10 3
+d52 1
+a52 1
+static char const vcid[]="$Id: mirror.cpp,v 1.9 1999/06/19 22:06:40 vitus Exp vitus $";
+d322 1
+a322 1
+ *	VMirror::addChild(newchild,valid)
+d325 2
+a326 1
+ *	valid		whether this child is valid (uptodate)
+d337 1
+a337 1
+VMirror::addChild(VRDev * newchild,Boolean valid)
+d344 2
+a345 1
+    child[children].valid = valid;
+d356 7
+a362 3
+    if( !valid  &&  state == Ready )
+	state = Fail;
+
+d611 2
+d614 17
+a631 1
+    /* First: fill configuration sector of current level. */
+d633 3
+a635 3
+    memset(sec, 0, sizeof(*sec));
+    memcpy(sec->sectype, "VRAIDDEVICE2    ", 16);
+    sec->timestamp = time(NULL);
+d637 2
+a638 3
+    memcpy(sec->u.s.id, id, sizeof(DEVID));
+    sec->u.s.type = RDTYPE_MIRROR;
+    sec->u.s.flags = (UCHAR)(parent != 0 ? 0 : 0x80);
+d640 3
+a642 1
+    sec->u.s.children = children;
+d645 2
+a646 2
+    /* 2nd: recalculate drive size, correct size of children.
+     * The current values were only wild guesses. */
+d648 31
+a678 6
+    ul = (ULONG)ULONG_MAX;
+    for( i = 0; i < children; ++i )
+	ul = min(ul, child[i].rdev->querySize());
+    for( i = 0; i < children; ++i )
+	sec->u.s.child[i].size = ul;
+    size = ul;
+d687 1
+d704 1
+a704 1
+    APIRET rc = write(0, 1, sec);
+d764 1
+a764 1
+    APIRET	rc;
+d768 3
+@
+
+
+1.9
+log
+@- minor corrections to keep compiler happy
+- detected states include now ready, fail and build
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/06/02 01:43:11 $
+d10 4
+d49 1
+a49 1
+static char const vcid[]="$Id: mirror.cpp,v 1.8 1999/06/02 01:43:11 vitus Exp vitus $";
+d98 1
+a98 1
+    childs = 0;
+d160 1
+a160 1
+ *	VMirror::queryChilds()
+d166 1
+a166 1
+ *	Returns count of childs.
+d171 1
+a171 1
+VMirror::queryChilds()
+d173 1
+a173 1
+    return childs;
+d195 1
+a195 1
+    if( index >= childs )
+d206 1
+a206 1
+    assert( which < childs );
+d216 1
+a216 1
+    for( int i = 0; i < childs; ++i )
+d246 1
+a246 1
+    for( int i = 0; i < childs; ++i )
+d249 1
+a249 1
+    if( found < childs )
+d339 2
+a340 2
+    child[childs].rdev = newchild;
+    child[childs].valid = valid;
+d354 1
+a354 1
+    ++childs;
+d371 1
+a371 1
+ *	This is done by telling all childs that we are about
+d389 1
+a389 1
+	for( i = 0; i < childs; ++i )
+d396 1
+a396 1
+		for( j = i, k = i+1; k < childs; ++j, ++k )
+d401 1
+a401 1
+		--childs;
+d437 1
+a437 1
+ *	This is done by telling all childs that we are about
+d449 1
+a449 1
+    /* Update all childs (parent removed -> marked in sectors). */
+d451 1
+a451 1
+    for( i = 0; i < childs; ++i )
+d614 1
+a614 1
+    sec->u.s.childs = childs;
+d617 1
+a617 1
+    /* 2nd: recalculate drive size, correct size of childs.
+d621 1
+a621 1
+    for( i = 0; i < childs; ++i )
+d623 1
+a623 1
+    for( i = 0; i < childs; ++i )
+d628 1
+a628 1
+    /* 3rd: update all childs and record their IDs and flags. */
+d630 1
+a630 1
+    for( i = 0; i < childs; ++i )
+d702 1
+a702 1
+ *	Should read all childs and compare. xxx
+d709 1
+a709 1
+    int		goodchilds = 0;
+d712 1
+a712 1
+    for( int i = 0; i < childs; ++i )
+d717 1
+a717 1
+	if( goodchilds == 0 )
+d721 1
+a721 1
+	++goodchilds;
+d725 1
+a725 1
+    return (goodchilds == 0 ? rc : 0);
+d754 1
+a754 1
+    for( int i = 0; i < childs; ++i )
+@
+
+
+1.8
+log
+@- queryIcon() returns ICO_INVCHILDARRAY if parent says that this
+  child is invalid
+- isValidChild(int/VRDev *) now located here
+- allocateDescription: adds "building" to text
+- addChild: set building flag if child is invalid
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/05/13 22:40:27 $
+d10 7
+d45 1
+a45 1
+static char const vcid[]="$Id: mirror.cpp,v 1.7 1999/05/13 22:40:27 vitus Exp vitus $";
+d98 1
+a98 1
+    building = False;
+d148 1
+a148 1
+    building = True;
+d238 1
+d245 2
+d248 1
+a248 3
+    
+    sprintf(descr, "RAID 1 (Mirroring, %s)",
+	    (found < childs ? "fail" : (building == True ? "building" : "ready")));
+d250 1
+a250 1
+    if( hostdrive == True  &&  os2access != - 1)
+d347 2
+a348 2
+    if( !valid )
+	building = True;
+a350 3
+
+    if( valid == False )
+	setBuild(0);
+d608 1
+a608 1
+    sec->u.s.flags = (parent != 0 ? 0 : 0x80);
+d616 1
+a616 1
+    ul = ULONG_MAX;
+d712 1
+a712 1
+	    continue;				// Verbose() already called
+d714 2
+a715 2
+	    memcpy(copybuf, buffer, count);
+	else if( memcmp(copybuf, buffer, count) != 0 )
+@
+
+
+1.7
+log
+@- array description includes "building" or "ready"
+- adding an invalid child causes building state
+- ioRemoveParent: clear parent's admin sector
+- ioDeleteYourself: no disk i/o
+- ioRemoveChild() implemented
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1999/05/12 01:30:43 $
+d10 7
+d38 1
+a38 1
+static char const vcid[]="$Id: mirror.cpp,v 1.6 1999/05/12 01:30:43 vitus Exp vitus $";
+d94 1
+d192 23
+d231 6
+a236 1
+    char * descr = new char[80];
+d238 1
+d240 1
+a240 1
+	    (building == True ? "building" : "ready"));
+d268 3
+a270 1
+    if( writable == True )
+d338 3
+@
+
+
+1.6
+log
+@- ioSync: new sector layout
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1999/04/13 01:25:03 $
+d10 3
+d31 1
+a31 1
+static char const vcid[]="$Id: mirror.cpp,v 1.5 1999/04/13 01:25:03 vitus Exp vitus $";
+a133 1
+    bnext = nextsec;
+d201 4
+d206 4
+a209 10
+	sprintf(descr, "RAID 1 (Mirroring) (OS/2 Drive %lu)\n"
+		"ID %02X%02X%02X%02X%02X%02X    %lu MByte",
+		os2access,
+		id[0],id[1],id[2],id[3],id[4],id[5],
+		size / 2 / 1024);
+    else
+	sprintf(descr, "RAID 1 (Mirroring)\n"
+		"ID %02X%02X%02X%02X%02X%02X    %lu MByte",
+		id[0],id[1],id[2],id[3],id[4],id[5],
+		size / 2 / 1024);
+d301 3
+d311 1
+a311 1
+ *	VMirror::ioDeleteYourself()
+d313 1
+a313 1
+ *	this		to be removed
+d327 1
+a327 1
+VMirror::ioDeleteYourself()
+d331 31
+d363 1
+d365 6
+a370 1
+    /* 1st: clear administrative sector of current level. */
+a371 5
+    PUCHAR	buffer = new UCHAR[SECTOR_SIZE];
+    memset(buffer, 0, SECTOR_SIZE);
+    if( write(0, 1, buffer) != 0 )
+	++errors;
+    delete[] buffer;
+d374 25
+a398 1
+    /* 2nd: update all childs (parent removed -> marked in sector) */
+d432 10
+d589 1
+d591 2
+@
+
+
+1.5
+log
+@- child[] now static member of object
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1999/03/24 23:01:06 $
+d10 3
+d28 1
+a28 1
+static char const vcid[]="$Id: mirror.cpp,v 1.4 1999/03/24 23:01:06 vitus Exp vitus $";
+d515 1
+d517 4
+@
+
+
+1.4
+log
+@- allocateDescription() displays drive ID
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1999/03/23 00:50:14 $
+d10 3
+d25 1
+a25 1
+static char const vcid[]="$Id: mirror.cpp,v 1.3 1999/03/23 00:50:14 vitus Exp vitus $";
+a79 1
+    child = new struct _ChildInfo[nchd];
+a102 2
+    delete[] child;				// delete table of childs
+
+@
+
+
+1.3
+log
+@- read method reads all childs and compares.  Currently differences are
+  only logged.  Better ideas?
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1999/03/22 01:59:33 $
+d10 4
+d22 1
+a22 1
+static char const vcid[]="$Id: mirror.cpp,v 1.2 1999/03/22 01:59:33 vitus Exp vitus $";
+d197 5
+a201 2
+	sprintf(descr, "RAID 1 (Mirroring) (OS/2 Drive %lu)\n%lu MByte",
+		os2access, size / 2 / 1024);
+d203 4
+a206 1
+	sprintf(descr, "RAID 1 (Mirroring)\n%lu MByte", size / 2 / 1024);
+@
+
+
+1.2
+log
+@- ioDeleteYourself: first clear own sector and afterwards call childs
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1999/03/06 20:09:47 $
+d10 3
+a14 1
+ *
+d18 1
+a18 1
+static char const vcid[]="$Id: mirror.cpp,v 1.1 1999/03/06 20:09:47 vitus Exp vitus $";
+d567 18
+a584 1
+    return child[0].rdev->read(offset+1, count, buffer);
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 4
+a12 1
+ * $Log$
+d16 1
+a16 1
+static char const vcid[]="$Id$";
+d95 2
+a96 1
+    delete[] child;
+a313 1
+    /* 1st: update all childs (parent removed -> marked in sector) */
+d315 1
+a315 8
+    for( i = 0; i < childs; ++i )
+    {
+	errors += child[i].rdev->ioRemoveParent();
+	child[i].rdev = NULL;
+    }
+
+
+    /* 2nd: clear administrative sector of current level. */
+d323 9
+a486 1
+    {
+a487 1
+    }
+a488 1
+    {
+a489 1
+    }
+d493 1
+a493 1
+    /* 3rd: update all childs and record their IDs. */
+d499 2
+@

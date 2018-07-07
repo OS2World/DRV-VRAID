@@ -1,0 +1,1781 @@
+head	2.2;
+access;
+symbols
+	vrflt031113:2.2
+	vrflt010903:2.2
+	PREV010803:2.2
+	VRAIDv0_85:2.2
+	VRAIDv0_84:2.2
+	VRAIDv0_82:1.12
+	VRAIDv0_70:1.10
+	VRAIDv0_60:1.5
+	VRAIDv0_51:1.5
+	VRAIDv0_50:1.5
+	VRAIDv0_40:1.5
+	VRAIDv0_30:1.4
+	ALPHA1:1.3;
+locks; strict;
+comment	@ * @;
+
+
+2.2
+date	2001.02.11.01.14.48;	author vitus;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.06.13.01.44.56;	author vitus;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	99.10.01.00.50.42;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	99.09.20.00.03.12;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.06.21.02.29.17;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.05.26.00.44.09;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.05.12.01.49.09;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.04.28.01.46.15;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.02.07.17.35.17;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	98.09.20.14.23.28;	author vitus;	state Stab;
+branches;
+next	1.4;
+
+1.4
+date	98.06.26.23.08.35;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.04.19.22.38.27;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.03.10.02.08.10;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.02.12.01.28.05;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@How to do RAID0 I/O
+@
+
+
+2.2
+log
+@- changed StripeCtrl() to return DRVSTATUS
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/RCS/stripe.c,v $
+ * $Revision: 2.1 $
+ * $Date: 2000/06/13 01:44:56 $
+ * $Locker: vitus $
+ *
+ *
+ *	How to do RAID 0 I/O.
+ *
+ *
+ * $Log: stripe.c,v $
+ * Revision 2.1  2000/06/13 01:44:56  vitus
+ * - implemented ioctl method (VRDIOCTL_QUERY_CHILDREN, VRDIOCTL_INFO)
+ *
+ * Revision 1.12  1999/10/01 00:50:42  vitus
+ * - updates new iocnt and busycnt fields in VRDEVHDR
+ *
+ * Revision 1.11  1999/09/20 00:03:12  vitus
+ * - defined all DBGMSG() strings as located in CONST segment
+ *
+ * Revision 1.10  1999/06/21 02:29:17  vitus
+ * - corrected english spelling
+ * - handle missing children (NULL pointer)
+ *
+ * Revision 1.9  1999/05/26 00:44:09  vitus
+ * - StripeCreate: return value now 'int', but as it is always 0...
+ *
+ * Revision 1.8  1999/05/12 01:49:09  vitus
+ * - dummy StripeUpdate() implemented
+ *
+ * Revision 1.7  1999/04/28 01:46:15  vitus
+ * - merged StripeAdmin() code with Worker/Notify, IOCMD_A* commands
+ * - StripeNotify() uses CompleteVrio()
+ *
+ * Revision 1.6  1999/02/07 17:35:17  vitus
+ * - implemented StripeAdmin() method
+ *
+ * Revision 1.5  1998/09/20 14:23:28  vitus
+ * - modified for AllocateVrio(working_dev,mother)
+ *
+ * Revision 1.4  1998/06/26 23:08:35  vitus
+ * - switched to DDK macros (cli, sti, pushf)
+ * - worker,notify get const pointers and become _Cdecl
+ *
+ * Revision 1.3  1998/04/19 22:38:27  vitus
+ * - corrected stripe distribution code
+ * - test successfull
+ *
+ * Revision 1.2  1998/03/10 02:08:10  vitus
+ * - changed to PUBLIC *Create() function and PRIVATE workers
+ *
+ * Revision 1.1  1998/02/12 01:28:05  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-2001
+ */
+#if defined(__WATCOMC__)
+# pragma off (unreferenced)
+#endif
+static char const id[]="$Id: stripe.c,v 2.1 2000/06/13 01:44:56 vitus Exp vitus $";
+#if defined(__WATCOMC__)
+# pragma on (unreferenced)
+#endif
+
+#include <string.h>
+
+#define INCL_NOBASEAPI
+#define INCL_INITRP_ONLY
+#include "os2intf.h"
+
+#include "vraid.h"
+#include "proto.h"
+#include "extern.h"
+#include "vraidpub.h"
+
+
+
+
+/* Our object: the striping drive. */
+typedef struct _VRDSTRIPE {
+
+    VRDEVHDR	header;				/* ALWAYS FIRST! */
+
+    USHORT	stripesize;			/* [sectors] */
+
+    USHORT	readchild;			/* next when doing admin I/O */
+
+    USHORT	children;
+    PVRDEVHDR	child[];
+
+} VRDSTRIPE, FAR * PVRDSTRIPE;
+
+
+
+
+PRIVATE USHORT NEAR _Cdecl	StripeWorker(PVRDEVHDR const self,PVRIO const myio);
+PRIVATE USHORT NEAR _Cdecl	StripeUpdate(PVRDEVHDR const self,PVOID const sec);
+PRIVATE DRVSTATUS NEAR _Cdecl	StripeCtrl(PVRDEVHDR const self, USHORT const cmd,
+					   PVOID const param, PVOID const data);
+
+
+
+
+#if defined(DEBUG)
+CONSTMSG dszStripeNotify[]=	"\r\n[StripeNotify] io %p, myio %p, error %w";
+CONSTMSG dszSNotifyComplete[]=	"\r\n[StripeNotify] completed all of myio %p";
+CONSTMSG dszStripeWorker[]=	"\r\n[StripeWorker] %p";
+CONSTMSG dszSWorkerBlk[]=	"\r\n[StripeWorker] first blk %lx, last blk %lx";
+CONSTMSG dszSWorkerStart[]=	"\r\n[StripeWorker] start %lx";
+CONSTMSG dszSWorkerStripe[]=   "\r\n[StripeWorker] strno %lx, stroffs %w, devidx %w";
+CONSTMSG dszSAdminNoalloc[]=	"\r\n[StripeAdmin] AllocateVrio failed";
+CONSTMSG dszSWorkerRelease[]=	"\r\n[StripeWorker] releasing VRIOs";
+CONSTMSG dszSWorkerChildMiss[]=	"\r\n[StripeWorker] child missing, cmd %w";
+CONSTMSG dszSWorkerBusy[]=	"\r\n[StripeWorker] child busy, queuing VRIO";
+CONSTMSG dszStripeCreate[]=	"\r\n[StripeCreate] at %p, %w children";
+CONSTMSG dszSCreateID[]=	"\r\n[StripeCreate] ID %z";
+CONSTMSG dszSCreateLooking[]=	"\r\n[StripeCreate] looking for %z";
+CONSTMSG dszSCreateFound[]=	"\r\n[StripeCreate] found child %w in %p";
+CONSTMSG dszSCreateOnly[]=	"\r\n[StripeCreate] only found %w out of %w";
+#endif
+
+
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * StripeNotify(io)
+ *
+ * PARAMETER
+ *	io		VRIO which completed
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Used by a child to report that an I/O has completed.
+ *	Updates father I/O (which was passed to this stripe set) and
+ *	ends it if all I/Os to children ended.
+ *
+ * REMARKS
+ */
+PRIVATE VOID NEAR _Cdecl
+StripeNotify(PVRIO const io)
+{
+    PVRIO const		myio = io->mother;
+    PVRDSTRIPE const	stripe = (PVRDSTRIPE)myio->vrd;
+
+
+    DEBMSG3(DBG_PATH,dszStripeNotify,io,myio,io->oserr);
+
+    ASSERT( io->bcnt != 0 );
+    ASSERT( io->link == NULL );
+    ASSERT( myio->link == NULL );
+    ASSERT( myio->bcnt != 0 );
+    ASSERT( myio->vrd->size != 0 );
+    ASSERT( myio->vrd->notify == StripeNotify );
+    ASSERT( myio->vrd->worker == StripeWorker );
+    ASSERT( myio->vrd->update == StripeUpdate );
+    ASSERT( myio->vrd->ioctl == StripeCtrl );
+
+    pushf();
+    cli();
+
+    /* Error handling (different for each RAID level). */
+
+    if( myio->oserr == 0xFFFF )			/* still not set? */
+	myio->oserr = io->oserr;		/* propagate first error code */
+    else if( myio->oserr == 0 )			/* my I/O still OK? */
+	myio->oserr = io->oserr;		/* keep any error */
+
+
+    switch( myio->iocmd )
+    {
+      case IOCMD_READ:
+      case IOCMD_WRITE:
+      case IOCMD_AWRITE:
+	/* Remove VRIO.  If last, call parent notification. */
+
+	--myio->children;
+	break;
+
+      case IOCMD_AREAD:
+	/* **** AREAD ****
+	 * Try next device if error.  Else call parent notification. */
+
+	if( io->oserr == 0 )
+	{
+	    myio->children = 0;			/* no more I/Os, see below */
+	}
+	else
+	{
+	    PVRDEVHDR	child = io->vrd;	/* child which completed */
+
+	    --myio->children;
+	    if( myio->children != 0 )
+	    {
+		USHORT	rc;
+		USHORT	i, found = 0;
+
+		/* Select next child. */
+
+		for( i = 0; i < stripe->children; ++i )
+		    if( child == stripe->child[i] )
+		    {
+			i = (i + 1 == stripe->children ? 0 : i+1);
+			child = stripe->child[i];
+			found = 1;
+			break;
+		    }
+		ASSERT( found == 1 );
+
+		/* Patch new child into VRIO and start it. */
+
+		io->vrd = child;
+		rc = io->vrd->worker(io->vrd, io);
+		if( rc )
+		    QueueVrio(io);
+	    }
+	}
+	break;
+    } /* end[switch] */
+
+
+    if( myio->children == 0 )			/* my I/O ready? */
+    {
+	DEBMSG1(DBG_LEVEL3,dszSNotifyComplete,myio);
+	if( myio->oserr != 0 )
+	    stripe->header.flags |= RDFLAG_ERROR;
+	CompleteVrio(myio);
+    }
+
+    popf();
+    return;
+} /* end[StripeNotify] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * StripeWorker(stripe,father_io)
+ *
+ * PARAMETER
+ *	stripe		set building a stripe
+ *	father_io	I/O to stripe set
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		I/O not processed, please retry
+ *
+ * DESCRIPTION
+ *	Pass VRIO to underlying I/O routine of affected children..
+ *
+ * REMARKS
+ */
+PRIVATE USHORT NEAR _Cdecl
+StripeWorker(PVRDEVHDR const self,PVRIO const myio)
+{
+    PVRDSTRIPE const	stripe = (PVRDSTRIPE)self;
+    PVRIO	io;
+    PVRIO	newio;
+    PVRIO	firstio = NULL;
+
+    ULONG	firstblk = myio->blk;		/* first blk */
+    ULONG const	lastblk = firstblk + myio->bcnt - 1;
+
+
+    DEBMSG1(DBG_PATH,dszStripeWorker,(PVOID)myio);
+    DEBMSG2(DBG_LEVEL3,dszSWorkerBlk,(PVOID)&firstblk,(PVOID)&lastblk);
+
+    ASSERT( myio->vrd == self );
+    ASSERT( myio->link == NULL );
+    ASSERT( myio->bcnt != 0 );
+    ASSERT( stripe->header.size != 0 );
+    ASSERT( stripe->header.notify == StripeNotify );
+    ASSERT( stripe->header.worker == StripeWorker );
+    ASSERT( stripe->header.update == StripeUpdate );
+    ASSERT( stripe->header.ioctl == StripeCtrl );
+
+    ++self->iocnt;
+
+    switch( myio->iocmd )
+    {
+	USHORT	i;
+
+      case IOCMD_READ:
+      case IOCMD_WRITE:
+	/* Create VRIO to all affected children. */
+
+	myio->children = 0;
+	for(; firstblk <= lastblk ; firstblk += io->bcnt)
+	{
+	    USHORT	devidx, stroffs;
+	    ULONG	strno;
+
+	    DEBMSG1(DBG_LEVEL3,dszSWorkerStart,(PVOID)&firstblk);
+
+	    /* Calculate child, offset and count for this block. */
+
+	    /* Which band? */
+
+	    strno = firstblk / (stripe->stripesize * stripe->children);
+
+	    /* Wich device? */
+
+	    devidx = (USHORT)((firstblk / stripe->stripesize) % stripe->children);
+
+	    /* Offset in band? */
+
+	    stroffs = (USHORT)(firstblk % stripe->stripesize);
+
+	    DEBMSG3(DBG_LEVEL3,dszSWorkerStripe,(PVOID)&strno,stroffs,devidx);
+
+	    /* Build linked list of VRIOs. */
+
+	    newio = AllocateVrio(stripe->child[devidx], myio);
+	    if( newio == NULL )			/* memory exhausted? */
+		break;
+
+	    if( firstio == NULL )
+		firstio = newio;		/* save this as first */
+	    else
+		io->link = newio;
+	    io = newio;
+	    io->link = NULL;
+	    ++myio->children;
+
+	    io->iorb = myio->iorb;
+	    io->iocmd = myio->iocmd;
+	    io->cSGList = myio->cSGList;
+	    io->pSGList = myio->pSGList;
+	    io->ppSGList = myio->ppSGList;
+
+	    io->offset = (USHORT)(firstblk - myio->blk);
+	    io->blk = (strno * stripe->stripesize) + stroffs;
+	    io->bcnt = (lastblk - firstblk + 1 < stripe->stripesize - stroffs
+			? (USHORT)(lastblk - firstblk + 1) : stripe->stripesize - stroffs);
+
+	    io->oserr = 0xFFFF;			/* invalidate error code */
+	}
+	break;
+
+
+      case IOCMD_AREAD:
+	/* Read: create for 'readchild' child and do another in Notify()
+	 * if this first failed!
+	 * Don't forget to increment 'readchild'. */
+
+	myio->children = stripe->children;	/* to detect 'all children tried' */
+
+	/* Allocate VRIOs and update links. */
+
+	do
+	{
+	    newio = AllocateVrio(stripe->child[stripe->readchild], myio);
+	    if( newio == NULL )			/* memory exhausted? */
+		break;
+
+	    if( firstio == NULL )
+		firstio = newio;		/* save this as first */
+	    else
+		io->link = newio;
+	    io = newio;
+	    io->link = NULL;
+
+	    /* Child will receive the same parameters
+	     * as parent (configuration secotrs!). */
+
+	    io->iorb = myio->iorb;
+	    io->iocmd = myio->iocmd;
+	    io->cSGList = myio->cSGList;
+	    io->pSGList = myio->pSGList;
+	    io->ppSGList = myio->ppSGList;
+
+	    io->offset = myio->offset;
+	    io->blk = myio->blk + 1;		/* as usual */
+	    io->bcnt = myio->bcnt;
+	    io->oserr = 0xFFFF;			/* invalid error code */
+
+	    /* Move 'readchild'. */
+
+	    pushf();
+	    cli();
+	    do
+	    {
+		stripe->readchild = (stripe->readchild + 1 == stripe->children
+				     ? 0 : stripe->readchild + 1);
+	    }
+	    while( stripe->child[stripe->readchild] == NULL );
+	    popf();
+	}
+	while(0);
+	break;
+
+
+      case IOCMD_AWRITE:
+	/* Write: create VRIO to all children. */
+
+	myio->children = 0;
+
+	for( i = 0; i < stripe->children; ++i )
+	{
+	    if( stripe->child[i] == NULL )
+		continue;			/* skip non-existing child */
+
+
+	    /* Allocate VRIOs and update links. */
+
+	    newio = AllocateVrio(stripe->child[i], myio);
+	    if( newio == NULL )
+	    {
+		DEBMSG(DBG_ALL,dszSAdminNoalloc);
+		break;				/* memory exhausted? */
+	    }
+
+	    if( firstio == NULL )
+		firstio = newio;		/* save this as first */
+	    else
+		io->link = newio;
+	    io = newio;
+	    io->link = NULL;
+	    ++myio->children;
+
+	    /* Children will receive exactly the same parameters as the
+	     * configuration sectors are identical on all parts of a
+	     * VRAID device. */
+
+	    io->iorb = myio->iorb;
+	    io->iocmd = myio->iocmd;
+	    io->cSGList = myio->cSGList;
+	    io->pSGList = myio->pSGList;
+	    io->ppSGList = myio->ppSGList;
+
+	    io->offset = myio->offset;
+	    io->blk = myio->blk + 1;		/* as usual */
+	    io->bcnt = myio->bcnt;
+	    io->oserr = 0xFFFF;			/* invalid error code */
+	}
+	break;
+    }
+
+
+    if( newio == NULL )
+    {
+	/* Not enough memory.  Free all allocated VRIOs
+	 * and return error code to parent. */
+
+	DEBMSG(DBG_ALL,dszSWorkerRelease);
+	for( io = firstio; io != NULL; io = newio )
+	{
+	    newio = io->link;
+	    FreeVrio(io);
+	    DO( io = NULL );
+	}
+	++self->busycnt;
+	return 1;
+    }
+
+    /* Now pass all allocated VRIOs to children. */
+
+    for( io = firstio; io != NULL; io = newio )
+    {
+	USHORT	rc;
+
+	newio = io->link;
+	io->link = NULL;
+	if( io->vrd == NULL )
+	{
+	    /* There is a child missing and somebody wants to read/write
+	     * from/to it's share of data.  Return error! */
+
+	    DEBMSG1(DBG_ALL,dszSWorkerChildMiss,io->iocmd);
+	    io->oserr = IOERR_ADAPTER_DEVICE_TIMEOUT;
+	    CompleteVrio(io);
+	}
+	else
+	{
+	    rc = io->vrd->worker(io->vrd, io);
+	    if( rc )
+	    {
+		DEBMSG(DBG_ALL,dszSWorkerBusy);
+		QueueVrio(io);
+	    }
+	}
+    }
+
+    return 0;
+} /* end[StripeWorker] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * StripeUpdate(self,sec)
+ *
+ * PARAMETER
+ *	self		a VRD which forms an array
+ *	sec		sector contains configuration
+ *
+ * RETURNS
+ *	0		don't write back, nothing changed
+ *
+ * DESCRIPTION
+ *	Do nothing.
+ *
+ * REMARKS
+ */
+PRIVATE USHORT NEAR _Cdecl
+StripeUpdate(PVRDEVHDR const self,PVOID const sec)
+{
+    PVRDSTRIPE const	stripe = (PVRDSTRIPE)self;
+
+    ASSERT( stripe->header.size != 0 );
+    ASSERT( stripe->header.notify == StripeNotify );
+    ASSERT( stripe->header.worker == StripeWorker );
+    ASSERT( stripe->header.update == StripeUpdate );
+    ASSERT( stripe->header.ioctl == StripeCtrl );
+
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * StripeCtrl(self,cmd,param,data)
+ *
+ * PARAMETER
+ *	mirror		a VRD which forms a mirror device
+ *	cmd		I/O Control Code
+ *	data		data buffer
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		error (driver status code)
+ *
+ * DESCRIPTION
+ *	Special function interface
+ *
+ * REMARKS
+ */
+PRIVATE DRVSTATUS NEAR _Cdecl
+StripeCtrl(PVRDEVHDR const self, USHORT const cmd,
+	   PVOID const param, PVOID const data)
+{
+    PVRDSTRIPE const	stripe = (PVRDSTRIPE)self;
+    USHORT		result = STATUS_ERR_UNKCMD;
+
+    ASSERT( stripe->header.size != 0 );
+    ASSERT( stripe->header.notify == StripeNotify );
+    ASSERT( stripe->header.worker == StripeWorker );
+    ASSERT( stripe->header.update == StripeUpdate );
+    ASSERT( stripe->header.ioctl == StripeCtrl );
+
+    switch( cmd )
+    {
+      case VRDIOCTL_QUERY_CHILDREN:
+	*(PUSHORT)data = stripe->children;
+	result = 0;
+	break;
+
+
+      case VRDIOCTL_INFO:
+	DEBMSG(DBG_PATH, "VRDIOCTL_INFO");
+	{
+	    PVRAID_ARRAYINFO_DATA	d = data;
+
+	    _fmemcpy(d->id, stripe->header.id, sizeof(d->id));
+	    d->reqcnt = stripe->header.iocnt;
+	    d->size = stripe->header.size;
+
+	    d->children = stripe->children;
+	    d->flags = stripe->header.flags;
+	    d->reserved = 0;
+	}
+	result = 0;
+	break;
+
+
+      default:
+	break;
+    }
+
+    return result;
+} /* end[StripeCtrl] */
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Public Entries **************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * StripeCreate(pVrh,pPhys,sec,pSize)
+ *
+ * PARAMETER
+ *	pVrh		room to create device structure
+ *	tab		table of device to build from
+ *	sec		contents of configuration sector
+ *	pSize		return: size used at '*pVrh'
+ *
+ * RETURNS
+ *	0		OK
+ *
+ * DESCRIPTION
+ * REMARKS
+ */
+PUBLIC int NEAR _Cdecl
+StripeCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,PSEC_VRDEV sec,PUSHORT pSize)
+{
+    PVRDSTRIPE const	stripe = (PVRDSTRIPE)pVrh;
+    USHORT	i, found;
+
+
+    DEBMSG2(DBG_INIT1,dszStripeCreate,(PVOID)pVrh,sec->u.s.children);
+
+    stripe->header.worker = StripeWorker;
+    stripe->header.notify = StripeNotify;
+    stripe->header.update = StripeUpdate;
+    stripe->header.ioctl = StripeCtrl;
+    stripe->header.size = 0;			/* initialize, will be added to */
+    stripe->header.flags = 0;
+    _fmemcpy(stripe->header.id, sec->u.s.id, sizeof(stripe->header.id));
+    DEBMSG2(DBG_INIT3,dszSCreateID,(PVOID)stripe->header.id,6);
+
+    stripe->stripesize = STRIPE_SIZE;
+
+
+    /* Build linking by looking up all parts in 'tab'. */
+
+    stripe->children = sec->u.s.children;
+    _fmemset(stripe->child, 0, stripe->children * sizeof(stripe->child[0]));
+    found = 0;
+    for( i = 0; i < stripe->children; ++i )
+    {
+	PDEVID const	id1 = &sec->u.s.child[i].id;
+	USHORT		j;
+
+	DEBMSG2(DBG_INIT3,dszSCreateLooking,(PVOID)id1,6);
+	stripe->header.size += sec->u.s.child[i].size;
+	for( j = 0; j < MAX_PDEV; ++j )
+	{
+	    if( tab[j] != NULL )		/* ignore empty entries */
+	    {
+		PDEVID const	id2 = &tab[j]->id;
+
+		if( _fmemcmp(id1, id2, sizeof(DEVID)) == 0 )
+		{
+		    DEBMSG2(DBG_INIT1,dszSCreateFound,i,tab[j]);
+		    stripe->child[i] = tab[j];
+		    tab[j] = NULL;
+		    ++found;
+		    break;			/* stop scan, next child */
+		}
+	    }
+	}
+    }
+    if( found != stripe->children )
+    {
+	DEBMSG2(DBG_ALL,dszSCreateOnly,found,stripe->children);
+	stripe->header.flags = RDFLAG_ERROR;
+    }
+
+    while( stripe->child[stripe->readchild] == NULL )
+    {
+	stripe->readchild = (stripe->readchild + 1 == stripe->children
+			     ? 0 : stripe->readchild + 1);
+    }
+
+
+    /* Size of administrative data depends on count of children. */
+
+    *pSize = sizeof(*stripe) + stripe->children * sizeof(stripe->child[0]);
+    return 0;
+}
+@
+
+
+2.1
+log
+@- implemented ioctl method (VRDIOCTL_QUERY_CHILDREN, VRDIOCTL_INFO)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.12 $
+ * $Date: 1999/10/01 00:50:42 $
+d7 3
+a9 1
+ *	How to do RAID0 I/O.
+d12 3
+d54 2
+a55 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+d60 1
+a60 1
+static char const id[]="$Id: stripe.c,v 1.12 1999/10/01 00:50:42 vitus Exp vitus $";
+d98 1
+a98 1
+PRIVATE USHORT NEAR _Cdecl	StripeCtrl(PVRDEVHDR const self, USHORT const cmd,
+d542 1
+a542 1
+PRIVATE USHORT NEAR _Cdecl
+@
+
+
+1.12
+log
+@- updates new iocnt and busycnt fields in VRDEVHDR
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.11 $
+ * $Date: 1999/09/20 00:03:12 $
+d10 3
+d55 1
+a55 1
+static char const id[]="$Id: stripe.c,v 1.11 1999/09/20 00:03:12 vitus Exp vitus $";
+d69 1
+d93 2
+d154 2
+d273 1
+d506 8
+d520 65
+d618 1
+@
+
+
+1.11
+log
+@- defined all DBGMSG() strings as located in CONST segment
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/06/21 02:29:17 $
+d10 3
+d52 1
+a52 1
+static char const id[]="$Id: stripe.c,v 1.10 1999/06/21 02:29:17 vitus Exp vitus $";
+d254 1
+d266 2
+d441 1
+d510 1
+a510 1
+ *	StripeCreate(pVrh,pPhys,sec,pSize)
+@
+
+
+1.10
+log
+@- corrected english spelling
+- handle missing children (NULL pointer)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/05/26 00:44:09 $
+d10 4
+d49 1
+a49 1
+static char const id[]="$Id: stripe.c,v 1.9 1999/05/26 00:44:09 vitus Exp vitus $";
+d67 1
+a67 3
+/*
+ * Our object: the striping drive.
+ */
+d90 23
+d136 1
+a136 1
+    DEBMSG3(DBG_PATH,"\r\n[StripeNotify] io %p, myio %p, error %w",io,myio,io->oserr);
+d211 1
+a211 1
+	DEBMSG1(DBG_LEVEL3,"\r\n[StripeNotify] completed all of myio %p",myio);
+d251 2
+a252 2
+    DEBMSG1(DBG_PATH,"\r\n[StripeWorker] %p",(PVOID)myio);
+    DEBMSG2(DBG_LEVEL3,"\r\n[StripeWorker] first blk %lx, last blk %lx",(PVOID)&firstblk,(PVOID)&lastblk);
+d276 1
+a276 1
+	    DEBMSG1(DBG_LEVEL3,"\r\n[StripeWorker] start %lx",(PVOID)&firstblk);
+d292 1
+a292 1
+	    DEBMSG3(DBG_LEVEL3,"\r\n[StripeWorker] strno %lx, stroffs %w, devidx %w",(PVOID)&strno,stroffs,devidx);
+d392 1
+a392 1
+		DEBMSG(DBG_ALL,"\r\n[StripeAdmin] AllocateVrio failed");
+d428 1
+a428 1
+	DEBMSG(DBG_ALL,"\r\n[StripeWorker] releasing VRIOs");
+d451 1
+a451 1
+	    DEBMSG1(DBG_ALL,"\r\n[StripeWorker] child missing, cmd %w",io->iocmd);
+d460 1
+a460 1
+		DEBMSG(DBG_ALL,"\r\n[StripeWorker] child busy, queuing VRIO");
+d524 1
+a524 1
+    DEBMSG2(DBG_INIT1,"\r\n[StripeCreate] at %p, %w children",(PVOID)pVrh,sec->u.s.children);
+d532 1
+d547 1
+d557 1
+a557 1
+		    DEBMSG2(DBG_INIT1,"\r\n[StripeCreate] found child %w in %p",i,tab[j]);
+d568 1
+a568 1
+	DEBMSG2(DBG_ALL,"\r\n[StripeCreate] only found %w out of %w",found,stripe->children);
+@
+
+
+1.9
+log
+@- StripeCreate: return value now 'int', but as it is always 0...
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/05/12 01:49:09 $
+d10 3
+d45 1
+a45 1
+static char const id[]="$Id: stripe.c,v 1.8 1999/05/12 01:49:09 vitus Exp vitus $";
+d74 1
+a74 1
+    USHORT	childs;
+d100 1
+a100 1
+ *	ends it if all I/Os to childs ended.
+d139 1
+a139 1
+	--myio->childs;
+d148 1
+a148 1
+	    myio->childs = 0;			/* no more I/Os, see below */
+d154 2
+a155 2
+	    --myio->childs;
+	    if( myio->childs != 0 )
+d162 1
+a162 1
+		for( i = 0; i < stripe->childs; ++i )
+d165 1
+a165 1
+			i = (i + 1 == stripe->childs ? 0 : i+1);
+d175 1
+a175 1
+		rc = io->vrd->worker(child, io);
+d184 1
+a184 1
+    if( myio->childs == 0 )			/* my I/O ready? */
+d211 1
+a211 1
+ *	Pass VRIO to underlying I/O routine of affected childs..
+d243 1
+a243 1
+	/* Create VRIO to all affected childs. */
+d245 1
+a245 1
+	myio->childs = 0;
+d257 1
+a257 1
+	    strno = firstblk / (stripe->stripesize * stripe->childs);
+d261 1
+a261 1
+	    devidx = (USHORT)((firstblk / stripe->stripesize) % stripe->childs);
+d281 1
+a281 1
+	    ++myio->childs;
+d298 1
+d304 1
+a304 1
+	myio->childs = stripe->childs;		/* to detect 'all childs tried' */
+d339 6
+a344 2
+	    stripe->readchild = (stripe->readchild + 1 == stripe->childs
+				 ? 0 : stripe->readchild + 1);
+d350 1
+d352 1
+a352 1
+	/* Write: create VRIO to all childs. */
+d354 1
+a354 1
+	myio->childs = 0;
+d356 1
+a356 1
+	for( i = 0; i < stripe->childs; ++i )
+d358 4
+d377 1
+a377 1
+	    ++myio->childs;
+d379 1
+a379 1
+	    /* Childs will receive exactly the same parameters as the
+d413 1
+a413 1
+    /* Now pass all allocated VRIOs to childs. */
+d421 10
+a430 2
+	rc = io->vrd->worker(io->vrd, io);
+	if( rc )
+d432 6
+a437 2
+	    DEBMSG(DBG_ALL,"\r\n[StripeWorker] child busy, queuing VRIO");
+	    QueueVrio(io);
+d499 1
+a499 1
+    DEBMSG2(DBG_INIT1,"\r\n[StripeCreate] at %p, %w childs",(PVOID)pVrh,sec->u.s.childs);
+d513 2
+a514 2
+    stripe->childs = sec->u.s.childs;
+    _fmemset(stripe->child, 0, stripe->childs * sizeof(stripe->child[0]));
+d516 1
+a516 1
+    for( i = 0; i < stripe->childs; ++i )
+d539 1
+a539 1
+    if( found != stripe->childs )
+d541 1
+a541 1
+	DEBMSG2(DBG_ALL,"\r\n[StripeCreate] only found %w out of %w",found,stripe->childs);
+d545 10
+a554 1
+    *pSize = sizeof(*stripe) + stripe->childs * sizeof(stripe->child[0]);
+@
+
+
+1.8
+log
+@- dummy StripeUpdate() implemented
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/04/28 01:46:15 $
+d10 3
+d42 1
+a42 1
+static char const id[]="$Id: stripe.c,v 1.7 1999/04/28 01:46:15 vitus Exp vitus $";
+d86 1
+a86 2
+ * CALL
+ *	StripeNotify(io)
+d197 1
+a197 2
+ * CALL
+ *	StripeWorker(stripe,father_io)
+d423 1
+a423 2
+ * CALL
+ *	StripeUpdate(self,sec)
+a452 1
+ * CALL
+a462 1
+ *	/0		couldn't create
+d467 1
+a467 1
+PUBLIC USHORT NEAR _Cdecl
+d474 1
+a474 1
+    DEBMSG2(DBG_LEVEL1,"\r\n[StripeCreate] at %p, %w childs",(PVOID)pVrh,sec->u.s.childs);
+d505 1
+a505 1
+		    DEBMSG2(DBG_LEVEL1,"\r\n[StripeCreate] found child %w in %p",i,tab[j]);
+@
+
+
+1.7
+log
+@- merged StripeAdmin() code with Worker/Notify, IOCMD_A* commands
+- StripeNotify() uses CompleteVrio()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1999/02/07 17:35:17 $
+d10 4
+d39 1
+a39 1
+static char const id[]="$Id: stripe.c,v 1.6 1999/02/07 17:35:17 vitus Exp vitus $";
+d77 1
+d183 1
+a183 1
+	    stripe->header.flags |= RDFLAGS_ERROR;
+d231 1
+d421 25
+d480 1
+d519 1
+a519 1
+	stripe->header.flags = RDFLAGS_ERROR;
+@
+
+
+1.6
+log
+@- implemented StripeAdmin() method
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1998/09/20 14:23:28 $
+d10 3
+d35 1
+a35 1
+static char const id[]="$Id: stripe.c,v 1.5 1998/09/20 14:23:28 vitus Stab vitus $";
+a71 1
+PRIVATE USHORT NEAR _Cdecl	StripeAdmin(PVRDEVHDR const self,PVRIO const myio);
+d98 1
+a108 1
+    ASSERT( myio->vrd->admin == StripeAdmin );
+d122 1
+a122 4
+    /* Remove VRIO.  If last, call parent notification. */
+
+    --myio->childs;
+    if( myio->childs == 0 )			/* my I/O ready? */
+d124 11
+a134 1
+	PVRDSTRIPE const	stripe = (PVRDSTRIPE)myio->vrd;
+d136 1
+a136 4
+	DEBMSG1(DBG_LEVEL3,"\r\n[StripeNotify] completed all of myio %p",myio);
+	if( myio->oserr != 0 )
+	    stripe->header.flags |= RDFLAGS_ERROR;
+	if( myio->mother != NULL )
+d138 1
+a138 11
+	    PVRDEVHDR const	parent = myio->mother->vrd;
+
+	    DEBMSG2(DBG_LEVEL3,"\r\n[StripeNotify] calling parent %p, mother I/O %p",parent,myio->mother);
+	    parent->notify(myio);
+	    FreeVrio(myio);			/* don't need anymore */
+	}
+	else if( myio->iorb != NULL )
+	{
+	    DEBMSG(DBG_LEVEL3,"\r\n[StripeNotify] iorb != 0 -> Host Drive");
+	    HostdriveNotify(myio);
+	    FreeVrio(myio);			/* don't need anymore */
+d142 7
+a148 1
+	    USHORT	awoken;
+d150 19
+a168 2
+	    DEBMSG(DBG_LEVEL2,"\r\n[StripeNotify] nothing -> IOCtl");
+	    DevHelp_ProcRun((ULONG)myio, &awoken);	/* *nicht* freigeben! */
+d170 10
+d191 1
+a191 1
+ *	StripeAdmin(stripe,myio)
+d194 2
+a195 2
+ *	stripe		set building a stripening set
+ *	myio		I/O to stripening set (to myself)
+d202 1
+a202 2
+ *	Pass VRIO to underlying administrative I/O routines
+ *	of all childs.
+d207 1
+a207 1
+StripeAdmin(PVRDEVHDR const self,PVRIO const myio)
+d214 1
+a214 1
+    ULONG const	firstblk = myio->blk;		/* first blk */
+a215 1
+    ULONG	devstart = 0;
+d217 2
+a218 3
+
+    DEBMSG1(DBG_PATH,"\r\n[StripeAdmin] %p",(PVOID)myio);
+    DEBMSG2(DBG_LEVEL3,"\r\n[StripeAdmin] first blk %lx, last blk %lx",(PVOID)&firstblk,(PVOID)&lastblk);
+a224 1
+    ASSERT( stripe->header.admin == StripeAdmin );
+d227 1
+a227 2
+
+    if( myio->iocmd == IOCMD_WRITE )
+d231 3
+a233 1
+	/* Write: create VRIO to all childs. */
+d236 10
+d247 13
+a259 3
+	for( i = 0; i < stripe->childs; ++i )
+	{
+	    /* Allocate VRIOs and update links. */
+d261 3
+a263 6
+	    newio = AllocateVrio(stripe->child[i], myio);
+	    if( newio == NULL )
+	    {
+		DEBMSG(DBG_ALL,"\r\n[StripeAdmin] AllocateVrio failed");
+		break;				/* memory exhausted? */
+	    }
+a272 4
+	    /* Childs will receive exactly the same parameters as the
+	     * configuration sectors are identical on all parts of a
+	     * VRAID device. */
+
+d279 6
+a284 4
+	    io->offset = myio->offset;
+	    io->blk = myio->blk + 1;		/* as usual */
+	    io->bcnt = myio->bcnt;
+	    io->oserr = 0xFFFF;			/* invalid error code */
+d286 3
+a288 3
+    }
+    else
+    {
+d333 1
+a333 1
+    }
+d335 2
+a336 4
+    if( newio == NULL )
+    {
+	/* Not enough memory.  Free all allocated VRIOs
+	 * and return error code to parent. */
+d338 1
+a338 10
+	DEBMSG(DBG_ALL,"\r\n[StripeAdmin] releasing VRIOs");
+	for( io = firstio; io != NULL; io = newio )
+	{
+	    newio = io->link;
+	    io->link = NULL;
+	    FreeVrio(io);
+	    DO( io = NULL );
+	}
+	return 1;
+    }
+d340 1
+a340 10
+    /* All VRIOs were allocated, now pass them to childs. */
+
+    for( io = firstio; io != NULL; io = newio )
+    {
+	USHORT	rc;
+
+	newio = io->link;
+	io->link = NULL;
+	rc = io->vrd->admin(io->vrd, io);
+	if( rc )
+d342 1
+a342 4
+	    DEBMSG(DBG_ALL,"\r\n[StripeAdmin] child busy, queuing VRIO");
+	    QueueVrio(io);
+	}
+    }
+d344 6
+a349 2
+    return 0;
+} /* end[StripeAdmin] */
+d351 7
+d359 3
+d363 5
+d369 6
+a374 90
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	StripeWorker(stripe,father_io)
+ *
+ * PARAMETER
+ *	stripe		set building a stripe
+ *	father_io	I/O to stripe set
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		I/O not processed, please retry
+ *
+ * DESCRIPTION
+ *	Pass VRIO to underlying I/O routine of affected childs..
+ *
+ * REMARKS
+ */
+PRIVATE USHORT NEAR _Cdecl
+StripeWorker(PVRDEVHDR const self,PVRIO const myio)
+{
+    PVRDSTRIPE const	stripe = (PVRDSTRIPE)self;
+    PVRIO	io;
+    PVRIO	newio;
+    PVRIO	firstio = NULL;
+
+    ULONG	blk = myio->blk;		/* first blk */
+    ULONG const	lastblk = blk + myio->bcnt - 1;
+
+    DEBMSG1(DBG_PATH,"\r\n[StripeWorker] %p",(PVOID)myio);
+    DEBMSG2(DBG_LEVEL3,"\r\n[StripeWorker] first blk %lx, last blk %lx",(PVOID)&blk,(PVOID)&lastblk);
+
+    ASSERT( myio->vrd == self );
+    ASSERT( myio->link == NULL );
+    ASSERT( myio->bcnt != 0 );
+    ASSERT( stripe->header.size != 0 );
+    ASSERT( stripe->header.notify == StripeNotify );
+    ASSERT( stripe->header.worker == StripeWorker );
+
+    /* Create VRIO to all affected childs. */
+
+    myio->childs = 0;
+    for(; blk <= lastblk ; blk += io->bcnt)
+    {
+	USHORT	devidx, stroffs;
+	ULONG	strno;
+
+	DEBMSG1(DBG_LEVEL3,"\r\n[StripeWorker] start %lx",(PVOID)&blk);
+
+	/* Calculate child, offset and count for this block. */
+
+	/* Which band? */
+
+	strno = blk / (stripe->stripesize * stripe->childs);
+
+	/* Wich device? */
+
+	devidx = (USHORT)((blk / stripe->stripesize) % stripe->childs);
+
+	/* Offset in band? */
+
+	stroffs = (USHORT)(blk % stripe->stripesize);
+
+	DEBMSG3(DBG_LEVEL3,"\r\n[StripeWorker] strno %lx, stroffs %w, devidx %w",(PVOID)&strno,stroffs,devidx);
+
+	/* Build linked list of VRIOs.  */
+
+	newio = AllocateVrio(stripe->child[devidx], myio);
+	if( newio == NULL )			/* memory exhausted? */
+	    break;
+
+	if( firstio == NULL )
+	    firstio = newio;			/* save this as first */
+	else
+	    io->link = newio;
+	io = newio;
+	io->link = NULL;
+	++myio->childs;
+
+	io->iorb = myio->iorb;
+	io->iocmd = myio->iocmd;
+	io->cSGList = myio->cSGList;
+	io->pSGList = myio->pSGList;
+	io->ppSGList = myio->ppSGList;
+
+	io->offset = (USHORT)(blk - myio->blk);
+	io->blk = (strno * stripe->stripesize) + stroffs;
+	io->bcnt = (lastblk - blk + 1 < stripe->stripesize - stroffs
+		    ? (USHORT)(lastblk - blk + 1) : stripe->stripesize - stroffs);
+
+	io->oserr = 0xFFFF;			/* invalidate error code */
+a446 1
+    stripe->header.admin = StripeAdmin;		/* required */
+@
+
+
+1.5
+log
+@- modified for AllocateVrio(working_dev,mother)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1998/06/26 23:08:35 $
+d7 1
+a7 1
+ * How to do RAID0 I/O.
+d10 3
+d26 2
+a27 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+d32 1
+a32 1
+static char const id[]="$Id: stripe.c,v 1.4 1998/06/26 23:08:35 vitus Exp vitus $";
+d59 2
+d69 1
+d75 1
+a75 1
+/*#
+d78 1
+d81 1
+d84 1
+a84 2
+ * GLOBAL
+ *	(none)
+d97 1
+a102 1
+    ASSERT( myio->request != NULL );
+d106 1
+d119 1
+d136 7
+d146 4
+a149 2
+	    DEBMSG(DBG_LEVEL3,"\r\n[StripeNotify] no mother I/O -> Host Drive");
+	    HostdriveNotify(myio);
+a150 1
+	FreeVrio(myio);				/* don't need anymore */
+d155 59
+a213 1
+}
+d215 83
+d299 12
+d312 3
+d316 17
+a332 1
+/*#
+d335 1
+d339 1
+d343 1
+a343 2
+ * GLOBAL
+ *	(nothing)
+a364 1
+    ASSERT( myio->request != NULL );
+d410 6
+a415 1
+	io->request = myio->request;
+a416 1
+
+d457 1
+a457 1
+}
+d468 1
+a468 1
+/*#
+d471 1
+d477 1
+d481 1
+a481 1
+ * GLOBAL
+d491 5
+a495 1
+    stripe->header.worker = StripeWorker;	/* required */
+d502 1
+@
+
+
+1.4
+log
+@- switched to DDK macros (cli, sti, pushf)
+- worker,notify get const pointers and become _Cdecl
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1998/04/19 22:38:27 $
+d10 4
+d26 7
+a32 3
+#pragma off (unreferenced)
+static char const id[]="$Id: stripe.c,v 1.3 1998/04/19 22:38:27 vitus Exp vitus $";
+#pragma on (unreferenced)
+d64 5
+a88 1
+    PVRDSTRIPE const	stripe = (PVRDSTRIPE)myio->vrd;
+d90 10
+a99 1
+    DEBMSG3(DBG_LEVEL3,"\r\n[StripeNotify] io %p, myio %p, error %w",io,myio,io->oserr);
+d116 2
+d170 1
+d173 8
+a190 14
+	/* Build linked list of VRIOs.  */
+
+	newio = AllocateVrio(myio);
+	if( newio == NULL )			/* memory exhausted? */
+	    break;
+
+	if( firstio == NULL )
+	    firstio = newio;			/* save this as first */
+	else
+	    io->link = newio;
+	io = newio;
+	io->link = NULL;
+	++myio->childs;
+
+d207 14
+a222 1
+	io->vrd = stripe->child[devidx];
+d242 1
+@
+
+
+1.3
+log
+@- corrected stripe distribution code
+- test successfull
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/raid/RCS/stripe.c,v $
+ * $Revision: 1.2 $
+ * $Date: 1998/03/10 02:08:10 $
+d10 4
+d23 1
+a23 1
+static char const id[]="$Id: stripe.c,v 1.2 1998/03/10 02:08:10 vitus Exp vitus $";
+d64 1
+a64 1
+ *	(nothing)
+d72 2
+a73 2
+PRIVATE VOID NEAR
+StripeNotify(PVRIO io)
+d78 1
+a78 1
+    DEBMSG3(DBG_LEVEL2,"\r\n[StripeNotify] io %p, my io %p, error %w",(PVOID)io,(PVOID)myio,io->oserr);
+d80 2
+a81 2
+    SAVE_IF();
+    DISABLE();
+d95 1
+a95 1
+	DEBMSG1(DBG_LEVEL2,"\r\n[StripeNotify] completed all of my io %p",(PVOID)myio);
+d102 1
+a102 1
+	    DEBMSG2(DBG_LEVEL2,"\r\n[StripeNotify] mother %p, parent %p",(PVOID)myio->mother,(PVOID)parent);
+d107 1
+a107 3
+	    extern void	HostdriveNotify(PVRIO io);
+
+	    DEBMSG(DBG_LEVEL2,"\r\n[StripeNotify] no mother -> Host Drive");
+d113 1
+a113 1
+    RESTORE_IF();
+d136 2
+a137 2
+PRIVATE USHORT NEAR
+StripeWorker(PVRDEVHDR self,PVRIO myio)
+a143 1
+    USHORT const	devcnt = stripe->childs; /* how many stripes? */
+d147 1
+a147 1
+    DEBMSG2(DBG_LEVEL1,"\r\n[StripeWorker] first blk %lx, last blk %lx",(PVOID)&blk,(PVOID)&lastblk);
+d157 1
+a157 1
+	DEBMSG1(DBG_LEVEL2,"\r\n[StripeWorker] start %lx",(PVOID)&blk);
+d177 1
+a177 1
+	strno = blk / (stripe->stripesize * devcnt);
+d181 1
+a181 1
+	devidx = (blk / stripe->stripesize) % devcnt;
+d185 1
+a185 1
+	stroffs = blk % stripe->stripesize;
+d187 1
+a187 1
+	DEBMSG3(DBG_LEVEL1,"\r\n[StripeWorker] strno %lx, stroffs %w, devidx %w",(PVOID)&strno,stroffs,devidx);
+d190 1
+a190 1
+	io->offset = blk - myio->blk;
+d195 1
+a195 1
+		    ? lastblk - blk + 1 : stripe->stripesize - stroffs);
+d206 1
+d225 2
+d228 1
+d267 2
+d279 1
+a279 1
+	PDEVID const	id1 = sec->u.s.child[i].id;
+d287 1
+a287 1
+		PDEVID const	id2 = tab[j]->id;
+d300 1
+a300 3
+    if( found == stripe->childs )
+	stripe->header.flags = 0;
+    else
+d305 1
+@
+
+
+1.2
+log
+@- changed to PUBLIC *Create() function and PRIVATE workers
+@
+text
+@d3 3
+a5 3
+ * $Revision: 1.1 $
+ * $Date: 1998/02/12 01:28:05 $
+ * $Locker$
+d10 3
+d19 1
+a19 1
+static char const id[]="$Id: stripe.c,v 1.1 1998/02/12 01:28:05 vitus Exp vitus $";
+d42 2
+d71 4
+a74 3
+    /*PVRDEVHDR		child = io->vrd;*/
+    PVRIO const		father_io = io->father;
+    PVRDSTRIPE const	stripe = (PVRDSTRIPE)father_io->vrd;
+d81 4
+a84 4
+    if( father_io->oserr == 0xFFFF )		/* still not set? */
+	father_io->oserr = io->oserr;		/* propagate error */
+    else if( io->oserr == 0 )			/* this I/O still OK? */
+	father_io->oserr = io->oserr;		/* keep any error */
+d88 2
+a89 3
+    --father_io->childs;
+    FreeVrio(io);				/* don't need anymore */
+    if( father_io->childs == 0 )		/* father I/O ready? */
+d91 2
+a92 1
+	if( father_io->oserr != 0 )
+d94 15
+a108 1
+	father_io->vrd->notify(father_io);
+d135 1
+a135 1
+StripeWorker(PVRDEVHDR self,PVRIO father_io)
+d143 4
+a146 2
+    ULONG	blk = father_io->blk;		/* first blk */
+    ULONG const	lastblk = blk + father_io->bcnt - 1;
+d150 1
+a150 1
+    father_io->childs = 0;
+d153 4
+a156 1
+	USHORT	devidx, strno, stroffs;
+d160 1
+a160 1
+	newio = AllocateVrio();
+d170 1
+a170 1
+	++father_io->childs;
+d174 3
+a176 3
+	strno = blk / (STRIPE_SIZE * devcnt);	/* welches Band? */
+	stroffs = blk % STRIPE_SIZE;		/* wie weit im Streifen? */
+	devidx = (blk % (STRIPE_SIZE * devcnt)) / devcnt;
+d178 12
+a189 2
+	io->request = father_io->request;
+	io->offset = blk - father_io->blk;
+d192 3
+a194 3
+	io->blk = (strno * STRIPE_SIZE) + stroffs;
+	io->bcnt = (lastblk - blk + 1 < STRIPE_SIZE - stroffs
+		    ? lastblk - blk + 1 : STRIPE_SIZE - stroffs);
+d232 2
+d253 2
+a254 2
+PUBLIC USHORT NEAR
+StripeCreate(PVRDEVHDR pVrh,PVRDEVHDR tab[MAX_PDEV],PSEC_VRDEV sec,PUSHORT pSize)
+d261 3
+d267 1
+a267 1
+    stripe->childs = sec->childs;
+d272 2
+a273 1
+	USHORT	j;
+d275 1
+d278 3
+a280 2
+	    if( tab[j] == NULL )
+		continue;			/* ignore empty entries */
+d282 8
+a289 5
+	    if( tab[j]->id == sec->child[i].id )
+	    {
+		stripe->child[i] = tab[j];
+		tab[j] = NULL;
+		++found;
+d296 2
+d299 1
+a299 1
+
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Author$
+d9 3
+a11 1
+ * $Log$
+d16 1
+a16 1
+static char const id[]="$Id$";
+d32 2
+a33 14
+/*#
+ * CALL
+ *	Idx2Vrd(stripe,devidx)
+ * PARAMETER
+ *	stripe		first sibling of stripe set
+ *	devidx		index of sibling
+ * RETURNS
+ *	PVRDEVICE
+ * GLOBAL
+ *	(nothing)
+ * DESCRIPTION
+ *	Returns pointer to nth sibling.
+ *
+ * REMARKS
+d35 8
+a42 7
+PRIVATE PVRDEVICE
+Idx2Vrd(PVRDEVICE stripe,USHORT devidx)
+{
+    for(; devidx != 0; stripe = stripe->sibling )
+	--devidx;
+    return stripe;
+}
+d49 1
+a49 1
+ *	StripeNotify(child,io)
+a50 1
+ *	child		child which reports a completed I/O
+d57 1
+a57 1
+ *	Used by child VRDEVICE to report that an I/O has completed.
+d63 2
+a64 2
+PUBLIC void
+StripeNotify(VRDEVICE child,PVRIO io)
+d66 1
+a66 1
+    PVRDEVICE const	self = io->vrd;
+d68 1
+d77 2
+a78 2
+    else if( io->oserr != 0 )			/* this I/O failed? */
+	father_io->oserr = io->oserr;		/* keep this error */
+d86 3
+a88 1
+	self->parent->notify(self, father_io);
+d100 1
+a100 1
+ *	StripeIo(stripe,father_io)
+d110 1
+a110 1
+ *	Pass iorb to underlying I/O routine of every sibling.
+d114 2
+a115 2
+PUBLIC USHORT
+StripeIo(PVRDEVICE stripe,PVRIO father_io)
+d117 1
+a117 1
+    PVRDEVICE	vrd;
+d122 1
+a122 1
+    USHORT	devcnt;				/* how many stripes? */
+d126 1
+a126 4
+    for( devcnt = 0, vrd = stripe; vrd != NULL; vrd = vrd->sibling )
+	++devcnt;
+
+    /* Create VRIO to all affected siblings. */
+d147 1
+a147 1
+	/* Calculate sibling, offset and count for this block. */
+d155 1
+a155 1
+	io->vrd = Idx2Vrd(stripe, devidx);
+d191 62
+@

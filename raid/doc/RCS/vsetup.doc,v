@@ -1,0 +1,521 @@
+head	1.5;
+access;
+symbols
+	VRAID_REL23:1.5
+	REL22:1.5
+	VRAIDv0_70:1.5
+	VRAIDv0_60:1.4
+	VRAIDv0_51:1.3
+	VRAIDv0_50:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	99.03.24.23.58.41;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	98.12.22.00.16.07;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.11.05.23.14.11;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.10.08.00.45.22;	author vitus;	state Stab;
+branches;
+next	1.1;
+
+1.1
+date	98.09.28.00.51.57;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@VRAID Filter - Setup Program VSETUP.EXE
+@
+
+
+1.5
+log
+@Changed for version 0.70: "Can't lock physical disk N, ..."
+@
+text
+@-*- Mode: indented-text -*-
+--- $Id: vsetup.doc,v 1.4 1998/12/22 00:16:07 vitus Exp vitus $
+
+    VRAID Filter - Setup Program VSETUP.EXE
+
+1. Introduction
+
+    This document describes  VSETUP.EXE,   a program  to define   RAID
+    drives build by VRAID.FLT on the  next system startup.  Additional
+    some settings/statistics of VRAID.FLT  may be changed/retrieved at
+    runtime.
+
+
+1.1. Nomenclature
+
+    As it is difficult to discuss the whole matter (drives made out of
+    drives which are known by OS/2 as drives :-) I deciced to put up a
+    nomenclature.  Fairly simple:
+
+	- OS/2 devices / OS/2 drives
+
+	  Those spinning things as  you  have know  them  ever.  Every
+	  device contains one  or more partitions and  every partition
+	  may  contain a  filesystem  supported by  OS/2.  A supported
+	  filesystem (FAT,  HPFS,  EXT2FS,  ...) is assigned  a  drive
+	  letter.  Whenever at least a single drive letter is assigned
+	  in this way the whole device  is declared "inuse by OS/2" as
+	  we cannot remove it from the system without affecting OS/2's
+	  operation in  some way (this isn't the  whole story: the WPS
+	  accesses it,   if  you boot to PM-only    the drive  may  be
+	  "free").
+
+	- PHYSDEVICE
+
+	  Whenever a device contains a VRAID partition (partition type
+	  0x7C if you wonder) it is called  a PHYSDEVICE.  PHYSDEVICEs
+	  are hidden by VRAID.FLT and PHYSDEVICEs may become part of...
+
+	- ARRAY DRIVE (Single, Striping, Chaining, Mirror, ...)
+
+	  ARRAY  DRIVEs are build from  PHYSDEVICEs and may be part of
+	  other  ARRAY  DRIVEs,  building   a  freely   definable disk
+	  structure.  The  topmost ARRAY DRIVE  is reported to OS/2 by
+	  VRAID.FLT and accessible by FDISK as  a whole if that driver
+	  is loaded.
+
+
+
+2. Main Window
+
+    That's the window you see when  you start VSETUP.EXE.  It contains
+    an action log and a menu bar to select tasks.
+
+
+2.1. File Menu
+
+    This menu let you save or print the contents of the action log.
+
+    --- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+
+    None of the choices in the file menu are currently implemented.
+
+    --- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+
+
+2.2. Edit Menu
+
+    Entries "Cut", "Copy" and "Paste" interact with the action log and
+    the clipboard (same  actions as the usual  system keys which work,
+    too), "Clear log" clears the action log.
+
+
+2.3. Driver Menu
+
+    The menu  is only enabled if  an  installed VRAID.FLT is detected.
+    Choices are to add the driver version  or it's startup messages to
+    the action log.
+
+
+2.4. Drives Menu
+
+    This menu  contains   the entry   "Setup" which opens   the  Drive
+    Definition Window (see 3.) and a "Dump..." choice.
+
+    Seleting "Dump..." opens a dialog where you can select which drive
+    to dump.   Possible selections are the  physical disks as known by
+    OS/2 (index 0  - n-1)  and the value   "-1", meaning  to dump  all
+    physical disks.
+
+
+2.5. Help
+
+    The  only choice here  is   to display version  information  about
+    VSETUP.EXE itself.
+
+
+
+
+3. Drive Definition Window
+
+
+    Whenever  you select  Drives->Setup   a new  windows    opens.  It
+    displays a container  showing   all drives found  by   VSETUP.EXE.
+    Drives are found by quering VRAID.FLT (if installed) and OS/2.
+
+    Existing arrays are displayed  in  tree view showing which  arrays
+    are  made  from which  physical  devices.  There  are several icon
+    types showing different device types.  They are:
+
+    - 3D look grey boxes (OS/2 devices)
+
+      They are  physical devices known to OS/2  but  not inuse by OS/2
+      (mostly  because there  are  no partitions or no  OS/2-supported
+      filesystems on them).  You  may create a  PHYSDEVICE of them and
+      afterwards use them to build a new array.
+
+    - 3D look white boxes (OS/2 devices inuse by OS/2)
+
+      Physical devices known to OS/2 *and* inuse by  OS/2 (there is at
+      least one partition and  an OS/2-supported filesystem resides in
+      it).  You can't build a drive array from this type.
+
+      To  enable VSETUP.EXE to  access those devices do the following:
+      run FDISK and remove partitions used by OS/2 --- OR --- if there
+      is some free space --- reboot without that particular filesystem
+      support ---  OR --- boot a PM-only  system (the WPS accesses all
+      filesystems at startup) and rerun VSETUP.EXE.
+
+    - 2D drive with grey front (PHYSDEVICE)
+
+      A PHYSDEVICE,  a drive where a VRAID  partition  resides.  Those
+      icons build or can be used to build an array.
+
+    - 2D drive with grey front and red cross (missing PHYSDEVICE)
+
+      A  PHYSDEVICE  which is known  to  be part of  an  array  but is
+      missing  from this computer.    Array is  in state "failure"  or
+      "error".
+
+    - 2D drive with white front (PHYSDEVICE, ARRAY inuse by OS/2)
+
+      A PHYSDEVICE  being part of an array  but the  array is inuse by
+      OS/2  and must not be modified.   This  icon shouldn't appear in
+      VSETUP 0.51 any longer.
+
+    - two 2D drives with grey front (ARRAY DRIVE)
+
+      An array being build from PHYSDEVICEs  and available for OS/2 or
+      being part of a larger array.
+
+    - two 2D drives with white front (ARRAY DRIVE inuse by OS/2)
+
+      Same as above but the array is inuse by  OS/2.
+
+
+    During drive scan message boxes may appear containing the
+    following text:
+
+	Can't lock physical disk N, ignore this error and allow
+	writing?
+
+    Where  N is  a  zerobased index over  all   OS/2 accessable disks.
+    Usually  this means disk N contains  an OS/2 partition (FAT, HPTS,
+    EXT2, NTFS, ...) and shouldn't be used (and hidden) by VRAID.  But
+    as  OS/2 isn't errorfree  this  message does  sometimes  appear on
+    disks which don't have   an OS/2 partition  and therefore  you are
+    asked what you do  think about disk N.   Answer "Yes" if disk N is
+    free  to be  used  by VRAID, answer   "No" if it contains an  OS/2
+    related partition.
+
+
+    Whenever you create a new PHYSDEVICE two messages may appear in
+    the action log:
+
+	"VORDev - missing PHYSDEV mark"
+	"VORDev - new PHYSDEV sector"
+
+    Those messages are non-critical, they tell you that you are really
+    creating a  new PHYSDEVICE and will most  certainly be  removed in
+    the next release.
+
+
+
+3.1. Possible Actions
+
+    Double clicking
+
+	Marks another PHYSDEVICE or ARRAY DRIVE.  Marked icons can be
+	used to build ARRAY DRIVEs.
+
+    2nd mouse button
+
+	Combine/break ARRAY  drives, build/removed PHYSDEVICEs, remove
+	selections done by double clicking.
+
+
+
+4. Sample Actions
+
+
+4.1. Defining an array drive
+
+    - start VSETUP.EXE
+
+    - select Drives->Setup
+
+    - after some drive  activity you should  see 3D drive icons, some
+      white and some grey.
+
+      If you  only see white   icons all you drives   are used by OS/2
+      (they  contain   partitions and filesystems,  drive  letters are
+      assigned), see explanation of icons how to get grey icons.
+
+    - use 2nd mouse button to create several PHYSDEVICEs.  You will be
+      prompted for data used to create a VRAID partition.  Note that
+      the icon style changes.
+
+    - double click on one or more PHYSDEVICEs.  They will be marked
+      (greyed).
+
+    - use 2nd mouse button  and select "Combine drives...".  You  will
+      be prompted  for a RAID level  (don't  select levels higher than
+      your   registration   allows:  those    arrays  are  ignored  by
+      VRAID.FLT).
+
+    - repeat the   last steps until  you  are satisfied.  Reboot  your
+      machine to let VRAID.FLT analyse the new situation.
+
+
+4.2. Destroying an array drive
+
+    - start VSETUP.EXE
+
+    - select Drives->Setup
+
+    - after  some drive activity  you should see some icons displaying
+      two 2D drives, those are the defined array drives.  Some of them
+      may contain  drive letters you  want  to keep so  be carefull to
+      figure out which array is which OS/2 "drive".
+
+    - use 2nd mouse button on an array drive and select "Destroy array".
+
+    - repeat the last step until you are  satisfied.  Use the parts to
+      create new  arrays or end VSETUP  and reboot your machine to let
+      the changes take effect.
+
+
+
+    Written for VSETUP Version: 0.70
+    $Date: 1998/12/22 00:16:07 $
+
+=== The End ===
+@
+
+
+1.4
+log
+@- removed most beta parts, this is now working code (or should be)
+@
+text
+@d2 1
+a2 1
+--- $Id: vsetup.doc,v 1.3 1998/11/05 23:14:11 vitus Exp vitus $
+d69 2
+a70 2
+    the clipboard (same actions as the  usual system keys), "Clear log"
+    clears the action log.
+d156 27
+d221 4
+a224 2
+    - use 2nd mouse button and select "Combine drives...". You will be
+      prompted for a RAID level.
+d249 2
+a250 2
+    Written for VSETUP Version: 0.60
+    $Date: 1998/11/05 23:14:11 $
+@
+
+
+1.3
+log
+@- chapter "Sample Actions"
+- removed "locked arrays" becuase they no longer exist
+@
+text
+@d2 1
+a2 1
+--- $Id: vsetup.doc,v 1.2 1998/10/08 00:45:22 vitus Stab vitus $
+a105 12
+    --- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+
+    In this  beta version either  VRAID.FLT *or* OS/2 are  queried for
+    drives.  This is  done because I  currently have no idea to figure
+    out  which OS/2 drives  are   actually provided by VRAID.FLT.
+
+    Remove VRAID.FLT  from C:/Config.Sys, reboot and  rerun VSETUP.EXE
+    if you want to create new PHYSDEVICEs.
+
+    --- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+
+
+d153 1
+a153 2
+      Same as above but the array is inuse by  OS/2.  This icon should
+      no longer appear in VSETUP 0.51.
+a170 1
+
+a175 6
+    --- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+
+    Make sure VRAID.FLT isn't loaded.
+
+    --- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+
+d220 2
+a221 2
+    Written for VSETUP Version: 0.51
+    $Date: 1998/10/08 00:45:22 $
+@
+
+
+1.2
+log
+@- clarified "in use" sitation (clear enough?)
+- minor missing desctiptions
+@
+text
+@d2 1
+a2 1
+--- $Id: vsetup.doc,v 1.1 1998/09/28 00:51:57 vitus Exp vitus $
+d37 1
+a37 1
+	  are hidden by vraid.flt and PHYSDEVICEs may become part of...
+d48 1
+d98 1
+d110 1
+a110 3
+    out  which OS/2 drives  are   actually provided by VRAID.FLT.   An
+    additional consequence is  that VSETUP.EXE assumes that all drives
+    found via VRAID.FLT are inuse by OS/2.
+d113 1
+a113 1
+    if you want to change current RAID arrays or define new.
+d124 4
+a127 4
+      They are  physical devices known to  OS/2 but not inuse  by OS/2
+      (mostly  because  there are no  partitions  or no OS/2-supported
+      filesystems  on  them).  You  may build a  new array  from these
+      devices.
+d143 1
+a143 1
+      A PHYSDEVICE, a drive where a VRAID partition resides.  Those
+d148 2
+a149 2
+      A PHYSDEVICE which is known to be part of an array but is
+      missing from this computer.  Array is in state "failure" or
+d154 3
+a156 2
+      A PHYSDEVICE being part of an array but the array is inuse by
+      OS/2 and must not be modified.
+d165 3
+a167 3
+      Same as above but the array is inuse by OS/2.  Remove partitions
+      from the topmost  array before you can  split the array and work
+      with the parts.
+d184 5
+a188 1
+4.  Defining your first array drive
+d207 9
+d217 14
+a230 2
+    - use 2nd mouse button to create several PHYSDEVICEs.  You will be
+      prompted for data used to create a VRAID partition.
+d232 1
+a232 2
+    - double click on one or more PHYSDEVICEs.  You will be prompted
+      for a RAID level.
+d234 3
+a236 2
+    - repeat the last step until you are satisfied.  Reboot your
+      machine.
+d240 2
+a241 2
+    Written for VSETUP Version: 0.50
+    $Date$
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 1
+a2 1
+--- $Id$
+d22 4
+a25 4
+	  Those spinning  things as  you have  know them  ever.  Every
+	  device contains one  or more partitions and every  partition
+	  may contain  a filesystem supported   by OS/2.  A  supported
+	  filesystem (FAT,   HPFS,  EXT2FS, ...) is  assigned  a drive
+d27 1
+a27 1
+	  in this way the whole device is declared "inuse by OS/2" as
+d29 3
+a31 1
+	  operation in some way.
+d37 1
+a37 1
+	  may become part of...
+d81 1
+a81 1
+    This menu contains the entry "Setup" which opens the Drive
+d84 3
+a86 3
+    seleting "Dump..." opens a dialog where you can select which drive
+    to dump.  Possible selections are the physical disks as known by
+    OS/2 (index 0 - n-1) and the value "-1", meaning to dump all
+d92 1
+a92 1
+    The only choice here is to display version information about
+d100 2
+a101 2
+    Whenever you  select Drives->Setup   a  new windows   opens.    It
+    displays a container    showing all drives found   by  VSETUP.EXE.
+d106 4
+a109 4
+    In this beta version either VRAID.FLT *or* OS/2 are queried for
+    drives.  This is done because I currently have no idea to figure
+    out which OS/2 drives are actually provided by VRAID.FLT.  An
+    additional consequence is that VSETUP.EXE assumes that all drives
+d112 1
+a112 1
+    Remove VRAID.FLT from C:/Config.Sys, reboot and rerun VSETUP.EXE
+d118 2
+a119 2
+    Existing arrays  are displayed in tree  view  showing which arrays
+    are made from which physical devices.  There are several icon
+d124 4
+a127 3
+      They are physical devices known  to OS/2 but  not inuse by  OS/2
+      (there  are no OS/2-supported filesystems   on  them).  You  may
+      build a new array from these devices.
+d131 9
+a139 4
+      Physical devices known to OS/2 *and* inuse by OS/2 (an
+      OS/2-supported filesystem resides on them).  Run FDISK and
+      remove OS/2 partition if you want to build an array from this
+      device.
+d159 1
+a159 1
+      An array being build from PHYSDEVICEs and available for OS/2 are
+d165 1
+a165 1
+      from the topmost array before you can split the array and wotk
+d178 2
+a179 1
+	Combine/break ARRAY drives, build/removed PHYSDEVICEs.
+d195 1
+a195 1
+    -  after some drive  activity you should  see 3D drive icons, some
+d198 4
+a201 4
+      If you only see white icons all you drives are used by OS/2 (the
+      contains   partitions  and   filesystems,  drive   letters   are
+      assigned).  Remove some  of those partitions using FDISK, reboot
+      and restart VSETUP.EXE.
+d215 1
+a215 1
+    Date: 27/09-1998
+@

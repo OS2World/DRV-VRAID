@@ -1,0 +1,46 @@
+head	1.1;
+access;
+symbols
+	vrflt031113:1.1
+	vrflt010903:1.1
+	PREV010803:1.1
+	VRAIDv0_85:1.1
+	VRAIDv0_84:1.1
+	VRAIDv0_82:1.1
+	VRAIDv0_70:1.1
+	VRAIDv0_60:1.1
+	VRAIDv0_51:1.1
+	VRAIDv0_50:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	98.09.27.22.55.53;	author vitus;	state Stab;
+branches;
+next	;
+
+
+desc
+@Device Driver Profile
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@* $Id$
+:TITLE
+VRAID Filter and Setup Program
+
+:CONFIG
+BASEDEV=VRAID.FLT
+
+:FILES
+VRAID.FLT	\VRAID.FLT
+VSETUP.EXE	\VSETUP.EXE
+
+* END
+@

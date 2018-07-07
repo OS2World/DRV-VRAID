@@ -1,0 +1,158 @@
+
+ LOCKDRV
+
+ Start     Length     Name                   Class
+ 0001:0000 00020H     DDHeader               DATA
+ 0001:0020 00000H     LIBDATA                DATA
+ 0001:0020 00724H     _DATA                  DATA
+ 0001:0744 00000H     CONST                  CONST
+ 0001:0744 00004H     _BSS                   BSS
+ 0001:0750 00032H     c_common               BSS
+ 0002:0000 00000H     LIBCODE                CODE
+ 0002:0000 005D2H     CODE                   CODE
+ 0002:05D4 00722H     _TEXT                  CODE
+ 0003:0000 00000H     SwapCode               CODE
+
+ Origin   Group
+ 0001:0   DGROUP
+ 0002:0   StaticGroup
+ 0003:0   SwapGroup
+
+  Address         Publics by Name
+
+ 0002:0440       DevHelp_AllocateCtxHook
+ 0002:0489       DevHelp_ArmCtxHook
+ 0002:0070       DevHelp_AttachDD
+ 0002:04FF       DevHelp_CreateInt13VDM
+ 0002:0187       DevHelp_DevDone
+ 0002:0119       DevHelp_EOI
+ 0002:046B       DevHelp_FreeCtxHook
+ 0002:0218       DevHelp_FreeGDTSelector
+ 0002:0395       DevHelp_GetDescInfo
+ 0002:0090       DEVHELP_GETDOSVAR
+ 0002:0000       DevHelp_InternalError
+ 0002:0370       DevHelp_LinToGDTSelector
+ 0002:03EB       DevHelp_LinToPageList
+ 0002:0418       DevHelp_PageListToGDTSelector
+ 0002:03C2       DevHelp_PageListToLin
+ 0002:0136       DEVHELP_PROCBLOCK
+ 0002:0161       DEVHELP_PROCRUN
+ 0002:0020       DevHelp_RAS
+ 0002:04B1       DevHelp_RegisterDeviceClass
+ 0002:01F8       DevHelp_RegisterPDD
+ 0002:0049       DevHelp_RegisterPerfCtrs
+ 0002:00BC       DevHelp_RegisterStackUsage
+ 0002:04E0       DEVHELP_SAVE_MESSAGE
+ 0002:00D9       DevHelp_SetIRQ
+ 0002:01A4       DevHelp_TCYield
+ 0002:00FC       DevHelp_UnSetIRQ
+ 0002:01D8       DevHelp_VideoPause
+ 0002:0348       DevHelp_VirtToLin
+ 0002:029C       DevHelp_VMAlloc
+ 0002:02D0       DevHelp_VMFree
+ 0002:031B       DevHelp_VMGlobalToProcess
+ 0002:0249       DevHelp_VMLock
+ 0002:02EE       DevHelp_VMProcessToGlobal
+ 0002:027E       DevHelp_VMUnLock
+ 0002:01BE       DevHelp_Yield
+ 0002:0520       DHRET_0
+ 0002:0562       DHRET_10
+ 0002:0570       DHRET_12
+ 0002:057E       DHRET_14
+ 0002:058C       DHRET_16
+ 0002:059A       DHRET_18
+ 0002:052A       DHRET_2
+ 0002:05A8       DHRET_20
+ 0002:05B6       DHRET_22
+ 0002:05C4       DHRET_24
+ 0002:0538       DHRET_4
+ 0002:0546       DHRET_6
+ 0002:0554       DHRET_8
+ 0001:02EA       _ADDHandle
+ 0001:02EC       _DeviceTable
+ 0001:0020       _Device_Help
+ 0001:0024       _InitComplete
+ 0001:02E8       _InitDataStart
+ 0002:08B8       _LKDRInit
+ 0001:0026       _LkdrIORB
+ 0002:05D4       _LKDRStr1
+ 0002:064C       _LKDRUnlock
+ 0001:072E       _LockDrvWngMsg
+ 0002:06BE       _SendIORB
+ 0002:070C       _SendIORBNotify
+ 0002:063A       _StatusError
+ 0001:00A6       _UnitEntryCount
+ 0001:00A8       _UnitEntryTable
+ 0001:0752       _UnitList
+ 0001:0750       _UnitListCount
+
+  Address         Publics by Value
+
+ 0001:0020       _Device_Help
+ 0001:0024       _InitComplete
+ 0001:0026       _LkdrIORB
+ 0001:00A6       _UnitEntryCount
+ 0001:00A8       _UnitEntryTable
+ 0001:02E8       _InitDataStart
+ 0001:02EA       _ADDHandle
+ 0001:02EC       _DeviceTable
+ 0001:072E       _LockDrvWngMsg
+ 0001:0750       _UnitListCount
+ 0001:0752       _UnitList
+ 0002:0000       DevHelp_InternalError
+ 0002:0020       DevHelp_RAS
+ 0002:0049       DevHelp_RegisterPerfCtrs
+ 0002:0070       DevHelp_AttachDD
+ 0002:0090       DEVHELP_GETDOSVAR
+ 0002:00BC       DevHelp_RegisterStackUsage
+ 0002:00D9       DevHelp_SetIRQ
+ 0002:00FC       DevHelp_UnSetIRQ
+ 0002:0119       DevHelp_EOI
+ 0002:0136       DEVHELP_PROCBLOCK
+ 0002:0161       DEVHELP_PROCRUN
+ 0002:0187       DevHelp_DevDone
+ 0002:01A4       DevHelp_TCYield
+ 0002:01BE       DevHelp_Yield
+ 0002:01D8       DevHelp_VideoPause
+ 0002:01F8       DevHelp_RegisterPDD
+ 0002:0218       DevHelp_FreeGDTSelector
+ 0002:0249       DevHelp_VMLock
+ 0002:027E       DevHelp_VMUnLock
+ 0002:029C       DevHelp_VMAlloc
+ 0002:02D0       DevHelp_VMFree
+ 0002:02EE       DevHelp_VMProcessToGlobal
+ 0002:031B       DevHelp_VMGlobalToProcess
+ 0002:0348       DevHelp_VirtToLin
+ 0002:0370       DevHelp_LinToGDTSelector
+ 0002:0395       DevHelp_GetDescInfo
+ 0002:03C2       DevHelp_PageListToLin
+ 0002:03EB       DevHelp_LinToPageList
+ 0002:0418       DevHelp_PageListToGDTSelector
+ 0002:0440       DevHelp_AllocateCtxHook
+ 0002:046B       DevHelp_FreeCtxHook
+ 0002:0489       DevHelp_ArmCtxHook
+ 0002:04B1       DevHelp_RegisterDeviceClass
+ 0002:04E0       DEVHELP_SAVE_MESSAGE
+ 0002:04FF       DevHelp_CreateInt13VDM
+ 0002:0520       DHRET_0
+ 0002:052A       DHRET_2
+ 0002:0538       DHRET_4
+ 0002:0546       DHRET_6
+ 0002:0554       DHRET_8
+ 0002:0562       DHRET_10
+ 0002:0570       DHRET_12
+ 0002:057E       DHRET_14
+ 0002:058C       DHRET_16
+ 0002:059A       DHRET_18
+ 0002:05A8       DHRET_20
+ 0002:05B6       DHRET_22
+ 0002:05C4       DHRET_24
+ 0002:05D4       _LKDRStr1
+ 0002:063A       _StatusError
+ 0002:064C       _LKDRUnlock
+ 0002:06BE       _SendIORB
+ 0002:070C       _SendIORBNotify
+ 0002:08B8       _LKDRInit
+
+lkdrinit.obj(lkdrinit.c) : error L2029: '__fstrcmp' : unresolved external
+

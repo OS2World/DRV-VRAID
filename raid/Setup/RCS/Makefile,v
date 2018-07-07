@@ -1,0 +1,914 @@
+head	1.16;
+access;
+symbols
+	VSETUPv0_84:1.15
+	VSETUP_82:1.12
+	VSETUPv0_80:1.8
+	VSETUPv0_71:1.8
+	VSETUPv0_70:1.8
+	VSETUPv0_60:1.6
+	VSETUPv0_52:1.5
+	VSETUPv0_51:1.5
+	VSETUPv0_50:1.4
+	VSETUPv0_20:1.2;
+locks
+	vitus:1.15; strict;
+comment	@# @;
+
+
+1.16
+date	2003.09.21.00.50.23;	author vitus;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2000.08.17.02.24.35;	author vitus;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2000.05.28.17.27.49;	author vitus;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2000.05.15.23.00.07;	author vitus;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2000.04.10.01.07.50;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2000.03.09.23.16.17;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.12.14.00.18.25;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.11.16.22.12.34;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.03.08.05.10.37;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.03.01.02.24.03;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	98.12.17.02.23.11;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	98.11.05.00.26.12;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	98.10.07.23.19.22;	author vitus;	state Stab;
+branches;
+next	1.3;
+
+1.3
+date	98.09.21.00.59.44;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.06.09.01.32.09;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.03.14.14.06.40;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Create tests, samples, setup programs
+@
+
+
+1.16
+log
+@- added RAID 5 setup module
+@
+text
+@#*
+#* $Source: r:/source/driver/raid/setup/RCS/makefile,v $
+#* $Revision: 1.15 $
+#* $Date: 2000/08/17 02:24:35 $
+#* $Locker: vitus $
+#*
+#*	Create tests, samples, setup programs.
+#*
+#* $Log: makefile,v $
+#* Revision 1.15  2000/08/17 02:24:35  vitus
+#* - added drverify.c, .h
+#* - added VSETUP_RC to conatin the includes from vsetup.rc
+#*
+#* Revision 1.14  2000/05/28 17:27:49  vitus
+#* - pcreate.cpp,.h
+#*
+#* Revision 1.13  2000/05/15 23:00:07  vitus
+#* - /source/lib/pphnd.c/.h
+#*
+#* Revision 1.12  2000/04/10 01:07:50  vitus
+#* - removed proto.h, use VSetup.h on all sources
+#*
+#* Revision 1.11  2000/03/09 23:16:17  vitus
+#* - added PartTable.cpp/.hpp
+#*
+#* Revision 1.10  1999/12/14 00:18:25  vitus
+#* - option argument LISTING enables assembler listing
+#*
+#* Revision 1.9  1999/11/16 22:12:34  vitus
+#* - compress resources (-x2 option)
+#*
+#* Revision 1.8  1999/03/08 05:10:37  vitus
+#* - seperate class definition files (.hpp)
+#*
+#* Revision 1.7  1999/03/01 02:24:03  vitus
+#* - new object filess: VRDev, VRDrive, Chain, Stri0e, Mirror, Single
+#*
+#* Revision 1.6  1998/12/17 02:23:11  vitus
+#* - changed for moved global headers
+#* - creates regme.exe and genkey.exe
+#*
+#* Revision 1.5  1998/11/05 00:26:12  vitus
+#* - default: DEBUG=0, 0.50 left as debug vesion :-(
+#*
+#* Revision 1.4  1998/10/07 23:19:22  vitus
+#* - added _BETA_PKG define to all compile steps
+#*
+#* Revision 1.3  1998/09/21 00:59:44  vitus
+#* - moved OBJ files to 'o' subdirectory
+#* - added drvif.c/.h
+#*
+#* Revision 1.2  1998/06/09 01:32:09  vitus
+#* - complete vsetup.exe source tree
+#*
+#* Revision 1.1  1998/03/14 14:06:40  vitus
+#* Initial revision
+#* ---------------------------------------------
+#* This code is Copyright Vitus Jensen 1998-2001
+#*
+DEBUG *= 0
+LISTING *= 0
+COMPILER *= VAC
+.INCLUDE: ../../../compiler.mkf
+
+CFLAGS = $(_CFLAGS) -D_BETA_PKG -Gm
+.IF $(LISTING) == 0
+CLIST =
+.ELSE
+CLIST = -Falist\			# cause possible continuation char
+.ENDIF
+
+
+o/%.$(OBJ) : ../../../Lib/%.c '../../../Lib/defines.h' '../../../Lib/verbose.h'
+	$(CC2) $(CFLAGS) $(CLIST) -Fo$@@ $<
+
+o/%.$(OBJ) : %.c '../../../Lib/defines.h' '../../../Lib/verbose.h' 'VSetup.h'
+	$(CC2) $(CFLAGS) $(CLIST) -Fo$@@ $<
+
+o/%.$(OBJ) : %.cpp '../../../Lib/defines.h' '../../../Lib/verbose.h' 'VSetup.h'
+	$(CC2) $(CFLAGS) $(CLIST) -Fo$@@ $<
+
+
+
+# **********************************************************************
+#
+# **********************************************************************
+
+all: VSetup.exe regme.exe genkey.exe
+#	pbench.exe csetup.exe
+
+
+pbench.exe: o/pbench.$(OBJ) o/physdsk.$(OBJ)
+	$(CL2VIO) $(CFLAGS) $<
+
+
+csetup.exe: csetup.$(OBJ) physdsk.$(OBJ) crc.$(OBJ) system.$(OBJ) verbose.$(OBJ)
+	$(CL2VIO) $(CFLAGS) $<
+
+csetup.$(OBJ): ../dsklayout.h
+
+
+
+
+# **********************************************************************
+#
+# **********************************************************************
+
+regme.exe : o/regme.$(OBJ)
+	$(CL2VIO) $(CFLAGS) $<
+
+genkey.exe : o/genkey.$(OBJ)
+	$(CL2VIO) $(CFLAGS) $<
+
+
+
+# **********************************************************************
+#
+# **********************************************************************
+
+VSETUP_OBJS = o/VSetup.$(OBJ) o/drvscan.$(OBJ) o/drvsetup.$(OBJ) o/drverify.$(OBJ) \
+	o/drvtype.$(OBJ) o/dskarea.$(OBJ) o/dump.$(OBJ) o/about.$(OBJ) \
+	o/container.$(OBJ) o/iniloc.$(OBJ) o/other.$(OBJ) \
+	o/pcreate.$(OBJ) o/PartTable.$(OBJ) \
+	o/VRDev.$(OBJ) o/VOS2Drive.$(OBJ) o/Missing.$(OBJ) \
+	o/Single.$(OBJ) o/Chain.$(OBJ) o/Stripe.$(OBJ) \
+	o/Mirror.$(OBJ) o/Raid5.$(OBJ) \
+	o/profile.$(OBJ) o/physdsk.$(OBJ) o/pphnd.$(OBJ) \
+	o/drvif.$(OBJ) o/crc.$(OBJ) o/system.$(OBJ)
+
+DRVIF_H = drvif.h ../vraidpub.h ../dsklayout.h
+VSETUP_RC = VSetup.rc about.dlg iniloc.dlg drvdump.dlg \
+	drvtype.dlg dskarea.dlg progress.dlg
+
+VSetup.exe: $(VSETUP_OBJS) VSetup.res
+	$(CL2PM) $(CFLAGS) -Fm $(VSETUP_OBJS)
+	$(RC) -x2 VSetup.res VSetup.exe
+
+
+VSetup.res: $(VSETUP_RC) resources.h
+	$(RC) -r VSetup.rc
+
+
+o/VSetup.$(OBJ): ../../../Lib/pphnd.h resources.h drvsetup.h $(DRVIF_H)
+
+o/drvsetup.$(OBJ): ../../../Lib/profile.h ../../../Lib/pphnd.h \
+		resources.h drvsetup.h drvbuild.h drverify.h \
+		dskinfo.hpp Single.hpp Chain.hpp Stripe.hpp Mirror.hpp Raid5.hpp
+
+o/drvscan.$(OBJ): ../../../Lib/physdsk.h $(DRVIF_H) pcreate.h PartTable.hpp \
+		dskinfo.hpp Missing.hpp \
+		Single.hpp Chain.hpp Stripe.hpp Mirror.hpp Raid5.hpp \
+		resources.h drvbuild.h
+
+o/pcreate.$(OBJ):$(DRVIF_H) PartTable.hpp dskinfo.hpp pcreate.h
+
+o/PartTable.$(OBJ): $(DRVIF_H) dskinfo.hpp PartTable.hpp
+
+o/VOS2Drive.$(OBJ): $(DRVIF_H) dskinfo.hpp resources.h
+
+o/VRDev.$(OBJ): $(DRVIF_H) dskinfo.hpp resources.h
+
+o/Single.$(OBJ): $(DRVIF_H) dskinfo.hpp Single.hpp resources.h
+
+o/Chain.$(OBJ): $(DRVIF_H) dskinfo.hpp Chain.hpp resources.h
+
+o/Stripe.$(OBJ): $(DRVIF_H) dskinfo.hpp Stripe.hpp resources.h
+
+o/Mirror.$(OBJ): $(DRVIF_H) dskinfo.hpp Mirror.hpp resources.h
+
+o/Raid5.$(OBJ): $(DRVIF_H) dskinfo.hpp Raid5.hpp resources.h
+
+o/Missing.$(OBJ): $(DRVIF_H) dskinfo.hpp Missing.hpp resources.h
+
+
+o/container.$(OBJ): resources.h drvbuild.h
+
+o/pphnd.$(OBJ): ../../../Lib/pphnd.h
+
+o/drvtype.$(OBJ): resources.h drvbuild.h
+
+o/dskarea.$(OBJ): resources.h drvbuild.h pcreate.h
+
+o/dump.$(OBJ): ../../../Lib/physdsk.h resources.h ../dsklayout.h
+
+o/physdsk.$(OBJ): ../../../Lib/physdsk.h
+
+o/drvif.$(OBJ): $(DRVIF_H)
+
+o/other.$(OBJ): resources.h
+
+o/about.$(OBJ): resources.h
+
+o/iniloc.$(OBJ): resources.h
+@
+
+
+1.15
+log
+@- added drverify.c, .h
+- added VSETUP_RC to conatin the includes from vsetup.rc
+@
+text
+@d3 2
+a4 2
+#* $Revision: 1.14 $
+#* $Date: 2000/05/28 17:27:49 $
+d10 4
+d58 1
+a58 1
+#* This code is Copyright Vitus Jensen 1998-2000
+d125 2
+a126 1
+	o/Single.$(OBJ) o/Chain.$(OBJ) o/Stripe.$(OBJ) o/Mirror.$(OBJ) \
+d147 1
+a147 1
+		dskinfo.hpp Single.hpp Chain.hpp Stripe.hpp Mirror.hpp
+d150 2
+a151 1
+		dskinfo.hpp Single.hpp Chain.hpp Stripe.hpp Mirror.hpp Missing.hpp \
+d169 2
+@
+
+
+1.14
+log
+@- pcreate.cpp,.h
+@
+text
+@d3 2
+a4 2
+#* $Revision: 1.13 $
+#* $Date: 2000/05/15 23:00:07 $
+d10 3
+d116 5
+a120 3
+VSETUP_OBJS = o/VSetup.$(OBJ) o/drvscan.$(OBJ) o/drvsetup.$(OBJ) o/pcreate.$(OBJ) \
+	o/PartTable.$(OBJ) \
+	o/VRDev.$(OBJ) o/VOS2Drive.$(OBJ) \
+d122 1
+a122 3
+	o/Missing.$(OBJ) o/container.$(OBJ) o/pphnd.$(OBJ)\
+	o/drvtype.$(OBJ) o/dskarea.$(OBJ) o/dump.$(OBJ) o/about.$(OBJ) \
+	o/iniloc.$(OBJ) o/other.$(OBJ) o/profile.$(OBJ) o/physdsk.$(OBJ) \
+d126 2
+a127 1
+
+d134 1
+a134 2
+VSetup.res: VSetup.rc resources.h \
+		about.dlg iniloc.dlg drvtype.dlg drvdump.dlg dskarea.dlg
+d141 2
+a142 2
+		dskinfo.hpp Single.hpp Chain.hpp Stripe.hpp Mirror.hpp \
+		resources.h drvsetup.h drvbuild.h
+@
+
+
+1.13
+log
+@- /source/lib/pphnd.c/.h
+@
+text
+@d3 2
+a4 2
+#* $Revision: 1.12 $
+#* $Date: 2000/04/10 01:07:50 $
+d10 3
+d113 2
+a114 1
+VSETUP_OBJS = o/VSetup.$(OBJ) o/drvscan.$(OBJ) o/drvsetup.$(OBJ) o/PartTable.$(OBJ) \
+d141 1
+a141 1
+o/drvscan.$(OBJ): ../../../Lib/physdsk.h $(DRVIF_H) PartTable.hpp \
+d145 2
+d170 1
+a170 1
+o/dskarea.$(OBJ): resources.h drvbuild.h
+@
+
+
+1.12
+log
+@- removed proto.h, use VSetup.h on all sources
+@
+text
+@d3 2
+a4 2
+#* $Revision: 1.11 $
+#* $Date: 2000/03/09 23:16:17 $
+d10 3
+d113 1
+a113 1
+	o/Missing.$(OBJ) o/container.$(OBJ) \
+d120 1
+d125 1
+d131 1
+a131 1
+o/VSetup.$(OBJ): resources.h drvsetup.h $(DRVIF_H)
+d133 1
+a133 1
+o/drvsetup.$(OBJ): ../../../Lib/profile.h \
+d159 2
+@
+
+
+1.11
+log
+@- added PartTable.cpp/.hpp
+@
+text
+@d3 2
+a4 2
+#* $Revision: 1.10 $
+#* $Date: 1999/12/14 00:18:25 $
+d10 3
+d44 2
+a45 2
+#* -------------------------------------------
+#* This code is Copyright Vitus Jensen 1998-99
+d63 1
+a63 1
+o/%.$(OBJ) : %.c '../../../Lib/defines.h' '../../../Lib/verbose.h' 'proto.h'
+d66 1
+a66 1
+o/%.$(OBJ) : %.cpp '../../../Lib/defines.h' '../../../Lib/verbose.h' 'proto.h'
+d126 1
+a126 1
+o/VSetup.$(OBJ): resources.h VSetup.h drvsetup.h $(DRVIF_H)
+d130 1
+a130 1
+		resources.h VSetup.h drvsetup.h drvbuild.h
+d134 1
+a134 1
+		resources.h VSetup.h drvbuild.h
+d153 1
+a153 1
+o/container.$(OBJ): resources.h VSetup.h drvbuild.h
+d155 1
+a155 1
+o/drvtype.$(OBJ): resources.h VSetup.h drvbuild.h
+d157 1
+a157 1
+o/dskarea.$(OBJ): resources.h VSetup.h drvbuild.h
+d159 1
+a159 1
+o/dump.$(OBJ): ../../../Lib/physdsk.h resources.h VSetup.h ../dsklayout.h
+d165 1
+a165 1
+o/other.$(OBJ): resources.h VSetup.h
+d167 1
+a167 1
+o/about.$(OBJ): resources.h VSetup.h
+d169 1
+a169 1
+o/iniloc.$(OBJ): resources.h VSetup.h
+@
+
+
+1.10
+log
+@- option argument LISTING enables assembler listing
+@
+text
+@d3 2
+a4 2
+#* $Revision: 1.9 $
+#* $Date: 1999/11/16 22:12:34 $
+d10 3
+d104 1
+a104 1
+VSETUP_OBJS = o/VSetup.$(OBJ) o/drvscan.$(OBJ) o/drvsetup.$(OBJ) \
+d129 1
+a129 2
+o/drvscan.$(OBJ) : ../../../Lib/profile.h \
+		../../../Lib/physdsk.h $(DRVIF_H) \
+d133 1
+d135 1
+a135 1
+o/VOS2Drive.$(OBJ) : $(DRVIF_H) dskinfo.hpp resources.h
+d137 1
+a137 1
+o/VRDev.$(OBJ) : $(DRVIF_H) dskinfo.hpp resources.h
+d139 1
+a139 1
+o/Single.$(OBJ) : $(DRVIF_H) dskinfo.hpp Single.hpp resources.h
+d141 1
+a141 1
+o/Chain.$(OBJ) : $(DRVIF_H) dskinfo.hpp Chain.hpp resources.h
+d143 1
+a143 1
+o/Stripe.$(OBJ) : $(DRVIF_H) dskinfo.hpp Stripe.hpp resources.h
+d145 1
+a145 1
+o/Mirror.$(OBJ) : $(DRVIF_H) dskinfo.hpp Mirror.hpp resources.h
+d147 1
+a147 1
+o/Missing.$(OBJ) : $(DRVIF_H) dskinfo.hpp Missing.hpp resources.h
+@
+
+
+1.9
+log
+@- compress resources (-x2 option)
+@
+text
+@d3 2
+a4 2
+#* $Revision: 1.8 $
+#* $Date: 1999/03/08 05:10:37 $
+d10 3
+d42 1
+d47 5
+d55 1
+a55 1
+	$(CC2) $(CFLAGS) -Fo$@@ $<
+d58 1
+a58 1
+	$(CC2) $(CFLAGS) -Fo$@@ $<
+d61 1
+a61 1
+	$(CC2) $(CFLAGS) -Fo$@@ $<
+@
+
+
+1.8
+log
+@- seperate class definition files (.hpp)
+@
+text
+@d3 2
+a4 2
+#* $Revision: 1.7 $
+#* $Date: 1999/03/01 02:24:03 $
+d10 3
+d104 1
+a104 1
+	$(RC) VSetup.res VSetup.exe
+@
+
+
+1.7
+log
+@- new object filess: VRDev, VRDrive, Chain, Stri0e, Mirror, Single
+@
+text
+@d3 2
+a4 2
+#* $Revision: 1.6 $
+#* $Date: 1998/12/17 02:23:11 $
+d10 3
+d42 1
+a42 1
+o/%.$(OBJ) : ../../../Lib/%.c '../../../Lib/verbose.h' '../../../Lib/defines.h'
+d45 1
+a45 1
+o/%.$(OBJ) : %.c '../../../Lib/verbose.h' '../../../Lib/defines.h' 'proto.h'
+d48 1
+a48 1
+o/%.$(OBJ) : %.cpp '../../../Lib/verbose.h' '../../../Lib/defines.h' 'proto.h'
+d90 3
+a92 3
+	o/VRDev.$(OBJ) o/VRDrive.$(OBJ) \
+	o/Chain.$(OBJ) o/Stripe.$(OBJ) o/Single.$(OBJ) \
+	o/container.$(OBJ) \
+a96 1
+GEN_H = ../../../Lib/defines.h ../../../Lib/verbose.h
+d100 1
+a100 1
+	$(CL2PM) $(CFLAGS) $(VSETUP_OBJS)
+d108 1
+a108 1
+o/VSetup.$(OBJ): $(GEN_H) resources.h VSetup.h drvsetup.h $(DRVIF_H)
+d110 2
+a111 1
+o/drvsetup.$(OBJ): $(GEN_H) ../../../Lib/profile.h dskinfo.hpp \
+d114 3
+a116 2
+o/drvscan.$(OBJ) : $(GEN_H) ../../../Lib/profile.h \
+		../../../Lib/physdsk.h $(DRVIF_H) dskinfo.hpp \
+d120 5
+a124 1
+o/VRDrive.$(OBJ) : $(GEN_H) $(DRVIF_H) dskinfo.hpp
+d126 1
+a126 1
+o/VRDev.$(OBJ) : $(GEN_H) $(DRVIF_H) dskinfo.hpp
+d128 1
+a128 1
+o/Chain.$(OBJ) : $(GEN_H) $(DRVIF_H) dskinfo.hpp
+d130 1
+a130 1
+o/Stripe.$(OBJ) : $(GEN_H) $(DRVIF_H) dskinfo.hpp
+d132 1
+a132 1
+o/Single.$(OBJ) : $(GEN_H) $(DRVIF_H) dskinfo.hpp
+d135 1
+a135 1
+o/container.$(OBJ): $(GEN_H) resources.h VSetup.h drvbuild.h
+d137 1
+a137 1
+o/drvtype.$(OBJ): $(GEN_H) resources.h VSetup.h drvbuild.h
+d139 1
+a139 1
+o/dskarea.$(OBJ): $(GEN_H) resources.h VSetup.h drvbuild.h
+d141 1
+a141 2
+o/dump.$(OBJ): $(GEN_H) ../../../Lib/physdsk.h \
+		resources.h VSetup.h ../dsklayout.h
+d143 1
+a143 1
+o/physdsk.$(OBJ): $(GEN_H) ../../../Lib/physdsk.h
+d145 1
+a145 1
+o/drvif.$(OBJ): $(GEN_H) $(DRVIF_H)
+d147 1
+a147 1
+o/other.$(OBJ): $(GEN_H) resources.h VSetup.h
+d149 1
+a149 1
+o/about.$(OBJ): $(GEN_H) resources.h VSetup.h
+d151 1
+a151 1
+o/iniloc.$(OBJ): $(GEN_H) resources.h VSetup.h
+@
+
+
+1.6
+log
+@- changed for moved global headers
+- creates regme.exe and genkey.exe
+@
+text
+@d3 2
+a4 2
+#* $Revision: 1.5 $
+#* $Date: 1998/11/05 00:26:12 $
+d10 4
+d29 2
+a30 2
+#* ----------------------------------------
+#* This code is Copyright Vitus Jensen 1998
+d45 8
+d54 1
+a54 1
+all: vsetup.exe regme.exe genkey.exe
+d86 4
+a89 1
+VSETUP_OBJS = o/vsetup.$(OBJ) o/drvsetup.$(OBJ) o/drvscan.$(OBJ) o/container.$(OBJ) \
+d97 1
+a97 1
+vsetup.exe: $(VSETUP_OBJS) vsetup.res
+d99 1
+a99 1
+	$(RC) vsetup.res vsetup.exe
+d101 1
+a101 1
+vsetup.res: vsetup.rc resources.h \
+d103 16
+a118 1
+	$(RC) -r vsetup.rc
+d120 1
+d122 1
+a122 1
+o/vsetup.$(OBJ): $(GEN_H) resources.h vsetup.h drvsetup.h $(DRVIF_H)
+d124 1
+a124 2
+o/drvsetup.$(OBJ): $(GEN_H) ../../../Lib/profile.h \
+		resources.h vsetup.h drvsetup.h drvbuild.h
+a125 3
+o/drvscan.$(OBJ): $(GEN_H) ../../../Lib/profile.h \
+		../../../Lib/physdsk.h $(DRVIF_H) \
+		resources.h vsetup.h drvbuild.h
+d127 1
+a127 1
+o/container.$(OBJ): $(GEN_H) resources.h vsetup.h drvbuild.h
+d129 1
+a129 1
+o/drvtype.$(OBJ): $(GEN_H) resources.h vsetup.h drvbuild.h
+d131 1
+a131 1
+o/dskarea.$(OBJ): $(GEN_H) resources.h vsetup.h drvbuild.h
+d134 1
+a134 1
+		resources.h vsetup.h ../dsklayout.h
+d140 1
+a140 1
+o/other.$(OBJ): $(GEN_H) resources.h vsetup.h
+d142 1
+a142 1
+o/about.$(OBJ): $(GEN_H) resources.h vsetup.h
+d144 1
+a144 1
+o/iniloc.$(OBJ): $(GEN_H) resources.h vsetup.h
+@
+
+
+1.5
+log
+@- default: DEBUG=0, 0.50 left as debug vesion :-(
+@
+text
+@d3 2
+a4 2
+#* $Revision: 1.4 $
+#* $Date: 1998/10/07 23:19:22 $
+d10 3
+d35 1
+a35 1
+o/%.$(OBJ) : ../../../tools/%.c '../../../tools/verbose.h' '../../../tools/defines.h'
+d38 1
+a38 1
+o/%.$(OBJ) : %.c '../../../tools/verbose.h' '../../../tools/defines.h' 'proto.h'
+d42 1
+a42 1
+all: vsetup.exe
+d62 11
+d79 2
+a80 4
+GEN_H = ../../../tools/defines.h ../../../tools/verbose.h
+
+DRVBUILD_H = drvbuild.h ../dsklayout.h
+
+d91 1
+a91 1
+o/vsetup.$(OBJ): $(GEN_H) resources.h vsetup.h drvsetup.h drvif.h
+d93 2
+a94 2
+o/drvsetup.$(OBJ): $(GEN_H) ../../../tools/profile.h \
+		resources.h vsetup.h drvsetup.h $(DRVBUILD_H)
+d96 3
+a98 3
+o/drvscan.$(OBJ): $(GEN_H) ../../../tools/profile.h \
+		../../../tools/physdsk.h drvif.h \
+		resources.h vsetup.h $(DRVBUILD_H)
+d100 1
+a100 1
+o/container.$(OBJ): $(GEN_H) resources.h vsetup.h $(DRVBUILD_H)
+d102 1
+a102 1
+o/drvtype.$(OBJ): $(GEN_H) resources.h vsetup.h $(DRVBUILD_H)
+d104 1
+a104 1
+o/dskarea.$(OBJ): $(GEN_H) resources.h vsetup.h $(DRVBUILD_H)
+d106 1
+a106 1
+o/dump.$(OBJ): $(GEN_H) ../../../tools/physdsk.h \
+d109 1
+a109 1
+o/physdsk.$(OBJ): $(GEN_H) ../../../tools/physdsk.h
+d111 1
+a111 1
+o/drvif.$(OBJ): $(GEN_H) ../vraidpub.h drvif.h
+@
+
+
+1.4
+log
+@- added _BETA_PKG define to all compile steps
+@
+text
+@d3 2
+a4 2
+#* $Revision: 1.3 $
+#* $Date: 1998/09/21 00:59:44 $
+d10 3
+d25 1
+a25 1
+DEBUG *= 1
+d29 1
+a29 1
+CFLAGS = $(_CFLAGS) -D_BETA_PKG -Gm -Tl
+d38 1
+d43 1
+a43 1
+pbench.exe: pbench.$(OBJ) physdsk.$(OBJ)
+@
+
+
+1.3
+log
+@- moved OBJ files to 'o' subdirectory
+- added drvif.c/.h
+@
+text
+@d2 4
+a5 4
+#* $Source$
+#* $Revision$
+#* $Date$
+#* $Locker$
+d9 5
+a13 1
+#* $Log$
+d26 1
+a26 1
+CFLAGS = $(_CFLAGS) -Gm -Tl
+@
+
+
+1.2
+log
+@- complete vsetup.exe source tree
+@
+text
+@d2 4
+a5 4
+#* $Source: d:/source/driver/raid/setup/RCS/makefile,v $
+#* $Revision: 1.1 $
+#* $Date: 1998/03/14 14:06:40 $
+#* $Locker: vitus $
+d7 5
+a11 1
+#* Create tests, samples, setup programs.
+a12 1
+#* $Log: makefile,v $
+a17 1
+
+d25 2
+a26 2
+%.$(OBJ) : ..\..\..\tools\%.c '../../../tools/verbose.h' '../../../tools/defines.h'
+	$(CC2) $(CFLAGS) $<
+d28 2
+a29 2
+%.$(OBJ) : %.c '../../../tools/verbose.h' '../../../tools/defines.h' 'proto.h'
+	$(CC2) $(CFLAGS) $<
+d31 2
+a32 2
+all: csetup.exe vsetup.exe
+#	pbench.exe 
+d52 4
+a55 3
+VSETUP_OBJS = vsetup.$(OBJ) drvsetup.$(OBJ) drvscan.$(OBJ) container.$(OBJ) \
+	drvtype.$(OBJ) dskarea.$(OBJ) dump.$(OBJ) about.$(OBJ) iniloc.$(OBJ) \
+	other.$(OBJ) profile.$(OBJ) physdsk.$(OBJ) crc.$(OBJ) system.$(OBJ)
+d71 1
+a71 1
+vsetup.$(OBJ): $(GEN_H) resources.h vsetup.h drvsetup.h
+d73 1
+a73 1
+drvsetup.$(OBJ): $(GEN_H) ../../../tools/profile.h \
+d76 2
+a77 1
+drvscan.$(OBJ): $(GEN_H) ../../../tools/profile.h ../../../tools/physdsk.h \
+d80 1
+a80 1
+container.$(OBJ): $(GEN_H) resources.h vsetup.h $(DRVBUILD_H)
+d82 1
+a82 1
+drvtype.$(OBJ): $(GEN_H) resources.h vsetup.h $(DRVBUILD_H)
+d84 1
+a84 1
+dskarea.$(OBJ): $(GEN_H) resources.h vsetup.h $(DRVBUILD_H)
+d86 1
+a86 1
+dump.$(OBJ): $(GEN_H) ../../../tools/physdsk.h \
+d89 3
+a91 1
+physdsk.$(OBJ): $(GEN_H) ../../../tools/physdsk.h
+d93 1
+a93 1
+other.$(OBJ): $(GEN_H) resources.h vsetup.h
+d95 1
+a95 1
+about.$(OBJ): $(GEN_H) resources.h vsetup.h
+d97 1
+a97 1
+iniloc.$(OBJ): $(GEN_H) resources.h vsetup.h
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+#* $Source$
+#* $Revision$
+#* $Date$
+#* $Locker$
+d9 3
+a11 1
+#* $Log$
+d14 1
+a14 1
+#*/
+d20 2
+a21 1
+CFLAGS = $(_CFLAGS)
+d23 2
+d26 1
+a26 1
+%.$(OBJ) :| %.c ..\..\..\tools\%.c '../../../tools/verbose.h ../../../tools/defines.h'
+d29 2
+a30 1
+all: pbench.exe vsetup.exe
+d36 2
+a37 1
+vsetup.exe: vsetup.$(OBJ) physdsk.$(OBJ) crc.$(OBJ) system.$(OBJ) verbose.$(OBJ)
+d40 48
+d89 1
+a89 1
+vsetup.$(OBJ): ../dsklayout.h
+d91 1
+@

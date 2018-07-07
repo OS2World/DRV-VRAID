@@ -1,0 +1,3399 @@
+head	1.10;
+access;
+symbols;
+locks; strict;
+comment	@ * @;
+
+
+1.10
+date	2000.06.12.02.34.00;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	98.03.04.02.11.28;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	97.12.16.02.48.09;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	97.12.11.01.43.44;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	97.12.08.23.10.24;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	97.12.06.00.37.13;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	97.11.12.00.40.30;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	97.11.10.01.15.37;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	97.11.05.00.49.57;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	97.10.28.02.06.59;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@First step of initialisation
+@
+
+
+1.10
+log
+@- DevHelp_ProcBlock now interruptable
+@
+text
+@/*
+ * $Source: r:/source/driver/perf/RCS/init1.c,v $
+ * $Revision: 1.9 $
+ * $Date: 1998/03/04 02:11:28 $
+ * $Locker: vitus $
+ *
+ * First step of initialisation, executed at ring 0 in protected
+ * mode as the only running process.
+ *
+ * History: see bottom of file
+ * --------------------------------------------
+ * Author: Vitus Jensen, 2:2474/424, 1997-98
+ */
+#pragma off (unreferenced)
+static char const id[]="$Id: init1.c,v 1.9 1998/03/04 02:11:28 vitus Exp vitus $";
+#pragma on (unreferenced)
+
+
+#include <string.h>
+
+#define INCL_DOSERRORS
+#define INCL_NOPMAPI
+#include <os2.h>
+
+#include <devcmd.h>
+#include <devclass.h>
+#include <dskinit.h>
+#include <infoseg.h>
+
+#define INCL_INITRP_ONLY
+#include <reqpkt.h>
+
+#include <scsi.h>
+#include <iorb.h>
+#include <addcalls.h>
+#if defined(__WATCOMC__)
+# include <devhelp.h>
+typedef USHORT NEAR *	NPUSHORT;
+typedef VOID NEAR *	NPVOID;
+#else
+# include <dhcalls.h>
+#endif
+#include "cmdphdr.h"
+
+#include "scsiopt.h"
+#include "proto.h"
+#include "extern.h"
+
+#include "modepages.h"
+
+
+
+/*
+ * Macro to allocate data from memory pool.
+ * OBS: to free this memory decrement 'npInitData' by the amount
+ * allocated.  Be sure to undo it inverse.
+ */
+#define GETINITRAM(p,type,size) (p=(type)npInitData,npInitData+=(size))
+
+
+
+#define INITMSG		static char _ininit
+
+
+/*
+ * Messages used during initialization
+ *
+ * 1. error messages start with driver name as they are
+ * displayed even if '/V' isn't used.
+ */
+INITMSG	szErrorVAddr[]= "%s: error converting virtual to physical address";
+INITMSG	szNoDriverTab[]="%s: error retrieving driver table";
+INITMSG	szNoDevTab[]=	"%s: error retrieving device table from ADD %u";
+INITMSG	szAllocFailed[]="%s: adapter %u, unit %u allocation failed";
+INITMSG	szDeallocFailed[]="%s: adapter %u, unit %u, deallocation failed";
+
+INITMSG	szSenseFailed[]= "%s: adapter %u, unit %u MODE SENSE(6) failed (%04x)";
+INITMSG	szSelectFailed[]= "%s: adapter %u, unit %u MODE SELECT(6) failed (%04x)";
+INITMSG	szUnknFormat[]=	"%s: adapter %u, unit %u, unknown format of page %u";
+
+INITMSG	szStatusblock[]= "%s: StatusBlock, Flags %02x, Adapter Error %04x, Target Status %02x";
+INITMSG	szAdapterDiag[]= "%s: adapter specific info [%s]";
+INITMSG	szSensedata[]=	"%s: SenseData [%s]";
+INITMSG	szHex[]=	"%02x ";
+
+
+/*
+ * 2. Screen messages only displayed if '/V' or '/DEBUG' are used.
+ */
+
+INITMSG	szNoDevices[]=	"No devices found";
+INITMSG	szNoSCSI[]=	"Adapter %u: no SCSI bus";
+INITMSG	szNo16M[]=	"Adapter %u: hardware doesn't support memory above 16MB";
+INITMSG	szNoScGa[]=	"Adapter %u: hardware doesn't support scatter/gather";
+INITMSG	szDiskette[]=	"Adapter %u, Unit %u: diskette drive";
+INITMSG	szDefective[]=	"Adapter %u, Unit %u: defect";
+
+/* Related to device modifications */
+
+INITMSG	szModifyStart[]=  "Adapter %u, Unit %u: modifications start...";
+INITMSG	szModifyOK[]=	  "Adapter %u, Unit %u: modifications ended w/o errors";
+
+INITMSG	szRCachePage[]=	  "Adapter %u, Unit %u: reading cache page 8";
+INITMSG	szRControlPage[]= "Adapter %u, Unit %u: reading control page 10";
+INITMSG	szRConnectPage[]= "Adapter %u, Unit %u: reading connect/disconnect page 2";
+INITMSG	szRCDPage[]=	"Adapter %u, Unit %u: reading CD-ROM page 13";
+INITMSG	szWCachePage[]=	  "Adapter %u, Unit %u: writing cache page 9";
+INITMSG	szWControlPage[]= "Adapter %u, Unit %u: writing control page 10";
+INITMSG	szWConnectPage[]= "Adapter %u, Unit %u: writing connect/disconnect page 2";
+INITMSG	szWCDPage[]=	"Adapter %u, Unit %u: writing CD-ROM page 13";
+
+/* Display current settings */
+
+INITMSG	szReadCache[]=	"Adapter %u, Unit %u: read cache %s";
+INITMSG	szWriteCache[]=	"Adapter %u, Unit %u: write cache %s";
+INITMSG	szPrefetchPrio[]= "Adapter %u, Unit %u: prefetch priority %s";
+INITMSG	szPrefetch[]=	"Adapter %u, Unit %u: prefetch %s";
+
+INITMSG	szTaggedQueue[]="Adapter %u, Unit %u: tagged queuing %s";
+INITMSG	szReorder[]=	"Adapter %u, Unit %u: unrestricted reordering %s";
+
+INITMSG	szFullReselect[]="Adapter %u, Unit %u: buffer fill disconnect/reconnect %s";
+INITMSG	szInactiveTO[]="Adapter %u, Unit %u: inactive bus disconnect %s";
+INITMSG	szDisconnectTO[]="Adapter %u, Unit %u: disconnect to reselect timeout %s";
+INITMSG	szConnectTO[]="Adapter %u, Unit %u: connection timeout %s";
+
+INITMSG	szCDTimeout[]=	"Adapter %u, Unit %u: CD-ROM inactivity timeout %s";
+
+
+/* Related to command line parsing */
+
+INITMSG	szCmdLineSyntax[]= "%s: syntax error in command line";
+INITMSG	szMissingOption[]= "%s: required option missing in command line";
+INITMSG	szUnknownOption[]= "%s: unknown command line option";
+INITMSG	szCmdLineError[]=  "%s: command line option error %d";
+
+
+INITMSG	szFoundDevice[]=   "Adapter %u, Unit %u: found";
+
+
+
+
+/*
+ * Very important :-)
+ */
+INITMSG szProduct[]=	"SCSI Optimizer                ";
+INITMSG szLogo[]=	"\r\n%s                               Version %u.%02u"
+"\r\nMade by Vitus Jensen (2:2474/424)                            " __DATE__ ;
+
+
+
+
+#pragma pack(1)
+typedef struct _UNIT_OPTION {
+    UCHAR	adpno;			/* MSB set if valid entry */
+    UCHAR	unitno;
+    struct {
+	UINT	access : 2;		/* forces reading of  this page */
+	UINT	buffer : 2;		/* empty/full ration */
+	UINT	inactive : 2;		/* enable inactive bus timeout */
+	UINT	disconnect : 2;		/* enable disconnect timeout */
+	UINT	connect : 2;		/* enable connect timeout */
+    } pg2;
+    struct {
+	UINT	access : 2;		/* forces reading of  this page */
+	UINT	wce : 2;		/* write cache enable */
+	UINT	rce : 2;		/* read cache enable */
+	UINT	pre : 2;		/* pre-fetch enable */
+	UINT	prio : 2;		/* higher pre-fetch priority */
+    } pg8;
+    struct {
+	UINT	access : 2;		/* forces reading of this page */
+	UINT	queue : 2;		/* enable tagged queuing */
+	UINT	reorder : 2;		/* unrestricted reordering */
+    } pg10;
+    struct {
+	UINT	access : 2;		/* forces reading of this page */
+	UINT	seconds : 12;		/* seconds until CD-ROM stop */
+    } pg13;
+} UNIT_OPTION, FAR * PUNIT_OPTION;
+#pragma pack(1)
+UNIT_OPTION _ininit	UnitOption[MAX_UNITS] = {0};
+
+
+
+
+
+
+/*
+ * Last element in code segments which remains resident
+ */
+PRIVATE void
+Code_End(void) {}
+
+
+
+
+/*#
+ * CALL
+ *	AddUTable(aidx,uidx,pgno,patch)
+ * PARAMETER
+ *	aidx		adapter index
+ *	uidx		unit index
+ *	pgno		mode page to change
+ *	enable		enable feature?  or disable?
+ *	patch		bitfield telling which patches to apply
+ * RETURNS
+ *	(nothing)
+ * GLOBAL
+ *	UnitTable
+ * DESPRIPTION
+ *	Adds entry to global table to save unit specific settings
+ *	or updates already allocated entry.
+ *
+ * REMARKS
+ *	Entries are allocated from low to higher indices and never freed.
+ */
+PRIVATE void
+AddUTable(USHORT aidx,USHORT uidx,USHORT pgno,int enable,USHORT patch)
+{
+    int i;
+
+    DEBMSG4("\r\nAddUTable: %w %w %w = %w",aidx,uidx,pgno,patch);
+    if( aidx > 0x007F  ||  uidx > 0x00FF )
+	return;					/* can't allocate that */
+
+    for( i = 0; i < MAX_UNITS; ++i )
+    {
+	if( (UnitOption[i].adpno & 0x80) == 0
+	    ||  ((UCHAR)(UnitOption[i].adpno & ~0x80) == aidx
+		 &&  UnitOption[i].unitno == uidx) )
+	{
+	    UnitOption[i].adpno = (UCHAR)(aidx | 0x80);
+	    UnitOption[i].unitno = (UCHAR)uidx;
+	    switch( pgno )
+	    {
+	      case 2:
+		UnitOption[i].pg2.access |= (patch == 0 ? 1 : 2);
+		if( (patch & 0x0001) )
+		    UnitOption[i].pg2.buffer = (enable ? 2 : 1);
+		if( (patch & 0x0002) )
+		    UnitOption[i].pg2.inactive = (enable ? 2 : 1);
+		if( (patch & 0x0004) )
+		    UnitOption[i].pg2.disconnect = (enable ? 2 : 1);
+		if( (patch & 0x0008) )
+		    UnitOption[i].pg2.connect = (enable ? 2 : 1);
+		break;
+
+	      case 8:
+		UnitOption[i].pg8.access |= (patch == 0 ? 1 : 2);
+		if( (patch & 0x0001) )
+		    UnitOption[i].pg8.wce = (enable ? 2 : 1);
+		if( (patch & 0x0002) )
+		    UnitOption[i].pg8.rce = (enable ? 2 : 1);
+		if( (patch & 0x0004) )
+		    UnitOption[i].pg8.pre = (enable ? 2 : 1);
+		if( (patch & 0x0008) )
+		    UnitOption[i].pg8.prio = (enable ? 2 : 1);
+		break;
+
+	      case 10:
+		UnitOption[i].pg10.access |= (patch == 0 ? 1 : 2);
+		if( (patch & 0x0001) )
+		    UnitOption[i].pg10.queue = (enable ? 2 : 1);
+		if( (patch & 0x0002) )
+		    UnitOption[i].pg10.reorder = (enable ? 2 : 1);
+		break;
+
+	      case 13:
+		UnitOption[i].pg13.access |= (patch == 0 ? 1 : 2);
+		UnitOption[i].pg13.seconds = (patch > 0x0FFF ? 0x0FFF : patch);
+		break;
+
+	      default:
+		break;			/* no error, empty entry */
+	    }
+
+	    DEBMSG2("\r\nAddUTable: entry\r\n%z",(PVOID)&UnitOption[i],sizeof(UnitOption[i]));
+	    return;
+	} /* end[if found of empty entry] */
+    } /* end[for every entry] */
+
+    return;
+}
+
+
+
+
+/*#
+ * CALL
+ *	QueryUTable(aidx,uidx)
+ * PARAMETER
+ *	aidx		adapter index
+ *	uidx		unit index
+ * RETURNS
+ *	&UnitTable[]
+ * GLOBAL
+ *	UnitTable
+ * DESPRIPTION
+ *	Retrieve special settings for this device, if available.
+ *
+ * REMARKS
+ */
+PRIVATE UNIT_OPTION FAR *
+QueryUTable(USHORT aidx,USHORT uidx)
+{
+    int i;
+
+    if( aidx > 0x007F  ||  uidx > 0xFF )
+	return 0;				/* quiet fail */
+
+    for( i = 0; i < MAX_UNITS; ++i )
+    {
+	if( (UnitOption[i].adpno & 0x80)
+	   &&  (UCHAR)(UnitOption[i].adpno & ~0x80) == aidx
+	   &&  UnitOption[i].unitno == uidx )
+	{
+	    return &UnitOption[i];
+	}
+    }
+
+    return 0;					/* let compiler expand... */
+}
+
+
+
+
+/*#
+ * CALL
+ *	DumpStatusblock(statusblock)
+ * PARAMETER
+ *	statusblock	SCSI_STATUS_BLOCK, see DDK
+ * RETURNS
+ *	(nothing)
+ * GLOBAL
+ *	(none)
+ * DESPRIPTION
+ *	Displays error values and dumps sense data to screen
+ *
+ * REMARKS
+ */
+char _ininit	achDump[200];
+PRIVATE void NEAR
+DumpStatusblock(NPSCSI_STATUS_BLOCK statusblock)
+{
+    /* Status block */
+
+    sprintk(szMsgBuffer, szStatusblock, (PSZ)szDriverName,
+	    statusblock->Flags, statusblock->AdapterErrorCode,
+	    statusblock->TargetStatus);
+    SaveMessage();
+
+    /* Adapter specific info, only if valid */
+
+    if( (statusblock->Flags & STATUS_DIAGINFO_VALID) )
+    {
+	USHORT	i;
+
+	achDump[0] = '\0';
+	for( i = 0; i < 8; ++i )
+	    sprintk(&achDump[_fstrlen(achDump)],
+		    szHex, statusblock->AdapterDiagInfo[i]);
+	sprintk(szMsgBuffer, szAdapterDiag, (PSZ)szDriverName, (PSZ)achDump);
+	SaveMessage();
+    }
+
+    /* Sense data, only if valid */
+
+    if( (statusblock->Flags & STATUS_SENSEDATA_VALID) )
+    {
+	USHORT	i;
+	PUCHAR	sensedata = (PUCHAR)statusblock->SenseData;
+
+	achDump[0] = '\0';
+	for( i = 0; i < statusblock->ReqSenseLen; ++i )
+	    sprintk(&achDump[_fstrlen(achDump)], szHex, sensedata[i]);
+	sprintk(szMsgBuffer, szSensedata, (PSZ)szDriverName, (PSZ)achDump);
+	SaveMessage();
+    }
+    return;
+}
+
+
+
+
+/*#
+ * CALL
+ *	SendIORBNotify(iorb)
+ * PARAMETER
+ *	iorb		completed request
+ * RETURNS
+ *	(nothing)
+ * GLOBAL
+ *	(none)
+ * DESPRIPTION
+ *	Awakens any process blocking on the passed IORB.  Used
+ *	by 'SendIORB'.
+ *
+ * REMARKS
+ */
+PRIVATE void FAR _loadds _Cdecl
+SendIORBNotify(PIORB iorb)
+{
+    USHORT awoken;
+
+    DevHelp_ProcRun((ULONG)iorb, &awoken);
+    return;
+}
+
+
+
+
+/*#
+ * CALL
+ *	SendIORB(iorb,addentry)
+ * PARAMETER
+ *	iorb		request to execute
+ *	addentry	entry point of ADD to call
+ * RETURNS
+ *	0		OK
+ *	/0		error code returned from ADD
+ * GLOBAL
+ *	(none)
+ * DESPRIPTION
+ *	Uses 'SendIORBNotify' as notification routine.
+ *
+ * REMARKS
+ *	Need local variable to prevent restoring sp from bp
+ *	after ADD call.
+ */
+#pragma optimize("lge",off)
+PRIVATE USHORT NEAR
+SendIORB(PIORB iorb,void (FAR _Cdecl * addentry)(PIORB))
+{
+    USHORT	rc;
+
+    iorb->NotifyAddress = (PVOID)SendIORBNotify; /* kind of hack */
+    iorb->RequestControl |= IORB_ASYNC_POST;
+    iorb->ErrorCode =	0;
+    iorb->Status =	0;
+
+    SAVE_REGS();
+    (addentry)(iorb);
+    RESTORE_REGS();
+
+    DISABLE();
+    while( !(iorb->Status & IORB_DONE) )
+    {
+	rc = DevHelp_ProcBlock( (ULONG)iorb, -1L, WAIT_IS_INTERRUPTABLE );
+	if( rc != 0 )
+	    break;				/* was interrupted: abort! */
+	DISABLE();
+    }
+    ENABLE();
+
+    return (rc != 0
+	    ? IOERR_CMD_ABORTED : (iorb->Status & IORB_ERROR ? iorb->ErrorCode : 0));
+}
+#pragma optimize("",on)
+
+
+
+
+/*#
+ * CALL
+ *	CheckAdapterInfo(iAdapter,npAdapterInfo)
+ * PARAMETER
+ *	iAdapter		index of adapter in system
+ *,	npAdapterInfo		from GET_DEVICE_TABLE
+ * RETURNS
+ *	0			OK to process units from this adapter
+ *	/0			no SCSI, defect, ...
+ * GLOBAL
+ *	fDriverFlags
+ * DESPRIPTION
+ *	Checks adapter flags, additional service: displays some
+ *	performance related capabilities of adapter.
+ *
+ * REMARKS
+ */
+PRIVATE int
+CheckAdapterInfo(USHORT const iAdapter,NPADAPTERINFO const npAdapterInfo)
+{
+    if( !(npAdapterInfo->AdapterFlags & AF_16M) )
+    {
+	sprintk(szMsgBuffer, szNo16M, iAdapter);
+	DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_DEBUG) )
+	    SaveMessage();
+    }
+    if( !(npAdapterInfo->AdapterFlags & AF_HW_SCATGAT) )
+    {
+	sprintk(szMsgBuffer, szNoScGa, iAdapter);
+	DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_DEBUG) )
+	    SaveMessage();
+    }
+
+    if( !((npAdapterInfo->AdapterDevBus & AI_DEVBUS_SCSI_1)
+	  ||  (npAdapterInfo->AdapterDevBus & AI_DEVBUS_SCSI_2)
+	  ||  (npAdapterInfo->AdapterDevBus & AI_DEVBUS_SCSI_3)) )
+    {
+	/* No SCSI devices to expect on non-SCSI bus,
+	 * ignore adapter. */
+
+	sprintk(szMsgBuffer, szNoSCSI, iAdapter);
+	DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_DEBUG) )
+	    SaveMessage();
+	return 1;
+    }
+
+    return 0;
+}
+
+
+
+
+/*#
+ * CALL
+ *	CheckUnitInfo(iAdapter,npUnitInfo)
+ * PARAMETER
+ *	iAdapter		index of adapter in system
+ *	npUnitInfo		from GET_DEVICE_TABLE
+ * RETURNS
+ *	0	OK, try/use this unit
+ *	/0	bad type, defective, etc.
+ * GLOBAL
+ *	fDriverFlags
+ * DESPRIPTION
+ *	If this unit is defect then skip the unit.
+ *	Dito if it's diskette A or B.
+ *
+ * REMARKS
+ */
+PRIVATE int
+CheckUnitInfo(PDEVICE const device,NPUNITINFO const npUnitInfo)
+{
+    USHORT const uflags = npUnitInfo->UnitFlags;
+
+    DEBMSG2("\r\nCheckUnitInfo: %w %w",device->iAdapter,device->iUnit);
+    if( (uflags & (UF_A_DRIVE | UF_B_DRIVE)) )
+    {
+	sprintk(szMsgBuffer, szDiskette, device->iAdapter, device->iUnit);
+	DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_DEBUG) )
+	    SaveMessage();
+	return 3;
+    }
+
+    if( (uflags & UF_DEFECTIVE) )
+    {
+	sprintk(szMsgBuffer, szDefective, device->iAdapter, device->iUnit);
+	DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_VERBOSE) )
+	    SaveMessage();
+	return 4;
+    }
+
+    return 0;
+}
+
+
+
+
+/*#
+ * CALL
+ *	ModeSense(pADDEntry,npUnit,pgno,buf,bufsiz)
+ * PARAMETER
+ *	pADDEntry	call ADD
+ *	npUnit		ADD's UNITINFO structure
+ *	pgno		which page?
+ *	buf
+ *	bufsiz
+ * RETURNS
+ *	0		OK
+ *	/0		error code from ADD
+ * GLOBAL
+ * DESPRIPTION
+ * REMARKS
+ */
+PRIVATE USHORT
+ModeSense(void (FAR _Cdecl * pADDEntry)(),NPUNITINFO const npUnit,
+	  UCHAR pgno,PUCHAR buf,USHORT bufsiz)
+{
+    NPIORB_ADAPTER_PASSTHRU	iothru;
+    NPSCSI_STATUS_BLOCK		statusblock;
+    NPSCSI_REQSENSE_DATA	sensedata;
+
+    BYTE		cdb[6];
+    USHORT		error;
+
+    GETINITRAM(iothru, NPIORB_ADAPTER_PASSTHRU, sizeof(IORB_ADAPTER_PASSTHRU));
+    GETINITRAM(statusblock, NPSCSI_STATUS_BLOCK, sizeof(SCSI_STATUS_BLOCK));
+    GETINITRAM(sensedata, NPSCSI_REQSENSE_DATA, sizeof(SCSI_REQSENSE_DATA));
+
+    cdb[0] = SCSI_MODE_SENSE;
+    cdb[1] = (UCHAR)((npUnit->UnitSCSILUN << 5) | 0);
+    cdb[2] = pgno;
+    cdb[3] = 0;
+    cdb[4] = (UCHAR)bufsiz;
+    cdb[5] = 0;
+
+    memset(iothru, 0, sizeof(IORB_ADAPTER_PASSTHRU));
+    memset(statusblock, 0, sizeof(SCSI_STATUS_BLOCK));
+    memset(sensedata, 0, sizeof(SCSI_REQSENSE_DATA));
+    statusblock->ReqSenseLen = sizeof(SCSI_REQSENSE_DATA);
+    statusblock->SenseData = sensedata;
+
+    iothru->iorbh.Length =	sizeof(IORB_ADAPTER_PASSTHRU);
+    iothru->iorbh.UnitHandle =	npUnit->UnitHandle;
+    iothru->iorbh.CommandCode =	IOCC_ADAPTER_PASSTHRU;
+    iothru->iorbh.CommandModifier =	IOCM_EXECUTE_CDB;
+
+    iothru->iorbh.RequestControl =	IORB_REQ_STATUSBLOCK;
+    iothru->iorbh.StatusBlockLen =	sizeof(SCSI_STATUS_BLOCK);
+    iothru->iorbh.pStatusBlock =	(NPBYTE)statusblock;
+
+    iothru->pControllerCmd =	cdb;
+    iothru->ControllerCmdLen =	6;
+
+    /* Data buffer: have to supply a scatter/gather list
+     * (1 entry) and a direction. */
+
+    ScGaEntry.ppXferBuf = (ULONG)((USHORT)buf + ppDiskDDHeader);
+    ScGaEntry.XferBufLen = bufsiz;
+    iothru->Flags = PT_DIRECTION_IN;
+    iothru->cSGList = 1;
+    iothru->pSGList = &ScGaEntry;
+    iothru->ppSGLIST = (ULONG)((USHORT)&ScGaEntry + ppDiskDDHeader);
+
+    DEBMSG2("\r\nMODE SENSE(6) - iorb cdb sc/ga\r\n%z",(PIORB)iothru,iothru->iorbh.Length);
+    DEBMSG2("\r\n%z",(PVOID)cdb,6);
+    DEBMSG2("\r\n%z",(PVOID)&ScGaEntry,sizeof(ScGaEntry));
+
+    if( (error=SendIORB((PIORB)iothru, pADDEntry)) )
+    {
+	sprintk(szMsgBuffer, szSenseFailed, (PSZ)szDriverName,
+		npUnit->AdapterIndex, npUnit->UnitIndex, error);
+	SaveMessage();
+	DumpStatusblock(statusblock);
+    }
+
+    npInitData -= sizeof(SCSI_REQSENSE_DATA);
+    npInitData -= sizeof(SCSI_STATUS_BLOCK);
+    npInitData -= sizeof(IORB_ADAPTER_PASSTHRU);
+
+    return error;
+}
+
+
+
+
+/*#
+ * CALL
+ *	ModeSelect(pADDEntry,npUnit,pgno,buf,bufsiz)
+ * PARAMETER
+ *	pADDEntry	call ADD
+ *	npUnit		ADD's UNITINFO structure
+ *	pgno		which page?
+ *	buf
+ *	bufsiz
+ * RETURNS
+ *	0		OK
+ *	/0		error code from ADD
+ * GLOBAL
+ * DESPRIPTION
+ * REMARKS
+ */
+PRIVATE USHORT
+ModeSelect(void (FAR _Cdecl * pADDEntry)(),NPUNITINFO const npUnit,
+	   UCHAR pgno,PUCHAR buf,USHORT bufsiz)
+{
+    NPIORB_ADAPTER_PASSTHRU	iothru;
+    NPSCSI_STATUS_BLOCK		statusblock;
+    NPSCSI_REQSENSE_DATA	sensedata;
+
+    BYTE		cdb[6];
+    USHORT		error;
+
+
+    GETINITRAM(iothru, NPIORB_ADAPTER_PASSTHRU, sizeof(IORB_ADAPTER_PASSTHRU));
+    GETINITRAM(statusblock, NPSCSI_STATUS_BLOCK, sizeof(SCSI_STATUS_BLOCK));
+    GETINITRAM(sensedata, NPSCSI_REQSENSE_DATA, sizeof(SCSI_REQSENSE_DATA));
+
+    cdb[0] = SCSI_MODE_SELECT;
+    cdb[1] = (UCHAR)((npUnit->UnitSCSILUN << 5) | 0x10 | 0x00);
+    cdb[2] = 0x00;
+    cdb[3] = 0;
+    cdb[4] = (UCHAR)bufsiz;
+    cdb[5] = 0;
+
+    memset(iothru, 0, sizeof(IORB_ADAPTER_PASSTHRU));
+    memset(statusblock, 0, sizeof(SCSI_STATUS_BLOCK));
+    memset(sensedata, 0, sizeof(SCSI_REQSENSE_DATA));
+    statusblock->ReqSenseLen = sizeof(SCSI_REQSENSE_DATA);
+    statusblock->SenseData = sensedata;
+
+    iothru->iorbh.Length =		sizeof(IORB_ADAPTER_PASSTHRU);
+    iothru->iorbh.UnitHandle =		npUnit->UnitHandle;
+    iothru->iorbh.CommandCode =		IOCC_ADAPTER_PASSTHRU;
+    iothru->iorbh.CommandModifier =	IOCM_EXECUTE_CDB;
+
+    iothru->iorbh.RequestControl =	IORB_REQ_STATUSBLOCK;
+    iothru->iorbh.StatusBlockLen =	sizeof(SCSI_STATUS_BLOCK);
+    iothru->iorbh.pStatusBlock =	(NPBYTE)statusblock;
+
+    iothru->pControllerCmd =	cdb;
+    iothru->ControllerCmdLen =	6;
+
+    /* Data buffer: have to supply a scatter/gather list
+     * (1 entry) and a direction. */
+
+    ScGaEntry.ppXferBuf = (ULONG)((USHORT)buf + ppDiskDDHeader);
+    ScGaEntry.XferBufLen = MAX_MODE_DATA;
+    iothru->Flags = 0;
+    iothru->cSGList = 1;
+    iothru->pSGList = &ScGaEntry;
+    iothru->ppSGLIST = (ULONG)((USHORT)&ScGaEntry + ppDiskDDHeader);
+
+    DEBMSG2("\r\nMODE SELECT(6) - iorb cdb sc/ga\r\n%z",(PIORB)iothru,iothru->iorbh.Length);
+    DEBMSG2("\r\n%z",(PVOID)cdb,6);
+    DEBMSG2("\r\n%z",(PVOID)&ScGaEntry,sizeof(ScGaEntry));
+
+    if( (error=SendIORB((PIORB)iothru, pADDEntry)) )
+    {
+	sprintk(szMsgBuffer, szSelectFailed, (PSZ)szDriverName,
+		npUnit->AdapterIndex, npUnit->UnitIndex, error);
+	SaveMessage();
+	DumpStatusblock(statusblock);
+    }
+
+    npInitData -= sizeof(SCSI_REQSENSE_DATA);
+    npInitData -= sizeof(SCSI_STATUS_BLOCK);
+    npInitData -= sizeof(IORB_ADAPTER_PASSTHRU);
+
+    return error;
+}
+
+
+
+
+/*#
+ * CALL
+ *	ModifyCachePage(device,npUnit)
+ * PARAMETER
+ *	device		our own device structure
+ *	npUnit		from GET_DEVICE_TABLE
+ * RETURNS
+ *	0		OK
+ * GLOBAL
+ *	fDriverFlags
+ * DESPRIPTION
+ *	Reads caching mode page (MODE SENSE), modifies requested
+ *	settings and writes new page (MODE SELECT).
+ *	If device options exists for this page nothing is done at all.
+ *	If no change is requested MODE SELECT isn't executed.
+ *
+ * REMARKS
+ *	The device isn't requested to save these parameters permanent.  I
+ *	think it's safer this way: reset your machine and you get the default
+ *	state.
+ */
+PRIVATE int
+ModifyCachePage(PDEVICE const device,NPUNITINFO const npUnit)
+{
+    NPBYTE	data;
+    int		rc = 0;				/* error? */
+    PUNIT_OPTION pOption = QueryUTable(device->iAdapter, device->iUnit);
+
+    if( pOption == NULL  ||  pOption->pg8.access == 0 )
+    {
+	DEBMSG2("\r\nModifyCachePage: nothing requested for %w,%w", device->iAdapter,device->iUnit);
+	return 0;				/* no change -> no error */
+    }
+
+    GETINITRAM(data, NPBYTE, MAX_MODE_DATA);
+
+    sprintk(szMsgBuffer, szRCachePage, device->iAdapter, device->iUnit);
+    DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+    if( (fDriverFlags & DF_VERBOSE) )
+	SaveMessage();
+
+    do
+    {
+	UCHAR			pgno = 0x08;
+	NPSCSI_MODEPAGE_8	page;
+	UCHAR			mdlen;
+	int			modified = 0;	/* how many modifications? */
+
+	/* First: read cache mode page via MODE SENSE(6),
+	 * read current values. */
+
+	if( ModeSense(device->pADDEntry, npUnit, pgno, data, MAX_MODE_DATA) )
+	{
+	    rc = 1;
+	    break;
+	}
+	DEBMSG3("\r\nOld page %w\r\n%z",pgno,(PVOID)data,sizeof(SCSI_MODEPAGE_HDR)
+		+sizeof(SCSI_MODEPAGE_DESCR)+sizeof(SCSI_MODEPAGE_8));
+
+	/* Make some checks to detect non-standard page layout. */
+
+	mdlen = (UCHAR)(data[0] + 1u);		/* 'does not include itself' */
+	page = (NPVOID)&data[sizeof(SCSI_MODEPAGE_HDR)
+			    +sizeof(SCSI_MODEPAGE_DESCR)];
+
+	if( (UCHAR)(page->pcode & 0x7F) != pgno ) /* correct page read? */
+	{
+	    sprintk(szMsgBuffer, szUnknFormat, (PSZ)szDriverName,
+		    device->iAdapter, device->iUnit, pgno);
+	    SaveMessage();
+	    DEBMSG2("\r\nDumping complete buffer\r\n%z",(PVOID)data, mdlen);
+	    rc = 2;
+	    break;				/* skip this page */
+	}
+
+
+	/* If no change is requested: display current settings */
+
+	if( pOption->pg8.access == 1  &&  (fDriverFlags & DF_VERBOSE) )
+	{
+	    sprintk(szMsgBuffer, szReadCache,
+		    device->iAdapter, device->iUnit,
+		    (PSZ)((page->cache & 0x01) != 0 ? "disabled" : "enabled"));
+	    SaveMessage();
+
+	    sprintk(szMsgBuffer, szWriteCache,
+		    device->iAdapter, device->iUnit,
+		    (PSZ)((page->cache & 0x04) == 0 ? "disabled" : "enabled"));
+	    SaveMessage();
+
+	    sprintk(szMsgBuffer, szPrefetchPrio,
+		    device->iAdapter, device->iUnit,
+		    (PSZ)((page->priority == 0) ? "disabled" : "enabled"));
+	    SaveMessage();
+
+	    sprintk(szMsgBuffer, szPrefetch,
+		    device->iAdapter, device->iUnit,
+		    (PSZ)((page->disprefetch[0] | page->disprefetch[1]) == 0
+			  ? "disabled" : "enabled"));
+	    SaveMessage();
+
+	    break;				/* nothing more to do, exit */
+	}
+
+
+	/* Modify page according to 'pOption'. */
+
+	if( pOption->pg8.rce == 1  &&  (page->cache & 0x01) == 0 )
+	{
+	    page->cache |= 0x01;		/* disable read cache */
+	    ++modified;
+	}
+	else if( pOption->pg8.rce == 2  &&  (page->cache & 0x01) != 0 )
+	{
+	    page->cache &= ~0x01;		/* don't disable read cache */
+	    ++modified;
+	}
+
+	if( pOption->pg8.wce == 1  &&  (page->cache & 0x04) != 0 )
+	{
+	    page->cache &= ~0x04;		/* don't enable write cache */
+	    ++modified;
+	}
+	else if( pOption->pg8.wce == 2  &&  (page->cache & 0x04) == 0 )
+	{
+	    page->cache |= 0x04;		/* enable write cache */
+	    ++modified;
+	}
+
+	if( pOption->pg8.prio == 1  &&  page->priority != 0 )
+	{
+	    page->priority = 0;			/* don't distinguish */
+	    ++modified;
+	}
+	else if( pOption->pg8.prio == 2  &&  page->priority != 0x11 )
+	{
+	    page->priority = 0x11;		/* keep prefetched data longer */
+	    ++modified;
+	}
+
+	if( pOption->pg8.pre == 1
+	    &&  (page->disprefetch[0] | page->disprefetch[1]) != 0 )
+	{
+	    /* Disable all pre-fetches */
+
+	    page->disprefetch[0] = 0;
+	    page->disprefetch[1] = 0;		/* LSB */
+	    page->minprefetch[0] = 0;
+	    page->minprefetch[1] = 0;		/* LSB */
+	    page->maxprefetch[0] = 0;
+	    page->maxprefetch[1] = 0;		/* LSB */
+	    page->prefetchceiling[0] = 0;
+	    page->prefetchceiling[1] = 0;	/* LSB */
+	    ++modified;
+	}
+	else if( pOption->pg8.pre == 2
+		 &&  (page->disprefetch[0] | page->disprefetch[1]) == 0 )
+	{
+	    /* Enable pre-fetch but disable it
+	     * on reads with more than 8KB data. */
+
+	    page->cache &= ~0x02;		/* no multipliers, real counts */
+	    page->disprefetch[0] = 0;
+	    page->disprefetch[1] = 32;		/* LSB */
+	    page->minprefetch[0] = 0;
+	    page->minprefetch[1] = 1;		/* LSB */
+	    page->maxprefetch[0] = 0;
+	    page->maxprefetch[1] = 16;		/* LSB */
+	    page->prefetchceiling[0] = 0;
+	    page->prefetchceiling[1] = 16;	/* LSB */
+	    ++modified;
+	}
+
+	if( modified > 0 )
+	{
+	    sprintk(szMsgBuffer, szWCachePage, device->iAdapter, device->iUnit);
+	    DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+	    if( (fDriverFlags & DF_VERBOSE) )
+		SaveMessage();
+
+	    /* Write this control mode page via MODE SELECT(6)
+	     * but don't let target save this permanently. */
+
+	    page->pcode &= 0x3f;		/* mask reserved bits */
+	    data[0] = 0;			/* reserved in MODE SELECT */
+	    DEBMSG3("\r\nNew data for page %w\r\n%z",pgno,(PVOID)data,mdlen);
+	    if( ModeSelect(device->pADDEntry, npUnit, pgno, data, mdlen) )
+		rc = 4;
+	}
+    }
+    while( 0 );
+
+
+    /* Release all memory in inverted order. */
+
+    npInitData -= MAX_MODE_DATA;
+
+    return 0;
+}
+
+
+
+
+/*#
+ * CALL
+ *	ModifyControlPage(device,npUnit)
+ * PARAMETER
+ *	device		our own device structure
+ *	npUnit		from GET_DEVICE_TABLE
+ * RETURNS
+ *	0		OK
+ * GLOBAL
+ *	fDriverFlags
+ * DESPRIPTION
+ *	Modifies Control Page (10).  Similar to ModifyCachePage().
+ *
+ * REMARKS
+ */
+PRIVATE int
+ModifyControlPage(PDEVICE const device,NPUNITINFO const npUnit)
+{
+    NPBYTE	data;
+    int		rc = 0;				/* error? */
+    PUNIT_OPTION pOption = QueryUTable(device->iAdapter, device->iUnit);
+
+    if( pOption == NULL  ||  pOption->pg10.access == 0 )
+    {
+	DEBMSG2("\r\nModifyControlPage: nothing requested for %w,%w", device->iAdapter,device->iUnit);
+	return 0;				/* no change -> no error */
+    }
+
+    GETINITRAM(data, NPBYTE, MAX_MODE_DATA);
+
+    sprintk(szMsgBuffer, szRControlPage, device->iAdapter, device->iUnit);
+    DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+    if( (fDriverFlags & DF_VERBOSE) )
+	SaveMessage();
+
+    do
+    {
+	UCHAR			pgno = 0x0A;
+	NPSCSI_MODEPAGE_A	page;
+	UCHAR			mdlen;
+	int			modified = 0;
+
+	/* First: read mode page via MODE SENSE(6),
+	 * read current values. */
+
+	if( ModeSense(device->pADDEntry, npUnit, pgno, data, MAX_MODE_DATA) )
+	{
+	    rc = 1;
+	    break;
+	}
+	DEBMSG3("\r\nOld page %w\r\n%z",pgno,(PVOID)data,sizeof(SCSI_MODEPAGE_HDR)
+		+sizeof(SCSI_MODEPAGE_DESCR)+sizeof(SCSI_MODEPAGE_A));
+
+
+	mdlen = (UCHAR)(data[0] + 1u);		/* 'does not include itself' */
+	page = (NPVOID)&data[sizeof(SCSI_MODEPAGE_HDR)
+			    +sizeof(SCSI_MODEPAGE_DESCR)];
+
+	if( (page->pcode & 0x7F) != pgno )
+	{
+	    sprintk(szMsgBuffer, szUnknFormat, (PSZ)szDriverName,
+		    device->iAdapter, device->iUnit, pgno);
+	    SaveMessage();
+	    DEBMSG2("\r\nDumping complete buffer\r\n%z",(PVOID)data, mdlen);
+	    rc = 2;
+	    break;				/* skip this page */
+	}
+
+
+	/* If no change is requested: display current settings */
+
+	if( pOption->pg10.access == 1  &&  (fDriverFlags & DF_VERBOSE) )
+	{
+	    sprintk(szMsgBuffer, szTaggedQueue,
+		    device->iAdapter, device->iUnit,
+		    (PSZ)((page->queuing & 0x01) != 0
+			  ? "disabled" : "enabled"));
+	    SaveMessage();
+
+	    sprintk(szMsgBuffer, szReorder,
+		    device->iAdapter, device->iUnit,
+		    (PSZ)((page->queuing & 0xF0) != 0x10
+			  ? "disabled" : "enabled"));
+	    SaveMessage();
+
+	    break;				/* nothing more to do, exit */
+	}
+
+
+	/* Modify page according to 'pOption'. */
+
+	if( pOption->pg10.queue == 1  &&  (page->queuing & 0x01) == 0 )
+	{
+	    page->queuing |= 0x01;		/* disable tagged queuing */
+	    ++modified;
+	}
+	else if( pOption->pg10.queue == 2  &&  (page->queuing & 0x01) != 0 )
+	{
+	    page->queuing &= ~0x01;		/* don't disable TQ */
+	    ++modified;
+	}
+
+	if( pOption->pg10.reorder == 1  &&  (page->queuing & 0xF0) == 0x10 )
+	{
+	    page->queuing &= 0x0F;		/* 'restricted reordering */
+	    ++modified;
+	}
+	else if(pOption->pg10.reorder == 2 && (page->queuing & 0xF0) != 0x10)
+	{
+	    page->queuing &= 0x0F;
+	    page->queuing |= 0x10;		/* 'unrestricted reordering' */
+	    ++modified;
+	}
+
+
+	if( modified > 0 )
+	{
+	    sprintk(szMsgBuffer,szWControlPage, device->iAdapter, device->iUnit);
+	    DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+	    if( (fDriverFlags & DF_VERBOSE) )
+		SaveMessage();
+
+	    /* Write this control mode page via MODE SELECT(6)
+	     * but don't let target save this permanently. */
+
+	    page->pcode &= 0x3f;		/* mask reserved bits */
+	    data[0] = 0;			/* reserved in MODE SELECT */
+	    DEBMSG3("\r\nNew page %w\r\n%z",pgno,(PVOID)data,mdlen);
+	    if( ModeSelect(device->pADDEntry, npUnit, pgno, data, mdlen) )
+		rc = 4;
+	}
+    }
+    while( 0 );
+
+
+    /* Release all memory in inverted order. */
+
+    npInitData -= MAX_MODE_DATA;
+
+    return 0;
+}
+
+
+
+
+/*#
+ * CALL
+ *	ModifyConnectPage(device,npUnit)
+ * PARAMETER
+ *	device		our own device structure
+ *	npUnit		from GET_DEVICE_TABLE
+ * RETURNS
+ *	0		OK
+ * GLOBAL
+ *	fDriverFlags
+ * DESPRIPTION
+ *	See ModifiyCachePage()
+ *
+ * REMARKS
+ */
+PRIVATE int
+ModifyConnectPage(PDEVICE const device,NPUNITINFO const npUnit)
+{
+    NPBYTE	data;
+    int		rc = 0;				/* error? */
+    PUNIT_OPTION pOption = QueryUTable(device->iAdapter, device->iUnit);
+
+    if( pOption == NULL  ||  pOption->pg2.access == 0 )
+    {
+	DEBMSG2("\r\nModifyConnectPage: nothing requested for %w,%w", device->iAdapter,device->iUnit);
+	return 0;				/* no change -> no error */
+    }
+
+    GETINITRAM(data, NPBYTE, MAX_MODE_DATA);
+
+    sprintk(szMsgBuffer, szRConnectPage, device->iAdapter, device->iUnit);
+    DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+    if( (fDriverFlags & DF_VERBOSE) )
+	SaveMessage();
+
+    do
+    {
+	UCHAR			pgno = 0x02;
+	NPSCSI_MODEPAGE_2	page;
+	UCHAR			mdlen;
+	int			modified = 0;
+
+	/* First: read mode page via MODE SENSE(6),
+	 * read current values. */
+
+	if( ModeSense(device->pADDEntry, npUnit, pgno, data, MAX_MODE_DATA) )
+	{
+	    rc = 1;
+	    break;
+	}
+	DEBMSG3("\r\nOld page %w\r\n%z",pgno,(PVOID)data,sizeof(SCSI_MODEPAGE_HDR)
+		+sizeof(SCSI_MODEPAGE_DESCR)+sizeof(SCSI_MODEPAGE_2));
+
+
+	mdlen = (UCHAR)(data[0] + 1u);		/* 'does not include itself' */
+	page = (NPVOID)&data[sizeof(SCSI_MODEPAGE_HDR)
+			    +sizeof(SCSI_MODEPAGE_DESCR)];
+
+	if( (page->pcode & 0x7F) != pgno )
+	{
+	    sprintk(szMsgBuffer, szUnknFormat, (PSZ)szDriverName,
+		    device->iAdapter, device->iUnit, pgno);
+	    SaveMessage();
+	    DEBMSG2("\r\nDumping complete buffer\r\n%z",(PVOID)data, mdlen);
+	    rc = 2;
+	    break;				/* skip this page */
+	}
+
+
+	/* If no change is requested: display current settings */
+
+	if( pOption->pg2.access == 1  &&  (fDriverFlags & DF_VERBOSE) )
+	{
+	    sprintk(szMsgBuffer, szFullReselect,
+		    device->iAdapter, device->iUnit,
+		    (PSZ)((page->bfull | page->bempty) == 0
+			  ? "disabled" : "enabled"));
+	    SaveMessage();
+
+	    sprintk(szMsgBuffer, szInactiveTO,
+		    device->iAdapter, device->iUnit,
+		    (PSZ)((page->businactive[0] |  page->businactive[1]) == 0
+			  ? "disabled" : "enabled"));
+	    SaveMessage();
+
+	    sprintk(szMsgBuffer, szDisconnectTO,
+		    device->iAdapter, device->iUnit,
+		    (PSZ)((page->disconnect[0] |  page->disconnect[1]) == 0
+			  ? "disabled" : "enabled"));
+	    SaveMessage();
+
+	    sprintk(szMsgBuffer, szConnectTO,
+		    device->iAdapter, device->iUnit,
+		    (PSZ)((page->connect[0] |  page->connect[1]) == 0
+			  ? "disabled" : "enabled"));
+	    SaveMessage();
+
+	    break;				/* nothing more to do, exit */
+	}
+
+
+	/* Modify page according to 'pOption'. */
+
+	if( pOption->pg2.buffer == 1
+	    &&  (page->bfull | page->bempty) != 0 )
+	{
+	    /* no disconnect because of full/empty buffers */
+
+	    page->bfull = 0;
+	    page->bempty = 0;
+	    ++modified;
+	}
+	else if( pOption->pg2.buffer == 2
+		 &&  (page->bfull | page->bempty) == 0 )
+	{
+	    /* disconnect because of full/empty buffers */
+
+	    page->bfull = 40;			/* ~15% */
+	    page->bempty = 40;
+	    ++modified;
+	}
+
+
+	if( pOption->pg2.inactive == 1
+	    &&  (page->businactive[0] |  page->businactive[1]) != 0 )
+	{
+	    /* no limit on bus busy time w/o connection */
+
+	    page->businactive[0] = page->businactive[1] = 0;
+	    ++modified;
+	}
+	else if(pOption->pg2.inactive == 2
+		&&  (page->businactive[0] |  page->businactive[1]) == 0 )
+	{
+	    /* don't keep bus busy w/o connection */
+
+	    page->businactive[0] = 0;
+	    page->businactive[1] = 200;		/* LSB */
+	    ++modified;
+	}
+
+	if( pOption->pg2.disconnect == 1
+	    &&  (page->disconnect[0] |  page->disconnect[1]) != 0 )
+	{
+	    /* no limit on bus disconnect state */
+
+	    page->disconnect[0] = page->disconnect[1] = 0;
+	    ++modified;
+	}
+	else if( pOption->pg2.disconnect == 2
+		 &&  (page->disconnect[0] |  page->disconnect[1]) == 0 )
+	{
+	    /* don't keep disconnect state forever */
+
+	    page->disconnect[0] = 0;
+	    page->disconnect[1] = 200;		/* LSB */
+	    ++modified;
+	}
+
+	if( pOption->pg2.connect == 1
+	    &&  (page->connect[0] |  page->connect[1]) != 0 )
+	{
+	    /* no limit on bus connect state */
+
+	    page->connect[0] = page->connect[1] = 0;
+	    ++modified;
+	}
+	else if( pOption->pg2.connect == 2
+	    &&  (page->connect[0] |  page->connect[1]) == 0 )
+	{
+	    /* don't keep connect state forever */
+
+	    page->connect[0] = 0;
+	    page->connect[1] = 200;		/* LSB */
+	    ++modified;
+	}
+
+
+	if( modified > 0 )
+	{
+	    sprintk(szMsgBuffer,szWConnectPage, device->iAdapter, device->iUnit);
+	    DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+	    if( (fDriverFlags & DF_VERBOSE) )
+		SaveMessage();
+
+	    /* Write this control mode page via MODE SELECT(6)
+	     * but don't let target save this permanently. */
+
+	    page->pcode &= 0x3f;		/* mask reserved bits */
+	    data[0] = 0;			/* reserved in MODE SELECT */
+	    DEBMSG3("\r\nNew page %w\r\n%z",pgno,(PVOID)data,mdlen);
+	    if( ModeSelect(device->pADDEntry, npUnit, pgno, data, mdlen) )
+		rc = 4;
+	}
+    }
+    while( 0 );
+
+
+    /* Release all memory in inverted order. */
+
+    npInitData -= MAX_MODE_DATA;
+
+    return 0;
+}
+
+
+
+
+/*#
+ * CALL
+ *	ModifyCdromPage(device,npUnit)
+ * PARAMETER
+ *	device		our own device structure
+ *	npUnit		from GET_DEVICE_TABLE
+ * RETURNS
+ *	0		OK
+ * GLOBAL
+ *	fDriverFlags
+ * DESPRIPTION
+ *	Modifies CDROM Control Page (13).
+ *
+ * REMARKS
+ */
+PRIVATE int
+ModifyCdromPage(PDEVICE const device,NPUNITINFO const npUnit)
+{
+    NPBYTE	data;
+    int		rc = 0;				/* error? */
+    PUNIT_OPTION pOption = QueryUTable(device->iAdapter, device->iUnit);
+
+    if( pOption == NULL  ||  pOption->pg13.access == 0 )
+    {
+	DEBMSG2("\r\nModifyCdromPage: nothing requested for %w,%w", device->iAdapter,device->iUnit);
+	return 0;				/* no change -> no error */
+    }
+
+    GETINITRAM(data, NPBYTE, MAX_MODE_DATA);
+
+    sprintk(szMsgBuffer, szRCDPage, device->iAdapter, device->iUnit);
+    DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+    if( (fDriverFlags & DF_VERBOSE) )
+	SaveMessage();
+
+    do
+    {
+	UCHAR			pgno = 0x0D;
+	NPSCSI_MODEPAGE_D	page;
+	UCHAR			mdlen;
+	int			modified = 0;
+
+	/* First: read mode page via MODE SENSE(6),
+	 * read current values. */
+
+	if( ModeSense(device->pADDEntry, npUnit, pgno, data, MAX_MODE_DATA) )
+	{
+	    rc = 1;
+	    break;
+	}
+	DEBMSG3("\r\nOld page %w\r\n%z",pgno,(PVOID)data,sizeof(SCSI_MODEPAGE_HDR)
+		+sizeof(SCSI_MODEPAGE_DESCR)+sizeof(SCSI_MODEPAGE_D));
+
+
+	mdlen = (UCHAR)(data[0] + 1u);		/* 'does not include itself' */
+	page = (NPVOID)&data[sizeof(SCSI_MODEPAGE_HDR)
+			    +sizeof(SCSI_MODEPAGE_DESCR)];
+
+	if( (page->pcode & 0x7F) != pgno )
+	{
+	    sprintk(szMsgBuffer, szUnknFormat, (PSZ)szDriverName,
+		    device->iAdapter, device->iUnit, pgno);
+	    SaveMessage();
+	    DEBMSG2("\r\nDumping complete buffer\r\n%z",(PVOID)data, mdlen);
+	    rc = 2;
+	    break;				/* skip this page */
+	}
+
+
+	/* If no change is requested: display current settings */
+
+	if( pOption->pg13.access == 1  &&  (fDriverFlags & DF_VERBOSE) )
+	{
+	    char * cp;
+
+	    switch( page->multiplier )
+	    {
+	      case 0x01:
+		cp = "125 ms";
+		break;
+	      case 0x02:
+		cp = "250 ms";
+		break;
+	      case 0x03:
+		cp = "500 ms";
+		break;
+	      case 0x04:
+		cp = "1 s";
+		break;
+	      case 0x05:
+		cp = "2 s";
+		break;
+	      case 0x06:
+		cp = "4 s";
+		break;
+	      case 0x07:
+		cp = "8 s";
+		break;
+	      case 0x08:
+		cp = "16 s";
+		break;
+	      case 0x09:
+		cp = "32 s";
+		break;
+	      case 0x0A:
+		cp = "60 s";
+		break;
+	      case 0x0B:
+		cp = "120 s";
+		break;
+	      case 0x0C:
+		cp = "240 s";
+		break;
+	      case 0x0D:
+		cp = "480 s";
+		break;
+	      case 0x0E:
+		cp = "960 s";
+		break;
+	      case 0x0F:
+		cp = "1920 s";
+		break;
+
+	      case 0:
+	      default:
+		cp = "unknown";
+		break;
+	    }
+
+	    sprintk(szMsgBuffer, szCDTimeout, device->iAdapter, device->iUnit, cp);
+	    SaveMessage();
+	    break;				/* nothing more to do, exit */
+	}
+
+
+	/* Modify page according to 'pOption'. */
+
+	page->multiplier &= 0xF0;		/* clear low nibble */
+	++modified;				/* always modified if reached */
+	if( pOption->pg13.seconds <= 1 )
+	    page->multiplier |= 0x04;
+	else if( pOption->pg13.seconds <= 2 )
+	    page->multiplier |= 0x05;
+	else if( pOption->pg13.seconds <= 4 )
+	    page->multiplier |= 0x06;
+	else if( pOption->pg13.seconds <= 8 )
+	    page->multiplier |= 0x07;
+	else if( pOption->pg13.seconds <= 16 )
+	    page->multiplier |= 0x08;
+	else if( pOption->pg13.seconds <= 32 )
+	    page->multiplier |= 0x09;
+	else if( pOption->pg13.seconds <= 60 )
+	    page->multiplier |= 0x0A;
+	else if( pOption->pg13.seconds <= 120 )
+	    page->multiplier |= 0x0B;
+	else if( pOption->pg13.seconds <= 240 )
+	    page->multiplier |= 0x0C;
+	else if( pOption->pg13.seconds <= 480 )
+	    page->multiplier |= 0x0D;
+	else if( pOption->pg13.seconds <= 960 )
+	    page->multiplier |= 0x0E;
+	else
+	    page->multiplier |= 0x0F;		/* else maximum */
+
+	if( modified > 0 )
+	{
+	    sprintk(szMsgBuffer,szWCDPage, device->iAdapter, device->iUnit);
+	    DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+	    if( (fDriverFlags & DF_VERBOSE) )
+		SaveMessage();
+
+	    /* Write this mode page via MODE SELECT(6)
+	     * but don't let target save this permanently. */
+
+	    page->pcode &= 0x3f;		/* mask reserved bits */
+	    data[0] = 0;			/* reserved in MODE SELECT */
+	    DEBMSG3("\r\nNew page %w\r\n%z",pgno,(PVOID)data,mdlen);
+	    if( ModeSelect(device->pADDEntry, npUnit, pgno, data, mdlen) )
+		rc = 4;
+	}
+    }
+    while( 0 );
+
+
+    /* Release all memory in inverted order. */
+
+    npInitData -= MAX_MODE_DATA;
+
+    return 0;
+}
+
+
+
+
+/*#
+ * CALL
+ *	ModifyDevice(device,npUnit)
+ * PARAMETER
+ *	device		DEVICE structure
+ *	npUnit
+ * RETURNS
+ *	0		OK
+ *	/0		error
+ * GLOBAL
+ * DESPRIPTION
+ *	Modify performance-related mode pages.
+ *
+ * REMARKS
+ */
+PRIVATE int NEAR
+ModifyDevice(PDEVICE const device,NPUNITINFO const npUnit)
+{
+    int rc = 0;
+
+    sprintk(szMsgBuffer, szModifyStart, device->iAdapter, device->iUnit);
+    DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+    if( (fDriverFlags & DF_DEBUG) )
+	SaveMessage();
+
+    /* We need access to a device before issuing commands
+     * to it.  So send a request to ALLOCATE UNIT */
+
+    {
+	NPIORB_UNIT_CONTROL pIOUC = (NPVOID)npInitData;
+
+	memset(pIOUC, 0, sizeof(IORB_UNIT_CONTROL));
+	pIOUC->iorbh.Length =		sizeof(IORB_UNIT_CONTROL);
+	pIOUC->iorbh.UnitHandle =	npUnit->UnitHandle;
+	pIOUC->iorbh.CommandCode =	IOCC_UNIT_CONTROL;
+	pIOUC->iorbh.CommandModifier =	IOCM_ALLOCATE_UNIT;
+
+	if( SendIORB((PIORB)pIOUC, device->pADDEntry) )
+	{
+	    sprintk(szMsgBuffer, szAllocFailed, (PSZ)szDriverName,
+		    device->iAdapter, device->iUnit);
+	    SaveMessage();
+	    return 1;
+	}
+    }
+
+    /* Modify pages... */
+
+    rc = ModifyCachePage(device, npUnit);
+    rc |= ModifyControlPage(device, npUnit);
+    rc |= ModifyConnectPage(device, npUnit);
+    rc |= ModifyCdromPage(device, npUnit);
+
+    /* All done, so release access to this unit. */
+
+    {
+	NPIORB_UNIT_CONTROL pIOUC = (NPVOID)npInitData;
+
+	/* Send request to DEALLOCATE UNIT */
+
+	memset( pIOUC, 0, sizeof(IORB_UNIT_CONTROL) );
+	pIOUC->iorbh.Length =		sizeof(IORB_UNIT_CONTROL);
+	pIOUC->iorbh.UnitHandle =	npUnit->UnitHandle;
+	pIOUC->iorbh.CommandCode =	IOCC_UNIT_CONTROL;
+	pIOUC->iorbh.CommandModifier =	IOCM_DEALLOCATE_UNIT;
+
+	if( SendIORB((PIORB)pIOUC, device->pADDEntry) )
+	{
+	    /* Couldn't deallocte unit.
+	     * Bad, display and ignore */
+
+	    sprintk(szMsgBuffer, szDeallocFailed, (PSZ)szDriverName,
+		    device->iAdapter, device->iUnit);
+	    SaveMessage();
+	}
+    }
+
+    if( rc == 0 )
+    {
+	sprintk(szMsgBuffer, szModifyOK, device->iAdapter, device->iUnit);
+	DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_DEBUG) )
+	    SaveMessage();
+    }
+    return rc;
+}
+
+
+
+
+
+/*#
+ * CALL
+ *	ScanDevices(void)
+ * PARAMETER
+ *	none
+ * RETURNS
+ *	0		OK, install driver
+ *	<0		fatal error, loud abort
+ *	>0		no device found, be quiet
+ * GLOBAL
+ *	anpUnit
+ *	npInitData
+ *	fDriverFlags
+ * DESPRIPTION
+ *	Scans all adapters on all ADDs for SCSI devices and
+ *	calls ModifyDevice() for each.
+ *
+ * REMARKS
+ */
+PRIVATE int
+ScanDevices(void)
+{
+    USHORT	j, k;
+    USHORT	changed = 0;
+    int		fatal = 0;
+
+    USHORT	add_count;
+    USHORT	add_index;
+    USHORT	adp = 0;
+
+    void	(FAR _Cdecl * pADDBaseEP)();
+
+    struct DevClassTableEntry FAR *pDCE;
+    struct DevClassTableStruc FAR *pDCT;
+
+
+    DEBMSG("\r\nScanDevices");
+
+    /* Get address of Registered ADD Table */
+
+    if( DevHelp_GetDOSVar(DHGETDOSV_DEVICECLASSTABLE, DRIVERCLASS_ADD, &pDCT) )
+    {
+	/* Should never happen.  What can we do? */
+
+	sprintk(szMsgBuffer, szNoDriverTab, (PSZ)szDriverName);
+	SaveMessage();
+	return -1;
+    }
+
+    add_count = pDCT->DCCount;
+
+
+    /* For each ADD registered  */
+
+    DEBMSG("\r\nLooking for ADDs");
+    for( pDCE = pDCT->DCTableEntries, add_index = 0;
+	 add_index < add_count;
+	 ++add_index, ++pDCE )
+    {
+	{
+	    NPIORB_CONFIGURATION pIOCF = (NPVOID)npInitData;
+
+	    /* Get ADD's Device Table */
+
+	    memset( pIOCF, 0, sizeof(IORB_CONFIGURATION) );
+	    pIOCF->iorbh.Length =		sizeof(IORB_CONFIGURATION);
+	    pIOCF->iorbh.UnitHandle =		0;
+	    pIOCF->iorbh.CommandCode =		IOCC_CONFIGURATION;
+	    pIOCF->iorbh.CommandModifier =	IOCM_GET_DEVICE_TABLE;
+
+	    pIOCF->pDeviceTable =	(PDEVICETABLE)DeviceTable;
+	    pIOCF->DeviceTableLen =	sizeof(DeviceTable);
+
+	    pADDBaseEP = (PVOID)MAKEP(pDCE->DCSelector, pDCE->DCOffset);
+
+	    if( SendIORB((PIORB)pIOCF, pADDBaseEP) )
+	    {
+		/* Error (?), could not get device table of installed
+		 * ADD.  Just ignore that ADD (which probably hasn't
+		 * any adapters/devices, either). */
+
+		sprintk(szMsgBuffer, szNoDevTab, (PSZ)szDriverName, add_index);
+		SaveMessage();
+		continue;
+	    }
+	}
+
+
+	/* For each Adapter in ADD's Device Table */
+
+	for( j = 0; j < ((PDEVICETABLE)DeviceTable)->TotalAdapters; ++j, ++adp )
+        {
+	    NPADAPTERINFO const npAdapterInfo
+		= ((PDEVICETABLE)DeviceTable)->pAdapter[j];
+	    NPUNITINFO		npUnitInfo;
+
+
+	    if( CheckAdapterInfo(adp, npAdapterInfo) )
+		continue;
+
+	    /* Access UNITINFO for each Device on adapter */
+
+	    DEBMSG("\r\nLooking for Units");
+	    for( npUnitInfo = npAdapterInfo->UnitInfo, k = 0;
+		 k < npAdapterInfo->AdapterUnits;
+		 ++k, ++npUnitInfo )
+            {
+		DEVICE	dev;			/* local structure, not
+						   global table as we aren't
+						   a real filter. */
+
+		/* If a Filter ADD has registered for this unit
+		 * then send subsequent requests to the Filter ADD
+		 * and not to the ADD. */
+
+		if( (dev.hdFilter=npUnitInfo->FilterADDHandle) != 0 )
+                {
+		    struct DevClassTableEntry FAR *pDCEFilter;
+
+		    DEBMSG("\r\nFound other filter for unit");
+		    pDCEFilter = &pDCT->DCTableEntries[dev.hdFilter-1];
+
+		    dev.pADDEntry = (PVOID)MAKEP(pDCEFilter->DCSelector,
+						 pDCEFilter->DCOffset);
+                }
+		else
+                {
+		    dev.pADDEntry = pADDBaseEP;
+                }
+		dev.iAdapter = adp;
+		dev.iUnit = npUnitInfo->UnitIndex;
+
+		if( CheckUnitInfo(&dev, npUnitInfo) )
+		    continue;
+
+		sprintk(szMsgBuffer, szFoundDevice, dev.iAdapter, dev.iUnit);
+		DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+		if( (fDriverFlags & DF_VERBOSE) )
+		    SaveMessage();
+
+		if( ModifyDevice(&dev, npUnitInfo) == 0 )
+		    ++changed;
+
+	    } /* for each unit */
+	} /* for each adapter */
+    } /* for each ADD */
+
+    if( fatal )					/* errors occurred? */
+    {
+	return -1;				/* than display and wait */
+    }
+    if( changed == 0 )
+    {
+	sprintk(szMsgBuffer, szNoDevices);
+	DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_VERBOSE) )
+	    SaveMessage();
+	return 1;				/* non-fatal error,
+						   don't install */
+    }
+    return 0;
+}
+
+
+
+
+
+
+#define ENTRY_STATE	   0
+#define MAX_STATES	   2
+
+/*
+ *					opt.state[] initialization definitions
+ *
+ *						____ entry state
+ *						|		previous
+ *						v		  opt	|
+ *  ----Command Line Option --------		----- STATE TABLE ----- |
+ *  token id		string	type		0   1	2		|
+ *									|
+ *						*  /A:	/A:	 <-------
+ *							 plus
+ */
+#define TOK_ID_EF	100
+#define TOK_ID_DF	101
+
+OPT OPT_VERBOSE =
+    {TOK_ID_VERBOSE,0,	"/V", TYPE_0,		{0,  E,  E}};
+
+OPT OPT_DEBUG_NO =
+    {TOK_ID_DEBUG,0,	"/DEBUG:", TYPE_D,	{0,  E,  E}};
+
+OPT OPT_DEBUG_DEFAULT =
+    {TOK_ID_DEBUG,0,	"/DEBUG", TYPE_0,	{0,  E,  E}};
+
+OPT OPT_ADAPTER =
+    {TOK_ID_ADAPTER,0,	"/A:", TYPE_D,		{1,  E,  1}};
+
+OPT OPT_ENABLE =
+    {TOK_ID_EF,0,	"/E:", TYPE_GEOMETRY,	{E,  2,  2}};
+
+OPT OPT_DISABLE =
+    {TOK_ID_DF,0,	"/!E:", TYPE_GEOMETRY,	{E,  2,  2}};
+
+OPT OPT_END =
+    {TOK_ID_END,0,	"\0", TYPE_0,		{O,  O,  O}};
+
+
+/*
+ *   Please note the importance of the ordering of entries in poption[]
+ *   For example: the pointer to the option "/DM:" must come before the
+ *   option "/DM"
+ */
+OPTIONTABLE  opttable = {
+    ENTRY_STATE, MAX_STATES,
+    {
+	&OPT_VERBOSE,
+	&OPT_DEBUG_NO,
+	&OPT_DEBUG_DEFAULT,
+	&OPT_ADAPTER,
+	&OPT_ENABLE,
+	&OPT_DISABLE,
+	&OPT_END
+    }
+};
+
+
+
+
+/*#
+ * CALL
+ *	AnalyseCmdLine(pszLine)
+ * PARAMETER
+ *	pszLine		pointer to command line
+ * RETURNS
+ *	0		OK
+ * GLOBAL
+ * DESPRIPTION
+ *	Invoke parser and analyse token output.
+ *
+ * REMARKS
+ */
+PRIVATE int NEAR
+AnalyseCmdLine(PSZ const pszLine)
+{
+    CC		parse_rc;
+    PCHAR	tp;
+    CHAR	TokenId;
+    int		i;
+    USHORT	adapter = 0xFFFF;
+
+
+    /* Call IBM supplied parser with the above defined option
+     * table. */
+
+    parse_rc = Command_Parser(pszLine, &opttable,
+			      DeviceTable, MAX_DEVICETABLE_SIZE);
+
+    /* Process errors. Although errors were detected the
+     * command line and 'DeviceTable' may contain valid tokens
+     * which have to be processed later, so only use 'break'
+     * in 'case' clauses. */
+
+    switch( parse_rc.ret_code )
+    {
+	/* SYNTAX_ERR:
+	 *	General error in command line, no special handling
+	 */
+      case SYNTAX_ERR:
+	sprintk(szMsgBuffer, szCmdLineSyntax, (PSZ)szDriverName);
+	SaveMessage();
+	break;
+
+	/* REQ_OPT_ERR:
+	 *	Required option is missing in command line (probably /A: )
+	 */
+      case REQ_OPT_ERR:
+	sprintk(szMsgBuffer, szMissingOption, (PSZ)szDriverName);
+	SaveMessage();
+	break;
+
+	/* INVALID_OPT_ERR:
+	 *	Bad format?
+	 */
+      case INVALID_OPT_ERR:
+	sprintk(szMsgBuffer, szUnknownOption,
+		(PSZ)szDriverName, (PBYTE)DeviceTable);
+	SaveMessage();
+	break;
+
+      case UNDEFINED_TYPE_ERR:
+      case UNDEFINED_STATE_ERR:
+      case BUF_TOO_SMALL_ERR:
+      default:
+	sprintk(szMsgBuffer, szCmdLineError, 
+		(PSZ)szDriverName, parse_rc.ret_code);
+	SaveMessage();
+      case NO_OPTIONS_FND_ERR:
+      case NO_ERR:
+	break;
+    }
+
+    /* Let 'tp' jump from token to token. */
+
+    for( tp = DeviceTable; (TokenId=*(tp+TOKL_ID)) != TOK_ID_END;
+	 tp += *(tp+TOKL_LEN) )
+    {
+	switch( TokenId )
+	{
+	  case TOK_ID_VERBOSE:
+	    DEBMSG("\r\n/VERBOSE");
+	    fDriverFlags |= DF_VERBOSE;
+	    break;
+
+	  case TOK_ID_DEBUG:
+	    DEBMSG("\r\n/DEBUG");
+	    fDriverFlags |= DF_VERBOSE;
+	    fDriverFlags |= DF_DEBUG;
+
+	    if( *(tp+TOKL_LEN) == TOK_MIN_LENGTH+1 )
+	    {
+		UCHAR code = *(tp+TOKL_VALUE);
+
+		switch( code )
+		{
+		  default:
+		    sprintk(szMsgBuffer, szUnknownOption, 
+			    (PSZ)szDriverName, (PBYTE)DeviceTable);
+		    SaveMessage();
+		    break;
+		}
+	    }
+	    break;
+
+	  case TOK_ID_ADAPTER:
+	    adapter = *(tp+TOKL_VALUE);
+	    DEBMSG1("\r\n/A:%w",adapter);
+	    break;
+
+	  case TOK_ID_EF:
+	  case TOK_ID_DF:
+	    /* Loop through every coordinate.patch provided */
+	    for( i = 0; i < *(tp+TOKL_LEN)-2; i += 6 )
+	    {
+		PCHAR	cp = tp + TOKL_VALUE + i;
+
+		DEBMSG3("\r\n/[!]E:(%w,%w,%w)",*(PUSHORT)(cp),*(PUSHORT)(cp+2),*(PUSHORT)(cp+4));
+
+		AddUTable(adapter,			/* adapter index */
+			  *(PUSHORT)(cp),		/* unit index */
+			  *(PUSHORT)(cp+2),		/* page number */
+			  (TokenId == TOK_ID_EF ? 1 : 0),
+			  *(PUSHORT)(cp+4));		/* mask */
+	    }
+	    break;
+
+	  case TOK_ID_END:
+	    break;
+
+	  default:
+	    break;
+	}
+    }
+
+    return 0;
+} /*end[AnalyseCmdLine]*/
+
+
+
+
+
+/* **********************************************************************
+ * **** Public Entries **************************************************
+ * ******************************************************************* */
+
+
+/*#
+ * CALL
+ *	InitBase(pRPI)
+ * PARAMETER
+ *	pRPI		init request
+ * RETURNS
+ *	error code as expected from the OS/2 device system
+ * GLOBAL
+ *	Device_Help
+ *	pGlobalInfoSeg
+ *	fDriverFlags
+ *	szDriverName, error messages
+ * DESPRIPTION
+ *	Process Base Initialization Request Packet
+ *
+ * REMARKS
+ *	Uses IBM supplied command line parser.
+ */
+PUBLIC USHORT NEAR
+InitBase(PRPINITIN pRPI)
+{
+    PULONG		pInfoSegSel;
+    int			rc;
+    PRPINITOUT const	pRPO = (PRPINITOUT)pRPI;
+
+    PDDD_PARM_LIST const pInitParms = (PDDD_PARM_LIST)pRPI->InitArgs;
+    PSZ			pCmdLine;
+
+    DEBMSG("\r\nInitBase");
+    DBSTOP();
+
+    /* Contains entry point to kernel functions */
+
+    Device_Help = pRPI->DevHlpEP;
+    pCmdLine	= MK_FP(FP_SEL(pInitParms),pInitParms->cmd_line_args);
+
+    if( DevHelp_VirtToPhys(&DiskDDHeader, &ppDiskDDHeader) )
+    {
+	sprintk(szMsgBuffer, szErrorVAddr, (PSZ)szDriverName);
+	SaveMessage();
+	rc = -1;
+	goto ERROR_EXIT;			/* !!! */
+    }
+
+    DevHelp_GetDOSVar(DHGETDOSV_SYSINFOSEG, 0, (PPVOID)&pInfoSegSel);
+    pGlobalInfoSeg = MAKEP(*pInfoSegSel, 0);
+
+
+    /* Parse Command Line Args */
+
+    AnalyseCmdLine(pCmdLine);
+
+    if( (fDriverFlags & DF_VERBOSE) )
+    {
+	sprintk(szMsgBuffer, szLogo, (PSZ)szProduct, VERSION, SUBVERSION);
+	SaveMessage();
+    }
+
+    rc = ScanDevices();
+
+
+    /* Processing complete.  Analyse situation, should we install,
+     * quiet fail or even loudly stop Config.Sys processing? */
+
+    if( rc == 0 )
+    {
+	/* We do not need to register any units, since this
+	 * filter does not generate any units on his own. */
+
+	pRPO->Unit    = 0;
+	pRPO->CodeEnd = ((USHORT)Code_End & ~0x0F) + 0x10;
+	pRPO->DataEnd = ((USHORT)npInitData & ~0x0F) + 0x10;
+
+	DEBMSG("\r\nDriver installed");
+	fDriverFlags |= DF_INITDONE;
+	return STATUS_DONE;
+    }
+    else
+    {
+      ERROR_EXIT:				/* goto destination */
+	pRPO->Unit    = 0;
+	pRPO->CodeEnd = 0;
+	pRPO->DataEnd = 0;
+
+	if( rc < 0 )
+	    return STERR | STDON | ERROR_I24_GEN_FAILURE;
+	else
+	    return STERR | STDON | ERROR_I24_QUIET_INIT_FAIL;
+    }
+}
+
+
+
+/* History:
+ *
+ * $Log: init1.c,v $
+ * Revision 1.9  1998/03/04 02:11:28  vitus
+ * - added option and code to modify mode page 13 (inact. timeout)
+ *
+ * Revision 1.8  1997/12/16 02:48:09  vitus
+ * - renamed source files
+ * - clarified messages
+ *
+ * Revision 1.7  1997/12/11 01:43:44  vitus
+ * - displays current settings if no change requested
+ * - uses external SaveMessages() - keep messages in swappable memory
+ *
+ * Revision 1.6  1997/12/08 23:10:24  vitus
+ * - INITMSG define
+ * - expected messages don't display driver name
+ * - AddUTable/QueryUTable: adjusted for WatCom's type conversion
+ * - added messages before writing the new page contents
+ * - new OPT structure layout
+ *
+ * Revision 1.5  1997/12/06 00:37:13  vitus
+ * - enabled support for WatCom C
+ * - switched to internal _fxxxxx functions
+ *
+ * Revision 1.4  1997/11/12 00:40:30  vitus
+ * - enable/disable options are saved per page
+ *
+ * Revision 1.3  1997/11/10 01:15:37  vitus
+ * - ModifyXxxxx function does MODE SENSE if device in device table,
+ *   but doesn't do a MODE SELECT if no changes requested
+ *
+ * Revision 1.2  1997/11/05 00:49:57  vitus
+ * - seperate functions 'ModifyXxxxxPage(device, npUnit)'
+ *
+ * Revision 1.1  1997/10/28 02:06:59  vitus
+ * Initial revision
+ */
+@
+
+
+1.9
+log
+@- added option and code to modify mode page 13 (inact. timeout)
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/perf/RCS/init1.c,v $
+ * $Revision: 1.8 $
+ * $Date: 1997/12/16 02:48:09 $
+d15 1
+a15 1
+static char const id[]="$Id: init1.c,v 1.8 1997/12/16 02:48:09 vitus Exp vitus $";
+d435 1
+a435 3
+#if defined(_MSC_VER)
+    ULONG	dummy;				/* needed for SAVE_REGS() */
+#endif
+d449 3
+a451 1
+	DevHelp_ProcBlock( (ULONG)iorb, -1L, WAIT_IS_NOT_INTERRUPTABLE );
+d456 2
+a457 1
+    return (iorb->Status & IORB_ERROR ? iorb->ErrorCode : 0);
+d2056 3
+@
+
+
+1.8
+log
+@- renamed source files
+- clarified messages
+@
+text
+@d2 3
+a4 3
+ * $Source: e:/source/driver/perf/RCS/init1.c,v $
+ * $Revision: 1.7 $
+ * $Date: 1997/12/11 01:43:44 $
+d12 1
+a12 1
+ * Author: Vitus Jensen, 2:2474/424, 1997
+d15 1
+a15 1
+static char const id[]="$Id: init1.c,v 1.7 1997/12/11 01:43:44 vitus Exp vitus $";
+d106 1
+d110 1
+d127 2
+d176 4
+d198 1
+a198 3
+/*
+ * NAME
+ *	AddUTable
+a200 1
+ *
+a206 1
+ *
+a208 1
+ *
+a210 1
+ *
+d269 5
+d289 1
+a289 3
+/*
+ * NAME
+ *	QueryUTable
+a291 1
+ *
+a294 1
+ *
+a296 1
+ *
+a298 1
+ *
+a328 2
+ * NAME
+ *	DumpStatusblock
+a332 1
+ *
+a334 1
+ *
+a336 1
+ *
+d386 1
+a386 3
+/*
+ * NAME
+ *	SendIORBNotify
+a388 1
+ *
+a390 1
+ *
+a392 1
+ *
+a394 1
+ *
+d413 1
+a413 3
+/*
+ * NAME
+ *	SendIORB
+a415 1
+ *
+a418 1
+ *
+a421 1
+ *
+a423 1
+ *
+d463 1
+a463 3
+/*
+ * NAME
+ *	CheckAdapterInfo
+d465 1
+a465 2
+ *	CheckAdapterInfo(add_index,npAdapterInfo)
+ *
+a468 1
+ *
+a471 1
+ *
+a473 1
+ *
+d518 1
+a518 3
+/*
+ * NAME
+ *	CheckUnitInfo
+a520 1
+ *
+a523 1
+ *
+a526 1
+ *
+a528 1
+ *
+a565 2
+ * NAME
+ *	ModeSense
+a573 1
+ *
+d575 2
+d581 1
+a581 1
+PRIVATE int
+a653 2
+ * NAME
+ *	ModeSelect
+a655 1
+ *
+a661 1
+ *
+d663 2
+a742 2
+ * NAME
+ *	ModifyCachePage
+a744 1
+ *
+a747 1
+ *
+a749 1
+ *
+a751 1
+ *
+a945 2
+ * NAME
+ *	ModifyControlPage
+a947 1
+ *
+a950 1
+ *
+a952 1
+ *
+a954 1
+ *
+d957 1
+a1090 2
+ * NAME
+ *	ModifyConnectPage
+a1092 1
+ *
+a1095 1
+ *
+a1097 1
+ *
+a1099 1
+ *
+d1298 195
+a1492 3
+/*
+ * NAME
+ *	ModifyDevice
+a1497 1
+ *
+a1500 1
+ *
+d1543 1
+d1583 1
+a1583 3
+/*
+ * NAME
+ *	ScanDevices
+d1611 1
+d1639 2
+a1640 2
+	add_index < add_count;
+	++add_index, ++pDCE )
+d1673 1
+a1673 1
+	for( j = 0; j < ((PDEVICETABLE)DeviceTable)->TotalAdapters; ++j )
+d1680 1
+a1680 1
+	    if( CheckAdapterInfo(add_index+j, npAdapterInfo) )
+d1712 1
+a1712 1
+		dev.iAdapter = add_index + j;
+d1812 1
+a1812 3
+/*
+ * NAME
+ *	AnalyseCmdLine
+d1821 2
+a1822 1
+     Invoke parser and analyse token output.
+d1959 1
+a1959 3
+/*
+ * NAME
+ *	InitBase
+d1973 1
+d2055 4
+@
+
+
+1.7
+log
+@- displays current settings if no change requested
+- uses external SaveMessages() - keep messages in swappable memory
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1997/12/08 23:10:24 $
+d15 1
+a15 1
+static char const id[]="$Id: init1.c,v 1.6 1997/12/08 23:10:24 vitus Exp vitus $";
+d45 1
+a45 1
+#include "dskperf.h"
+d103 6
+a108 6
+INITMSG	szRCachePage[]=	  "Adapter %u, Unit %u: reading cache page";
+INITMSG	szRControlPage[]= "Adapter %u, Unit %u: reading control page";
+INITMSG	szRConnectPage[]= "Adapter %u, Unit %u: reading connect/disconnect page";
+INITMSG	szWCachePage[]=	  "Adapter %u, Unit %u: writing cache page";
+INITMSG	szWControlPage[]= "Adapter %u, Unit %u: writing control page";
+INITMSG	szWConnectPage[]= "Adapter %u, Unit %u: writing connect/disconnect page";
+d142 3
+a144 3
+INITMSG szProduct[]=	"SCSI Mode Page Modifier";
+INITMSG szLogo[]=	"\r\n%s                                      Version %u.%02u" \
+			"\r\nMade by Vitus Jensen (2:2474/424)                            " __DATE__ ;
+d1915 4
+@
+
+
+1.6
+log
+@- INITMSG define
+- expected messages don't display driver name
+- AddUTable/QueryUTable: adjusted for WatCom's type conversion
+- added messages before writing the new page contents
+- new OPT structure layout
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1997/12/06 00:37:13 $
+d7 2
+a8 1
+ * First step of initialisation.
+d12 1
+a12 1
+ * Author: Vitus Jensen, 2:2474/424
+d15 1
+a15 1
+static char const id[]="$Id: init1.c,v 1.5 1997/12/06 00:37:13 vitus Exp vitus $";
+d77 2
+a78 2
+INITMSG	szSenseFailed[]= "%s: adapter %u, unit %u MODE SENSE(6) failed (%04x)\n";
+INITMSG	szSelectFailed[]= "%s: adapter %u, unit %u MODE SELECT(6) failed (%04x)\n";
+d110 15
+d142 1
+a142 1
+INITMSG szProduct[]="SCSI Mode Page Modifier";
+d154 1
+a154 1
+	UINT	access : 1;		/* forces reading of  this page */
+d161 1
+a161 1
+	UINT	access : 1;		/* forces reading of  this page */
+d168 1
+a168 1
+	UINT	access : 1;		/* forces reading of  this page */
+d236 1
+a236 1
+		UnitOption[i].pg2.access = 1;
+d248 1
+a248 1
+		UnitOption[i].pg8.access = 1;
+d260 1
+a260 1
+		UnitOption[i].pg10.access = 1;
+a328 29
+ *	SaveMessage
+ * CALL
+ *	SaveMessage(void)
+ * PARAMETER
+ *	none
+ * RETURNS
+ *	nothing
+ * GLOBAL
+ *	szMsgBuffer,msgBuffer		message
+ * DESPRIPTION
+ *	Copies 'szMsgBuffer', if still in init phase 1, to screen
+ *	via DevHelp_Save_Messsage.
+ * REMARKS
+ */
+#pragma optimize("",off)
+PRIVATE void
+SaveMessage(void)
+{
+    if( !(fDriverFlags & DF_INITDONE) )
+	DevHelp_Save_Message((NPBYTE)&msgBuffer);
+    return;
+}
+#pragma optimize("",)
+
+
+
+
+/*#
+ * NAME
+a354 1
+    DEBMSG(szMsgBuffer);
+a367 1
+	DEBMSG(szMsgBuffer);
+a381 1
+	DEBMSG(szMsgBuffer);
+d508 1
+a508 1
+	DEBMSG(szMsgBuffer);
+d515 1
+a515 1
+	DEBMSG(szMsgBuffer);
+d528 1
+a528 1
+	DEBMSG(szMsgBuffer);
+d572 1
+a572 1
+	DEBMSG(szMsgBuffer);
+d581 1
+a581 1
+	DEBMSG(szMsgBuffer);
+a667 1
+	DEBMSG(szMsgBuffer);
+a758 1
+	DEBMSG(szMsgBuffer);
+d777 1
+a777 1
+ *	ModifyCachePage(pADDEntry,npUnit)
+d780 2
+a781 2
+ *	pADDEntry		entry to ADD
+ *	npUnit			from GET_DEVICE_TABLE
+d816 1
+a816 1
+    DEBMSG(szMsgBuffer);
+d847 1
+a847 2
+		    npUnit->AdapterIndex, npUnit->UnitIndex, pgno);
+	    DEBMSG(szMsgBuffer);
+d855 31
+d955 1
+a955 1
+	    DEBMSG(szMsgBuffer);
+d986 1
+a986 1
+ *	ModifyControlPage(pADDEntry,npUnit)
+d989 2
+a990 2
+ *	pADDEntry		entry to ADD
+ *	npUnit			from GET_DEVICE_TABLE
+d1018 1
+a1018 1
+    DEBMSG(szMsgBuffer);
+d1045 1
+a1045 1
+	if( (page->pcode & 0x7F) != 0x0A )
+d1048 1
+a1048 2
+		    npUnit->AdapterIndex, npUnit->UnitIndex, pgno);
+	    DEBMSG(szMsgBuffer);
+d1056 22
+d1105 1
+a1105 1
+	    DEBMSG(szMsgBuffer);
+d1136 1
+a1136 1
+ *	ModifyConnectPage(pADDEntry,npUnit)
+d1139 2
+a1140 2
+ *	pADDEntry		entry to ADD
+ *	npUnit			from GET_DEVICE_TABLE
+d1169 1
+a1169 1
+    DEBMSG(szMsgBuffer);
+d1196 1
+a1196 1
+	if( (page->pcode & 0x7F) != 0x02 )
+d1199 1
+a1199 2
+		    npUnit->AdapterIndex, npUnit->UnitIndex, pgno);
+	    DEBMSG(szMsgBuffer);
+d1207 34
+d1319 1
+a1319 1
+	    DEBMSG(szMsgBuffer);
+d1371 1
+a1371 1
+    DEBMSG(szMsgBuffer);
+a1390 1
+	    DEBMSG(szMsgBuffer);
+a1421 1
+	    DEBMSG(szMsgBuffer);
+d1429 1
+a1429 1
+	DEBMSG(szMsgBuffer);
+a1485 1
+	DEBMSG(szMsgBuffer);
+a1522 1
+		DEBMSG(szMsgBuffer);
+d1577 1
+a1577 1
+		DEBMSG(szMsgBuffer);
+d1595 1
+a1595 1
+	DEBMSG(szMsgBuffer);
+a1711 1
+	DEBMSG(szMsgBuffer);
+a1719 1
+	DEBMSG(szMsgBuffer);
+a1728 1
+	DEBMSG(szMsgBuffer);
+a1737 1
+	DEBMSG(szMsgBuffer);
+a1766 4
+		  case 1:
+		    fDriverFlags |= DF_TESTOP;
+		    break;
+
+a1769 1
+		    DEBMSG(szMsgBuffer);
+a1857 1
+	DEBMSG(szMsgBuffer);
+a1873 1
+	DEBMSG(szMsgBuffer);
+d1889 2
+a1890 2
+	pRPO->CodeEnd = 0;
+	pRPO->DataEnd = 0;
+d1892 1
+d1915 7
+@
+
+
+1.5
+log
+@- enabled support for WatCom C
+- switched to internal _fxxxxx functions
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1997/11/12 00:40:30 $
+d14 1
+a14 1
+static char const id[]="$Id: init1.c,v 1.4 1997/11/12 00:40:30 vitus Exp vitus $";
+d61 1
+d66 22
+d89 7
+a95 23
+char _ininit	szErrorVAddr[]= "%s: error converting virtual to physical address";
+char _ininit	szNoDriverTab[]="%s: error retrieving driver table";
+char _ininit	szNoDevTab[]=	"%s: error retrieving device table from ADD %u";
+char _ininit	szNoSCSI[]=	"%s: adapter %u has no SCSI bus";
+char _ininit	szNo16M[]=	"%s: adapter %u doesn't support memory above 16MB";
+char _ininit	szNoScGa[]=	"%s: adapter %u doesn't support HW scatter/gather";
+char _ininit	szNoDiskType[]=	"%s: adapter %u, unit %u is no disk device";
+char _ininit	szRemovable[]=	"%s: adapter %u, unit %u is removable";
+char _ininit	szDiskette[]=	"%s: adapter %u, unit %u is diskette drive";
+char _ininit	szDefective[]=	"%s: adapter %u, unit %u is defect";
+char _ininit	szNoSupport[]=	"%s: adapter %u, unit %u has /!DM or /!SM set";
+char _ininit	szAllocFailed[]="%s: adapter %u, unit %u allocation failed";
+char _ininit	szDeallocFailed[]="%s: adapter %u, unit %u, deallocation failed";
+char _ininit	szChangeUInfoFailed[]="%s: adapter %u, unit %u, change unit info failed";
+char _ininit	szNoDevices[]=	"%s: no devices found";
+
+
+char _ininit	szSenseFailed[]= "%s: adapter %u, unit %u MODE SENSE(6) failed (%04x)\n";
+char _ininit	szSelectFailed[]= "%s: adapter %u, unit %u MODE SELECT(6) failed (%04x)\n";
+char _ininit	szStatusblock[]= "%s: StatusBlock, Flags %02x, Adapter Error %04x, Target Status %02x";
+char _ininit	szAdapterDiag[]= "%s: adapter specific info [%s]";
+char _ininit	szSensedata[]=	"%s: SenseData [%s]";
+char _ininit	szHex[]=	"%02x ";
+d99 9
+a107 7
+char _ininit	szModifyStart[]= "%s: adapter %u, unit %u, modifications start...";
+char _ininit	szModifyOK[]= "%s: adapter %u, unit %u, modifications ended w/o errors";
+char _ininit	szUnknFormat[]=	"%s: adapter %u, unit %u, unknown format of page %u";
+
+char _ininit	szCachePage[]=	"%s: adapter %u, unit %u, requesting cache page";
+char _ininit	szControlPage[]= "%s: adapter %u, unit %u, requesting control page";
+char _ininit	szConnectPage[]= "%s: adapter %u, unit %u, requesting connect/disconnect page";
+d112 4
+a115 4
+char _ininit	szCmdLineSyntax[]= "%s: syntax error in command line";
+char _ininit	szMissingOption[]= "%s: required option missing in command line";
+char _ininit	szUnknownOption[]= "%s: unknown command line option";
+char _ininit	szCmdLineError[]="%s: command line option error %d";
+d118 1
+a118 1
+char _ininit	szFoundDevice[]="Adapter %u, Unit %u found";
+d126 2
+a127 2
+char _ininit szProduct[]="SCSI Mode Page Modifier";
+char _ininit szLogo[]=	"\r\n%s                                      Version %u.%02u" \
+d206 1
+a206 1
+    if( aidx > 0x007F  ||  uidx > 0xFF )
+d212 2
+a213 2
+	    ||  ((UnitOption[i].adpno & ~0x80U) == aidx
+		 &&  UnitOption[i].unitno == (UCHAR)uidx) )
+d298 2
+a299 2
+	   &&  (UnitOption[i].adpno & ~0x80U) == aidx
+	   &&  UnitOption[i].unitno == (UCHAR)uidx )
+d523 1
+a523 1
+	sprintk(szMsgBuffer, szNo16M, (PSZ)szDriverName, iAdapter);
+d530 1
+a530 1
+	sprintk(szMsgBuffer, szNoScGa, (PSZ)szDriverName, iAdapter);
+d543 1
+a543 1
+	sprintk(szMsgBuffer, szNoSCSI, (PSZ)szDriverName, iAdapter);
+a581 1
+    USHORT const utype = npUnitInfo->UnitType;
+d587 1
+a587 2
+	sprintk(szMsgBuffer, szDiskette, (PSZ)szDriverName,
+		device->iAdapter, device->iUnit);
+d596 1
+a596 2
+	sprintk(szMsgBuffer, szDefective, (PSZ)szDriverName,
+		device->iAdapter, device->iUnit);
+d833 1
+a833 2
+    sprintk(szMsgBuffer, szCachePage, (PSZ)szDriverName,
+	    device->iAdapter, device->iUnit);
+d942 5
+d952 1
+a952 1
+	    DEBMSG2("\r\nNew data for page 8\r\n%z",(PVOID)data,mdlen);
+d1005 1
+a1005 2
+    sprintk(szMsgBuffer, szControlPage, (PSZ)szDriverName,
+	    device->iAdapter, device->iUnit);
+d1071 5
+d1081 1
+a1081 1
+	    DEBMSG2("\r\nNew page A\r\n%z",(PVOID)data,mdlen);
+d1135 1
+a1135 2
+    sprintk(szMsgBuffer, szConnectPage, (PSZ)szDriverName,
+	    device->iAdapter, device->iUnit);
+d1252 5
+d1262 1
+a1262 1
+	    DEBMSG2("\r\nNew page A\r\n%z",(PVOID)data,mdlen);
+d1304 1
+a1304 2
+    sprintk(szMsgBuffer, szModifyStart, (PSZ)szDriverName,
+	    device->iAdapter, device->iUnit);
+d1315 1
+a1315 1
+	memset( pIOUC, 0, sizeof(IORB_UNIT_CONTROL) );
+d1364 1
+a1364 2
+	sprintk(szMsgBuffer, szModifyOK, (PSZ)szDriverName,
+		device->iAdapter, device->iUnit);
+d1366 1
+a1366 1
+	if( (fDriverFlags & DF_VERBOSE) )
+d1532 1
+a1532 1
+	sprintk(szMsgBuffer, szNoDevices, (PSZ)szDriverName);
+d1536 2
+a1537 1
+	return 1;				/* non-fatal error */
+d1566 1
+a1566 1
+    {TOK_ID_VERBOSE,	"/V", TYPE_0,		{0,  E,  E}};
+d1569 1
+a1569 1
+    {TOK_ID_DEBUG,	"/DEBUG:", TYPE_D,	{0,  E,  E}};
+d1572 1
+a1572 1
+    {TOK_ID_DEBUG,	"/DEBUG", TYPE_0,	{0,  E,  E}};
+d1575 1
+a1575 1
+    {TOK_ID_ADAPTER,	"/A:", TYPE_D,		{1,  E,  1}};
+d1578 1
+a1578 1
+    {TOK_ID_EF,		"/E:", TYPE_GEOMETRY,	{E,  2,  2}};
+d1581 1
+a1581 1
+    {TOK_ID_DF,		"/!E:", TYPE_GEOMETRY,	{E,  2,  2}};
+d1584 1
+a1584 1
+    {TOK_ID_END,	"\0", TYPE_0,		{O,  O,  O}};
+d1863 4
+@
+
+
+1.4
+log
+@- enable/disable options are saved per page
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1997/11/10 01:15:37 $
+d13 3
+a15 1
+static char const id[]="$Id: init1.c,v 1.3 1997/11/10 01:15:37 vitus Exp vitus $";
+d35 7
+a41 2
+#include <dhcalls.h>
+
+d117 3
+a119 3
+char _ininit szProduct[]="SCSI Disk Performace Modifier";
+char _ininit szLogo[]=	"\n\r%s                                Version %u.%02u\n\r" \
+			"Made by Vitus Jensen (2:2474/424), use at own risk!          " __DATE__ ;
+d196 1
+a196 1
+    DEBMSG3("\r\nAddUTable: %w %w = %w",aidx,uidx,patch);
+a321 1
+    DEBMSG(szMsgBuffer);
+d359 1
+d370 1
+a370 1
+	    sprintk(&achDump[_far_strlen(achDump)],
+d373 1
+d386 1
+a386 1
+	    sprintk(&achDump[_far_strlen(achDump)], szHex, sensedata[i]);
+d388 1
+d418 1
+a418 1
+PRIVATE void FAR _loadds
+d456 1
+a456 1
+SendIORB(PIORB iorb,void (FAR *addentry)(PIORB))
+d458 1
+d460 1
+d462 1
+a462 1
+    iorb->NotifyAddress = SendIORBNotify;
+d621 1
+a621 1
+ModeSense(void (FAR *pADDEntry)(),NPUNITINFO const npUnit,
+d678 1
+d712 1
+a712 1
+ModeSelect(void (FAR *pADDEntry)(),NPUNITINFO const npUnit,
+d770 1
+d861 1
+d1028 1
+d1154 1
+d1308 1
+d1340 1
+d1391 1
+a1391 1
+    void	(FAR *pADDBaseEP)();
+d1406 1
+d1435 1
+a1435 1
+	    (PVOID)pADDBaseEP = (PVOID)MAKEP(pDCE->DCSelector, pDCE->DCOffset);
+d1444 1
+d1551 3
+a1556 3
+OPT OPT_DEBUG_NO =
+    {TOK_ID_DEBUG,	"/DEBUG:", TYPE_D,	{0,  E,  E}};
+
+d1578 7
+a1584 6
+	(POPT)&OPT_VERBOSE,
+	(POPT)&OPT_DEBUG_NO,
+	(POPT)&OPT_DEBUG_DEFAULT,
+	(POPT)&OPT_ENABLE,
+	(POPT)&OPT_DISABLE,
+	(POPT)&OPT_END
+d1606 1
+a1606 1
+AnalyseCmdLine(PSZ pszLine)
+d1618 2
+a1619 2
+    parse_rc = Command_Parser( pszLine, &opttable,
+			      DeviceTable, MAX_DEVICETABLE_SIZE );
+d1632 2
+a1633 1
+	sprintk( szMsgBuffer, szCmdLineSyntax, (PSZ)szDriverName );
+d1641 2
+a1642 1
+	sprintk( szMsgBuffer, szMissingOption, (PSZ)szDriverName );
+d1650 3
+a1652 2
+	sprintk( szMsgBuffer, szUnknownOption, 
+		(PSZ)szDriverName, (PBYTE)DeviceTable );
+d1660 3
+a1662 2
+	sprintk( szMsgBuffer, szCmdLineError, 
+		(PSZ)szDriverName, parse_rc.ret_code );
+d1697 3
+a1699 2
+		    sprintk( szMsgBuffer, szUnknownOption, 
+			    (PSZ)szDriverName, (PBYTE)DeviceTable );
+d1718 1
+a1718 1
+		DEBMSG3("\r\n/[1]E:(%w,%w,%w)",*(PUSHORT)(cp),*(PUSHORT)(cp+2),*(PUSHORT)(cp+4));
+d1767 1
+a1767 1
+PUBLIC USHORT
+d1770 3
+a1772 3
+    PULONG	pInfoSegSel;
+    int		rc;
+    PRPINITOUT	pRPO = (PRPINITOUT)pRPI;
+d1774 2
+a1775 2
+    PDDD_PARM_LIST			pInitParms;
+    CHAR _based((_segment)pInitParms)	*bpCmdLine;
+d1778 1
+a1778 3
+#if defined(DEBUG)
+    _asm{ int 3 }
+#endif
+d1783 1
+a1783 2
+    pInitParms	= (PDDD_PARM_LIST)pRPI->InitArgs;
+    bpCmdLine	= (CHAR _based((_segment)pInitParms) *)pInitParms->cmd_line_args;
+d1787 2
+a1788 1
+	sprintk( szMsgBuffer, szErrorVAddr, (PSZ)szDriverName );
+d1800 1
+a1800 1
+    AnalyseCmdLine( (PSZ)bpCmdLine );
+d1805 1
+d1846 3
+@
+
+
+1.3
+log
+@- ModifyXxxxx function does MODE SENSE if device in device table,
+  but doesn't do a MODE SELECT if no changes requested
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1997/11/05 00:49:57 $
+d8 2
+d13 1
+a13 1
+static char const id[]="$Id: init1.c,v 1.2 1997/11/05 00:49:57 vitus Exp vitus $";
+d112 1
+a112 1
+			"Copyright 1997 by Vitus Jensen (2:2474/424)                  " __DATE__ ;
+d119 1
+a119 1
+    UCHAR	adpno;				/* MSB set if valid entry */
+d122 18
+a139 11
+	ULONG	wce : 2;		/* write cache enable */
+	ULONG	rce : 2;		/* read cache enable */
+	ULONG	pre : 2;		/* pre-fetch enable */
+	ULONG	prio : 2;		/* higher pre-fetch priority */
+	ULONG	queue : 2;		/* enable tagged queuing */
+	ULONG	reorder : 2;		/* unrestricted reordering */
+	ULONG	buffer : 2;		/* empty/full ration */
+	ULONG	inactive : 2;		/* enable inactive bus timeout */
+	ULONG	disconnect : 2;		/* enable disconnect timeout */
+	ULONG	connect : 2;		/* enable connect timeout */
+    } feature;
+d162 1
+a162 1
+ *	AddUTable(aidx,uidx,patch)
+d167 1
+d185 1
+a185 1
+AddUTable(USHORT aidx,USHORT uidx,int enable,USHORT patch)
+d201 38
+a238 20
+	    if( (patch & 0x0001) )
+		UnitOption[i].feature.wce = (enable ? 2 : 1);
+	    if( (patch & 0x0002) )
+		UnitOption[i].feature.rce = (enable ? 2 : 1);
+	    if( (patch & 0x0004) )
+		UnitOption[i].feature.pre = (enable ? 2 : 1);
+	    if( (patch & 0x0008) )
+		UnitOption[i].feature.prio = (enable ? 2 : 1);
+	    if( (patch & 0x0010) )
+		UnitOption[i].feature.queue = (enable ? 2 : 1);
+	    if( (patch & 0x0020) )
+		UnitOption[i].feature.reorder = (enable ? 2 : 1);
+	    if( (patch & 0x0040) )
+		UnitOption[i].feature.buffer = (enable ? 2 : 1);
+	    if( (patch & 0x0080) )
+		UnitOption[i].feature.inactive = (enable ? 2 : 1);
+	    if( (patch & 0x0100) )
+		UnitOption[i].feature.disconnect = (enable ? 2 : 1);
+	    if( (patch & 0x0200) )
+		UnitOption[i].feature.connect = (enable ? 2 : 1);
+d241 2
+a242 2
+	}
+    }
+d806 1
+a806 1
+    if( pOption == NULL )
+d855 1
+a855 1
+	if( pOption->feature.rce == 1  &&  (page->cache & 0x01) == 0 )
+d860 1
+a860 1
+	else if( pOption->feature.rce == 2  &&  (page->cache & 0x01) != 0 )
+d866 1
+a866 1
+	if( pOption->feature.wce == 1  &&  (page->cache & 0x04) != 0 )
+d871 1
+a871 1
+	else if( pOption->feature.wce == 2  &&  (page->cache & 0x04) == 0 )
+d877 1
+a877 1
+	if( pOption->feature.prio == 1  &&  page->priority != 0 )
+d882 1
+a882 1
+	else if( pOption->feature.prio == 2  &&  page->priority != 0x11 )
+d888 1
+a888 1
+	if( pOption->feature.pre == 1
+d903 1
+a903 1
+	else if( pOption->feature.pre == 2
+d973 1
+a973 1
+    if( pOption == NULL )
+d1021 1
+a1021 1
+	if( pOption->feature.queue == 1  &&  (page->queuing & 0x01) == 0 )
+d1026 1
+a1026 1
+	else if( pOption->feature.queue == 2  &&  (page->queuing & 0x01) != 0 )
+d1032 1
+a1032 1
+	if( pOption->feature.reorder == 1  &&  (page->queuing & 0xF0) == 0x10 )
+d1037 1
+a1037 1
+	else if(pOption->feature.reorder == 2 && (page->queuing & 0xF0) != 0x10)
+d1098 1
+a1098 1
+    if( pOption == NULL )
+d1146 1
+a1146 1
+	if( pOption->feature.buffer == 1
+d1155 1
+a1155 1
+	else if( pOption->feature.buffer == 2
+d1166 1
+a1166 1
+	if( pOption->feature.inactive == 1
+d1174 1
+a1174 1
+	else if(pOption->feature.inactive == 2
+d1184 1
+a1184 1
+	if( pOption->feature.disconnect == 1
+d1192 1
+a1192 1
+	else if( pOption->feature.disconnect == 2
+d1202 1
+a1202 1
+	if( pOption->feature.connect == 1
+d1210 1
+a1210 1
+	else if( pOption->feature.connect == 2
+d1537 3
+d1541 1
+a1541 1
+    {TOK_ID_EF,		"/E:", TYPE_GEOMETRY,	{0,  E,  E}};
+d1544 1
+a1544 1
+    {TOK_ID_DF,		"/!E:", TYPE_GEOMETRY,	{0,  E,  E}};
+d1591 1
+d1680 5
+a1686 2
+	    DEBMSG("\r\n/E:,/!E:");
+
+d1692 5
+a1696 1
+		AddUTable(*(PUSHORT)(cp), *(PUSHORT)(cp+2), 
+d1698 1
+a1698 1
+			  *(PUSHORT)(cp+4));
+a1705 3
+#if __DEBUG__
+	    _asm int 3;
+#endif
+d1821 4
+@
+
+
+1.2
+log
+@- seperate functions 'ModifyXxxxxPage(device, npUnit)'
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1997/10/28 02:06:59 $
+d11 1
+a11 1
+static char const id[]="$Id: init1.c,v 1.1 1997/10/28 02:06:59 vitus Exp vitus $";
+a72 1
+/* Related to device modification */
+d74 4
+a77 6
+char _ininit	szModifyStart[]="%s: adapter %u, unit %u, modification starts...";
+char _ininit	szModifyOK[]= "%s: adapter %u, unit %u, modification ended successfully";
+char _ininit	szSenseFailed[]=    "%s: adapter %u, unit %u MODE SENSE(6) failed (%04x)\n";
+char _ininit	szSelectFailed[]=   "%s: adapter %u, unit %u MODE SELECT(6) failed (%04x)\n";
+char _ininit	szStatusblock[]="%s: StatusBlock, Flags %02x, Adapter Error %04x, Target Status %02x";
+char _ininit	szAdapterDiag[]="%s: adapter specific info [%s]";
+d81 11
+d108 2
+a109 2
+char _ininit szProduct[]="SCSI Disk Sleeper";
+char _ininit szLogo[]=	"\n\r%s                                            Version %u.%02u\n\r" \
+d762 3
+a764 2
+ *	settings and saves new page (MODE SELECT).
+ *	If no change is requested nothing is done at all.
+d767 2
+a768 2
+ *	The device isn't requested to save these parameters.  I think
+ *	it's safer this way: reset your machine and you get the default
+a782 6
+    if( pOption->feature.wce == 0  &&  pOption->feature.rce == 0
+	&&  pOption->feature.pre == 0  &&  pOption->feature.prio == 0 )
+    {
+	DEBMSG("\r\nModifyCachePage: nothing requested in page 8");
+	return 0;
+    }
+d786 1
+a786 1
+    sprintk(szMsgBuffer, szModifyStart, (PSZ)szDriverName,
+d789 1
+a789 1
+    if( (fDriverFlags & DF_DEBUG) )
+a791 1
+
+d794 1
+a794 1
+	UCHAR			pgno = 8;
+d797 1
+a797 1
+
+d807 1
+a807 1
+	DEBMSG2("\r\nOld page 8\r\n%z",(PVOID)data,sizeof(SCSI_MODEPAGE_HDR)
+d816 1
+a816 1
+	if( (page->pcode & 0x7F) != 0x08 )	/* correct page read? */
+d818 4
+a821 3
+	    DEBMSG1("\r\nUnknown format!"
+		    "\r\nDumping complete buffer for mode page %u",pgno);
+	    DEBMSG2("\r\n%z",(PVOID)data, mdlen);
+d828 1
+d830 2
+d833 1
+d835 2
+d839 1
+d841 2
+d844 1
+d846 2
+d850 1
+d852 2
+d855 1
+d857 2
+d873 1
+d890 1
+d893 4
+a896 2
+	/* Write this control mode page via MODE SELECT(6)
+	 * but don't let target save this permanently. */
+d898 6
+a903 5
+	page->pcode &= 0x3f;			/* mask reserved bits */
+	data[0] = 0;				/* reserved in MODE SELECT */
+	DEBMSG2("\r\nNew data for page 8\r\n%z",(PVOID)data,mdlen);
+	if( ModeSelect(device->pADDEntry, npUnit, pgno, data, mdlen) )
+	    rc = 4;
+a911 7
+    if( rc == 0 )
+    {
+	sprintk(szMsgBuffer, szModifyOK, (PSZ)szDriverName,
+		device->iAdapter, device->iUnit);
+	SaveMessage();
+    }
+
+d935 1
+a949 5
+    if( pOption->feature.queue == 0  &&  pOption->feature.reorder == 0 )
+    {
+	DEBMSG("\r\nModifyControlPage: nothing requested in Page A");
+	return 0;
+    }
+d953 1
+a953 1
+    sprintk(szMsgBuffer, szModifyStart, (PSZ)szDriverName,
+d956 1
+a956 1
+    if( (fDriverFlags & DF_DEBUG) )
+a958 1
+
+d964 1
+a964 1
+
+d974 1
+a974 1
+	DEBMSG2("\r\nOld page A\r\n%z",(PVOID)data,sizeof(SCSI_MODEPAGE_HDR)
+d984 4
+a987 3
+	    DEBMSG1("\r\nUnknown format!"
+		    "\r\nDumping complete buffer for mode page %u", pgno);
+	    DEBMSG2("\r\n%z",(PVOID)data, mdlen);
+d994 1
+d996 2
+d999 1
+d1001 2
+d1005 1
+d1007 2
+d1013 1
+d1017 4
+a1020 2
+	/* Write this control mode page via MODE SELECT(6)
+	 * but don't let target save this permanently. */
+d1022 6
+a1027 5
+	page->pcode &= 0x3f;			/* mask reserved bits */
+	data[0] = 0;				/* reserved in MODE SELECT */
+	DEBMSG2("\r\nNew page A\r\n%z",(PVOID)data,mdlen);
+	if( ModeSelect(device->pADDEntry, npUnit, pgno, data, mdlen) )
+	    rc = 4;
+a1035 7
+    if( rc == 0 )
+    {
+	sprintk(szMsgBuffer, szModifyOK, (PSZ)szDriverName,
+		device->iAdapter, device->iUnit);
+	SaveMessage();
+    }
+
+d1059 2
+d1078 1
+a1078 1
+    sprintk(szMsgBuffer, szModifyStart, (PSZ)szDriverName,
+d1081 1
+a1081 1
+    if( (fDriverFlags & DF_DEBUG) )
+a1083 1
+
+d1089 1
+a1089 1
+
+d1099 1
+a1099 1
+	DEBMSG2("\r\nOld page 2\r\n%z",(PVOID)data,sizeof(SCSI_MODEPAGE_HDR)
+d1109 4
+a1112 3
+	    DEBMSG1("\r\nUnknown format!"
+		    "\r\nDumping complete buffer for mode page %u", pgno);
+	    DEBMSG2("\r\n%z",(PVOID)data, mdlen);
+d1125 1
+d1134 1
+d1144 1
+d1153 1
+d1162 1
+d1171 1
+d1180 1
+d1189 1
+d1193 4
+a1196 2
+	/* Write this control mode page via MODE SELECT(6)
+	 * but don't let target save this permanently. */
+d1198 6
+a1203 5
+	page->pcode &= 0x3f;			/* mask reserved bits */
+	data[0] = 0;				/* reserved in MODE SELECT */
+	DEBMSG2("\r\nNew page A\r\n%z",(PVOID)data,mdlen);
+	if( ModeSelect(device->pADDEntry, npUnit, pgno, data, mdlen) )
+	    rc = 4;
+a1211 7
+    if( rc == 0 )
+    {
+	sprintk(szMsgBuffer, szModifyOK, (PSZ)szDriverName,
+		device->iAdapter, device->iUnit);
+	SaveMessage();
+    }
+
+d1242 6
+d1299 8
+d1330 3
+a1332 3
+ *	Scans all adapters on all ADDs for a SCSI disk device
+ *	which isn't removable.
+ *	Modifies performance settings.
+d1785 3
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 1
+d11 1
+a11 1
+static char const id[]="$Id$";
+d738 1
+a738 1
+ *	ModifyPages
+d740 1
+a740 1
+ *	ModifyPages(pADDEntry,npUnit)
+d753 4
+d758 3
+d763 1
+a763 1
+ModifyPages(PDEVICE const device,NPUNITINFO const npUnit)
+d766 1
+a766 1
+    int		failures = 0;			/* how many ops failed? */
+d771 1
+a771 1
+	DEBMSG2("\r\nModifyPages: nothing requested for %w,%w", device->iAdapter,device->iUnit);
+d774 6
+a789 2
+    /* ---- Try to modify page 8 (caching) ---- */
+
+a795 7
+	if( pOption->feature.wce == 0  &&  pOption->feature.rce == 0
+	    &&  pOption->feature.pre == 0  &&  pOption->feature.prio == 0 )
+	{
+	    DEBMSG("\r\nPage 8 not requested");
+	    break;				/* nothing to do */
+	}
+
+d802 1
+a802 1
+	    ++failures;
+d808 1
+d814 1
+a814 1
+	if( (page->pcode & 0x7F) != 0x08 )
+d819 1
+d877 1
+a877 1
+	    ++failures;
+d882 62
+a943 1
+    /* ---- Try to modify page A (control) ---- */
+a950 6
+	if( pOption->feature.queue == 0  &&  pOption->feature.reorder == 0 )
+	{
+	    DEBMSG("\r\nPage A not requested");
+	    break;				/* nothing to do */
+	}
+
+d957 1
+a957 1
+	    ++failures;
+d973 1
+d999 1
+a999 1
+	    ++failures;
+d1008 171
+a1178 1
+    if( failures == 0 )
+d1238 3
+a1240 1
+    rc = ModifyPages(device, npUnit);
+a1700 2
+    if( !(fDriverFlags & DF_REGISTERED) )
+	fDriverFlags |= DF_VERBOSE;
+d1743 3
+a1745 1
+ * $Log$
+@

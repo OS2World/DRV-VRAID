@@ -1,0 +1,105 @@
+head	1.3;
+access;
+symbols
+	VSETUPv0_84:1.3
+	VSETUP_82:1.3
+	VSETUPv0_80:1.2
+	VSETUPv0_71:1.2
+	VSETUPv0_70:1.2
+	VSETUPv0_60:1.2
+	VSETUPv0_52:1.2
+	VSETUPv0_51:1.2
+	VSETUPv0_50:1.2
+	VSETUPv0_20:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2000.04.10.01.22.59;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.05.27.01.51.17;	author vitus;	state Stab;
+branches;
+next	1.1;
+
+1.1
+date	98.05.24.03.35.23;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Dialog to select position/size of partition
+@
+
+
+1.3
+log
+@- added static control to hold size of selected percentage
+@
+text
+@#ifndef OS2_INCLUDED
+   #include <os2.h>
+#endif
+DLGINCLUDE 1 "R:\Source\driver\raid\Setup\resources.h"
+
+DLGTEMPLATE IDW_DSKAREA LOADONCALL MOVEABLE DISCARDABLE
+BEGIN
+    DIALOG  "Partition size and position", IDW_DSKAREA, 99, 88, 176, 84, 
+            WS_VISIBLE, FCF_SYSMENU | FCF_TITLEBAR
+    BEGIN
+        SLIDER          SL_AREAPERCENT, 60, 46, 114, 16, SLS_RIBBONSTRIP | 
+                        WS_GROUP
+                        CTLDATA 12, 0, 5, 0, 0, 0
+        DEFPUSHBUTTON   "OK", DID_OK, 6, 4, 40, 14
+        PUSHBUTTON      "Cancel", DID_CANCEL, 49, 4, 40, 14
+        PUSHBUTTON      "Help", DID_HELP, 92, 4, 40, 14, BS_HELP
+        LISTBOX         LB_AREASIZE, 6, 28, 48, 32
+        LTEXT           "Free area", -1, 6, 69, 40, 8
+        LTEXT           "Percentage of area", -1, 69, 69, 97, 8
+        LTEXT           "", ST_AREASIZE, 69, 28, 106, 8
+    END
+END
+@
+
+
+1.2
+log
+@- ribbon, no snap
+- 5 tick marks
+@
+text
+@d4 1
+a4 1
+DLGINCLUDE 1 "D:\SOURCE\driver\raid\Setup\resources.h"
+d11 1
+a11 1
+        SLIDER          SL_AREAPERCENT, 67, 27, 109, 35, SLS_RIBBONSTRIP | 
+d16 5
+a20 4
+        PUSHBUTTON      "Help", -1, 92, 4, 40, 14, BS_HELP
+        LISTBOX         LB_AREASIZE, 14, 28, 48, 32
+        LTEXT           "Free area", -1, 18, 69, 40, 8
+        LTEXT           "Percentage of area", -1, 88, 69, 78, 8
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d4 1
+a4 1
+DLGINCLUDE 2 "resources.h"
+d11 5
+a15 5
+        SLIDER          SL_AREAPERCENT, 67, 27, 109, 35, SLS_SNAPTOINCREMENT | 
+                        SLS_HOMETOP | WS_GROUP
+                        CTLDATA 12, 0, 100, 0, 0, 0
+        DEFPUSHBUTTON   "", DID_OK, 6, 4, 40, 14
+        PUSHBUTTON      "", DID_CANCEL, 49, 4, 40, 14
+@

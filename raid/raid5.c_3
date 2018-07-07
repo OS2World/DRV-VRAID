@@ -1,0 +1,861 @@
+/*
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+ *
+ *	How to do RAID5 I/O.
+ *
+ *	Guidelines:
+ *	- all I/O have to go through the cache
+ *	- VRIO.children counts stripes affected by this VRIO
+ *
+ * $Log$
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 2000-2001
+ */
+static char const id[]="$Id$";
+
+#include <string.h>
+
+#define INCL_NOBASEAPI
+#define INCL_INITRP_ONLY
+#include "os2intf.h"
+
+#include "vraid.h"
+#include "proto.h"
+#include "extern.h"
+#include "cache.h"
+
+#define MIN_STRIPE_SIZE		16		/* [sectors] */
+
+PRIVATE USHORT NEAR _Cdecl	Raid5Worker(PVRDEVHDR const self,PVRIO const myio);
+PRIVATE USHORT NEAR _Cdecl	Raid5Update(PVRDEVHDR const self,PVOID const sec);
+
+INITMSG	szFailState[]=		"RAID5, fail state: 1 child missing";
+INITMSG	szErrorState[]=		"RAID5, error state: %u child(s) missing";
+INITMSG	szCreationDelayed[]=	"RAID5 creation delayed";
+
+#if defined(DEBUG)
+CONSTMSG dszBFLSEntry[]=	"\r\n[BlknoFromLargeSec] sector %lx";
+CONSTMSG dszBFLSExit[]=   	"\r\n[ArrayWorker] strno %lx, stroffs %w, devidx %w";
+
+CONSTMSG dszNotify[]=		"\r\n[Raid5Notify] io %p, strhdr %p, err %w";
+CONSTMSG dszNotifyValid[]=	"\r\n[Raid5Notify] child %w now valid";
+CONSTMSG dszNotifyUStart[]=	"\r\n[Raid5Notify] starting UpdateCfg()";
+CONSTMSG dszNotifyUDefer[]=	"\r\n[Raid5Notify] deferring UpdateCfg()";
+CONSTMSG dszWorker[]=		"\r\n[Raid5Worker] %p";
+CONSTMSG dszWorkerRelease[]=	"\r\n[Raid5Worker] releasing VRIOs";
+CONSTMSG dszWorkerBusy[]=	"\r\n[Raid5Worker] child busy, queuing VRIO";
+CONSTMSG dszCreate[]=		"\r\n[Raid5Create] at %p";
+CONSTMSG dstAdminData[]=	"\r\n[Raid5Create] admin data\r\n%z";
+CONSTMSG dszStr[]=		"\r\n%s";
+CONSTMSG dszNoBuild[]=		"\r\n[Raid5Create] sector says BUILD, all childs valid -> clear BUILD";
+#endif
+
+
+
+
+
+
+/*
+ * Our object: the RAID5 array.
+ */
+typedef struct _VRDRAID5 {
+    VRDEVHDR	header;				/* ALWAYS FIRST! */
+
+    USHORT	readchild;			/* AREAD from this child */
+    BOOL	need_updatecfg;
+    USHORT	stripesize;			/* [sectors] */
+
+    USHORT	children;			/* entries in table below */
+    struct {
+	PVRDEVHDR	vrd;
+	ULONG		valid;			/* 0 - vrd->size	needs update
+						   0xFFFFFFFF		valid */
+	struct {
+	    int		missing : 1;
+	};
+    } child[];
+
+} VRDRAID5, FAR * PVRDRAID5;
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Stripe Caching **************************************************
+ * ******************************************************************* */
+#define BufferState(us)		((us) & 0x0F)
+
+typedef struct _STRIPE_HEADER {
+    USHORT	state;				/* allocated, busy, etc */
+    USHORT	idxPd;				/* child index of parity disk */
+    PVRDRAID5	array;				/* to which this stripe belongs */
+    PVRIO	active_io;			/* VRIO to whole array */
+    ULONG	blkno;				/* on child, not array */
+    USHORT	OffsetInStripe;			/* [sectors] */
+    USHORT	OffsetInBuffer;			/* [sectors] */
+
+    LIN		buffer[MAX_PDEV];
+    USHORT	bufstat[MAX_PDEV];
+    PVRIO	io[MAX_PDEV];			/* active I/Os */
+
+} STRIPE_HEADER, FAR * PSTRIPE_HEADER;
+
+#define BUFSTAT_EMPTY		0		/* no data in buffer */
+#define BUFSTAT_VALID		1		/* same data as on disk */
+#define BUFSTAT_DIRTY		2		/* disk needs update */
+#define BUFSTAT_WANTED		0x10
+
+
+
+PRIVATE PSTRIPE_HEADER
+AllocateStrHdr(PVRDRAID5 const array, PVRIO io, ULONG blkno)
+{
+    return NULL;
+}
+PRIVATE PSTRIPE_HEADER
+FreeStrHdr(PSTRIPE_HEADER const strhdr)
+{
+    return NULL;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Private Routines ************************************************
+ * ******************************************************************* */
+
+static USHORT NEAR
+Vrd2Child(PVRDRAID5 const array, PVRDEVHDR const child)
+{
+    USHORT	i;
+
+    for( i = 0; i < array->children; ++i )
+    {
+	if( child == array->child[i].vrd )
+	    return i;
+    }
+    return (USHORT)-1;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * NextValidChild(array, previous)
+ *
+ * PARAMETER
+ *	array		a VRD which forms a RAID 5 device
+ *	previous	the previously used child
+ *
+ * RETURNS
+ *	child index or (USHORT)-1
+ *
+ * DESCRIPTION
+ *	Selects another valid child.
+ *
+ * REMARKS
+ */
+static USHORT
+NextValidChild(PVRDRAID5 const array, USHORT const previous)
+{
+    USHORT	next = previous;
+    USHORT	tries = array->children;
+    BOOL	found = FALSE;
+
+    do
+    {
+	next = (next + 1 == array->children ? 0 : next + 1);
+	if( array->child[next].vrd != NULL
+	    &&  !array->child[next].missing
+	    &&  array->child[next].valid == (ULONG)-1 )
+	{
+	    found = TRUE;
+	    break;
+	}
+    }
+    while( tries-- );
+    if( !found )
+    {
+	array->header.flags &= ~RDFLAG_STATEMASK;
+	array->header.flags |= RDFLAG_ERROR;	/* ERROR state */
+	array->need_updatecfg = TRUE;
+	return (USHORT)-1;
+    }
+    return next;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * BlknoFromLargeSec(array, largesec, datachild, xorchild, remaining_blks)
+ *
+ * PARAMETER
+ *	array		IN	array information
+ *	largesec	IN	sector no in array
+ *	datachild	OUT	child no to read data stripe from
+ *	xorchild	OUT	child no  to read XOR stripe from
+ *	remaining_blks	OUT	how many sectors can be used from this
+ *				stripe before it ends (stripesize - offset)
+ *
+ *
+ * RETURNS
+ *	sector in data resp. XOR stripe
+ *
+ * DESCRIPTION
+ * 	Calculates disks where the data and the XOR information are
+ *	stored.  Both are stored starting at the returned sector no.
+ *	And there are '*remaining_blks' sectors in the same data/xor
+ *	combination behind the requested one.
+ *
+ * REMARKS
+ *	OBS: currently implements RAID 4!!!
+ */
+PRIVATE ULONG
+BlknoFromLargeSec(VRDRAID5 const FAR * array, ULONG largesec,
+		  PUSHORT datachild, PUSHORT xorchild,
+		  PULONG remaining_blks)
+{
+    ULONG	strno;
+    USHORT	devidx, stroffs;
+
+
+    DEBMSG1(DBG_LEVEL3,dszBFLSEntry,(PVOID)&largesec);
+
+    /* Calculate child, offset and count for this block. */
+
+    /* Which band? */
+
+    strno = largesec / (array->stripesize * (array->children - 1));
+
+    /* Wich device? */
+
+    devidx = (USHORT)((largesec / array->stripesize) % (array->children - 1));
+
+    /* Offset in band? */
+
+    stroffs = (USHORT)(largesec % array->stripesize);
+
+    /* How many blks in that band behind the requested? */
+
+    *remaining_blks = array->stripesize - stroffs;
+
+    *datachild = devidx;
+    *xorchild = array->children-1;		/* there is only one */
+
+    DEBMSG3(DBG_LEVEL3,dszBFLSExit,(PVOID)&strno,stroffs,devidx);
+
+    return (strno * array->stripesize) + stroffs;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * ProcessStripe(strhdr)
+ *
+ * PARAMETER
+ *	strhdr
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Look at all disks building a stripe and start any actions
+ *	required.
+ *
+ * REMARKS
+ */
+PRIVATE void
+ProcessStripe(PSTRIPE_HEADER const strhdr)
+{
+    USHORT const sgl_size = (USHORT)(sizeof(SCATGATENTRY)
+				     * (strhdr->array->stripesize
+					* (ULONG)SECTOR_SIZE
+					/ PAGESIZE + 1));
+    USHORT	childidx;
+    USHORT	action[MAX_PDEV];		/* what to do for each child */
+    USHORT	active_actions;
+
+
+    _fmemset(action, 0, sizeof(action));
+    active_actions = 0;
+
+    for( childidx = 0; childidx < strhdr->array->children; ++childidx )
+    {
+	if( (strhdr->bufstat[childidx] & BUFSTAT_WANTED) )
+	{
+	    if( BufferState(strhdr->bufstat[childidx]) == BUFSTAT_VALID )
+	    {
+		strhdr->bufstat[childidx] &= ~BUFSTAT_WANTED;
+		continue;
+	    }
+	    action[childidx] = IOCMD_READ;	/* do read */
+	    active_actions++;
+	}
+	else if( BufferState(strhdr->bufstat[childidx]) == BUFSTAT_DIRTY )
+	{
+	    action[childidx] = IOCMD_WRITE;	/* do write */
+	    active_actions++;
+	}
+	else
+	    continue;				/* not involved in I/O */
+    }
+
+
+    /* There may be nothing to do on the stripe.  The only reason
+     * for this is that all data for our I/O (strhdr->active_io) is
+     * already available and we may now process it. */
+
+    if( active_actions == 0 )
+    {
+	PVRIO const	myio = strhdr->active_io;
+	PVRDRAID5 const	array = strhdr->array;
+
+	if( myio->iocmd == IOCMD_READ )
+	{
+	    USHORT	off_stripe = strhdr->OffsetInStripe; 	/* [sectors] */
+	    USHORT	off_buffer = strhdr->OffsetInBuffer;
+
+	    do
+	    {
+		LIN	     src;
+		USHORT const child = off_stripe / array->stripesize;
+		USHORT	     copied;				/* [sectors] */
+
+		ASSERT( strhdr->bufstat[child] == BUFSTAT_VALID );
+		src = strhdr->buffer[child] + off_stripe % array->stripesize;
+		copied = array->stripesize - off_stripe % array->stripesize;
+
+		/* Copy data to caller buffer 		xxx*/
+
+	DoXYCopy(myio->pSGList, off_buffer, src, copied);
+
+		off_stripe += copied;
+		off_buffer += copied;
+	    }
+	    while( off_stripe < (array->children-1) * array->stripesize
+		   &&  off_buffer < myio->bcnt );
+	    if( --myio->children == 0 )
+	    {
+		FreeStrHdr(strhdr);
+		CompleteVrio(myio);
+	    }
+	}
+	else if( myio->iocmd == IOCMD_WRITE )
+	{
+	    /* xxx */
+	}
+
+	return;					/* nothing more to do */
+    }
+
+
+    /* Schedule actions */
+
+    for( childidx = 0; childidx < strhdr->array->children; ++childidx )
+    {
+	PSCATGATENTRY	scga;
+	PVRIO		io;
+	ULONG		ul;
+	USHORT		rc;
+
+	/* Build VRIO */
+
+	scga = MemAlloc(sgl_size);
+	if( scga == NULL )
+	    break;				/* do it next time */
+	io = AllocateVrio(strhdr->array->child[childidx].vrd, (PVOID)strhdr);
+	if( io == NULL )			/* memory exhausted? */
+	{
+	    MemFree(scga);
+	    break;
+	}
+
+	/* Setup scatter/gather list */
+
+	{
+	    LIN		lin_of_scga;
+	    USHORT	error;
+	    error = DevHelp_VirtToLin(SELECTOROF(scga), OFFSETOF(scga),
+				      &lin_of_scga);
+	    if( error != 0 )
+		Panic(__FILE__, __LINE__);
+	    error = DevHelp_LinToPageList(strhdr->buffer[childidx],
+					  strhdr->array->stripesize
+					  * (ULONG)SECTOR_SIZE,
+					  lin_of_scga, &ul);
+	    if( error != 0 )
+		Panic(__FILE__, __LINE__);
+	}
+
+	io->link = NULL;
+	io->iorb = NULL;
+	io->iocmd = action[childidx];
+
+	io->pSGList = scga;
+	io->ppSGList = FP_OFF(scga) + ppWorkMem;;
+	io->cSGList = (USHORT)ul;
+
+	io->offset = 0;
+	io->blk = strhdr->blkno;
+	io->bcnt = strhdr->array->stripesize;
+
+	io->oserr = 0xFFFF;			/* invalidate error code */
+	strhdr->io[childidx] = io;		/* remember in stripe header */
+
+	rc = io->vrd->worker(io->vrd, io);
+	if( rc )
+	{
+	    DEBMSG(DBG_ALL,dszWorkerBusy);
+	    QueueVrio(io);
+	}
+    } /* end[for every child] */
+
+    return;
+}
+
+
+
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * Raid5Notify(io)
+ *
+ * PARAMETER
+ *	io			I/O which completed
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Notified by child when it has completed an I/O.
+ *
+ * REMARKS
+ */
+PRIVATE VOID NEAR _Cdecl
+Raid5Notify(PVRIO const io)
+{
+    PSTRIPE_HEADER const strhdr = (PVOID)io->mother; 	/* I/O to us */
+    PVRDRAID5 const	array = strhdr->array;		/* it's me */
+    USHORT const	childidx = Vrd2Child(array, io->vrd);
+
+
+    DEBMSG3(DBG_PATH,dszNotify,io,strhdr,io->oserr);
+
+    pushf();
+    cli();
+
+    /*
+     *	An I/O to a child of this array completed.
+     *
+     *	READ:
+     *	- set stripe buffer to valid
+     *	- copy data into caller buffer
+     *
+     *	READ before WRITE:
+     *	- check whether data *and* parity data is available
+     *	- if available calculate new parity, copy caller buffer and issue WRITE
+     */
+    switch( BufferState(strhdr->bufstat[childidx]) )
+    {
+	/* BUFSTAT_EMPTY:
+	 *	Read request satisfied by read: -> VALID */
+      case BUFSTAT_EMPTY:
+	if( io->oserr == 0 )
+	    strhdr->bufstat[childidx] = BUFSTAT_VALID;
+	else
+	{
+	    /* Switch array to fail state!	xxx*/
+	    strhdr->bufstat[childidx] = BUFSTAT_EMPTY; /* remove _WANTED */
+	}
+	break;
+
+	/* BUFSTAT_VALID:
+	 *	ReRead of a buffer: -> VALID */
+      case BUFSTAT_VALID:
+	strhdr->bufstat[childidx] = BUFSTAT_VALID; /* remove _WANTED */
+	break;
+
+	/* BUFSTAT_DIRTY:
+	 *	Buffer written to disk: -> VALID */
+      case BUFSTAT_DIRTY:
+	strhdr->bufstat[childidx] = BUFSTAT_VALID; /* even if error */
+	break;
+
+      default:
+	DEBMSG1(DBG_ALL,"Raid5Notify: invalid state %#x",strhdr->bufstat[childidx]);
+	DBSTOP();
+    }
+    ProcessStripe(strhdr);
+
+
+    popf();
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * Raid5Worker(self,myio)
+ *
+ * PARAMETER
+ *	mirror		a VRD which forms a RAID 5 array
+ *	myio		I/O to myself, distribute
+ *
+ * RETURNS
+ *	0		OK, I/O started
+ *	/0		not started
+ *
+ * DESCRIPTION
+ *	Pass VRIO to I/O routines of affected childs on read or write.
+ *
+ * REMARKS
+ *	Erst einmal nur den OK Fall implementieren!
+ */
+PRIVATE USHORT NEAR _Cdecl
+Raid5Worker(PVRDEVHDR const self, PVRIO const myio)
+{
+    PVRDRAID5 const	array = (PVRDRAID5)self;
+    PVRIO	io;
+
+    ULONG	firstblk = myio->blk;		/* first blk */
+    ULONG const	lastblk = firstblk + myio->bcnt - 1;
+
+    PSTRIPE_HEADER	strhdr[128/MIN_STRIPE_SIZE];
+    unsigned		used_stripes = 0;
+    unsigned		i;
+
+    BOOL		busy = FALSE;		/* delay I/O */
+
+
+    DEBMSG1(DBG_PATH,dszWorker,(PVOID)myio);
+
+    ASSERT( myio->vrd == self );
+    ASSERT( myio->link == NULL );
+    ASSERT( myio->bcnt != 0 );
+    ASSERT( array->header.size != 0 );
+    ASSERT( array->header.notify == Raid5Notify );
+    ASSERT( array->header.worker == Raid5Worker );
+    ASSERT( array->header.update == Raid5Update );
+    ++self->iocnt;
+
+
+    switch( myio->iocmd )
+    {
+      case IOCMD_READ:
+	/* Create VRIO to all affected children. */
+
+	myio->children = 0;
+	for(; firstblk <= lastblk ; firstblk += io->bcnt )
+	{
+	    USHORT	dd_idx, pd_idx;
+	    ULONG	maxblks;
+	    ULONG	blkno;
+	    ULONG	this_cnt;
+
+	    blkno = BlknoFromLargeSec(array, firstblk, &dd_idx, &pd_idx, &maxblks);
+	    this_cnt = (maxblks >= lastblk - firstblk + 1
+			? lastblk - firstblk + 1 : maxblks);
+
+	    /* For all I/Os we need a stripe header.  Allocate one! */
+
+	    strhdr[used_stripes] = AllocateStrHdr(array, myio, blkno);
+	    if( strhdr[used_stripes] == NULL )
+	    {
+		/* No stripe header available or corresponding stripe
+		 * currently in use.  Retry later. */
+
+		busy = TRUE;
+		break;
+	    }
+	    strhdr[used_stripes]->idxPd = pd_idx;
+	    strhdr[used_stripes]->OffsetInStripe
+		= firstblk - (strhdr[used_stripes]->blkno * (array->children-1));
+	    strhdr[used_stripes]->OffsetInBuffer = firstblk - myio->blk;
+
+	    /* Mark buffer of data child as required for this I/O. *
+	     * For reading there is nothing more to to. */
+
+	    strhdr[used_stripes]->bufstat[dd_idx] |= BUFSTAT_WANTED;
+
+	    ++used_stripes;
+	}
+	break;
+
+    } /* end[switch] */
+
+
+    if( busy == TRUE )
+    {
+	/* Not enough resources to process the I/O.  Free everything
+	 * and return error code to parent. */
+
+	DEBMSG(DBG_ALL,dszWorkerRelease);
+	for( i = 0; i < used_stripes; ++i )
+	{
+	    FreeStrHdr(strhdr[i]);
+	}
+
+	++self->busycnt;
+	return 1;
+    }
+
+
+    /* The strhdr[] array now contains BUFFERs for all data needed.  Build
+     * VRIOs if needed and start them (the same processing as done by
+     * time ticks). */
+
+    myio->children = used_stripes;
+    for( i = 0; i < used_stripes; ++i )
+    {
+	ProcessStripe(strhdr[i]);
+    }
+
+
+    return 0;
+} /* end[Raid5Worker] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * Raid5Update(self,sec)
+ *
+ * PARAMETER
+ *	self		a VRD which forms a RAID5 array
+ *	sec		sector contains configuration
+ *
+ * RETURNS
+ *	0		don't write back, nothing changed
+ *	/0		modified, write back
+ *
+ * DESCRIPTION
+ *	Update configuration sector if anything has changed.
+ *
+ *	The RDFLAGS_ERROR, RDFLAGS_FAIL don't have to be written to disk
+ *	as they can be detected by analysing the childs data.
+ *
+ * REMARKS
+ * ------------------------------------------------------------------- #*/
+PRIVATE USHORT NEAR _Cdecl
+Raid5Update(PVRDEVHDR const self, PVOID const sec)
+{
+    PVRDRAID5 const	array = (PVRDRAID5)self;
+    PSEC_VRDEV2 const	cfg = sec;
+    unsigned		i;
+
+
+    cfg->timestamp = pGlobalInfoSeg->SIS_BigTime;
+
+    for( i = 0; i < array->children; ++i )
+    {
+	if( array->child[i].vrd == 0 )
+	{
+	    cfg->u.s.child[i].flags &= ~0x01;
+	    cfg->u.s.child[i].valid = 0;	/* no sector at all */
+	}
+	else if( array->child[i].valid == (ULONG)-1 )
+	{
+	    cfg->u.s.child[i].flags |= 0x01;
+	    cfg->u.s.child[i].valid = (ULONG)-1;
+	}
+	else
+	{
+	    cfg->u.s.child[i].flags &= ~0x01;	/* not completely valid */
+	    cfg->u.s.child[i].valid = array->child[i].valid;
+	}
+    }
+
+    if( (array->header.flags & RDFLAG_BUILDING) )
+	cfg->u.s.flags |= RDFLAG_BUILDING;
+    else
+	cfg->u.s.flags &= ~RDFLAG_BUILDING;
+
+    cfg->crc = Crc16(sec, SECTOR_SIZE-2);
+    return 1;
+} /* end[MirrorUpdate] */
+
+
+
+
+
+
+/* **********************************************************************
+ * **** INIT-time processing ********************************************
+ * ******************************************************************* */
+
+
+
+/* **********************************************************************
+ * **** Public Entries **************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * Raid5Create(pVrh,pPhys,sec,pSize)
+ *
+ * PARAMETER
+ *	pVrh		create here
+ *	tab		table of device to build from
+ *	sec		contents of configuration sector
+ *	pSize		return: size used at '*pVrh'
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		couldn't create
+ *
+ * DESCRIPTION
+ *	Analyses configuration sector and builds RAID5 VRAID structure
+ *	in memory pointed to by 'pVrh'.
+ *
+ * REMARKS
+ */
+PUBLIC int NEAR _Cdecl
+Raid5Create(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,PSEC_VRDEV2 sec,PUSHORT pSize)
+{
+    PVRDRAID5 const array = (PVRDRAID5)pVrh;
+    USHORT	i, j, found;
+    int		invalids = 0;
+    int		result;
+
+
+    DEBMSG1(DBG_INIT1,dszCreate,(PVOID)pVrh);
+    DEBMSG2(DBG_INIT2,dstAdminData,(PVOID)sec,SECTOR_SIZE);
+    _fmemset(array, 0, sizeof(*array));
+
+
+    /* Initialize header elements */
+
+    array->header.notify = Raid5Notify;
+    array->header.worker = Raid5Worker;
+    array->header.update = Raid5Update;
+    array->header.size = 0;			/* initialize, will be modified */
+    array->header.flags = 0;
+    _fmemcpy(array->header.id, sec->u.s.id, sizeof(array->header.id));
+
+    array->stripesize = STRIPE_SIZE;
+
+    /* Build linking by looking up all parts in 'tab'. */
+
+    array->children = sec->u.s.children;
+    array->header.size = sec->u.s.child[0].size * (array->children - 1);
+    _fmemset(array->child, 0, array->children * sizeof(array->child[0]));
+    found = 0;
+    for( i = 0; i < array->children; ++i )
+    {
+	for( j = 0; j < MAX_PDEV; ++j )
+	{
+	    if( tab[j] == NULL )
+		continue;			/* ignore empty entries */
+
+	    if( _fmemcmp(tab[j]->id, sec->u.s.child[i].id, sizeof(tab[j]->id)) == 0 )
+	    {
+		result = ValidateVSec2(tab[j], sec);
+		if( result < 0 )
+		{
+		    sprintk(szMsgBuffer, szCreationDelayed);
+		    DEBMSG1(DBG_INIT1,dszStr,(PSZ)szMsgBuffer);
+		    if( (fDriverFlags & DF_VERBOSE) )
+			SaveMessage();
+
+		    return 1;			/* don't create mirror, be quiet */
+		}
+		else if( result != 0 )
+		    continue;			/* don't use this child */
+
+		array->child[i].vrd = tab[j];
+		if( (sec->u.s.child[i].flags & 0x01) == 0 )
+		{
+		    ++invalids;
+		    array->child[i].valid = sec->u.s.child[i].valid;
+		}
+		else
+		{
+		    array->child[i].valid = (ULONG)-1;
+		}
+		++found;
+		break;				/* stop scan, next child */
+	    }
+	}
+    }
+
+
+    /* OK, we will indeed create an array.  Remove children from 'tab'
+     * so that they don't get used for another array. */
+
+    /*xxx	CreateCache(&array->header, array->stripesize);	xxx*/
+    for( i = 0; i < array->children; ++i )
+    {
+	if( array->child[i].vrd != 0 )
+	{
+	    for( j = 0; j < MAX_PDEV; ++j )
+		if( tab[j] == array->child[i].vrd )
+		{
+		    tab[j] = NULL;
+		    break;
+		}
+	}
+    }
+
+
+    /* Update local flags and start [re]build process if usefull. */
+
+    if( found != array->children )
+    {
+	if( found != (array->children-1) )
+	{
+	    sprintk(szMsgBuffer, szErrorState, array->children-found);
+	    array->header.flags |= RDFLAG_ERROR;
+	}
+	else
+	{
+	    sprintk(szMsgBuffer, szFailState);
+	    array->header.flags |= RDFLAG_FAIL;
+	}
+	DEBMSG1(DBG_INIT1,dszStr,(PSZ)szMsgBuffer);
+	if( (fDriverFlags & DF_VERBOSE) )
+	    SaveMessage();
+	++cBeeps;
+    }
+    else if( (sec->u.s.flags & RDFLAG_BUILDING)  ||  invalids != 0 )
+    {
+	ULONG	bdone = (ULONG)-1;
+
+	for( i = 0; i < array->children; ++i )
+	    bdone = MIN(bdone,array->child[i].valid);
+	if( bdone == (ULONG)-1 )
+	{
+	    /* Well, there may be all configuration data from
+	     * an aborted BUILD (stopped via VSetup).
+	     * We *need* to update: no BUILD */
+
+	    array->need_updatecfg = TRUE;
+	    DEBMSG(DBG_INIT1,dszNoBuild);
+	}
+	else
+	{
+	    array->header.flags |= RDFLAG_BUILDING;
+	    BuildCreate(pVrh, bdone, 0);
+	}
+    }
+
+
+    array->readchild = NextValidChild(array, array->readchild);
+
+
+    /* Size of administrative data depends on count of children. */
+
+    *pSize = sizeof(*array) + array->children * sizeof(array->child[0]);
+
+    return 0;
+} /* end[Raid5Create] */

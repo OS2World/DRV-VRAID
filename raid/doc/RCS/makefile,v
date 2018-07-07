@@ -1,0 +1,79 @@
+head	1.2;
+access;
+symbols
+	VRAID_REL23:1.2
+	REL22:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2000.04.20.23.25.19;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.11.03.22.11.47;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Create online documentation.
+@
+
+
+1.2
+log
+@- added BMP files to dependencies
+@
+text
+@#*
+#* $Source: r:/source/driver/raid/doc/RCS/makefile,v $
+#* $Revision: 1.1 $
+#* $Date: 1999/11/03 22:11:47 $
+#* $Locker: vitus $
+#*
+#*	Create online documentation.
+#*
+#* $Log: makefile,v $
+#* Revision 1.1  1999/11/03 22:11:47  vitus
+#* Initial revision
+#* ---------------------------------------------
+#* This code is Copyright Vitus Jensen 1999-2000
+#*/
+
+
+vraid.inf: vraid.ipf Array.bmp InvalidArray.bmp PDev.bmp locked.bmp \
+		DisabledArray.bmp InvalidPDev.bmp bmtmicro.bmp DisabledPDev.bmp \
+		Missing.bmp free.bmp
+	ipfc -i -d:049 -c:437 vraid
+
+
+vraid.ipf: vraid.rip vraid.def
+	+R:\DEV\IPFPP vraid.rip vraid.ipf vraid.def
+
+
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+#* $Source$
+#* $Revision$
+#* $Date$
+#* $Locker$
+d9 5
+a13 3
+#* $Log$
+#* ----------------------------------------
+#* This code is Copyright Vitus Jensen 1999
+d17 3
+a19 1
+vraid.inf : vraid.ipf
+@

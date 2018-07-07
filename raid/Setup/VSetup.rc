@@ -1,0 +1,143 @@
+/*
+ * $Source: R:/Source/driver/raid/Setup/RCS/VSetup.rc,v $
+ * $Revision: 1.10 $
+ * $Date: 2001/01/15 01:37:09 $
+ * $Locker:  $
+ *
+ *	Menue and icons for standard windows, use rcinclude
+ *	to add dialog resources (created by dialog editor).
+ *
+ * $Log: VSetup.rc,v $
+ * Revision 1.10  2001/01/15 01:37:09  vitus
+ * - added MENUITEM "Declare as ~invalid"
+ *
+ * Revision 1.9  2000/08/17 02:26:50  vitus
+ * - added include progress.dlg
+ * - context menue contains IDM_REBUILD_DRV, IDM_VERIFY_DRV
+ *
+ * Revision 1.8  1999/06/19 01:33:57  vitus
+ * - added "~Beeper disabled" menue entry
+ *
+ * Revision 1.7  1999/06/02 01:48:48  vitus
+ * - added  ICO_INVCHILDPDEV, ICO_INVCHILDARRAY
+ *
+ * Revision 1.6  1999/05/13 22:49:28  vitus
+ * - added "~Remove from array" to single drive popup
+ *
+ * Revision 1.5  1998/11/05 00:24:27  vitus
+ * - "destroy array" is correct!
+ *
+ * Revision 1.4  1998/09/27 00:44:06  vitus
+ * - added ICO_DISABLEDPDEV, ICO_DISABLEDARRAY
+ * - added "log" to save,print,clear actions
+ *
+ * Revision 1.3  1998/09/20 20:43:55  vitus
+ * - added IDM_DRIVER submenu
+ *
+ * Revision 1.2  1998/06/09 01:42:52  vitus
+ * - uses brackets instead of BEGIN,END
+ * - added more icons, context menues
+ * - added more other dialogs (include)
+ *
+ * Revision 1.1  1998/04/29 00:45:41  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-2001
+ */
+
+#define INCL_WINSYS
+#define INCL_WINSTDDLGS
+#define INCL_WINSTDSPIN
+#define INCL_NLS
+#define INCL_SW
+#include <os2.h>
+
+#include "resources.h"
+
+ICON	IDW_MAIN vsetup.ico
+
+MENU IDW_MAIN
+{
+    SUBMENU "~File",		       	IDM_FILE, MIS_TEXT
+    {
+	MENUITEM "~Save log",	       	IDM_SAVE, MIS_TEXT
+	MENUITEM "Save log ~as",       	IDM_SAVEAS, MIS_TEXT
+	MENUITEM "~Print log",	       	IDM_PRINT, MIS_TEXT
+    }
+
+    SUBMENU "~Edit",		       	IDM_EDIT, MIS_TEXT
+    {
+	MENUITEM "~Cut\tShift-Delete", 	IDM_CUT,	MIS_TEXT
+	MENUITEM "~Copy\tCtrl-Insert", 	IDM_COPY, MIS_TEXT
+	MENUITEM "~Paste\tShift-Insert", IDM_PASTE, MIS_TEXT
+	MENUITEM SEPARATOR
+	MENUITEM "C~lear log",	       	IDM_CLEAR, MIS_TEXT
+    }
+
+    SUBMENU "Drive~r",		       	IDM_DRIVER, MIS_TEXT
+    {
+	MENUITEM "~Version",		IDM_VERSION, MIS_TEXT
+	MENUITEM "~Messages",		IDM_MSGDUMP, MIS_TEXT
+	MENUITEM SEPARATOR
+	MENUITEM "~Beeper disabled",	IDM_NOBEEP, MIS_TEXT
+    }
+
+    SUBMENU "~Drives",		       	IDM_DRIVES, MIS_TEXT
+    {
+	MENUITEM "~Setup",		IDM_DRVSETUP, MIS_TEXT
+	MENUITEM "Dum~p...",		IDM_DRVDUMP, MIS_TEXT
+    }
+
+    SUBMENU "~Help",			IDM_HELP, MIS_TEXT | MIS_BUTTONSEPARATOR
+    {
+	MENUITEM "~Product information", IDM_ABOUT, MIS_TEXT
+    }
+}
+
+
+MENU IDPM_SNGDRV
+{
+    MENUITEM "~Create physdevice",	IDM_CREATE_PDEV, MIS_TEXT
+    MENUITEM "Destroy ~physdevice",	IDM_DELETE_PDEV, MIS_TEXT
+    MENUITEM "~Remove from array",	IDM_REMOVE_CHILD, MIS_TEXT
+    MENUITEM "Declare as ~invalid",	IDM_INVALID_CHILD, MIS_TEXT
+    MENUITEM "~Destroy array",		IDM_DESTROY_DRV, MIS_TEXT
+    MENUITEM "Re~build array",		IDM_REBUILD_DRV, MIS_TEXT
+    MENUITEM "~Verify array",		IDM_VERIFY_DRV, MIS_TEXT
+    MENUITEM SEPARATOR
+    MENUITEM "remove ~Selections",	IDM_REMOVE_SEL, MIS_TEXT
+}
+
+MENU IDPM_MULDRV
+{
+    MENUITEM "~Combine drives...",	IDM_COMBINE_DRV, MIS_TEXT
+    MENUITEM SEPARATOR
+    MENUITEM "remove ~Selections",	IDM_REMOVE_SEL, MIS_TEXT
+}
+
+MENU IDPM_NODRV
+{
+    MENUITEM "~Nothing",		IDM_NOTHING, MIS_TEXT
+    MENUITEM SEPARATOR
+    MENUITEM "remove ~Selections",	IDM_REMOVE_SEL, MIS_TEXT
+}
+
+
+ICON	IDW_DRVSETUP		drvsetup.ico
+ICON	ICO_LOCKEDDRIVE		locked.ico
+ICON	ICO_FREEDRIVE		free.ico
+ICON	ICO_PDEVDRIVE		PDev.ico
+ICON	ICO_RAIDDRIVE		Array.ico
+ICON	ICO_MISSINGDRIVE	missing.ico
+ICON	ICO_DISABLEDPDEV	DisabledPDev.ico
+ICON	ICO_DISABLEDARRAY	DisabledArray.ico
+ICON	ICO_INVCHILDARRAY	InvalidArray.ico
+ICON	ICO_INVCHILDPDEV	InvalidPDev.ico
+
+
+rcinclude about.dlg
+rcinclude iniloc.dlg
+rcinclude drvdump.dlg
+rcinclude drvtype.dlg
+rcinclude dskarea.dlg
+rcinclude progress.dlg

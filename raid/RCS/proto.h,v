@@ -1,0 +1,829 @@
+head	1.20;
+access;
+symbols
+	vrflt031113:1.19
+	vrflt010903:1.19
+	PREV010803:1.18
+	VRAIDv0_85:1.18
+	VRAIDv0_84:1.17
+	VRAIDv0_82:1.13
+	VRAIDv0_70:1.9
+	VRAIDv0_60:1.5
+	VRAIDv0_51:1.5
+	VRAIDv0_50:1.5
+	VRAIDv0_40:1.4
+	VRAIDv0_30:1.3
+	ALPHA1:1.2;
+locks; strict;
+comment	@ * @;
+
+
+1.20
+date	2003.10.20.22.18.44;	author vitus;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2001.09.03.02.58.08;	author vitus;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2001.06.24.23.00.34;	author vitus;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2001.02.11.01.31.24;	author vitus;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2001.01.15.01.20.31;	author vitus;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2000.10.24.23.56.39;	author vitus;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2000.06.15.01.07.31;	author vitus;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	99.12.14.00.36.33;	author vitus;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	99.10.01.00.55.30;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	99.09.18.14.35.10;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.07.06.01.58.26;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.06.22.00.05.06;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.05.26.00.51.31;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.05.12.01.50.29;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.02.09.00.09.23;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	98.09.27.16.09.06;	author vitus;	state Stab;
+branches;
+next	1.4;
+
+1.4
+date	98.09.20.15.16.26;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.06.26.23.01.45;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.04.08.01.29.29;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.03.10.02.30.32;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Function prototyping
+@
+
+
+1.20
+log
+@- added QueryFlatDS(), MemCpy32(), CopyLin2ScGa()
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/RCS/proto.h,v $
+ * $Revision: 1.19 $
+ * $Date: 2001/09/03 02:58:08 $
+ * $Locker: vitus $
+ *
+ *	Function prototyping.
+ *
+ *
+ *	OBS: functions marked to return DRVSTATUS will return '0'
+ *	if all was OK.  This is not totally correct as the OS
+ *	needs the STDON bit to mark the request as complete, but
+ *	comparing with '0' is so much easier...
+ *	Errors are returned complete with STERR and STDON set, though.
+ *
+ *
+ * History:
+ * $Log: proto.h,v $
+ * Revision 1.19  2001/09/03 02:58:08  vitus
+ * - added Raid5Create()
+ *
+ * Revision 1.18  2001/06/24 23:00:34  vitus
+ * - added AllocateFixed(), FreeFixed()
+ * - BuildCreate() now returns error code
+ *
+ * Revision 1.17  2001/02/11 01:31:24  vitus
+ * - InitBase, ProcessAdminIO, ProcessUserIO now return DRVSTATUS
+ * - removed PhysdevPartIO, since almost 2 year non existing
+ *
+ * Revision 1.16  2001/01/15 01:20:31  vitus
+ * - UpdateCfg: new 'forced' parameter
+ *
+ * Revision 1.15  2000/10/24 23:56:39  vitus
+ * - BuildCreate: parameter 'mode' to distinguish build and rebuild
+ *
+ * Revision 1.14  2000/06/15 01:07:31  vitus
+ * - added ProcessUserIO()
+ *
+ * Revision 1.13  1999/12/14 00:36:33  vitus
+ * - added ValidateVSec2() (init1.c)
+ *
+ * Revision 1.12  1999/10/01 00:55:30  vitus
+ * - changed UpdateCfg() prototype: returns BOOL saying whether update
+ *   was really started or not.
+ *
+ * Revision 1.11  1999/09/18 14:35:10  vitus
+ * - added FilterHandler(), routes IORBs to BASEDISKs
+ *
+ * Revision 1.10  1999/07/06 01:58:26  vitus
+ * - corrected calling convention of BuildNotify(), UpdateNotify(): _Cdecl
+ *
+ * Revision 1.9  1999/06/22 00:05:06  vitus
+ * - renamed InitWorkmem to BuildWorkmem
+ * - added ReleaseWorkmem, to unlock the memory
+ *
+ * Revision 1.8  1999/05/26 00:51:31  vitus
+ * - *Create() routines now return 'int'
+ *
+ * Revision 1.7  1999/05/12 01:50:29  vitus
+ * - added CRC routines
+ * - more routines from build.c
+ * - added CompleteVrio()
+ *
+ * Revision 1.6  1999/02/09 00:09:23  vitus
+ * - ProcessAdminIO() addded (vrio.c)
+ * - MirrorCreate() now accepts SEC_VRDEV2 structure
+ *
+ * Revision 1.5  1998/09/27 16:09:06  vitus
+ * - corrected CallADD() prototype: MC-C/C++ 7.0 complains
+ *
+ * Revision 1.4  1998/09/20 15:16:26  vitus
+ * - changed to AllocateIorb(sgcnt)
+ * - changed to AllocateVrio(working_dev,mother)
+ *
+ * Revision 1.3  1998/06/26 23:01:45  vitus
+ * - corrected prototypes for MS-C 6.00A
+ *
+ * Revision 1.2  1998/04/08 01:29:29  vitus
+ * - corrected prototypes to *Create() functions
+ * - changed AllocateVrio() to accept mother
+ *
+ * Revision 1.1  1998/03/10 02:30:32  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1997-2001
+ */
+
+#if defined(_MSC_VER)
+
+/* MS-C inline functions (these take only near pointer!)
+ * OBS: don't forget to compile w/ inlining (at least -Oi) */
+
+void	_disable(void);
+void	_enable(void);
+#endif
+
+
+/* Module: startup.asm */
+
+extern void	NEAR _Cdecl AsmTimer(void);	/* really far */
+extern void	NEAR _Cdecl CallADD(void (FAR _Cdecl *)(PIORB),PIORB);
+
+extern SEL	NEAR _Cdecl QueryFlatDS(void);
+extern void	NEAR _Cdecl MemCpy32(ULONG doffs, SEL dsel,
+				     ULONG soffs, SEL ssel,
+				     ULONG bcnt);
+
+extern void	NEAR _Cdecl _lock(PULONG pulHandle);
+extern void	NEAR _Cdecl _unlock(PULONG pulHandle);
+
+
+/* Module: str1.c */
+
+extern void	NEAR _Cdecl Strategy();
+
+
+/* Module: ioctl.c */
+
+extern void	NEAR SaveMessage(void);
+
+
+/* Module: build.c */
+
+extern void	NEAR _Cdecl BuildNotify(PVRIO const io);
+extern USHORT	NEAR BuildCreate(PVRDEVHDR vrd, ULONG next_sector, USHORT mode);
+extern void	NEAR UpdateBuilds(void);
+extern void	NEAR _Cdecl UpdateNotify(PVRIO const io);
+extern BOOL	NEAR UpdateCfg(PVRDEVHDR const vrd, BOOL forced);
+extern void	NEAR SaveArrayInfos(void);
+
+
+/* Module: iorb.c */
+
+extern void	NEAR _Cdecl HostdriveNotify(PVRIO io);
+extern void	NEAR _Cdecl NotifyIorb(PIORBH const pIorbh,USHORT ErrorCode);
+extern void	FAR _loadds _Cdecl IorbEntry(PIORB const pIorb);
+
+
+/* Module: filter.c */
+
+extern void	NEAR _Cdecl FilterHandler(PBASEDISK const disk,PIORB const pIorb);
+
+
+/* Module: physdev.c, single.c, mirror.c, stripe.c, span.c, ... */
+
+extern int	NEAR _Cdecl PhysdevCreate(PVRDEVHDR pVrh, PPHYSDEVICE pPhys,
+					  PSEC_PHYSDEV sec, PUSHORT pSize);
+extern int	NEAR _Cdecl SingleCreate(PVRDEVHDR pVrh, PVRDEVHDR FAR * tab,
+					 PSEC_VRDEV sec, PUSHORT pSize);
+extern int	NEAR _Cdecl SpanCreate(PVRDEVHDR pVrh, PVRDEVHDR FAR * tab,
+				       PSEC_VRDEV sec, PUSHORT pSize);
+extern int	NEAR _Cdecl StripeCreate(PVRDEVHDR pVrh, PVRDEVHDR FAR * tab,
+					 PSEC_VRDEV sec, PUSHORT pSize);
+extern int	NEAR _Cdecl MirrorCreate(PVRDEVHDR pVrh, PVRDEVHDR FAR * tab,
+					 PSEC_VRDEV2 sec, PUSHORT pSize);
+extern int	NEAR _Cdecl Raid5Create(PVRDEVHDR pVrh, PVRDEVHDR FAR * tab,
+					PSEC_VRDEV2 sec, PUSHORT pSize);
+
+
+
+
+/* Module: vrio.c */
+
+extern void	NEAR _Cdecl CompleteVrio(PVRIO const io);
+extern void	NEAR _Cdecl QueueVrio(PVRIO const io);
+extern PVRIO	NEAR _Cdecl DequeueVrio(void);
+extern void	NEAR _Cdecl InsertVrio(PVRIO const io);
+extern void	NEAR _Cdecl StartManyIorb(PHOSTDRIVE const drvp);
+extern DRVSTATUS NEAR _Cdecl ProcessAdminIO(PVRDEVHDR const target,BOOL write,
+					    ULONG blk,USHORT bcnt,ULONG physaddr);
+extern DRVSTATUS NEAR _Cdecl ProcessUserIO(PVRDEVHDR const target,BOOL write,
+					   ULONG blk,USHORT bcnt,ULONG physaddr);
+
+
+
+/* Module: memory.c */
+
+extern USHORT	NEAR _Cdecl BuildWorkmem(void);
+extern USHORT	NEAR _Cdecl ReleaseWorkmem(void);
+
+extern void	NEAR _Cdecl MemFree(PVOID const ap);
+extern PVOID	NEAR _Cdecl MemAlloc(USHORT const nbytes);
+
+extern PIORB_EXECUTEIO	NEAR _Cdecl AllocateIorb(USHORT const sgcnt);
+extern void	NEAR _Cdecl FreeIorb(PIORB_EXECUTEIO iorb);
+extern PVRIO	NEAR _Cdecl AllocateVrio(PVRDEVHDR working_dev,PVRIO mother);
+extern void	NEAR _Cdecl FreeVrio(PVRIO io);
+
+extern USHORT 	NEAR _Cdecl AllocateFixed(ULONG size, PLIN lin);
+extern USHORT 	NEAR _Cdecl FreeFixed(LIN lin);
+
+extern void	NEAR _Cdecl CopyLin2ScGa(PSCATGATENTRY sglist, ULONG destoffset,
+					 LIN src, ULONG cnt);
+
+extern void	NEAR _Cdecl CrcInit(USHORT uPOLYNOM);
+extern USHORT	NEAR _Cdecl Crc16(PVOID buffer,USHORT cb);
+
+
+
+/* Module: init1.c */
+
+extern DRVSTATUS NEAR InitBase(PRPINITIN pRPI);
+extern int	NEAR ValidateVSec2(PVRDEVHDR const child,
+				   SEC_VRDEV2 const FAR * const sec);
+
+
+
+/* Module: init2.c */
+
+extern void	NEAR CompleteInit(PIORB_CONFIGURATION const pIorb);
+
+
+/* Module: printk.c */
+
+extern void	NEAR sprintk(char FAR *outs,const char FAR *fmt,...);
+
+#if defined(DEBUG)
+/* Module: dprintf.asm (really void _saveregs but...) */
+
+extern int	NEAR _Cdecl dprintf(char FAR * msg,...);
+#endif
+
+@
+
+
+1.19
+log
+@- added Raid5Create()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.18 $
+ * $Date: 2001/06/24 23:00:34 $
+d19 3
+d103 5
+d191 3
+@
+
+
+1.18
+log
+@- added AllocateFixed(), FreeFixed()
+- BuildCreate() now returns error code
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.17 $
+ * $Date: 2001/02/11 01:31:24 $
+d19 4
+d138 12
+a149 10
+extern int	NEAR _Cdecl PhysdevCreate(PVRDEVHDR pVrh,PPHYSDEVICE pPhys,
+					  PSEC_PHYSDEV sec,PUSHORT pSize);
+extern int	NEAR _Cdecl SingleCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,
+					 PSEC_VRDEV sec,PUSHORT pSize);
+extern int	NEAR _Cdecl MirrorCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,
+					 PSEC_VRDEV2 sec,PUSHORT pSize);
+extern int	NEAR _Cdecl StripeCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,
+					 PSEC_VRDEV sec,PUSHORT pSize);
+extern int	NEAR _Cdecl SpanCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,
+				       PSEC_VRDEV sec,PUSHORT pSize);
+@
+
+
+1.17
+log
+@- InitBase, ProcessAdminIO, ProcessUserIO now return DRVSTATUS
+- removed PhysdevPartIO, since almost 2 year non existing
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.16 $
+ * $Date: 2001/01/15 01:20:31 $
+d19 4
+d113 1
+a113 1
+extern void	NEAR BuildCreate(PVRDEVHDR vrd, ULONG next_sector, USHORT mode);
+d174 3
+@
+
+
+1.16
+log
+@- UpdateCfg: new 'forced' parameter
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.15 $
+ * $Date: 2000/10/24 23:56:39 $
+d9 8
+d19 3
+a129 3
+extern USHORT	NEAR _Cdecl PhysdevPartIO(PVRDEVHDR self,BOOL write,
+					  ULONG blk,USHORT bcnt,ULONG phys);
+
+d151 3
+a153 1
+extern USHORT	NEAR _Cdecl ProcessAdminIO(PVRDEVHDR const target,BOOL write,
+a154 2
+extern USHORT	NEAR _Cdecl ProcessUserIO(PVRDEVHDR const target,BOOL write,
+					  ULONG blk,USHORT bcnt,ULONG physaddr);
+d178 1
+a178 1
+extern USHORT	NEAR InitBase(PRPINITIN pRPI);
+@
+
+
+1.15
+log
+@- BuildCreate: parameter 'mode' to distinguish build and rebuild
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.14 $
+ * $Date: 2000/06/15 01:07:31 $
+d11 3
+d62 2
+a63 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1997-99
+d101 1
+a101 1
+extern BOOL	NEAR UpdateCfg(PVRDEVHDR const vrd);
+@
+
+
+1.14
+log
+@- added ProcessUserIO()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.13 $
+ * $Date: 1999/12/14 00:36:33 $
+d11 3
+d95 1
+a95 1
+extern void	NEAR BuildCreate(PVRDEVHDR vrd,ULONG next_sector);
+@
+
+
+1.13
+log
+@- added ValidateVSec2() (init1.c)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.12 $
+ * $Date: 1999/10/01 00:55:30 $
+d11 3
+d139 2
+@
+
+
+1.12
+log
+@- changed UpdateCfg() prototype: returns BOOL saying whether update
+  was really started or not.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.11 $
+ * $Date: 1999/09/18 14:35:10 $
+d11 4
+d160 3
+@
+
+
+1.11
+log
+@- added FilterHandler(), routes IORBs to BASEDISKs
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/07/06 01:58:26 $
+d11 3
+d88 1
+a88 1
+extern void	NEAR UpdateCfg(PVRDEVHDR const vrd);
+@
+
+
+1.10
+log
+@- corrected calling convention of BuildNotify(), UpdateNotify(): _Cdecl
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/06/22 00:05:06 $
+d11 3
+d94 5
+@
+
+
+1.9
+log
+@- renamed InitWorkmem to BuildWorkmem
+- added ReleaseWorkmem, to unlock the memory
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/05/26 00:51:31 $
+d11 4
+d78 1
+a78 1
+extern void	NEAR BuildNotify(PVRIO const io);
+d81 1
+a81 1
+extern void	NEAR UpdateNotify(PVRIO const io);
+@
+
+
+1.8
+log
+@- *Create() routines now return 'int'
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/05/12 01:50:29 $
+d11 3
+d122 2
+a123 1
+extern USHORT	NEAR _Cdecl InitWorkmem(void);
+d133 1
+a133 1
+extern VOID	NEAR _Cdecl CrcInit(USHORT uPOLYNOM);
+@
+
+
+1.7
+log
+@- added CRC routines
+- more routines from build.c
+- added CompleteVrio()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1999/02/09 00:09:23 $
+d11 5
+d91 1
+a91 1
+extern USHORT	NEAR _Cdecl PhysdevCreate(PVRDEVHDR pVrh,PPHYSDEVICE pPhys,
+d93 1
+a93 1
+extern USHORT	NEAR _Cdecl SingleCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,
+d95 1
+a95 1
+extern USHORT	NEAR _Cdecl MirrorCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,
+d97 1
+a97 1
+extern USHORT	NEAR _Cdecl StripeCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,
+d99 1
+a99 1
+extern USHORT	NEAR _Cdecl SpanCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,
+@
+
+
+1.6
+log
+@- ProcessAdminIO() addded (vrio.c)
+- MirrorCreate() now accepts SEC_VRDEV2 structure
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1998/09/27 16:09:06 $
+d11 4
+d32 1
+a32 1
+ * This code is Copyright Vitus Jensen 1997-98
+d66 6
+a71 2
+extern void	NEAR CreateBuild(PVRDEVHDR vrd,ULONG next_sector);
+extern void	NEAR UpdateBuild(void);
+d102 1
+d111 1
+d123 4
+@
+
+
+1.5
+log
+@- corrected CallADD() prototype: MC-C/C++ 7.0 complains
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1998/09/20 15:16:26 $
+d11 3
+d43 2
+a44 2
+extern VOID	NEAR _Cdecl AsmTimer(void);	/* really far */
+extern VOID	NEAR _Cdecl CallADD(VOID (FAR _Cdecl *)(PIORB),PIORB);
+d46 2
+a47 2
+extern VOID	NEAR _Cdecl _lock(PULONG pulHandle);
+extern VOID	NEAR _Cdecl _unlock(PULONG pulHandle);
+d52 1
+a52 1
+extern VOID	NEAR _Cdecl Strategy();
+d57 7
+a63 1
+extern VOID	NEAR SaveMessage(void);
+d68 3
+a70 3
+extern VOID	NEAR _Cdecl HostdriveNotify(PVRIO io);
+extern VOID	NEAR _Cdecl NotifyIorb(PIORBH const pIorbh,USHORT ErrorCode);
+extern VOID	FAR _loadds _Cdecl IorbEntry(PIORB const pIorb);
+d83 1
+a83 1
+					 PSEC_VRDEV sec,PUSHORT pSize);
+d98 2
+d106 1
+a106 1
+extern VOID	NEAR _Cdecl MemFree(PVOID const ap);
+d110 1
+a110 1
+extern VOID	NEAR _Cdecl FreeIorb(PIORB_EXECUTEIO iorb);
+d112 1
+a112 1
+extern VOID	NEAR _Cdecl FreeVrio(PVRIO io);
+@
+
+
+1.4
+log
+@- changed to AllocateIorb(sgcnt)
+- changed to AllocateVrio(working_dev,mother)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1998/06/26 23:01:45 $
+d11 4
+d41 1
+a41 1
+extern VOID	NEAR _Cdecl CallADD(PIORB (FAR _Cdecl *)(PIORB),PIORB);
+@
+
+
+1.3
+log
+@- corrected prototypes for MS-C 6.00A
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/raid/RCS/proto.h,v $
+ * $Revision: 1.2 $
+ * $Date: 1998/04/08 01:29:29 $
+d7 1
+a7 1
+ * Function prototyping.
+d11 3
+d84 1
+a84 1
+extern void	NEAR _Cdecl StartManyIorb(PHOSTDRIVE drvp);
+d94 1
+a94 1
+extern PIORB_EXECUTEIO	NEAR _Cdecl AllocateIorb(void);
+d96 1
+a96 1
+extern PVRIO	NEAR _Cdecl AllocateVrio(PVRIO mother);
+@
+
+
+1.2
+log
+@- corrected prototypes to *Create() functions
+- changed AllocateVrio() to accept mother
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1998/03/10 02:30:32 $
+d9 8
+d22 1
+d26 2
+a27 2
+void	 _disable(void);
+void	 _enable(void);
+d33 5
+a37 3
+extern void _Cdecl	NEAR AsmTimer(void);	/* really far */
+extern void _Cdecl	NEAR _lock(PULONG pulHandle);
+extern void _Cdecl	NEAR _unlock(PULONG pulHandle);
+d42 1
+a42 1
+extern void _Cdecl	NEAR Strategy();
+d47 1
+a47 1
+extern void	NEAR SaveMessage(void);
+d52 19
+a70 9
+extern void	NEAR NotifyIorb(PIORBH const pIorbh,USHORT ErrorCode);
+extern void FAR _saveregs _loadds _Cdecl	IorbEntry(PIORB const pIorb);
+
+
+/* Module: single.c, mirror.c, stripe.c, span.c, ... */
+
+extern USHORT NEAR _Cdecl SingleCreate(PVRDEVHDR pVrh,PPHYSDEVICE pPhys,
+				       PSEC_PHYSDEV sec,PUSHORT pSize);
+extern USHORT NEAR _Cdecl MirrorCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,
+a71 4
+extern USHORT NEAR _Cdecl StripeCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,
+				       PSEC_VRDEV sec,PUSHORT pSize);
+extern USHORT NEAR _Cdecl SpanCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,
+				     PSEC_VRDEV sec,PUSHORT pSize);
+d78 4
+a81 4
+extern void	NEAR QueueVrio(PVRIO const io);
+extern PVRIO	NEAR DequeueVrio(void);
+extern void	NEAR InsertVrio(PVRIO const io);
+extern void	NEAR StartManyIorb(PHOSTDRIVE drvp);
+d86 1
+a86 1
+extern USHORT		NEAR InitWorkmem(void);
+d88 2
+a89 2
+extern void		NEAR MemFree(PVOID const ap);
+extern PVOID		NEAR MemAlloc(USHORT const nbytes);
+d91 4
+a94 4
+extern PIORB_EXECUTEIO	NEAR AllocateIorb(void);
+extern void		NEAR FreeIorb(PIORB_EXECUTEIO iorb);
+extern PVRIO		NEAR AllocateVrio(PVRIO mother);
+extern void		NEAR FreeVrio(PVRIO io);
+d114 1
+a114 1
+extern int _Cdecl	NEAR dprintf(char FAR * msg,...);
+a116 8
+
+
+/* History:
+ *
+ * $Log: proto.h,v $
+ * Revision 1.1  1998/03/10 02:30:32  vitus
+ * Initial revision
+ */
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d47 8
+a54 8
+extern USHORT	NEAR SingleCreate(PVRDEVHDR pVrh,PPHYSDEVICE pPhys,
+				  PSEC_PHYSDEV sec,PUSHORT pSize);
+extern USHORT	NEAR MirrorCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,
+				  PSEC_VRDEV sec,PUSHORT pSize);
+extern USHORT	NEAR StripeCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,
+				  PSEC_VRDEV sec,PUSHORT pSize);
+extern USHORT	NEAR SpanCreate(PVRDEVHDR pVrh,PVRDEVHDR FAR * tab,
+				  PSEC_VRDEV sec,PUSHORT pSize);
+d76 1
+a76 1
+extern PVRIO		NEAR AllocateVrio(void);
+d95 1
+a95 1
+/* Module: dprintf.asm */
+d97 1
+a97 1
+extern void _Cdecl	NEAR dprintf(char FAR * msg,...);
+d104 3
+a106 1
+ * $Log$
+@

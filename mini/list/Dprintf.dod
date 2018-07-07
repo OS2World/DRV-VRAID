@@ -1,0 +1,711 @@
+Microsoft (R) Macro Assembler Version 6.00B 		    06/26/01 01:54:15
+..\Dprintf.asm						     Page 1 - 1
+
+
+				;	SCCSID = @(#)dprintf.asm	6.3 92/05/05
+				;	$Source: R:/source/driver/raid/RCS/Dprintf.asm,v $
+
+				;/***********************************************************************/
+				;/*									*/
+				;/* Driver Name: IBM2SCSI.ADD - Adapter Driver for ABIOS SCB Devices	*/
+				;/*		 ---------------------------------------------------	*/
+				;/*									*/
+				;/* Source File Name: DPRINTF.ASM					*/
+				;/*									*/
+				;/* Descriptive Name: Format/Send debug information to COMx:		*/
+				;/*									*/
+				;/* Function:								*/
+				;/*									*/
+				;/*									*/
+				;/*---------------------------------------------------------------------*/
+				;/*									*/
+				;/* Copyright (C) 1992 IBM Corporation					*/
+				;/*									*/
+				;/* DISCLAIMER OF WARRANTIES.  The following [enclosed] code is 	*/
+				;/* provided to you solely for the purpose of assisting you in		*/
+				;/* the development of your applications. The code is provided		*/
+				;/* "AS IS", without warranty of any kind. IBM shall not be liable      */
+				;/* for any damages arising out of your use of this code, even if	*/
+				;/* they have been advised of the possibility of such damages.		*/
+				;/*									*/
+				;/*---------------------------------------------------------------------*/
+				;/*									*/
+				;/* Change Log								*/
+				;/*									*/
+				;/* Mark    Date      Programmer  Comment				*/
+				;/* ----    ----      ----------  -------				*/
+				;/* @nnnn   mm/dd/yy  NNN						*/
+				;/*									*/
+				;/* $Log: Dprintf.asm,v $
+				;/* Revision 1.2  1998/05/29 01:36:55  vitus
+				;/* - save/restore flags
+				;/*
+				;/* Revision 1.1  1998/02/17 23:12:04  vitus
+				;/* Initial revision
+				;/***********************************************************************/
+
+
+				;****************************************************************************
+				;*
+				;* dprintf - this routine displays information on the debug terminal. it
+				;*	     provides limited formatting, which is a subset of c's printf
+				;*	     function
+				;*
+				;*	calling sequence:	push selector for insert 'n'
+				;*				push offset for insert 'n'
+				;*				push selector for 'n-1'
+				;*				push offset for 'n-1'
+				;*				   ...
+				;*				push selector for second insert
+				;*				push offset for second insert
+				;*				push selector for first insert
+				;*				push offset for first insert
+				;*				push selector raw string
+				;*				push offset for raw string
+				;*				call dprintf
+				;*				add sp,4 + ('n' * 4)
+				;*
+				;*			for "%w", just push one word containing the data to
+				;*				  be displayed. make sure that the "add sp"
+				;*				  cleans the stack correctly.
+				;*
+				;*			for "%z", just the repeat count, then the selector
+				;*				  of the area to display, and then the offset.
+				;*				  make sure that the "add sp" cleans the stack
+				;*				  correctly.
+				;*
+				;*	formatting:	prior to being displayed, the raw string is formatted
+				;*			by scanning it for format control sequences. as each
+				;*			format control sequence is encountered, it is replaced
+				;*			by appropriately formatted text obtained from the
+				;*			corresponding pointer
+				;*
+				;*			the following format control sequences are supported:
+				;*
+				;*			%c -  the corresponding far ptr points to a byte
+				;*			      which replaces the "%c"
+				;*
+				;*			%u -  the corresponding far ptr points to a word
+				;*			      which is displayed as an unsigned decimal
+				;*			      integer, replacing the "%u"
+				;*
+				;*			%x -  the corresponding far ptr points to a word
+				;*			      which is displayed as upper case hex,
+				;*			      replacing the "%X"
+				;*
+				;*			%lx - the corresponding far ptr points to a double
+				;*			      word which is displayed as upper case hex,
+				;*			      replacing the "%X"
+				;*
+				;*			%s -  the corresponding far ptr points to a null
+				;*			      terminated string which is displayed unchanged,
+				;*			      replacing the "%s"
+				;*
+				;*			%p -  the corresponding far ptr is displayed as upper
+				;*			      case hex in the format "ssss:oooo"
+				;*
+				;*			%w -  the corresponding word is displayed as upper
+				;*			      case hex replacing the "%w". note that in this
+				;*			      case, only one word is pushed onto the stack
+				;*			      for the %w insert
+				;*
+				;*			%z -  using the corresponding repeat count and far
+				;*			      pointer, a memory dump is produced. note that
+				;*			      in this case the stack contains a repeat count
+				;*			      and a far pointer to the area to dump
+				;*
+				;*			%% -  the character "%" is displayed, replacing the
+				;*			      "%%"
+				;*
+				;*
+
+				.286p
+
+
+ = 03F8				COM1_PORT	EQU	03f8h
+ = 02F8				COM2_PORT	EQU	02f8h
+
+
+ = COM2_PORT			DEFAULT_PORT	EQU	COM2_PORT
+
+ = 000D				CAR_RET 	EQU	0DH
+ = 000A				LINE_FEED	EQU	0AH
+ = 0007				BELL		EQU	07H
+ = 0005				COM_LSR 	EQU	05H
+ = 0000				COM_DAT 	EQU	00H
+
+
+
+ 000E				s_frame 	struc
+
+ 0000  0000			s_bp		dw	?		; callers bp.
+ 0002  0000			s_ptr_delta	dw	?		; delta (in bytes) to current pointer
+									; from first pointer.
+ 0004  0000			s_ret		dw	?		; callers ip.
+ 0006  00000000			s_string	dd	?		; far pointer to raw string.
+ 000A  00000000			s_ptrs		dd	?		; pointer to first variable.
+
+				s_frame 	ends
+
+				;word_10000	 dw	 10000
+				;word_1000	 dw	 1000
+				;word_100	 dw	 100
+				;word_10	 dw	 10
+
+
+ 0000				_TEXT	segment word public 'CODE'
+					assume	cs:_TEXT
+
+
+ 0000				_dprintf	proc	near
+						public	_dprintf
+
+ 0000  6A 00					push	0		; zero the delta to current pointer.
+
+ 0002  55					push	bp		; save our callers bp register.
+ 0003  8B EC					mov	bp,sp		; point to our stack frame.
+
+ 0005  1E					push	ds		; save our callers ds register.
+ 0006  06					push	es		; save our callers es register.
+ 0007  60					pusha			; save all other caller registers.
+ 0008  9C					pushf
+ 0009  FA					cli
+
+ 000A  C5 76 06					lds	si,ss:[bp+s_string] ; point to the raw string.
+
+ 000D  AC			dprintf_loop:	lodsb			; pick up a byte of the string.
+
+ 000E  0A C0					or	al,al		; is it the end of the string?
+ 0010  75 09					jnz	dprintf_more	; no, go check for format control.
+
+ 0012  9D					popf
+ 0013  61					popa			; restore all other caller registers.
+ 0014  07					pop	es		; restore our callers es register.
+ 0015  1F					pop	ds		; restore our callers ds register.
+ 0016  5D					pop	bp		; restore our callers bp register.
+ 0017  83 C4 02					add	sp,2		; unstack s_ptr_delta.
+
+ 001A  C3					ret			; return to our caller.
+
+ 001B  3C 25			dprintf_more:	cmp	al,'%'          ; no, is it the start of a format
+									; control sequence?
+ 001D  74 03					je	dprintf_type	; yes, go see what type of sequence.
+ 001F  E9 01D0					jmp	dprintf_put_ch	; no, go display character and return.
+
+ 0022  AC			dprintf_type:	lodsb			; pick up a byte of the string.
+ 0023  3C 25					cmp	al,'%'          ; is caller trying to display "%"?
+
+ 0025  75 05					jne	dprintf_try_c	; no, go see if it is a "c".
+
+ 0027  B0 25					mov	al,'%'          ; yes, go display it
+ 0029  E9 01C6					jmp	dprintf_put_ch	; and exit.
+
+ 002C  3C 63			dprintf_try_c:	cmp	al,'c'          ; is it a string display?
+ 002E  75 13					jne	dprintf_try_s	; no, go see if it is a "s".
+
+ 0030  8D 5E 0A					lea	bx,[bp]+s_ptrs	       ; yes, pick up the
+ 0033  03 5E 02					add	bx,ss:[bp+s_ptr_delta] ; corresponding
+ 0036  36: C4 1F				les	bx,ss:[bx]	       ; pointer.
+ 0039  83 46 02 04				add	ss:[bp+s_ptr_delta],4  ; move down to next pointer.
+
+ 003D  26: 8A 07				mov	al,es:[bx]	; pick up a byte.
+ 0040  E9 01AF					jmp	dprintf_put_ch	; go display character and return.
+
+ 0043  3C 73			dprintf_try_s:	cmp	al,'s'          ; is it a string display?
+ 0045  75 1A					jne	dprintf_try_u	; no, go see if it is a "u".
+
+ 0047  8D 5E 0A					lea	bx,[bp]+s_ptrs	       ; yes, pick up the
+ 004A  03 5E 02					add	bx,ss:[bp+s_ptr_delta] ; corresponding
+ 004D  36: C4 1F				les	bx,ss:[bx]	       ; pointer.
+ 0050  83 46 02 04				add	ss:[bp+s_ptr_delta],4  ; move down to next pointer.
+
+ 0054  26: 8A 07		dprintf_next_s: mov	al,es:[bx]	; pick up a byte.
+
+ 0057  0A C0					or	al,al		; is it the end of the string?
+ 0059  74 B2					jz	dprintf_loop	; yes, go do next raw string byte.
+
+ 005B  E8 01E6					call	put_char	; no, display the character.
+
+ 005E  43					inc	bx		; move down to the next character
+ 005F  EB F3					jmp	dprintf_next_s	; and go round again.
+
+ 0061  3C 75			dprintf_try_u:	cmp	al,'u'          ; is it an unsigned short display?
+ 0063  75 4D					jne	dprintf_try_x	; no, go see if it is a "X".
+
+ 0065  8D 5E 0A					lea	bx,[bp]+s_ptrs	       ; yes, pick up the
+ 0068  03 5E 02					add	bx,ss:[bp+s_ptr_delta] ; corresponding
+ 006B  36: C4 1F				les	bx,ss:[bx]	       ; pointer.
+ 006E  83 46 02 04				add	ss:[bp+s_ptr_delta],4  ; move down to next pointer.
+
+ 0072  26: 8B 07				mov	ax,es:[bx]	; pick up the word to display.
+
+ 0075  33 D2					xor	dx,dx		; convert the
+ 0077  B9 2710					mov	cx, 10000
+ 007A  F7 F1					div	cx		; ten thousands
+				;		div	word_10000	; ten thousands
+ 007C  0C 30					or	al,'0'          ; digit and
+ 007E  E8 01C3					call	put_char	; display it.
+
+ 0081  8B C2					mov	ax,dx		; convert the
+ 0083  33 D2					xor	dx,dx		; thousands
+ 0085  B9 03E8					mov	cx, 1000
+ 0088  F7 F1					div	cx		; digit
+				;		div	word_1000	; digit
+ 008A  0C 30					or	al,'0'          ; and
+ 008C  E8 01B5					call	put_char	; display it.
+
+ 008F  8B C2					mov	ax,dx		; convert the
+ 0091  33 D2					xor	dx,dx		; hundreds
+ 0093  B9 0064					mov	cx, 100
+ 0096  F7 F1					div	cx		; digit
+				;		div	word_100	; digit
+ 0098  0C 30					or	al,'0'          ; and
+ 009A  E8 01A7					call	put_char	; display it.
+
+ 009D  8B C2					mov	ax,dx		; convert the
+ 009F  33 D2					xor	dx,dx		; tens
+ 00A1  B9 000A					mov	cx, 10
+ 00A4  F7 F1					div	cx		; digit
+				;		div	word_10 	; digit
+ 00A6  0C 30					or	al,'0'          ; and
+ 00A8  E8 0199					call	put_char	; display it.
+
+ 00AB  8A C2					mov	al,dl		; convert the units digit
+ 00AD  0C 30					or	al,'0'          ; and go display it
+ 00AF  E9 0140					jmp	dprintf_put_ch	; and return.
+
+ 00B2  3C 78			dprintf_try_x:	cmp	al,'x'          ; is it an unsigned short hex display?
+ 00B4  75 13					jne	dprintf_try_lx	; no, go see if it is a "lX".
+
+ 00B6  8D 5E 0A					lea	bx,[bp]+s_ptrs	       ; yes, pick up the
+ 00B9  03 5E 02					add	bx,ss:[bp+s_ptr_delta] ; corresponding
+ 00BC  36: C4 1F				les	bx,ss:[bx]	       ; pointer.
+ 00BF  83 46 02 04				add	ss:[bp+s_ptr_delta],4  ; move down to next pointer.
+
+ 00C3  E8 0160					call	put_hex_word	; convert and display the word.
+
+ 00C6  E9 FF44					jmp	dprintf_loop	; go do next raw string byte.
+
+ 00C9  3C 6C			dprintf_try_lx: cmp	al,'l'          ; is it an unsigned long hex display?
+ 00CB  75 24					jne	dprintf_try_p	; no, go see if it is a "p".
+ 00CD  AC					lodsb			; maybe, pick up a byte of the string.
+ 00CE  3C 78					cmp	al,'x'          ; is the second byte correct?
+ 00D0  74 03					je	dprintf_do_lx	; no, go report
+ 00D2  E9 0105					jmp	dprintf_error	; the error.
+
+ 00D5  8D 5E 0A			dprintf_do_lx:	lea	bx,[bp]+s_ptrs	       ; yes, pick up the
+ 00D8  03 5E 02					add	bx,ss:[bp+s_ptr_delta] ; corresponding
+ 00DB  36: C4 1F				les	bx,ss:[bx]	       ; pointer.
+ 00DE  83 46 02 04				add	ss:[bp+s_ptr_delta],4  ; move down to next pointer.
+
+ 00E2  83 C3 02					add	bx,2		; move down to the second word.
+ 00E5  E8 013E					call	put_hex_word	; convert and display the second word.
+ 00E8  83 EB 02					sub	bx,2		; move back to the first word.
+ 00EB  E8 0138					call	put_hex_word	; convert and display the first word.
+
+ 00EE  E9 FF1C					jmp	dprintf_loop	; go do next raw string byte.
+
+ 00F1  3C 70			dprintf_try_p:	cmp	al,'p'          ; is it a far pointer display?
+ 00F3  75 22					jne	dprintf_try_w	; no, go see if it is a "w".
+
+ 00F5  8D 5E 0A					lea	bx,[bp]+s_ptrs	       ; yes, pick up the
+ 00F8  03 5E 02					add	bx,ss:[bp+s_ptr_delta] ; corresponding pointer.
+ 00FB  83 46 02 04				add	ss:[bp+s_ptr_delta],4  ; move down to next pointer.
+
+ 00FF  06					push	es		; save the callers data selector.
+
+ 0100  16					push	ss		; set up the proper
+ 0101  07					pop	es		; selector.
+
+ 0102  83 C3 02					add	bx,2		; move down to the second word.
+ 0105  E8 011E					call	put_hex_word	; convert and display the selector.
+ 0108  B0 3A					mov	al,':'          ; display
+ 010A  E8 0137					call	put_char	; the ":".
+ 010D  83 EB 02					sub	bx,2		; move back to the first word.
+ 0110  E8 0113					call	put_hex_word	; convert and display the offset.
+
+				;;;		mov	al,' '		; display
+				;;;		call	put_char	; a couple
+				;;;		mov	al,' '		; of
+				;;;		call	put_char	; spaces.
+
+ 0113  07					pop	es		; recover the callers data selector.
+
+ 0114  E9 FEF6					jmp	dprintf_loop	; go do next raw string byte.
+
+ 0117  3C 77			dprintf_try_w:	cmp	al,'w'          ; is it an immediate word display?
+ 0119  75 14					jne	dprintf_try_z	; no, go see if it is a "z".
+
+ 011B  8D 5E 0A					lea	bx,[bp]+s_ptrs	       ; yes, pick up the
+ 011E  03 5E 02					add	bx,ss:[bp+s_ptr_delta] ; corresponding pointer.
+ 0121  83 46 02 02				add	ss:[bp+s_ptr_delta],2  ; move down to next pointer.
+
+ 0125  06					push	es		; save the callers data selector.
+
+ 0126  16					push	ss		; set up the proper
+ 0127  07					pop	es		; selector.
+
+ 0128  E8 00FB					call	put_hex_word	; convert and display the word.
+
+ 012B  07					pop	es		; recover the callers data selector.
+
+ 012C  E9 FEDE					jmp	dprintf_loop	; go do next raw string byte.
+
+ 012F  3C 7A			dprintf_try_z:	cmp	al,'z'          ; is it a memory dump display?
+ 0131  74 03					je	dprintf_do_z	; no, go report
+ 0133  E9 00A4					jmp	dprintf_error	; the error.
+
+ 0136				dprintf_do_z:
+ 0136  8D 5E 0A					lea	bx,[bp]+s_ptrs	       ; yes, pick up the
+ 0139  03 5E 02					add	bx,ss:[bp+s_ptr_delta] ; corresponding pointer.
+ 013C  83 46 02 06				add	ss:[bp+s_ptr_delta],6  ; move down to next pointer.
+
+ 0140  36: 8B 4F 04				mov	cx,ss:[bx+4]	; pick up the repeat count.
+
+ 0144  06					push	es		; save the callers data selector.
+
+ 0145  36: C4 1F				les	bx,ss:[bx]	; point to the area to display.
+
+ 0148  8C C0			dprintf_z_a:	mov	ax,es		; pick up the selector to display.
+ 014A  86 E0					xchg	ah,al		; set up to process the first byte.
+ 014C  E8 00A9					call	put_left_nib	; display the first byte
+ 014F  E8 00B7					call	put_right_nib	; of the selector.
+ 0152  86 E0					xchg	ah,al		; set up to process the second byte.
+ 0154  E8 00A1					call	put_left_nib	; display the second byte
+ 0157  E8 00AF					call	put_right_nib	; of the selector.
+
+ 015A  B0 3A					mov	al,':'          ; display a
+ 015C  E8 00E5					call	put_char	; colon.
+
+ 015F  8B C3					mov	ax,bx		; pick up the offset to display.
+ 0161  86 E0					xchg	ah,al		; set up to process the first byte.
+ 0163  E8 0092					call	put_left_nib	; display the first byte
+ 0166  E8 00A0					call	put_right_nib	; of the offset.
+ 0169  86 E0					xchg	ah,al		; set up to process the second byte.
+ 016B  E8 008A					call	put_left_nib	; display the second byte
+ 016E  E8 0098					call	put_right_nib	; of the offset.
+
+ 0171  B0 20					mov	al,' '          ; display
+ 0173  E8 00CE					call	put_char	; two
+ 0176  B0 20					mov	al,' '          ; seperating
+ 0178  E8 00C9					call	put_char	; spaces.
+
+ 017B  51					push	cx		; save the repeat count for later.
+
+ 017C  BA 0031					mov	dx,16*3+1	; initialize the fill count.
+
+ 017F  83 F9 10					cmp	cx,16		; are there more than 16 bytes left?
+ 0182  76 03					jbe	dprintf_z_b	; yes, limit it to 16 bytes
+ 0184  B9 0010					mov	cx,16		; for this line.
+
+ 0187  53			dprintf_z_b:	push	bx		; save offset and display count
+ 0188  51					push	cx		; for the character display.
+
+ 0189  26: 8A 07		dprintf_z_c:	mov	al,es:[bx]	; pick up a byte to display.
+ 018C  E8 008A					call	put_hex_byte	; display it in hex.
+
+ 018F  B0 20					mov	al,' '          ; set up to display a space.
+ 0191  83 FA 1C					cmp	dx,9*3+1	; should it be a dash?
+ 0194  75 02					jne	dprintf_z_e	; no, bypass changing it.
+ 0196  B0 2D					mov	al,'-'          ; yes, set up to display a dash.
+ 0198  E8 00A9			dprintf_z_e:	call	put_char	; display the dash or space.
+
+ 019B  83 EA 03					sub	dx,3		; down the fill count by one position.
+
+ 019E  43					inc	bx		; move down to the next byte.
+
+ 019F  E2 E8					loop	dprintf_z_c	; more to do? yes, go round again?
+
+ 01A1  8B CA					mov	cx,dx		; no, pick up remaining fill count.
+
+ 01A3  B0 20			dprintf_z_g:	mov	al,' '          ; display a
+ 01A5  E8 009C					call	put_char	; space.
+
+ 01A8  E2 F9					loop	dprintf_z_g	; more to do? yes, go round again.
+
+ 01AA  59					pop	cx		; recover the offset and
+ 01AB  5B					pop	bx		; display count.
+
+ 01AC  B0 2E			dprintf_z_i:	mov	al,'.'          ; set up to display a dot.
+
+ 01AE  26: 8A 27				mov	ah,es:[bx]	; does the byte
+ 01B1  80 FC 20					cmp	ah,20h		; contain a
+ 01B4  72 07					jb	dprintf_z_k	; valid ascii
+ 01B6  80 FC 7F					cmp	ah,7fh		; code?
+ 01B9  77 02					ja	dprintf_z_k	; no, go display the dot.
+
+ 01BB  86 C4					xchg	al,ah		; yes, set up to do byte's contents.
+
+ 01BD  E8 0084			dprintf_z_k:	call	put_char	; display a dot or the byte contents.
+
+ 01C0  43					inc	bx		; move down to the next byte.
+
+ 01C1  E2 E9					loop	dprintf_z_i	; more to do on this line?
+									; yes, go round again.
+
+ 01C3  59					pop	cx		; no, recover the repeat count.
+
+ 01C4  83 E9 10					sub	cx,16		; down the repeat count by one line.
+
+ 01C7  7E 0D					jle	dprintf_z_z	; more to do? no, go exit.
+
+ 01C9  B0 0D					mov	al,CAR_RET	; perform
+ 01CB  E8 0076					call	put_char	; a
+ 01CE  B0 0A					mov	al,LINE_FEED	; new line
+ 01D0  E8 0071					call	put_char	; operation.
+
+ 01D3  E9 FF72					jmp	dprintf_z_a	; go round and display another line.
+
+ 01D6  07			dprintf_z_z:	pop	es		; recover the callers data selector.
+
+ 01D7  E9 FE33					jmp	dprintf_loop	; go do next raw string byte.
+
+ 01DA  8A E0			dprintf_error:	mov	ah,al		; display
+ 01DC  B0 3F					mov	al,'?'          ; an
+ 01DE  E8 0063					call	put_char	; eye
+ 01E1  B0 5C					mov	al,'\'          ; catching
+ 01E3  E8 005E					call	put_char	; "invalid
+ 01E6  8A C4					mov	al,ah		; format
+ 01E8  E8 0059					call	put_char	; control"
+ 01EB  B0 5C					mov	al,'\'          ; message
+ 01ED  E8 0054					call	put_char	; and
+ 01F0  B0 07					mov	al,BELL 	; beep.
+
+ 01F2  E8 004F			dprintf_put_ch: call	put_char	; display the character.
+ 01F5  E9 FE15					jmp	dprintf_loop	; go process next raw string byte.
+
+ 01F8				_dprintf	endp
+
+ 01F8				put_left_nib	proc	near
+
+ 01F8  50					push	ax		; save the callers ax register.
+
+ 01F9  C0 E8 04					shr	al,4		; convert the
+ 01FC  04 30					add	al,'0'          ; left nibble
+ 01FE  3C 39					cmp	al,'9'          ; to an ascii
+ 0200  76 02					jbe	put_left_nib_a	; hex
+ 0202  04 07					add	al,'A'-'9'-1    ; representation.
+ 0204  E8 003D			put_left_nib_a: call	put_char	; display the character.
+
+ 0207  58					pop	ax		; restore the callers ax register.
+
+ 0208  C3					ret			; return to our caller.
+
+ 0209				put_left_nib	endp
+
+ 0209				put_right_nib	proc	near
+
+ 0209  50					push	ax		; save the callers ax register.
+
+ 020A  24 0F					and	al,0fh		; convert the
+ 020C  04 30					add	al,'0'          ; right nibble
+ 020E  3C 39					cmp	al,'9'          ; to an
+ 0210  76 02					jbe	put_rght_nib_a	; ascii hex
+ 0212  04 07					add	al,'A'-'9'-1    ; representation.
+ 0214  E8 002D			put_rght_nib_a: call	put_char	; display the character.
+
+ 0217  58					pop	ax		; restore the callers ax register.
+
+ 0218  C3					ret			; return to our caller
+
+ 0219				put_right_nib	endp
+
+ 0219				put_hex_byte	proc	near
+
+ 0219  26: 8A 07				mov	al,es:[bx]	; display the left nibble
+ 021C  E8 FFD9					call	put_left_nib	; in ascii hex.
+
+ 021F  26: 8A 07				mov	al,es:[bx]	; display the right nibble
+ 0222  E8 FFE4					call	put_right_nib	; in ascii hex.
+
+ 0225  C3					ret			; return to our caller.
+
+ 0226				put_hex_byte	endp
+
+
+ 0226				put_hex_word	proc	near
+
+ 0226  43					inc	bx		; set up to process second byte first.
+
+ 0227  E8 FFEF					call	put_hex_byte	; display the byte in hex.
+
+ 022A  4B					dec	bx		; move back to the first byte.
+
+ 022B  E8 FFEB					call	put_hex_byte	; display the byte in hex.
+
+ 022E  C3					ret			; return to our caller.
+
+ 022F				put_hex_word	endp
+
+
+				;		 public  portadr
+				;portadr	 dw	 DEFAULT_PORT	 ; change config.h to change this.
+									; use: com2=02f8H, com1=03f8H
+
+				IODelay Macro
+				    local a
+				    jmp a
+				a:
+				endm
+
+ 022F				PollC	PROC	NEAR
+
+				;	mov	dx, cs:PortAdr
+ 022F  BA 02F8				mov	dx, DEFAULT_PORT
+ 0232  83 C2 05				add	dx, COM_LSR
+
+ 0235  EC				in	al,dx			; get input status
+				;	IODelay
+
+ 0236  24 01				and	al,1			; is there a char in RECV buffer?
+ 0238  74 09				jz	plc1			; no, go return empty
+
+				;	mov	dx, cs:PortAdr
+ 023A  BA 02F8				mov	dx, DEFAULT_PORT
+ 023D  83 C2 00				add	dx, COM_DAT
+
+ 0240  EC				in	al,dx			; suck char out of buffer
+				;	IODelay
+
+ 0241  24 7F				and	al,07fh 		; strip off stupid parity crap
+ 0243  C3			plc1:	ret
+ 0244				PollC	ENDP
+
+
+				;**	PUTC - output a single char to COM2 handling ^S
+
+
+ 0244				put_char	proc	near
+
+ 0244  52				push	dx
+ 0245  50				push	ax
+
+				;	See if ^S
+
+ 0246  E8 FFE6				call	PollC		    ; is there a char at input
+ 0249  74 0D				jz	pc2		    ; no, go output our char
+ 024B  3C 13				cmp	al,'S' - 'A' + 1    ; is it ^S?
+ 024D  75 09				jnz	pc2		    ; no, go output our char
+
+				;	Saw ^S.  Wait for and eat next char.
+
+ 024F  E8 FFDD			pc1:	call	PollC		    ; look for next char
+ 0252  74 FB				jz	pc1		    ; no char, go look again
+ 0254  3C 13				cmp	al,'S' - 'A' + 1    ; is it ^S again?
+ 0256  74 F7				jz	pc1		    ; yes, go look for something else
+
+				;pc2:	 mov	 dx, cs:PortAdr
+ 0258  BA 02F8			pc2:	mov	dx, DEFAULT_PORT
+ 025B  83 C2 05				add	dx, COM_LSR
+ 025E  EC				in	al,dx
+				;	IODelay
+ 025F  A8 20				test	al,020h
+ 0261  74 F5				jz	pc2
+
+				;	ready.	crank it out!
+
+				;	mov	dx, cs:PortAdr
+ 0263  BA 02F8				mov	dx, DEFAULT_PORT
+ 0266  83 C2 00				add	dx, COM_DAT
+ 0269  58				pop	ax
+ 026A  EE				out	dx,al
+
+ 026B  5A					pop	dx		; restore the callers dx register.
+
+ 026C  C3				ret
+
+ 026D				put_char	endp
+
+ 026D				_TEXT	ends
+					end
+Microsoft (R) Macro Assembler Version 6.00B 		    06/26/01 01:54:15
+..\Dprintf.asm						     Symbols 2 - 1
+
+
+
+
+Macros:
+
+                N a m e                 Type
+
+IODelay  . . . . . . . . . . . .	Proc
+
+
+Structures and Unions:
+
+                N a m e                  Size
+                                         Offset      Type
+
+s_frame  . . . . . . . . . . . .	 000E
+  s_bp . . . . . . . . . . . . .	 0000	     Word
+  s_ptr_delta  . . . . . . . . .	 0002	     Word
+  s_ret  . . . . . . . . . . . .	 0004	     Word
+  s_string . . . . . . . . . . .	 0006	     DWord
+  s_ptrs . . . . . . . . . . . .	 000A	     DWord
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+_TEXT  . . . . . . . . . . . . .	16 Bit	 026D	  Word	  Public  'CODE'	
+
+
+Procedures,  parameters and locals:
+
+                N a m e                 Type     Value    Attr
+
+PollC  . . . . . . . . . . . . .	P Near	 022F	  _TEXT	Length= 0015 Private
+_dprintf . . . . . . . . . . . .	P Near	 0000	  _TEXT	Length= 01F8 Public
+put_char . . . . . . . . . . . .	P Near	 0244	  _TEXT	Length= 0029 Private
+put_hex_byte . . . . . . . . . .	P Near	 0219	  _TEXT	Length= 000D Private
+put_hex_word . . . . . . . . . .	P Near	 0226	  _TEXT	Length= 0009 Private
+put_left_nib . . . . . . . . . .	P Near	 01F8	  _TEXT	Length= 0011 Private
+put_right_nib  . . . . . . . . .	P Near	 0209	  _TEXT	Length= 0010 Private
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+BELL . . . . . . . . . . . . . .	Number	 0007h	 
+CAR_RET  . . . . . . . . . . . .	Number	 000Dh	 
+COM1_PORT  . . . . . . . . . . .	Number	 03F8h	 
+COM2_PORT  . . . . . . . . . . .	Number	 02F8h	 
+COM_DAT  . . . . . . . . . . . .	Number	 0000h	 
+COM_LSR  . . . . . . . . . . . .	Number	 0005h	 
+DEBUG  . . . . . . . . . . . . .	Text   	 
+DEFAULT_PORT . . . . . . . . . .	Text   	 COM2_PORT
+LINE_FEED  . . . . . . . . . . .	Number	 000Ah	 
+dprintf_do_lx  . . . . . . . . .	L Near	 00D5	  _TEXT	
+dprintf_do_z . . . . . . . . . .	L Near	 0136	  _TEXT	
+dprintf_error  . . . . . . . . .	L Near	 01DA	  _TEXT	
+dprintf_loop . . . . . . . . . .	L Near	 000D	  _TEXT	
+dprintf_more . . . . . . . . . .	L Near	 001B	  _TEXT	
+dprintf_next_s . . . . . . . . .	L Near	 0054	  _TEXT	
+dprintf_put_ch . . . . . . . . .	L Near	 01F2	  _TEXT	
+dprintf_try_c  . . . . . . . . .	L Near	 002C	  _TEXT	
+dprintf_try_lx . . . . . . . . .	L Near	 00C9	  _TEXT	
+dprintf_try_p  . . . . . . . . .	L Near	 00F1	  _TEXT	
+dprintf_try_s  . . . . . . . . .	L Near	 0043	  _TEXT	
+dprintf_try_u  . . . . . . . . .	L Near	 0061	  _TEXT	
+dprintf_try_w  . . . . . . . . .	L Near	 0117	  _TEXT	
+dprintf_try_x  . . . . . . . . .	L Near	 00B2	  _TEXT	
+dprintf_try_z  . . . . . . . . .	L Near	 012F	  _TEXT	
+dprintf_type . . . . . . . . . .	L Near	 0022	  _TEXT	
+dprintf_z_a  . . . . . . . . . .	L Near	 0148	  _TEXT	
+dprintf_z_b  . . . . . . . . . .	L Near	 0187	  _TEXT	
+dprintf_z_c  . . . . . . . . . .	L Near	 0189	  _TEXT	
+dprintf_z_e  . . . . . . . . . .	L Near	 0198	  _TEXT	
+dprintf_z_g  . . . . . . . . . .	L Near	 01A3	  _TEXT	
+dprintf_z_i  . . . . . . . . . .	L Near	 01AC	  _TEXT	
+dprintf_z_k  . . . . . . . . . .	L Near	 01BD	  _TEXT	
+dprintf_z_z  . . . . . . . . . .	L Near	 01D6	  _TEXT	
+pc1  . . . . . . . . . . . . . .	L Near	 024F	  _TEXT	
+pc2  . . . . . . . . . . . . . .	L Near	 0258	  _TEXT	
+plc1 . . . . . . . . . . . . . .	L Near	 0243	  _TEXT	
+put_left_nib_a . . . . . . . . .	L Near	 0204	  _TEXT	
+put_rght_nib_a . . . . . . . . .	L Near	 0214	  _TEXT	
+
+	   0 Warnings
+	   0 Errors

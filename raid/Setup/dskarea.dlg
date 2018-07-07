@@ -1,0 +1,22 @@
+#ifndef OS2_INCLUDED
+   #include <os2.h>
+#endif
+DLGINCLUDE 1 "R:\Source\driver\raid\Setup\resources.h"
+
+DLGTEMPLATE IDW_DSKAREA LOADONCALL MOVEABLE DISCARDABLE
+BEGIN
+    DIALOG  "Partition size and position", IDW_DSKAREA, 99, 88, 176, 84, 
+            WS_VISIBLE, FCF_SYSMENU | FCF_TITLEBAR
+    BEGIN
+        SLIDER          SL_AREAPERCENT, 60, 46, 114, 16, SLS_RIBBONSTRIP | 
+                        WS_GROUP
+                        CTLDATA 12, 0, 5, 0, 0, 0
+        DEFPUSHBUTTON   "OK", DID_OK, 6, 4, 40, 14
+        PUSHBUTTON      "Cancel", DID_CANCEL, 49, 4, 40, 14
+        PUSHBUTTON      "Help", DID_HELP, 92, 4, 40, 14, BS_HELP
+        LISTBOX         LB_AREASIZE, 6, 28, 48, 32
+        LTEXT           "Free area", -1, 6, 69, 40, 8
+        LTEXT           "Percentage of area", -1, 69, 69, 97, 8
+        LTEXT           "", ST_AREASIZE, 69, 28, 106, 8
+    END
+END

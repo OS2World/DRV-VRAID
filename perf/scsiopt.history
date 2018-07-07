@@ -1,0 +1,12 @@
+-*- Mode: indented-text -*-
+
+    SCSI Optimizer - Driver History
+
+Version 0.71 - scsiopt2.zip - 04.03.1998
+
+    - added mode page 13 (CD-ROM inactivity timeout)
+
+Version 0.70 - scsiopt1.zip
+
+    - quasi-public alpha release (some friends)
+

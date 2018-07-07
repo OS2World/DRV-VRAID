@@ -1,0 +1,833 @@
+head	2.1;
+access;
+symbols
+	VSETUPv0_84:1.11
+	VSETUP_82:1.9
+	VSETUPv0_80:1.8
+	VSETUPv0_71:1.7
+	VSETUPv0_70:1.7
+	VSETUPv0_60:1.5
+	VSETUPv0_52:1.4
+	VSETUPv0_51:1.4
+	VSETUPv0_50:1.3
+	VSETUPv0_20:1.3;
+locks; strict;
+comment	@ * @;
+
+
+2.1
+date	2003.09.24.10.46.04;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2000.06.12.20.30.28;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2000.05.28.17.40.02;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2000.04.10.01.00.01;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.06.20.17.03.47;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.03.01.02.20.53;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.02.09.02.50.16;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	98.12.17.02.22.37;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	98.11.03.02.50.38;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.06.09.01.23.24;	author vitus;	state Stab;
+branches;
+next	1.2;
+
+1.2
+date	98.05.27.02.23.51;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.05.18.01.53.45;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Process dialog to select type of RAID device
+@
+
+
+2.1
+log
+@- added RAID 5 code (new major because of "stopped" development)
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/drvtype.cpp,v $
+ * $Revision: 1.11 $
+ * $Date: 2000/06/12 20:30:28 $
+ * $Locker: vitus $
+ *
+ *	Process dialog to select type of RAID device.
+ *
+ * $Log: drvtype.cpp,v $
+ * Revision 1.11  2000/06/12 20:30:28  vitus
+ * - changes to use QWL_USER constant as window word
+ *
+ * Revision 1.10  2000/05/28 17:40:02  vitus
+ * - adjusted verbosity levels
+ *
+ * Revision 1.9  2000/04/10 01:00:01  vitus
+ * - include VSetup.h instead of proto.h
+ * - converted calls to WinMessageBox() to MyMessageBox()
+ *
+ * Revision 1.8  1999/06/20 17:03:47  vitus
+ * - minor corrections to keep compiler happy
+ *
+ * Revision 1.7  1999/03/01 02:20:53  vitus
+ * - include dskinfo.hpp for drvbuild.h
+ * - changed DSKTYPE_* to RDTYPE_* constants
+ *
+ * Revision 1.6  1999/02/09 02:50:16  vitus
+ * - switched to C++
+ *
+ * Revision 1.5  1998/12/17 02:22:37  vitus
+ * - changed for moved global headers
+ *
+ * Revision 1.4  1998/11/03 02:50:38  vitus
+ * - QueryDlgItems: return /0 and display message box if user forgot to
+ *   select a drive type.  dialog will remain on screen.
+ *
+ * Revision 1.3  1998/06/09 01:23:24  vitus
+ * - corrected drive size calculation
+ *
+ * Revision 1.2  1998/05/27 02:23:51  vitus
+ * - correctly fill listbox for one or more childs
+ *
+ * Revision 1.1  1998/05/18 01:53:45  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-2001
+ */
+static char const vcid[]="$Id: drvtype.cpp,v 1.11 2000/06/12 20:30:28 vitus Exp vitus $";
+
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <limits.h>
+
+#define __IBMC__	0
+#define INCL_DOS
+#define INCL_DOSDEVIOCTL
+#define INCL_ERRORS
+#define INCL_WIN
+#define INCL_GPI
+#include <os2.h>
+
+extern "C" {
+#include "../../../Lib/defines.h"
+#include "../../../Lib/verbose.h"
+#include "../../../Lib/profile.h"		/* profile handling */
+}
+#include "VSetup.h"
+#include "resources.h"
+
+#include "../dsklayout.h"
+#include "dskinfo.hpp"
+#include "drvbuild.h"
+
+
+PSZ const	apcszRaidType[] = {"Single",
+				   "Chain",
+				   "Stripe (RAID 0)",
+				   "Mirror (RAID 1)",
+				   "RAID 4",
+				   "RAID 5"};
+
+
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * InitDlgItems(hwndDlg,p)
+ *
+ * PARAMETER
+ *	hwndDlg		window handle of dialoge
+ *	p		pointer to dialog parameters
+ * RETURNS
+ *	0		OK
+ *	/0		couldn't configure dialog
+ * GLOBAL
+ *	apcszRaidType
+ * DESPRIPTION
+ *	Configures some controls which can't from dialog template.
+ * REMARKS
+ */
+PRIVATE int
+InitDlgItems(HWND const hwndDlg,PDRVBUILD const p)
+{
+    BOOL	bool;
+    HWND	hwndItem;
+    LONG	l, idx;
+
+    Verbose(3, "DrvSetup", "InitDlg (parameter %#x)", p);
+
+    /* Store caller pointer */
+
+    if( (bool = WinSetWindowPtr(hwndDlg, QWL_USER, (PVOID)p)) == FALSE )
+    {
+	Verbose(1, "DrvSetup", "WinSetWindowPtr failed");
+	return 1;				/* can't continue */
+    }
+
+    /* Store possible RAID levels in combo-box (list-box control). */
+
+    hwndItem = WinWindowFromID(hwndDlg, CB_DRVTYPE);
+    Verbose(4, "DrvSetup", "hwnd(CB_DRVTYPE): %#x", hwndItem);
+    for( idx = l = 0; l < sizeof(apcszRaidType)/sizeof(apcszRaidType[0]); ++l )
+    {
+	if( 1 == p->cnt  &&  0 != l )
+	    continue;				/* only "single" possible */
+	else if( 1 != p->cnt  &&  0 == l )
+	    continue;				/* "single" not possible */
+
+	WinSendMsg(hwndItem, LM_INSERTITEM, MPFROMLONG(idx), apcszRaidType[l]);
+	++idx;
+    }
+
+    hwndItem = WinWindowFromID(hwndDlg, SC_DRVSIZE);
+    Verbose(4, "DrvSetup", "hwnd(SC_DRVSIZE): %#x", hwndItem);
+    WinSetWindowText(hwndItem, "(still unknown)");
+
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * QueryDlgItems(hwndDlg,p)
+ *
+ * PARAMETER
+ *	hwndDlg		window handle of dialog
+ *	p		insert values here
+ * RETURNS
+ *	0		OK, do start test
+ *	/0		some value missing, don't start
+ * GLOBAL
+ *	aulIoSize[]
+ * DESPRIPTION
+ *	Asks all controls inside the dialog box for current values
+ *	and fills them into structure 'p' points to.
+ * REMARKS
+ *	Sets focus to control with invalid data to allow user
+ *	to complete input.
+ */
+PRIVATE int
+QueryDlgItems(HWND hwndDlg,PDRVBUILD const p)
+{
+    SHORT	idx;
+    MRESULT	mresult;
+
+    Verbose(4, "DrvSetup", "QueryDlgItems(parameter %#x)", p);
+
+    /* Query drive type selected by user. */
+
+    mresult = WinSendDlgItemMsg(hwndDlg, CB_DRVTYPE, LM_QUERYSELECTION,
+				MPFROMLONG(LIT_FIRST), 0);
+    idx = SHORT1FROMMR(mresult);
+    if( LIT_NONE == idx )
+    {
+	Verbose(1, "DrvSetup", "No drive type selected!");
+	MyMessageBox(1, hwndDlg,
+		     "You forgot to select a drive type...");
+	return 1;
+    }
+    else if( 1 != p->cnt )
+	p->type = idx + 2;			/* first entry not displayed */
+    else
+    {
+	assert(idx == 0);			/* only "single" possible */
+	p->type = idx + 1;
+    }
+
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DrvtypeDlgProc(hwnd,msg,mp1,mp2)
+ *
+ * PARAMETER
+ * RETURNS
+ * GLOBAL
+ * DESCRIPTION
+ * REMARKS
+ */
+PUBLIC MRESULT EXPENTRY
+DrvtypeDlgProc(HWND hwnd,ULONG msg,MPARAM mp1,MPARAM mp2)
+{
+    switch( msg )
+    {
+	/* WM_INITDLG:
+	 *	Save caller parameter in window words and
+	 *	initialize all control inside the dialog. */
+      case WM_INITDLG:
+        {
+	    PDRVBUILD	p = (PDRVBUILD)PVOIDFROMMP(mp2);
+
+	    if( InitDlgItems(hwnd, p) )
+	    {
+		WinDismissDlg(hwnd, DID_ERROR); /* abort dialog */
+		return FALSE;
+	    }
+	}
+	return FALSE;				/*all done, focus not changed*/
+
+	/* WM_COMMAND:
+	 *	Button control sends.
+	 *	Should return 0 (reserved value). */
+      case WM_COMMAND:
+	switch( SHORT1FROMMP(mp1) )
+	{
+	    /* DID_START:
+	     *	User pressed OK, query all controls about
+	     *	actual values, check these, fill them in caller 
+	     *	structure and return OK to caller. */
+	  case DID_OK:
+	    {
+		PDRVBUILD p = (PDRVBUILD)WinQueryWindowPtr(hwnd, QWL_USER);
+
+		if( QueryDlgItems(hwnd, p) != 0 )
+		    return 0;			/* restart from beginning */
+
+		WinDismissDlg(hwnd, DID_OK);
+	    }
+	    return 0;
+
+	  case DID_CANCEL:
+	    WinDismissDlg(hwnd, DID_CANCEL);
+	    return 0;
+	}
+	break;
+
+	/* WM_CONTROL:
+	 *	Things the combo-box wants to tell us. */
+      case WM_CONTROL:
+	Verbose(4, "DrvSetup", "DrvType.WM_CONTROL");
+	{
+	    PDRVBUILD	p = (PDRVBUILD)WinQueryWindowPtr(hwnd, QWL_USER);
+	    USHORT	code = SHORT2FROMMP(mp1);
+	    HWND	hwndItem = HWNDFROMMP(mp2);
+	    MRESULT	mresult;
+	    SHORT	idx;
+	    CHAR	str[30];
+
+	    switch( code )
+	    {
+	      case CBN_ENTER:
+		mresult = WinSendMsg(hwndItem, LM_QUERYSELECTION,
+					MPFROMLONG(LIT_FIRST), 0);
+		idx = SHORT1FROMMR(mresult);
+		if( LIT_NONE != idx )
+		{
+		    ULONG	size = 0;
+
+		    if( 1 != p->cnt )
+			idx += 2;		/* first entry not displayed */
+		    else
+		    {
+			assert(idx == 0);	/* only "single" possible */
+			idx += 1;
+		    }
+
+		    Verbose(2, "DrvSetup", "selected type %d", idx);
+		    switch( idx )
+		    {
+			int	i;
+
+		      case RDTYPE_SINGLE:
+			size = p->child[0]->dsk->querySize();
+			break;
+
+		      case RDTYPE_CHAIN:	/* chain */
+			for( i = 0; i < p->cnt; ++i )
+			    size += p->child[i]->dsk->querySize();
+			break;
+
+		      case RDTYPE_STRIPE:	/* stripe */
+			size = (ULONG)ULONG_MAX;
+			for( i = 0; i < p->cnt; ++i )
+			    size = min(size, p->child[i]->dsk->querySize());
+			size *= p->cnt;
+			break;
+
+		      case RDTYPE_MIRROR:
+			size = (ULONG)ULONG_MAX;
+			for( i = 0; i < p->cnt; ++i )
+			    size = min(size, p->child[i]->dsk->querySize());
+			break;
+
+		      case RDTYPE_RAID4:
+		      case RDTYPE_RAID5:
+			size = (ULONG)ULONG_MAX;
+			for( i = 0; i < p->cnt; ++i )
+			    size = min(size, p->child[i]->dsk->querySize());
+			size *= p->cnt - 1;
+			break;
+		    }
+		    sprintf(str, "appr. %lu MBytes", size/2/1024);
+		    hwndItem = WinWindowFromID(hwnd, SC_DRVSIZE);
+		    Verbose(4, "DrvSetup", "hwnd(SC_DRVSIZE): %#x", hwndItem);
+		    WinSetWindowText(hwndItem, str);
+		}
+		return 0;
+
+	      default:
+		break;
+	    }
+	}
+	break;
+
+	/* default: let WinDefDlgProc() handle all others. */
+      default:
+	break;
+    }
+
+    return WinDefDlgProc(hwnd, msg, mp1, mp2);
+}
+@
+
+
+1.11
+log
+@- changes to use QWL_USER constant as window word
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 2000/05/28 17:40:02 $
+d10 3
+d46 1
+a46 1
+ * This code is Copyright Vitus Jensen 1998-2000
+d48 1
+a48 1
+static char const vcid[]="$Id: drvtype.cpp,v 1.10 2000/05/28 17:40:02 vitus Exp vitus $";
+d80 3
+a82 1
+				   "Mirror (RAID 1)"};
+d293 6
+a298 1
+		      case RDTYPE_MIRROR:
+d302 1
+d305 1
+a305 1
+		      case RDTYPE_STRIPE:	/* stripe */
+a308 1
+			size *= p->cnt;
+d311 3
+a313 1
+		      case RDTYPE_CHAIN:	/* chain */
+d315 2
+a316 1
+			    size += p->child[i]->dsk->querySize();
+@
+
+
+1.10
+log
+@- adjusted verbosity levels
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 2000/04/10 01:00:01 $
+d10 3
+d45 1
+a45 1
+static char const vcid[]="$Id: drvtype.cpp,v 1.9 2000/04/10 01:00:01 vitus Exp vitus $";
+d110 1
+a110 1
+    if( (bool = WinSetWindowPtr(hwndDlg, 0, (PVOID)p)) == FALSE )
+d234 1
+a234 1
+		PDRVBUILD p = (PDRVBUILD)WinQueryWindowPtr(hwnd, 0);
+d254 1
+a254 1
+	    PDRVBUILD	p = (PDRVBUILD)WinQueryWindowPtr(hwnd, 0);
+@
+
+
+1.9
+log
+@- include VSetup.h instead of proto.h
+- converted calls to WinMessageBox() to MyMessageBox()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/06/20 17:03:47 $
+d10 4
+d42 1
+a42 1
+static char const vcid[]="$Id: drvtype.cpp,v 1.8 1999/06/20 17:03:47 vitus Exp vitus $";
+d116 1
+a116 1
+    Verbose(3, "DrvSetup", "hwnd(CB_DRVTYPE): %#x", hwndItem);
+d129 1
+a129 1
+    Verbose(3, "DrvSetup", "hwnd(SC_DRVSIZE): %#x", hwndItem);
+d162 1
+a162 1
+    Verbose(3, "DrvSetup", "QueryDlgItems(parameter %#x)", p);
+d249 1
+a249 1
+	Verbose(3, "DrvSetup", "DrvType.WM_CONTROL");
+d305 1
+a305 1
+		    Verbose(3, "DrvSetup", "hwnd(SC_DRVSIZE): %#x", hwndItem);
+@
+
+
+1.8
+log
+@- minor corrections to keep compiler happy
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/03/01 02:20:53 $
+d10 3
+d35 2
+a36 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+d38 1
+a38 1
+static char const vcid[]="$Id: drvtype.cpp,v 1.7 1999/03/01 02:20:53 vitus Exp vitus $";
+d59 1
+a59 1
+#include "vsetup.h"
+d78 2
+a79 2
+ * CALL
+ *	InitDlgItems(hwndDlg,p)
+d135 2
+a136 2
+ * CALL
+ *	QueryDlgItems(hwndDlg,p)
+d168 2
+a169 3
+	WinMessageBox(HWND_DESKTOP, hwndDlg,
+		      "You forgot to select a drive type...",
+		      NULL, -1ul, MB_CANCEL|MB_ERROR|MB_MOVEABLE);
+d187 2
+a188 2
+ * CALL
+ *	DrvtypeDlgProc(hwnd,msg,mp1,mp2)
+@
+
+
+1.7
+log
+@- include dskinfo.hpp for drvbuild.h
+- changed DSKTYPE_* to RDTYPE_* constants
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1999/02/09 02:50:16 $
+d10 4
+d35 1
+a35 1
+static char const id[]="$Id: drvtype.cpp,v 1.6 1999/02/09 02:50:16 vitus Exp vitus $";
+d167 1
+a167 1
+		      NULL, -1, MB_CANCEL|MB_ERROR|MB_MOVEABLE);
+a260 1
+		    int		i;
+d280 1
+a280 1
+			size = ULONG_MAX;
+d286 1
+a286 1
+			size = ULONG_MAX;
+@
+
+
+1.6
+log
+@- switched to C++
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1998/12/17 02:22:37 $
+d10 3
+d31 1
+a31 1
+static char const id[]="$Id: drvtype.cpp,v 1.5 1998/12/17 02:22:37 vitus Exp vitus $";
+d54 1
+d56 1
+d68 2
+d272 2
+a273 2
+		      case DSKTYPE_SINGLE:
+			size = p->child[0]->dsk->size;
+d276 1
+a276 1
+		      case DSKTYPE_MIRROR:
+d279 1
+a279 1
+			    size = min(size,p->child[i]->dsk->size);
+d282 1
+a282 1
+		      case DSKTYPE_STRIPE:	/* stripe */
+d285 1
+a285 1
+			    size = min(size,p->child[i]->dsk->size);
+d289 1
+a289 1
+		      case DSKTYPE_CHAIN:	/* chain */
+d291 1
+a291 1
+			    size += p->child[i]->dsk->size;
+@
+
+
+1.5
+log
+@- changed for moved global headers
+@
+text
+@d2 3
+a4 3
+ * $Source: r:/source/driver/raid/setup/RCS/drvtype.c,v $
+ * $Revision: 1.4 $
+ * $Date: 1998/11/03 02:50:38 $
+d9 4
+a12 1
+ * $Log: drvtype.c,v $
+d25 2
+a26 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+d28 1
+a28 1
+static char const id[]="$Id: drvtype.c,v 1.4 1998/11/03 02:50:38 vitus Exp vitus $";
+d36 1
+d44 1
+d48 1
+d63 1
+a63 1
+/*
+d141 2
+a142 1
+    SHORT idx;
+d148 3
+a150 2
+    idx = (SHORT)WinSendDlgItemMsg(hwndDlg, CB_DRVTYPE, LM_QUERYSELECTION,
+				   MPFROMLONG(LIT_FIRST), 0);
+d192 1
+a192 1
+	    PDRVBUILD	p = PVOIDFROMMP(mp2);
+d214 1
+a214 1
+		PDRVBUILD p = WinQueryWindowPtr(hwnd, 0);
+d234 1
+a234 1
+	    PDRVBUILD	p = WinQueryWindowPtr(hwnd, 0);
+d237 1
+d244 1
+a244 1
+		idx = (SHORT)WinSendMsg(hwndItem, LM_QUERYSELECTION,
+d246 1
+@
+
+
+1.4
+log
+@- QueryDlgItems: return /0 and display message box if user forgot to
+  select a drive type.  dialog will remain on screen.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1998/06/09 01:23:24 $
+d10 4
+d25 1
+a25 1
+static char const id[]="$Id: drvtype.c,v 1.3 1998/06/09 01:23:24 vitus Stab vitus $";
+d40 3
+a42 3
+#include "../../../tools/defines.h"
+#include "../../../tools/verbose.h"
+#include "../../../tools/profile.h"		/* profile handling */
+d45 1
+@
+
+
+1.3
+log
+@- corrected drive size calculation
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/raid/setup/RCS/drvtype.c,v $
+ * $Revision: 1.2 $
+ * $Date: 1998/05/27 02:23:51 $
+d7 1
+a7 1
+ * Process dialog to select type of RAID device.
+d10 3
+d21 1
+a21 1
+static char const id[]="$Id: drvtype.c,v 1.2 1998/05/27 02:23:51 vitus Exp vitus $";
+d90 1
+a90 1
+	if( p->cnt == 1  &&  l != 0 )
+d92 1
+a92 1
+	else if( p->cnt != 1  &&  l == 0 )
+d109 1
+a109 3
+/*
+ * NAME
+ *	QueryDlgItems
+d138 1
+a138 1
+    if( idx == LIT_NONE )
+d141 4
+a144 1
+	p->type = DSKTYPE_NONE;
+d146 1
+a146 1
+    else if( p->cnt != 1 )
+d160 1
+a160 1
+/*#
+d232 1
+a232 1
+		if( idx != LIT_NONE )
+d237 1
+a237 1
+		    if( p->cnt != 1 )
+d289 1
+@
+
+
+1.2
+log
+@- correctly fill listbox for one or more childs
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1998/05/18 01:53:45 $
+d10 3
+d18 1
+a18 1
+static char const id[]="$Id: drvtype.c,v 1.1 1998/05/18 01:53:45 vitus Exp vitus $";
+d24 1
+d244 2
+d247 3
+d251 10
+a260 1
+			size = p->child[0]->dsk->size;
+d262 1
+a263 1
+		      case DSKTYPE_STRIPE:	/* stripe */
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 3
+a11 1
+ * $Log$
+d15 1
+a15 1
+static char const vcid[]="$Id$";
+d17 1
+a31 1
+#include "../dsklayout.h"
+d37 4
+a40 1
+PSZ const	apcszRaidType[] = {"Single","Chain", "Stripe", "Mirror"};
+d65 1
+a65 1
+    LONG	l;
+d81 1
+a81 1
+    for( l = 0; l < sizeof(apcszRaidType)/sizeof(apcszRaidType[0]); ++l )
+d83 4
+a86 1
+	SHORT	s;
+d88 2
+a89 6
+	s = (SHORT)WinSendMsg(hwndItem, LM_INSERTITEM,
+			      MPFROMLONG(l), apcszRaidType[l]);
+	if( s != l )
+	    Verbose(1, "DrvSetup",
+		    "WinSendMsg(LM_INSERTITEM) failed - last error %#x)",
+		    WinGetLastError(0));
+d138 2
+d142 1
+d154 1
+d229 8
+d240 2
+a241 2
+		      case 0:			/* single */
+		      case 3:			/* mirror */
+d244 2
+a245 2
+		      case 1:			/* chain */
+		      case 2:			/* stripe */
+@

@@ -1,0 +1,684 @@
+head	1.10;
+access;
+symbols
+	DSLEEPv0_98:1.10
+	DSLEEPv0_95:1.5
+	DSLEEPv0_93:1.5
+	DSLEEPv0_92:1.5
+	DSLEEPv0_91:1.4
+	DSLEEPv0_80:1.3
+	DSLEEPv0_70:1.2
+	DSLEEPv0_60:1.2;
+locks; strict;
+comment	@ * @;
+
+
+1.10
+date	2001.02.27.02.24.09;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.02.21.23.22.15;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.11.29.00.37.15;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	98.06.28.23.56.16;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	97.12.05.01.44.13;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	97.09.03.01.07.38;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	97.03.03.01.28.25;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	97.02.05.01.53.52;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	96.10.23.23.42.54;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	96.09.27.02.33.30;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Strategy Level 1 code
+@
+
+
+1.10
+log
+@- APM registration may be disabled via DF_NOAPM flag
+@
+text
+@/*
+ * $Source: r:/source/driver/sleep/RCS/str1.c,v $
+ * $Revision: 1.9 $
+ * $Date: 2001/02/21 23:22:15 $
+ * $Locker: vitus $
+ *
+ *	Strategy Level 1 code.
+ *
+ * History:
+ * $Log: str1.c,v $
+ * Revision 1.9  2001/02/21 23:22:15  vitus
+ * - handles CMDInitComplete and registers APM event handler
+ *
+ * Revision 1.8  1999/11/29 00:37:15  vitus
+ * - moved all system includes to dsksleep.h
+ * - minor changes for M$ C 7.0 (_fmem* routines excluded as they are inlined)
+ *
+ * Revision 1.7  1998/06/28 23:56:16  vitus
+ * - renamed _far_*() to _f*() (for MS-C, WatCom supplies)
+ * - switched to DDK support macros (cli, pushf, etc.)
+ *
+ * Revision 1.6  1997/12/05 01:44:13  vitus
+ * - added WatCom specific code and header
+ * - moved history to bottom of file
+ * - added _Cdecl to all exported functions
+ *
+ * Revision 1.5  1997/09/03 01:07:38  vitus
+ * Restarts units/cancels sleeping if DF_SHUTDOWN
+ *
+ * Revision 1.4  1997/03/03 01:28:25  vitus
+ * Added _far_strlen, _far_strcpy
+ *
+ * Revision 1.3  1997/02/05 01:53:52  vitus
+ * Added call to GenIOCtl()
+ *
+ * Revision 1.2  1996/10/23 23:42:54  vitus
+ * Added _far_mem*() functions
+ *
+ * Revision 1.1  1996/09/27 02:33:30  vitus
+ * Initial revision
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1996-99
+ */
+static char id[]="$Id: str1.c,v 1.9 2001/02/21 23:22:15 vitus Exp vitus $";
+
+#define INCL_DOSERRORS
+#define INCL_NOPMAPI
+#define INCL_INITRP_ONLY
+#include "dsksleep.h"
+#include "apmcalls.h"
+
+#include "proto.h"
+#include "extern.h"
+
+/* To skip including all request packets... */
+extern USHORT NEAR	GenIOCtl(PRPH pRPH);
+
+
+#if defined(DEBUG)
+char _inconst dszShutdownStart[]=	"\r\nSystem enters SHUTDOWN state";
+char _inconst dszShutdownEnd[]=		"\r\nSystem completed SHUTDOWN";
+char _inconst dszCMDInit2[]=		"\r\nCMDInitComplete";
+char _inconst dszAPMAttached[]=		"\r\nAttached to APM.SYS!";
+char _inconst dszAPMRegister[]=		"\r\nAPMRegister() returned %w";
+char _inconst dszUnknownStr[]=		"\r\nUnknown strategy coded %w";
+#endif
+
+
+
+
+
+#if defined(_MSC_VER) && _MSC_VER < 700
+PUBLIC void NEAR
+_fmemset(void _far *data,int val,size_t size)
+{
+    PUCHAR	d = data;
+
+    while( size-- )
+	*(d++) = val;
+}
+
+
+PUBLIC void NEAR
+_fmemcpy(void _far * dest,const void _far * src,size_t size)
+{
+    PUCHAR	d = dest;
+    UCHAR const FAR * s = src;
+
+    while( size-- )
+	*(d++) = *(s++);
+}
+
+PUBLIC int NEAR
+_fmemcmp(const void _far *s1,const void _far * s2,size_t size)
+{
+    UCHAR const * dest = s1, src = s2;
+
+    while( size-- )
+	if( *(dest++) != *(src++) )
+	    return 1;
+    return 0;					/* memory regions identical */
+}
+
+PUBLIC size_t NEAR
+_fstrlen(const char _far * s)
+{
+    size_t	len = 0;
+
+    for(; *s != '\0'; ++s )
+	++len;
+    return len;
+}
+
+PUBLIC _far * NEAR
+_fstrcpy(char _far * d,const char _far * s)
+{
+    UCHAR	_far * dst = d, const * _far *src = s;
+
+    while( (*dst++ = *src++) != '\0' )
+	;
+    return d;
+}
+#endif
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * NAME
+ *	Shutdown
+ * CALL
+ *	Shutdown(rph)
+ * PARAMETER
+ *	rph		request header
+ * RETURNS
+ *	STATUS_DONE
+ * GLOBAL
+ *	none
+ * DESPRIPTION
+ *	Disables device stopping when shutdown starts.
+ *	Could start all stopped devices to avoid errors when
+ *	BIOS starts.
+ *	BUT --- OS/2 flushes all cache buffers before shutting
+ *	down, so all disks are rotating anyway now.
+ *
+ * REMARKS
+ *	Is this even neccessary?  Newer AHA* have an option
+ *	"send start" in BIOS setup...
+ */
+PRIVATE USHORT NEAR
+Shutdown(PRPH const rph)
+{
+    USHORT	u;
+
+    if( (fDriverFlags & DF_SHUTDOWN) )
+    {
+	if( *(PUCHAR)(rph+1) == 0 )		/* 0 means start of shutdown */
+	{
+	    /* For every device in our table disable
+	     * device stopping. */
+
+	    DEBMSG(dszShutdownStart);
+	    for( u = 0; u < cUnit; ++u )
+	    {
+		cli();
+		anpUnit[u]->usSleep = 0;
+		anpUnit[u]->counter = 0;
+		sti();
+	    }
+	}
+	else
+	{
+	    DEBMSG(dszShutdownEnd);
+
+	    /* For every device in our table check status
+	     * and start rotation if stopped. */
+
+	    for( u = 0; u < cUnit; ++u )
+	    {
+		if( anpUnit[u]->stopped )
+		    IssueStart(anpUnit[u]);	/* restart */
+	    }
+	}
+    }
+
+    return STATUS_DONE;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Public Entries **************************************************
+ * ******************************************************************* */
+
+/*
+ * NAME
+ *	Strategy
+ * CALL
+ *	Strategy(rph)
+ * PARAMETER
+ *	rph		request header
+ * RETURNS
+ *	nothing
+ * GLOBAL
+ *	none
+ * DESPRIPTION
+ *	Entry point for strategy level 1 requests.  Only
+ *	some commands are supported.
+ * REMARKS
+ *	Called by assembler stub.
+ */
+PUBLIC void _Cdecl NEAR
+Strategy(PRPH rph)
+{
+    switch( rph->Cmd )
+    {
+      case CMDInitBase:
+	if( (fDriverFlags & DF_INITDONE) )
+	    rph->Status = STDON | STERR | ERROR_I24_BAD_COMMAND;
+	else
+	    rph->Status = InitBase((PRPINITIN)rph);
+	break;
+
+      case CMDInitComplete:
+	DEBMSG(dszCMDInit2);
+	if( !(fDriverFlags & DF_INITCOMPLETE) )
+	{
+	    if( !(fDriverFlags & DF_NOAPM)  &&  APMAttach() == 0 )
+	    {
+		USHORT	rc;
+
+		DEBMSG(dszAPMAttached);
+
+		/* If attached, register for suspend */
+
+		rc = APMRegister((APMHANDLER)APMEventHandler,
+				 APM_NOTIFYSETPWR
+				 | APM_NOTIFYNORMRESUME
+				 | APM_NOTIFYCRITRESUME,
+				 0);		/* 0x02FF = all disks */
+
+		DEBMSG1(dszAPMRegister, rc);
+	    }
+	    fDriverFlags |= DF_INITCOMPLETE;
+	}
+	rph->Status = STATUS_DONE;
+	break;
+
+      case CMDShutdown:
+	rph->Status = Shutdown(rph);
+	break;
+
+      case CMDOpen:
+      case CMDClose:
+	rph->Status = STATUS_DONE;
+	break;
+
+      case CMDGenIOCTL:
+	rph->Status = GenIOCtl(rph);
+	break;
+
+      default:
+	DEBMSG1(dszUnknownStr, rph->Cmd);
+	rph->Status = STDON | STERR | ERROR_I24_BAD_COMMAND;
+	break;
+    }
+    return;
+}
+
+@
+
+
+1.9
+log
+@- handles CMDInitComplete and registers APM event handler
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/11/29 00:37:15 $
+d11 3
+d44 1
+a44 1
+static char id[]="$Id: str1.c,v 1.8 1999/11/29 00:37:15 vitus Exp vitus $";
+d128 1
+a128 1
+/*
+d231 1
+a231 1
+	    if( APMAttach() == 0 )
+@
+
+
+1.8
+log
+@- moved all system includes to dsksleep.h
+- minor changes for M$ C 7.0 (_fmem* routines excluded as they are inlined)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1998/06/28 23:56:16 $
+d11 4
+d41 1
+a41 1
+static char id[]="$Id: str1.c,v 1.7 1998/06/28 23:56:16 vitus Exp vitus $";
+d47 2
+d59 4
+d221 26
+a246 1
+	    rph->Status = InitBase( (PRPINITIN)rph );
+d250 1
+a250 1
+	rph->Status = Shutdown( rph );
+d259 1
+a259 1
+	rph->Status = GenIOCtl( rph );
+d263 1
+@
+
+
+1.7
+log
+@- renamed _far_*() to _f*() (for MS-C, WatCom supplies)
+- switched to DDK support macros (cli, pushf, etc.)
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/sleep/RCS/str1.c,v $
+ * $Revision: 1.6 $
+ * $Date: 1997/12/05 01:44:13 $
+d7 1
+a7 1
+ * Strategy Level 1 code.
+d11 4
+d35 1
+a35 1
+ * This code is Copyright Vitus Jensen 1996-97
+d37 1
+a37 4
+#pragma off (unreferenced)
+static char id[]="$Id: str1.c,v 1.6 1997/12/05 01:44:13 vitus Exp vitus $";
+#pragma on (unreferenced)
+
+a40 4
+#include <os2.h>
+
+#include <devcmd.h>
+
+a41 12
+#include <reqpkt.h>
+
+#include <scsi.h>
+#include <iorb.h>
+#if defined(__WATCOMC__)
+# include <devhelp.h>
+typedef USHORT NEAR *NPUSHORT;
+typedef VOID   NEAR *NPVOID;
+#else
+# include <dhcalls.h>
+#endif
+
+d59 1
+a59 1
+#if !defined(__WATCOMC__)
+@
+
+
+1.6
+log
+@- added WatCom specific code and header
+- moved history to bottom of file
+- added _Cdecl to all exported functions
+@
+text
+@d2 4
+a5 4
+ * $Source: e:/source/driver/sleep/RCS/str1.c,v $
+ * $Revision: 1.5 $
+ * $Date: 1997/09/03 01:07:38 $
+ * $Locker$
+d9 21
+a29 1
+ * History: see bottom of file
+d34 1
+a34 1
+static char id[]="$Id: str1.c,v 1.5 1997/09/03 01:07:38 vitus Exp vitus $";
+a48 1
+#include <addcalls.h>
+d74 1
+a74 1
+
+d76 1
+a76 1
+_far_memset(PUCHAR data,UCHAR val,USHORT size)
+d78 2
+d81 1
+a81 1
+	*(data++) = val;
+d84 1
+d86 1
+a86 1
+_far_memcpy(PUCHAR dest,UCHAR const _far *src,USHORT size)
+d88 3
+d92 1
+a92 1
+	*(dest++) = *(src++);
+d96 1
+a96 1
+_far_memcmp(UCHAR const _far *dest,UCHAR const _far *src,USHORT size)
+d98 2
+d106 2
+a107 2
+PUBLIC int NEAR
+_far_strlen(UCHAR const _far *s)
+d109 1
+a109 1
+    int	len = 0;
+d116 2
+a117 2
+PUBLIC void NEAR
+_far_strcpy(PUCHAR d,UCHAR const _far *s)
+d119 3
+a121 1
+    while( (*d++ = *s++) != '\0' )
+d123 1
+a123 1
+    return;
+d125 1
+d167 1
+a167 1
+		DISABLE();
+d170 1
+a170 1
+		ENABLE();
+a248 20
+
+
+/* History:
+ *
+ * $Log: str1.c,v $
+ * Revision 1.5  1997/09/03 01:07:38  vitus
+ * Restarts units/cancels sleeping if DF_SHUTDOWN
+ *
+ * Revision 1.4  1997/03/03 01:28:25  vitus
+ * Added _far_strlen, _far_strcpy
+ *
+ * Revision 1.3  1997/02/05 01:53:52  vitus
+ * Added call to GenIOCtl()
+ *
+ * Revision 1.2  1996/10/23 23:42:54  vitus
+ * Added _far_mem*() functions
+ *
+ * Revision 1.1  1996/09/27 02:33:30  vitus
+ * Initial revision
+ */
+@
+
+
+1.5
+log
+@Restarts units/cancels sleeping if DF_SHUTDOWN
+@
+text
+@d3 3
+a5 3
+ * $Revision: 1.4 $
+ * $Date: 1997/03/03 01:28:25 $
+ * $Author: vitus $
+d9 3
+a11 14
+ * $Log: str1.c,v $
+ * Revision 1.4  1997/03/03 01:28:25  vitus
+ * Added _far_strlen, _far_strcpy
+ *
+ * Revision 1.3  1997/02/05 01:53:52  vitus
+ * Added call to GenIOCtl()
+ *
+ * Revision 1.2  1996/10/23 23:42:54  vitus
+ * Added _far_mem*() functions
+ *
+ * Revision 1.1  1996/09/27 02:33:30  vitus
+ * Initial revision
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1996
+d13 3
+a15 1
+static char vcid[]="$Id: str1.c,v 1.4 1997/03/03 01:28:25 vitus Exp vitus $";
+a17 1
+//#define INCL_NOBASEAPI
+d30 7
+a36 2
+
+#include <dhcalls.h>
+d187 1
+a187 1
+PUBLIC void NEAR
+d218 21
+@
+
+
+1.4
+log
+@Added _far_strlen, _far_strcpy
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1997/02/05 01:53:52 $
+d10 3
+a20 1
+ *
+d24 1
+a24 1
+static char vcid[]="$Id: str1.c,v 1.3 1997/02/05 01:53:52 vitus Exp vitus $";
+d37 1
+d51 8
+d117 1
+d130 1
+a130 1
+    USHORT        i;
+d132 1
+a132 4
+    /* For every device in our table check status
+     * and start rotation if stopped. */
+
+    for( i = 0; i < cUnit; ++i )
+d134 27
+a160 1
+	;					/* nothing */
+d162 1
+@
+
+
+1.3
+log
+@Added call to GenIOCtl()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1996/10/23 23:42:54 $
+d10 3
+d22 1
+a22 1
+static char vcid[]="$Id: str1.c,v 1.2 1996/10/23 23:42:54 vitus Exp vitus $";
+a56 3
+
+
+
+a63 3
+
+
+
+d73 18
+a137 1
+
+@
+
+
+1.2
+log
+@Added _far_mem*() functions
+@
+text
+@d2 3
+a4 3
+ * $Source: e:/source/driver/sleep/str1.c,v $
+ * $Revision: 1.1 $
+ * $Date: 1996/09/27 02:33:30 $
+d10 3
+d19 1
+a19 1
+static char vcid[]="$Id: str1.c,v 1.1 1996/09/27 02:33:30 vitus Exp vitus $";
+d41 2
+a42 1
+
+d161 4
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Author$
+d9 4
+a12 1
+ * $Log$
+d16 1
+a16 1
+static char vcid[]="$Id$";
+d39 32
+@

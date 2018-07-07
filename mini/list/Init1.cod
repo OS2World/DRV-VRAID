@@ -1,0 +1,79 @@
+;	Static Name Aliases
+;
+;	$S170_id	EQU	id
+;	$S1850_szAPIError	EQU	szAPIError
+	TITLE   Init1.c
+	.286p
+	.287
+_TEXT	SEGMENT  WORD PUBLIC 'CODE'
+_TEXT	ENDS
+_DATA	SEGMENT  WORD PUBLIC 'DATA'
+_DATA	ENDS
+CONST	SEGMENT  WORD PUBLIC 'CONST'
+CONST	ENDS
+_BSS	SEGMENT  WORD PUBLIC 'BSS'
+_BSS	ENDS
+INITDATA	SEGMENT  WORD PUBLIC 'FAR_DATA'
+INITDATA	ENDS
+DGROUP	GROUP	CONST, _BSS, _DATA
+	ASSUME DS: DGROUP
+	ASSUME  SS: NOTHING
+EXTRN	_Device_Help:DWORD
+EXTRN	_fDriverFlags:WORD
+EXTRN	_npInitData:WORD
+_DATA      SEGMENT
+$S170_id	DB	'$Id: init1.c,v 1.2.1.1 2001/06/26 01:59:16 vitus Exp vitus $'
+	DB	00H
+_DATA      ENDS
+INITDATA      SEGMENT
+$S1850_szAPIError	DB	'%s: error %u from Dos* API',  00H
+INITDATA      ENDS
+_TEXT      SEGMENT
+	ASSUME	CS: _TEXT
+
+Code_End	PROC NEAR
+; Line 67
+	*** 000000	c3 			ret	
+	*** 000001	90 			nop	
+
+Code_End	ENDP
+	PUBLIC	_Init
+_Init	PROC NEAR
+; Line 93
+	*** 000002	c8 04 00 00 		enter	4,0
+	*** 000006	56 			push	si
+;	pRPO = -4
+;	rc = -6
+;	pRPI = 4
+; Line 103
+	*** 000007	c4 76 04 		les	si,DWORD PTR [bp+4]	;pRPI
+	*** 00000a	8b de 			mov	bx,si
+	*** 00000c	26 8b 44 0e 		mov	ax,WORD PTR es:[si+14]
+	*** 000010	26 8b 54 10 		mov	dx,WORD PTR es:[si+16]
+	*** 000014	a3 00 00 		mov	WORD PTR _Device_Help,ax
+	*** 000017	89 16 02 00 		mov	WORD PTR _Device_Help+2,dx
+; Line 155
+	*** 00001b	26 c6 47 0d 00 		mov	BYTE PTR es:[bx+13],0
+; Line 156
+	*** 000020	b8 00 00 		mov	ax,OFFSET Code_End
+	*** 000023	24 f0 			and	al,240	;00f0H
+	*** 000025	05 10 00 		add	ax,16	;0010H
+	*** 000028	26 89 47 0e 		mov	WORD PTR es:[bx+14],ax
+; Line 157
+	*** 00002c	a1 00 00 		mov	ax,WORD PTR _npInitData
+	*** 00002f	24 f0 			and	al,240	;00f0H
+	*** 000031	05 10 00 		add	ax,16	;0010H
+	*** 000034	26 89 47 10 		mov	WORD PTR es:[bx+16],ax
+; Line 160
+	*** 000038	80 0e 01 00 01 		or	BYTE PTR _fDriverFlags+1,1
+; Line 161
+	*** 00003d	b8 00 01 		mov	ax,256	;0100H
+; Line 174
+	*** 000040	5e 			pop	si
+	*** 000041	c9 			leave	
+	*** 000042	c3 			ret	
+	*** 000043	90 			nop	
+
+_Init	ENDP
+_TEXT	ENDS
+END

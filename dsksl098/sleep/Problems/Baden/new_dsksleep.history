@@ -1,0 +1,112 @@
+-*- Mode: indented-text -*-
+--- $Id: dsksleep.history,v 1.14 2001/02/27 23:56:45 vitus Exp $
+
+    Disk Sleeper Filter - Driver History
+
+Version 0.98 -	 28.2.2001 - dsksl098.zip
+    - APM support
+    - removed timing related error which could fail initialisation
+
+Version 0.97 (internal)
+    - source supports Microsoft C *and* Watcom C
+    - IOCtl returns IORB which restarted a disk
+
+Version 0.96 -	 23.11.1997 - dsksl096.zip
+    - BUGFIX: DSKSleep 0.95 did ignore SCSI adapters which correctly
+      reported bus widths (my Adaptecs did not).  Corrected.
+
+Version 0.95 -	 22.11.1997 - dsksl095.zip
+    - BUGFIX: DSKSleep 0.93 did not ignore non-SCSI adapters.
+      Could lead to system hangs.
+
+Version 0.93 -	 9.11.1997 - dsksl093.zip
+    - installed new DDK, required small changes in IOCtl code
+    - corrected filtering code, did pass wrong handle to ADD
+      (= SYM8XX problems?).  Made this case easier to debug.
+    - updated dsksleep.doc (bank account, parameters, etc.)
+    - added IOCtl to retrieve saved status and sense values
+      and updated dsl.exe to display them
+    - /DEBUG:1 uses same start/stop code as runtime operation
+    - accepts /!DM or /!SM units
+    - don't test /!UT devices
+    - removed trap if a device test fails and there are no other disks
+      to install for.
+
+Version 0.92 (internal)
+    - disable device stopping once the system enters shutdown (/SR)
+    - device test (/DEBUG:1) uses same code as device stop/restart
+      at runtime
+    - save/restore most registers when calling other drivers
+
+
+Version 0.91 -	 3/6-1997 - dsksl091.zip
+    - expanded 'dsl -?'
+    - corrected syntax errors
+
+Version 0.90 -	 14/5-1997 - dsksl090.zip
+
+    - Bugfix: changed start/stop code to work with HPFS386 (and other
+      ring 0 I/O, too)
+    - Bugfix: removed trap when no devices were found to install for
+    - IOCtl/bugfix: devices were stopped immediately when changing
+      timeout from 0 to something higher
+    - IOCtl/bugfix: correct timer value if no timeout
+    - IOCtl/bugfix: return part of data if caller requests it
+    - Display timeout values in driver output
+    - updated dsksleep.doc (adapter and unit indices, dsl)
+
+Version 0.86 -	 8/4-1997 - dsksl086.zip
+
+    - Added regme.exe to archive
+    - Extended dsl.exe to allow modifications of 'time left
+      until stop' values
+    - IOCtl to query version returns "registered" info
+      and dsl.exe displays it
+    - Corrected byte counts from IOCtls (not used in OS/2)
+    - Modified DSKSleep.doc (includes HPFS386 warning)
+
+Version 0.85 -	 5/3-1997 - dsksl085.zip
+
+    - saves display messages for IOCtl
+    - IOCtl to read saved messages, dsl.c modified
+      to demonstrate this
+    - TEST UNIT READY after START UNIT.  Errors from START UNIT
+      are ignored, TEST UNIT READY has to complete successfully
+      to allow further disk access.
+
+Version 0.83 (internal)
+    - long timeout for START UNIT (test -> permanent)
+    - IOCtls to query/change timeout counters
+    - Changed timeout values to seconds!
+
+Version 0.82 (internal)
+    - Corrected adapter numbering (now global)
+    - REQUEST SENSE after START UNIT (test -> changed in 0.85)
+
+Version 0.81 -  11/2-1997 - dsksl081.zip
+
+    - fixed bug which caused any IOCtl to hang
+
+Version 0.80 -  6/2-1997 - dsksl080.zip (never published)
+
+    - IOCtls to allow applications to change timeout values and
+      retrieve device list.  Included dsl.exe to demonstrate
+      the IOCtls
+    - Changed fidonet address
+
+Version 0.70 - 3/11-1996 - dsksl070.zip
+
+    - better Testmode (accesses disk and displays more
+      status bytes on failure)
+    - /!UT and /UT to change operation per device
+    - History list starts...
+
+Version 0.60 - dsksl060.zip
+
+    - Testmode (/DEBUG:1) added
+    - screen output cleaned (/DEBUG and /VERBOSE)
+    - Documentation starts...
+
+Version 0.50 - dsksl050.zip
+
+    - first "public" release (some friends)

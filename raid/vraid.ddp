@@ -1,0 +1,12 @@
+* $Id: vraid.ddp,v 1.1 1998/09/27 22:55:53 vitus Stab $
+:TITLE
+VRAID Filter and Setup Program
+
+:CONFIG
+BASEDEV=VRAID.FLT
+
+:FILES
+VRAID.FLT	\VRAID.FLT
+VSETUP.EXE	\VSETUP.EXE
+
+* END

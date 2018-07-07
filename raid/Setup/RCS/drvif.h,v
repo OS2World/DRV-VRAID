@@ -1,0 +1,246 @@
+head	1.8;
+access;
+symbols
+	VSETUPv0_84:1.8
+	VSETUP_82:1.5
+	VSETUPv0_80:1.4
+	VSETUPv0_71:1.2
+	VSETUPv0_70:1.2
+	VSETUPv0_60:1.2
+	VSETUPv0_52:1.1
+	VSETUPv0_51:1.1
+	VSETUPv0_50:1.1;
+locks; strict;
+comment	@ * @;
+
+
+1.8
+date	2000.08.17.02.01.52;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2000.08.07.01.26.10;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2000.06.12.20.27.56;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	99.09.28.00.58.54;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	99.06.19.22.02.51;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	99.04.14.23.42.18;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.12.13.22.35.24;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.09.24.01.53.37;	author vitus;	state Stab;
+branches;
+next	;
+
+
+desc
+@Interface to drvif.c
+@
+
+
+1.8
+log
+@- added DriverArrayChild()
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/drvif.h,v $
+ * $Revision: 1.7 $
+ * $Date: 2000/08/07 01:26:10 $
+ * $Locker: vitus $
+ *
+ *	Interface to drvif.c
+ *
+ * $Log: drvif.h,v $
+ * Revision 1.7  2000/08/07 01:26:10  vitus
+ * - added DriverArrayRebuild()
+ *
+ * Revision 1.6  2000/06/12 20:27:56  vitus
+ * - added DriverArrayVerify()
+ *
+ * Revision 1.5  1999/09/28 00:58:54  vitus
+ * - changed DriverPhysinfo() to DriverPhyssize()
+ * - added new DriverPhysinfo() to return VRAID_PHYSINFO_DATA
+ *
+ * Revision 1.4  1999/06/19 22:02:51  vitus
+ * - added DriverSetBeeper()
+ * - changed DriverGetVersion() to return flags, too.
+ *
+ * Revision 1.3  1999/04/14 23:42:18  vitus
+ * - added DriverStartSetup(), DriverEndSetup()
+ *
+ * Revision 1.2  1998/12/13 22:35:24  vitus
+ * - added DriverArraylist(), DriverArrayinfo()
+ *
+ * Revision 1.1  1998/09/24 01:53:37  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-2000
+ */
+
+#include "../dsklayout.h"
+#include "../vraidpub.h"
+
+
+extern APIRET	DriverOpen(VOID);
+extern APIRET	DriverClose(VOID);
+extern APIRET	DriverGetVersion(PUSHORT ver,PUSHORT flags);
+extern APIRET	DriverReadMessages(PUCHAR * retbuf);
+
+extern APIRET	DriverPhyslist(PUSHORT cnt,PUSHORT * list);
+extern APIRET	DriverPhysinfo(USHORT hd,PVRAID_PHYSINFO_DATA info);
+extern APIRET	DriverPhyssize(USHORT hd,PULONG partsize);
+extern APIRET	DriverPhysIO(USHORT hd,BOOL write,ULONG offset,PVOID buffer);
+
+extern APIRET	DriverArraylist(PUSHORT cnt,PUSHORT * list);
+extern APIRET	DriverArrayinfo(USHORT hd,PVRAID_ARRAYINFO_DATA info);
+extern APIRET	DriverArrayVerify(PVRAID_VERIFY_PARM p, PVOID buf, ULONG bufsiz);
+extern APIRET	DriverArrayRebuild(USHORT handle, ULONG start_sector);
+extern APIRET	DriverArrayChild(PVRAID_CHILD_PARAM param);
+
+extern APIRET	DriverStartSetup(VOID);
+extern APIRET	DriverEndSetup(VOID);
+
+extern APIRET	DriverSetBeeper(USHORT onoff);
+@
+
+
+1.7
+log
+@- added DriverArrayRebuild()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 2000/06/12 20:27:56 $
+d10 3
+d54 1
+@
+
+
+1.6
+log
+@- added DriverArrayVerify()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1999/09/28 00:58:54 $
+d10 3
+d50 1
+@
+
+
+1.5
+log
+@- changed DriverPhysinfo() to DriverPhyssize()
+- added new DriverPhysinfo() to return VRAID_PHYSINFO_DATA
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1999/06/19 22:02:51 $
+d10 4
+d26 2
+a27 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+d46 1
+@
+
+
+1.4
+log
+@- added DriverSetBeeper()
+- changed DriverGetVersion() to return flags, too.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1999/04/14 23:42:18 $
+d10 4
+d36 2
+a37 1
+extern APIRET	DriverPhysinfo(USHORT hd,PULONG partsize);
+@
+
+
+1.3
+log
+@- added DriverStartSetup(), DriverEndSetup()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1998/12/13 22:35:24 $
+d10 3
+d18 2
+a19 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+d28 1
+a28 1
+extern APIRET	DriverGetVersion(PUSHORT ver);
+d40 2
+@
+
+
+1.2
+log
+@- added DriverArraylist(), DriverArrayinfo()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1998/09/24 01:53:37 $
+d10 3
+d34 3
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 3
+a11 1
+ * $Log$
+d16 3
+d24 1
+d28 3
+@

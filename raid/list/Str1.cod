@@ -1,0 +1,215 @@
+;	Static Name Aliases
+;
+;	$S170_id	EQU	id
+	TITLE   str1.c
+	.286p
+	.287
+_TEXT	SEGMENT  WORD PUBLIC 'CODE'
+_TEXT	ENDS
+_DATA	SEGMENT  WORD PUBLIC 'DATA'
+_DATA	ENDS
+CONST	SEGMENT  WORD PUBLIC 'CONST'
+CONST	ENDS
+_BSS	SEGMENT  WORD PUBLIC 'BSS'
+_BSS	ENDS
+INITDATA	SEGMENT  WORD PUBLIC 'FAR_DATA'
+INITDATA	ENDS
+DGROUP	GROUP	CONST, _BSS, _DATA
+	ASSUME DS: DGROUP
+	ASSUME  SS: NOTHING
+EXTRN	_GenIOCtl:NEAR
+EXTRN	_InitBase:NEAR
+EXTRN	_SaveArrayInfos:NEAR
+EXTRN	_fDriverFlags:WORD
+_DATA      SEGMENT
+$S170_id	DB	'$Id: str1.c,v 1.6 1999/10/01 00:54:18 vitus Exp $',  00H
+_DATA      ENDS
+_TEXT      SEGMENT
+	ASSUME	CS: _TEXT
+
+Shutdown	PROC NEAR
+; Line 84
+	*** 000000	55 			push	bp
+	*** 000001	8b ec 			mov	bp,sp
+;	rph = 4
+;	parameter = -4
+; Line 89
+	*** 000003	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;rph
+	*** 000006	26 80 7f 0d 00 		cmp	BYTE PTR es:[bx+13],0
+	*** 00000b	75 0b 			jne	$I2118
+; Line 92
+	*** 00000d	80 0e 01 00 04 		or	BYTE PTR _fDriverFlags+1,4
+; Line 94
+	*** 000012	e8 00 00 		call	_SaveArrayInfos
+; Line 96
+	*** 000015	eb 06 			jmp	SHORT $I2119
+	*** 000017	90 			nop	
+					$I2118:
+; Line 99
+	*** 000018	80 0e 01 00 08 		or	BYTE PTR _fDriverFlags+1,8
+; Line 100
+					$I2119:
+; Line 102
+	*** 00001d	b8 00 01 		mov	ax,256	;0100H
+; Line 103
+	*** 000020	c9 			leave	
+	*** 000021	c3 			ret	
+
+Shutdown	ENDP
+	PUBLIC	__fstrncpy
+__fstrncpy	PROC FAR
+; Line 121
+	*** 000022	c8 08 00 00 		enter	8,0
+	*** 000026	57 			push	di
+	*** 000027	56 			push	si
+;	d = 6
+;	s = 10
+;	size = 14
+;	dst = -8
+;	src = -4
+; Line 122
+	*** 000028	8b 46 06 		mov	ax,WORD PTR [bp+6]	;d
+	*** 00002b	8b 56 08 		mov	dx,WORD PTR [bp+8]
+	*** 00002e	8b f0 			mov	si,ax
+	*** 000030	89 56 fa 		mov	WORD PTR [bp-6],dx
+; Line 123
+	*** 000033	8b 46 0a 		mov	ax,WORD PTR [bp+10]	;s
+	*** 000036	8b 56 0c 		mov	dx,WORD PTR [bp+12]
+	*** 000039	8b f8 			mov	di,ax
+	*** 00003b	89 56 fe 		mov	WORD PTR [bp-2],dx
+	*** 00003e	8b 4e 0e 		mov	cx,WORD PTR [bp+14]	;size
+; Line 125
+					$FC2130:
+	*** 000041	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 000044	8b df 			mov	bx,di
+	*** 000046	47 			inc	di
+	*** 000047	26 8a 07 		mov	al,BYTE PTR es:[bx]
+	*** 00004a	8e 46 fa 		mov	es,WORD PTR [bp-6]
+	*** 00004d	8b de 			mov	bx,si
+	*** 00004f	46 			inc	si
+	*** 000050	26 88 07 		mov	BYTE PTR es:[bx],al
+	*** 000053	0a c0 			or	al,al
+	*** 000055	74 07 			je	$L2150
+	*** 000057	8b c1 			mov	ax,cx
+	*** 000059	49 			dec	cx
+	*** 00005a	0b c0 			or	ax,ax
+	*** 00005c	75 e3 			jne	$FC2130
+					$L2150:
+; Line 127
+	*** 00005e	0b c9 			or	cx,cx
+	*** 000060	74 0d 			je	$FB2134
+	*** 000062	8e 46 fa 		mov	es,WORD PTR [bp-6]
+					$F2132:
+; Line 128
+	*** 000065	8b de 			mov	bx,si
+	*** 000067	46 			inc	si
+	*** 000068	26 c6 07 00 		mov	BYTE PTR es:[bx],0
+	*** 00006c	49 			dec	cx
+	*** 00006d	75 f6 			jne	$F2132
+					$FB2134:
+; Line 129
+	*** 00006f	8b 46 06 		mov	ax,WORD PTR [bp+6]	;d
+	*** 000072	8b 56 08 		mov	dx,WORD PTR [bp+8]
+; Line 130
+	*** 000075	5e 			pop	si
+	*** 000076	5f 			pop	di
+	*** 000077	c9 			leave	
+	*** 000078	cb 			ret	
+	*** 000079	90 			nop	
+
+__fstrncpy	ENDP
+	PUBLIC	_Strategy
+_Strategy	PROC NEAR
+; Line 225
+	*** 00007a	55 			push	bp
+	*** 00007b	8b ec 			mov	bp,sp
+	*** 00007d	57 			push	di
+	*** 00007e	56 			push	si
+;	rph = 4
+	*** 00007f	8b 76 04 		mov	si,WORD PTR [bp+4]	;rph
+; Line 226
+	*** 000082	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000085	26 8a 44 02 		mov	al,BYTE PTR es:[si+2]
+	*** 000089	2a e4 			sub	ah,ah
+; Line 251
+	*** 00008b	2d 0d 00 		sub	ax,13	;000dH
+	*** 00008e	3d 0f 00 		cmp	ax,15	;000fH
+	*** 000091	77 29 			ja	$SD2148
+	*** 000093	d1 e0 			shl	ax,1
+	*** 000095	93 			xchg	ax,bx
+	*** 000096	2e ff a7 9c 00 		jmp	WORD PTR cs:$L2152[bx]
+	*** 00009b	90 			nop	
+					$L2152:
+	*** 00009c	c8 00 				DW	$SC2146
+	*** 00009e	c8 00 				DW	$SC2146
+	*** 0000a0	bc 00 				DW	$SD2148
+	*** 0000a2	d0 00 				DW	$SC2147
+	*** 0000a4	bc 00 				DW	$SD2148
+	*** 0000a6	bc 00 				DW	$SD2148
+	*** 0000a8	bc 00 				DW	$SD2148
+	*** 0000aa	bc 00 				DW	$SD2148
+	*** 0000ac	bc 00 				DW	$SD2148
+	*** 0000ae	bc 00 				DW	$SD2148
+	*** 0000b0	bc 00 				DW	$SD2148
+	*** 0000b2	bc 00 				DW	$SD2148
+	*** 0000b4	bc 00 				DW	$SD2148
+	*** 0000b6	bc 00 				DW	$SD2148
+	*** 0000b8	d8 00 				DW	$SC2142
+	*** 0000ba	ec 00 				DW	$SC2145
+; Line 248
+					$SD2148:
+; Line 249
+	*** 0000bc	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0000bf	26 c7 44 03 03 81 	mov	WORD PTR es:[si+3],-32509	;8103H
+; Line 250
+	*** 0000c5	eb 37 			jmp	SHORT $EX2137
+	*** 0000c7	90 			nop	
+; Line 239
+					$SC2146:
+; Line 241
+	*** 0000c8	26 c7 44 03 00 01 	mov	WORD PTR es:[si+3],256	;0100H
+; Line 242
+	*** 0000ce	eb 2e 			jmp	SHORT $EX2137
+; Line 244
+					$SC2147:
+; Line 245
+	*** 0000d0	06 			push	es
+	*** 0000d1	56 			push	si
+	*** 0000d2	e8 00 00 		call	_GenIOCtl
+	*** 0000d5	eb 0d 			jmp	SHORT $L2155
+	*** 0000d7	90 			nop	
+; Line 228
+					$SC2142:
+; Line 229
+	*** 0000d8	f6 06 01 00 01 		test	BYTE PTR _fDriverFlags+1,1
+	*** 0000dd	75 dd 			jne	$SD2148
+; Line 232
+	*** 0000df	06 			push	es
+	*** 0000e0	56 			push	si
+	*** 0000e1	e8 00 00 		call	_InitBase
+					$L2155:
+	*** 0000e4	83 c4 04 		add	sp,4
+	*** 0000e7	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0000ea	eb 0e 			jmp	SHORT $L2154
+; Line 235
+					$SC2145:
+; Line 236
+	*** 0000ec	8c c0 			mov	ax,es
+	*** 0000ee	50 			push	ax
+	*** 0000ef	56 			push	si
+	*** 0000f0	8c c7 			mov	di,es
+	*** 0000f2	e8 0b ff 		call	Shutdown
+	*** 0000f5	83 c4 04 		add	sp,4
+	*** 0000f8	8e c7 			mov	es,di
+					$L2154:
+	*** 0000fa	26 89 44 03 		mov	WORD PTR es:[si+3],ax
+; Line 253
+					$EX2137:
+	*** 0000fe	5e 			pop	si
+	*** 0000ff	5f 			pop	di
+	*** 000100	c9 			leave	
+	*** 000101	c3 			ret	
+
+_Strategy	ENDP
+_TEXT	ENDS
+END

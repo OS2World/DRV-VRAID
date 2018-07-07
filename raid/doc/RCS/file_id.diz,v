@@ -1,0 +1,27 @@
+head	1.1;
+access;
+symbols
+	VRAID_REL23:1.1
+	REL22:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	99.11.27.22.26.06;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@file_id.diz
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@VRAID - Software RAID for OS/2 2.0 and above.  Build Disk Arrays from IDE and SCSI drives!  RAID 1, RAID 0, Chaining. Shareware.
+@

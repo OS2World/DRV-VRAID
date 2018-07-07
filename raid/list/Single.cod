@@ -1,0 +1,475 @@
+;	Static Name Aliases
+;
+;	$S170_vcid	EQU	vcid
+	TITLE   single.c
+	.286p
+	.287
+_TEXT	SEGMENT  WORD PUBLIC 'CODE'
+_TEXT	ENDS
+_DATA	SEGMENT  WORD PUBLIC 'DATA'
+_DATA	ENDS
+CONST	SEGMENT  WORD PUBLIC 'CONST'
+CONST	ENDS
+_BSS	SEGMENT  WORD PUBLIC 'BSS'
+_BSS	ENDS
+INITDATA	SEGMENT  WORD PUBLIC 'FAR_DATA'
+INITDATA	ENDS
+DGROUP	GROUP	CONST, _BSS, _DATA
+	ASSUME DS: DGROUP
+	ASSUME  SS: NOTHING
+EXTRN	_AllocateVrio:NEAR
+EXTRN	_CompleteVrio:NEAR
+EXTRN	_QueueVrio:NEAR
+_DATA      SEGMENT
+$S170_vcid	DB	'$Id: single.c,v 2.3 2001/07/12 02:20:35 vitus Exp $',  00H
+_DATA      ENDS
+_TEXT      SEGMENT
+	ASSUME	CS: _TEXT
+
+SingleNotify	PROC NEAR
+; Line 153
+	*** 000000	c8 04 00 00 		enter	4,0
+;	myio = -4
+;	io = 4
+; Line 154
+	*** 000004	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 000007	26 8b 47 0c 		mov	ax,WORD PTR es:[bx+12]
+	*** 00000b	26 8b 57 0e 		mov	dx,WORD PTR es:[bx+14]
+	*** 00000f	89 46 fc 		mov	WORD PTR [bp-4],ax	;myio
+	*** 000012	89 56 fe 		mov	WORD PTR [bp-2],dx
+; Line 159
+; Line 160
+; Line 161
+; Line 162
+; Line 163
+; Line 164
+; Line 165
+; Line 167
+	*** 000015	9c 			pushf	
+; Line 168
+	*** 000016	fa 			cli	
+; Line 172
+	*** 000017	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 00001a	26 8b 47 12 		mov	ax,WORD PTR es:[bx+18]
+	*** 00001e	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;myio
+	*** 000021	26 89 47 12 		mov	WORD PTR es:[bx+18],ax
+; Line 174
+	*** 000025	06 			push	es
+	*** 000026	53 			push	bx
+	*** 000027	e8 00 00 		call	_CompleteVrio
+	*** 00002a	83 c4 04 		add	sp,4
+; Line 176
+	*** 00002d	9d 			popf	
+; Line 178
+	*** 00002e	c9 			leave	
+	*** 00002f	c3 			ret	
+
+SingleNotify	ENDP
+
+SingleWorker	PROC NEAR
+; Line 201
+	*** 000030	c8 04 00 00 		enter	4,0
+	*** 000034	57 			push	di
+	*** 000035	56 			push	si
+;	self = 4
+;	myio = 8
+;	single = -4
+;	newio = -4
+;	rc = -10
+	*** 000036	8b 76 04 		mov	si,WORD PTR [bp+4]	;self
+; Line 203
+	*** 000039	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 00003c	ff 76 08 		push	WORD PTR [bp+8]	;myio
+	*** 00003f	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000042	26 ff 74 19 		push	WORD PTR es:[si+25]
+	*** 000046	26 ff 74 17 		push	WORD PTR es:[si+23]
+	*** 00004a	e8 00 00 		call	_AllocateVrio
+	*** 00004d	83 c4 08 		add	sp,8
+	*** 000050	8b f8 			mov	di,ax
+	*** 000052	89 56 fe 		mov	WORD PTR [bp-2],dx
+; Line 217
+	*** 000055	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000058	26 ff 44 07 		inc	WORD PTR es:[si+7]
+; Line 218
+	*** 00005c	8b 46 fe 		mov	ax,WORD PTR [bp-2]
+	*** 00005f	0b c7 			or	ax,di
+	*** 000061	75 0d 			jne	$L1445
+; Line 221
+	*** 000063	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 000066	26 ff 44 09 		inc	WORD PTR es:[si+9]
+; Line 222
+	*** 00006a	b8 01 00 		mov	ax,1
+	*** 00006d	e9 20 01 		jmp	$EX1392
+					$L1445:
+; Line 225
+	*** 000070	8b f7 			mov	si,di
+	*** 000072	8b 7e 08 		mov	di,WORD PTR [bp+8]	;myio
+	*** 000075	8e 46 0a 		mov	es,WORD PTR [bp+10]
+	*** 000078	26 8b 45 08 		mov	ax,WORD PTR es:[di+8]
+	*** 00007c	26 8b 55 0a 		mov	dx,WORD PTR es:[di+10]
+	*** 000080	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 000083	26 89 44 08 		mov	WORD PTR es:[si+8],ax
+	*** 000087	26 89 54 0a 		mov	WORD PTR es:[si+10],dx
+; Line 226
+	*** 00008b	8e 46 0a 		mov	es,WORD PTR [bp+10]
+	*** 00008e	26 8b 45 14 		mov	ax,WORD PTR es:[di+20]
+	*** 000092	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 000095	26 89 44 14 		mov	WORD PTR es:[si+20],ax
+; Line 227
+	*** 000099	8e 46 0a 		mov	es,WORD PTR [bp+10]
+	*** 00009c	26 8b 45 16 		mov	ax,WORD PTR es:[di+22]
+	*** 0000a0	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 0000a3	26 89 44 16 		mov	WORD PTR es:[si+22],ax
+; Line 228
+	*** 0000a7	8e 46 0a 		mov	es,WORD PTR [bp+10]
+	*** 0000aa	26 8b 45 18 		mov	ax,WORD PTR es:[di+24]
+	*** 0000ae	26 8b 55 1a 		mov	dx,WORD PTR es:[di+26]
+	*** 0000b2	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 0000b5	26 89 44 18 		mov	WORD PTR es:[si+24],ax
+	*** 0000b9	26 89 54 1a 		mov	WORD PTR es:[si+26],dx
+; Line 229
+	*** 0000bd	8e 46 0a 		mov	es,WORD PTR [bp+10]
+	*** 0000c0	26 8b 45 1c 		mov	ax,WORD PTR es:[di+28]
+	*** 0000c4	26 8b 55 1e 		mov	dx,WORD PTR es:[di+30]
+	*** 0000c8	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 0000cb	26 89 44 1c 		mov	WORD PTR es:[si+28],ax
+	*** 0000cf	26 89 54 1e 		mov	WORD PTR es:[si+30],dx
+; Line 231
+	*** 0000d3	8e 46 0a 		mov	es,WORD PTR [bp+10]
+	*** 0000d6	26 8b 45 14 		mov	ax,WORD PTR es:[di+20]
+; Line 246
+	*** 0000da	2d 01 00 		sub	ax,1
+	*** 0000dd	72 7a 			jb	$SB1398
+	*** 0000df	2d 01 00 		sub	ax,1
+	*** 0000e2	76 0e 			jbe	$SC1401
+	*** 0000e4	2d 0f 00 		sub	ax,15	;000fH
+	*** 0000e7	72 70 			jb	$SB1398
+	*** 0000e9	2d 01 00 		sub	ax,1
+	*** 0000ec	76 33 			jbe	$SC1402
+	*** 0000ee	eb 69 			jmp	SHORT $SB1398
+	*** 0000f0	90 			nop	
+	*** 0000f1	90 			nop	
+; Line 233
+					$SC1401:
+; Line 235
+	*** 0000f2	26 8b 45 20 		mov	ax,WORD PTR es:[di+32]
+	*** 0000f6	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 0000f9	26 89 44 20 		mov	WORD PTR es:[si+32],ax
+; Line 236
+	*** 0000fd	8e 46 0a 		mov	es,WORD PTR [bp+10]
+	*** 000100	26 8b 45 24 		mov	ax,WORD PTR es:[di+36]
+	*** 000104	26 8b 55 26 		mov	dx,WORD PTR es:[di+38]
+	*** 000108	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 00010b	26 89 44 24 		mov	WORD PTR es:[si+36],ax
+	*** 00010f	26 89 54 26 		mov	WORD PTR es:[si+38],dx
+; Line 237
+	*** 000113	8e 46 0a 		mov	es,WORD PTR [bp+10]
+	*** 000116	26 8b 45 22 		mov	ax,WORD PTR es:[di+34]
+	*** 00011a	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 00011d	26 89 44 22 		mov	WORD PTR es:[si+34],ax
+; Line 239
+					$SC1402:
+; Line 241
+	*** 000121	8e 46 0a 		mov	es,WORD PTR [bp+10]
+	*** 000124	26 8b 45 20 		mov	ax,WORD PTR es:[di+32]
+	*** 000128	8c c1 			mov	cx,es
+	*** 00012a	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 00012d	26 89 44 20 		mov	WORD PTR es:[si+32],ax
+; Line 242
+	*** 000131	8e c1 			mov	es,cx
+	*** 000133	26 8b 45 24 		mov	ax,WORD PTR es:[di+36]
+	*** 000137	26 8b 55 26 		mov	dx,WORD PTR es:[di+38]
+	*** 00013b	05 01 00 		add	ax,1
+	*** 00013e	83 d2 00 		adc	dx,0
+	*** 000141	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 000144	26 89 44 24 		mov	WORD PTR es:[si+36],ax
+	*** 000148	26 89 54 26 		mov	WORD PTR es:[si+38],dx
+; Line 244
+	*** 00014c	8e c1 			mov	es,cx
+	*** 00014e	26 8b 45 22 		mov	ax,WORD PTR es:[di+34]
+	*** 000152	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 000155	26 89 44 22 		mov	WORD PTR es:[si+34],ax
+; Line 246
+					$SB1398:
+; Line 249
+	*** 000159	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 00015c	26 c7 44 12 ff ff 	mov	WORD PTR es:[si+18],-1	;ffffH
+; Line 250
+	*** 000162	2b c0 			sub	ax,ax
+	*** 000164	26 89 44 06 		mov	WORD PTR es:[si+6],ax
+	*** 000168	26 89 44 04 		mov	WORD PTR es:[si+4],ax
+; Line 252
+	*** 00016c	06 			push	es
+	*** 00016d	56 			push	si
+	*** 00016e	26 ff 74 02 		push	WORD PTR es:[si+2]
+	*** 000172	26 ff 34 		push	WORD PTR es:[si]
+	*** 000175	26 c4 1c 		les	bx,DWORD PTR es:[si]
+	*** 000178	26 ff 57 11 		call	WORD PTR es:[bx+17]
+	*** 00017c	83 c4 08 		add	sp,8
+	*** 00017f	0b c0 			or	ax,ax
+	*** 000181	74 0b 			je	$I1403
+; Line 253
+	*** 000183	8b 46 fe 		mov	ax,WORD PTR [bp-2]
+	*** 000186	50 			push	ax
+	*** 000187	56 			push	si
+	*** 000188	e8 00 00 		call	_QueueVrio
+	*** 00018b	83 c4 04 		add	sp,4
+; Line 255
+					$I1403:
+	*** 00018e	33 c0 			xor	ax,ax
+; Line 256
+					$EX1392:
+	*** 000190	5e 			pop	si
+	*** 000191	5f 			pop	di
+	*** 000192	c9 			leave	
+	*** 000193	c3 			ret	
+
+SingleWorker	ENDP
+
+SingleUpdate	PROC NEAR
+; Line 278
+;	single = -4
+;	self = 4
+;	sec = 8
+; Line 287
+	*** 000194	33 c0 			xor	ax,ax
+; Line 288
+	*** 000196	c3 			ret	
+	*** 000197	90 			nop	
+
+SingleUpdate	ENDP
+
+SingleCtrl	PROC NEAR
+; Line 313
+	*** 000198	c8 06 00 00 		enter	6,0
+	*** 00019c	57 			push	di
+	*** 00019d	56 			push	si
+;	self = 4
+;	cmd = 8
+;	param = 10
+;	data = 14
+;	single = -4
+;	result = -6
+;	d = -10
+; Line 314
+	*** 00019e	8b 46 04 		mov	ax,WORD PTR [bp+4]	;self
+	*** 0001a1	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 0001a4	89 46 fc 		mov	WORD PTR [bp-4],ax	;single
+	*** 0001a7	89 56 fe 		mov	WORD PTR [bp-2],dx
+; Line 315
+	*** 0001aa	c7 46 fa 03 81 		mov	WORD PTR [bp-6],-32509	;8103H	;result
+; Line 324
+	*** 0001af	8b 46 08 		mov	ax,WORD PTR [bp+8]	;cmd
+; Line 349
+	*** 0001b2	0b c0 			or	ax,ax
+	*** 0001b4	74 06 			je	$SC1425
+	*** 0001b6	48 			dec	ax
+	*** 0001b7	74 0d 			je	$SC1426
+	*** 0001b9	eb 63 			jmp	SHORT $SB1422
+	*** 0001bb	90 			nop	
+; Line 326
+					$SC1425:
+; Line 327
+	*** 0001bc	c4 5e 0e 		les	bx,DWORD PTR [bp+14]	;data
+	*** 0001bf	26 c7 07 01 00 		mov	WORD PTR es:[bx],1
+	*** 0001c4	eb 53 			jmp	SHORT $L1450
+; Line 331
+					$SC1426:
+; Line 336
+	*** 0001c6	c4 5e 0e 		les	bx,DWORD PTR [bp+14]	;data
+	*** 0001c9	8b 46 fc 		mov	ax,WORD PTR [bp-4]	;single
+	*** 0001cc	8b 56 fe 		mov	dx,WORD PTR [bp-2]
+	*** 0001cf	06 			push	es
+	*** 0001d0	1e 			push	ds
+	*** 0001d1	8d 7f 02 		lea	di,WORD PTR [bx+2]
+	*** 0001d4	8b f0 			mov	si,ax
+	*** 0001d6	8e da 			mov	ds,dx
+	ASSUME DS: NOTHING
+	*** 0001d8	a5 			movsw
+	*** 0001d9	a5 			movsw
+	*** 0001da	a5 			movsw
+	*** 0001db	1f 			pop	ds
+	ASSUME DS: DGROUP
+	*** 0001dc	07 			pop	es
+; Line 337
+	*** 0001dd	8e c2 			mov	es,dx
+	*** 0001df	8b d8 			mov	bx,ax
+	*** 0001e1	26 8b 4f 07 		mov	cx,WORD PTR es:[bx+7]
+	*** 0001e5	c4 76 0e 		les	si,DWORD PTR [bp+14]	;data
+	*** 0001e8	26 89 4c 08 		mov	WORD PTR es:[si+8],cx
+; Line 338
+	*** 0001ec	8e c2 			mov	es,dx
+	*** 0001ee	26 8b 4f 0b 		mov	cx,WORD PTR es:[bx+11]
+	*** 0001f2	26 8b 77 0d 		mov	si,WORD PTR es:[bx+13]
+	*** 0001f6	c4 7e 0e 		les	di,DWORD PTR [bp+14]	;data
+	*** 0001f9	26 89 4d 0a 		mov	WORD PTR es:[di+10],cx
+	*** 0001fd	26 89 75 0c 		mov	WORD PTR es:[di+12],si
+; Line 340
+	*** 000201	26 c7 45 0e 01 00 	mov	WORD PTR es:[di+14],1
+; Line 341
+	*** 000207	8e c2 			mov	es,dx
+	*** 000209	26 8a 47 06 		mov	al,BYTE PTR es:[bx+6]
+	*** 00020d	c4 5e 0e 		les	bx,DWORD PTR [bp+14]	;data
+	*** 000210	26 88 47 10 		mov	BYTE PTR es:[bx+16],al
+; Line 342
+	*** 000214	26 c6 47 11 00 		mov	BYTE PTR es:[bx+17],0
+; Line 344
+					$L1450:
+	*** 000219	c7 46 fa 00 00 		mov	WORD PTR [bp-6],0	;result
+; Line 349
+					$SB1422:
+; Line 351
+	*** 00021e	8b 46 fa 		mov	ax,WORD PTR [bp-6]	;result
+; Line 352
+	*** 000221	5e 			pop	si
+	*** 000222	5f 			pop	di
+	*** 000223	c9 			leave	
+	*** 000224	c3 			ret	
+	*** 000225	90 			nop	
+
+SingleCtrl	ENDP
+	PUBLIC	_SingleCreate
+_SingleCreate	PROC NEAR
+; Line 380
+	*** 000226	c8 0a 00 00 		enter	10,0
+	*** 00022a	57 			push	di
+	*** 00022b	56 			push	si
+;	pVrh = 4
+;	tab = 8
+;	sec = 12
+;	pSize = 16
+;	single = -10
+;	j = -6
+; Line 386
+	*** 00022c	33 c0 			xor	ax,ax
+	*** 00022e	8b 56 04 		mov	dx,WORD PTR [bp+4]	;pVrh
+	*** 000231	8b 5e 06 		mov	bx,WORD PTR [bp+6]
+	*** 000234	89 56 f6 		mov	WORD PTR [bp-10],dx	;single
+	*** 000237	89 5e f8 		mov	WORD PTR [bp-8],bx
+	*** 00023a	b9 1b 00 		mov	cx,27	;001bH
+	*** 00023d	8b fa 			mov	di,dx
+	*** 00023f	8e c3 			mov	es,bx
+	*** 000241	f3 			rep
+	*** 000242	aa 			stosb
+; Line 391
+	*** 000243	8e c3 			mov	es,bx
+	*** 000245	8b f2 			mov	si,dx
+	*** 000247	26 c7 44 11 00 00 	mov	WORD PTR es:[si+17],OFFSET SingleWorker
+; Line 392
+	*** 00024d	26 c7 44 0f 00 00 	mov	WORD PTR es:[si+15],OFFSET SingleNotify
+; Line 393
+	*** 000253	26 c7 44 13 00 00 	mov	WORD PTR es:[si+19],OFFSET SingleUpdate
+; Line 394
+	*** 000259	26 c7 44 15 00 00 	mov	WORD PTR es:[si+21],OFFSET SingleCtrl
+; Line 395
+	*** 00025f	26 89 44 0d 		mov	WORD PTR es:[si+13],ax
+	*** 000263	26 89 44 0b 		mov	WORD PTR es:[si+11],ax
+; Line 396
+	*** 000267	26 88 44 06 		mov	BYTE PTR es:[si+6],al
+; Line 397
+	*** 00026b	8b 46 0c 		mov	ax,WORD PTR [bp+12]	;sec
+	*** 00026e	8b 56 0e 		mov	dx,WORD PTR [bp+14]
+	*** 000271	05 14 00 		add	ax,20	;0014H
+	*** 000274	56 			push	si
+	*** 000275	06 			push	es
+	*** 000276	1e 			push	ds
+	*** 000277	8b fe 			mov	di,si
+	*** 000279	8b f0 			mov	si,ax
+	*** 00027b	8e da 			mov	ds,dx
+	ASSUME DS: NOTHING
+	*** 00027d	a5 			movsw
+	*** 00027e	a5 			movsw
+	*** 00027f	a5 			movsw
+	*** 000280	1f 			pop	ds
+	ASSUME DS: DGROUP
+	*** 000281	07 			pop	es
+	*** 000282	5e 			pop	si
+; Line 401
+	*** 000283	2b c0 			sub	ax,ax
+	*** 000285	26 89 44 19 		mov	WORD PTR es:[si+25],ax
+	*** 000289	26 89 44 17 		mov	WORD PTR es:[si+23],ax
+; Line 402
+	*** 00028d	89 46 fa 		mov	WORD PTR [bp-6],ax	;j
+	*** 000290	8b 46 08 		mov	ax,WORD PTR [bp+8]	;tab
+	*** 000293	8b 56 0a 		mov	dx,WORD PTR [bp+10]
+	*** 000296	89 46 fc 		mov	WORD PTR [bp-4],ax
+	*** 000299	89 56 fe 		mov	WORD PTR [bp-2],dx
+					$F1440:
+; Line 404
+	*** 00029c	c4 5e fc 		les	bx,DWORD PTR [bp-4]
+	*** 00029f	26 8b 47 02 		mov	ax,WORD PTR es:[bx+2]
+	*** 0002a3	26 0b 07 		or	ax,WORD PTR es:[bx]
+	*** 0002a6	74 26 			je	$FC1441
+; Line 407
+	*** 0002a8	26 8b 07 		mov	ax,WORD PTR es:[bx]
+	*** 0002ab	26 8b 57 02 		mov	dx,WORD PTR es:[bx+2]
+	*** 0002af	c4 5e 0c 		les	bx,DWORD PTR [bp+12]	;sec
+	*** 0002b2	b9 06 00 		mov	cx,6
+	*** 0002b5	1e 			push	ds
+	*** 0002b6	8d 7f 1e 		lea	di,WORD PTR [bx+30]
+	*** 0002b9	8b f0 			mov	si,ax
+	*** 0002bb	8e da 			mov	ds,dx
+	ASSUME DS: NOTHING
+	*** 0002bd	d1 e9 			shr	cx,1
+	*** 0002bf	1b c0 			sbb	ax,ax
+	*** 0002c1	3b c9 			cmp	cx,cx
+	*** 0002c3	f3 			repz
+	*** 0002c4	a7 			cmpsw
+	*** 0002c5	75 04 			jne	$L1449
+	*** 0002c7	2b c8 			sub	cx,ax
+	*** 0002c9	f3 			repz
+	*** 0002ca	a6 			cmpsb
+					$L1449:
+	*** 0002cb	1f 			pop	ds
+	ASSUME DS: DGROUP
+	*** 0002cc	74 10 			je	$L1447
+; Line 402
+					$FC1441:
+	*** 0002ce	83 46 fc 04 		add	WORD PTR [bp-4],4
+	*** 0002d2	ff 46 fa 		inc	WORD PTR [bp-6]	;j
+	*** 0002d5	83 7e fa 18 		cmp	WORD PTR [bp-6],24	;0018H	;j
+	*** 0002d9	72 c1 			jb	$F1440
+	*** 0002db	eb 47 			jmp	SHORT $FB1442
+	*** 0002dd	90 			nop	
+					$L1447:
+	*** 0002de	8b 5e f6 		mov	bx,WORD PTR [bp-10]	;single
+; Line 409
+	*** 0002e1	c4 76 0c 		les	si,DWORD PTR [bp+12]	;sec
+	*** 0002e4	26 8b 44 24 		mov	ax,WORD PTR es:[si+36]
+	*** 0002e8	26 8b 54 26 		mov	dx,WORD PTR es:[si+38]
+	*** 0002ec	8e 46 f8 		mov	es,WORD PTR [bp-8]
+	*** 0002ef	26 89 47 0b 		mov	WORD PTR es:[bx+11],ax
+	*** 0002f3	26 89 57 0d 		mov	WORD PTR es:[bx+13],dx
+	*** 0002f7	8b 7e fa 		mov	di,WORD PTR [bp-6]	;j
+	*** 0002fa	8b 4e 08 		mov	cx,WORD PTR [bp+8]	;tab
+; Line 410
+	*** 0002fd	8c c0 			mov	ax,es
+	*** 0002ff	8e 46 0a 		mov	es,WORD PTR [bp+10]
+	*** 000302	c1 e7 02 		shl	di,2
+	*** 000305	03 f9 			add	di,cx
+	*** 000307	26 8b 0d 		mov	cx,WORD PTR es:[di]
+	*** 00030a	26 8b 55 02 		mov	dx,WORD PTR es:[di+2]
+	*** 00030e	8e c0 			mov	es,ax
+	*** 000310	26 89 4f 17 		mov	WORD PTR es:[bx+23],cx
+	*** 000314	26 89 57 19 		mov	WORD PTR es:[bx+25],dx
+; Line 411
+	*** 000318	8e 46 0a 		mov	es,WORD PTR [bp+10]
+	*** 00031b	2b c0 			sub	ax,ax
+	*** 00031d	26 89 45 02 		mov	WORD PTR es:[di+2],ax
+	*** 000321	26 89 05 		mov	WORD PTR es:[di],ax
+; Line 414
+					$FB1442:
+; Line 416
+	*** 000324	c4 5e 10 		les	bx,DWORD PTR [bp+16]	;pSize
+	*** 000327	26 c7 07 1b 00 		mov	WORD PTR es:[bx],27	;001bH
+; Line 419
+	*** 00032c	33 c0 			xor	ax,ax
+; Line 420
+	*** 00032e	5e 			pop	si
+	*** 00032f	5f 			pop	di
+	*** 000330	c9 			leave	
+	*** 000331	c3 			ret	
+
+_SingleCreate	ENDP
+_TEXT	ENDS
+END

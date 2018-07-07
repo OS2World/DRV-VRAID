@@ -1,0 +1,7329 @@
+head	3.2;
+access;
+symbols
+	VSETUPv0_84:2.13
+	VSETUP_82:2.5
+	VSETUPv0_80:1.21
+	VSETUPv0_71:1.13.1.1
+	VSETUPv0_70:1.13
+	VSETUPv0_60:1.9
+	VSETUPv0_52:1.8
+	VSETUPv0_51:1.7
+	VSETUPv0_50:1.5
+	VSETUPv0_20:1.4;
+locks; strict;
+comment	@ * @;
+
+
+3.2
+date	2006.01.16.21.18.45;	author vitus;	state Exp;
+branches;
+next	3.1;
+
+3.1
+date	2003.09.24.10.43.06;	author vitus;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2001.01.30.00.37.15;	author vitus;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2001.01.15.01.50.39;	author vitus;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2000.11.07.01.31.24;	author vitus;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2000.08.21.08.14.36;	author vitus;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2000.08.05.02.57.16;	author vitus;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2000.06.15.01.18.23;	author vitus;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2000.05.28.17.42.56;	author vitus;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2000.05.13.16.43.59;	author vitus;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2000.04.15.23.50.12;	author vitus;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2000.04.10.01.09.00;	author vitus;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2000.03.17.02.11.33;	author vitus;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2000.03.09.23.40.16;	author vitus;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.02.18.00.15.33;	author vitus;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	99.12.14.00.28.52;	author vitus;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	99.10.01.01.29.37;	author vitus;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	99.07.05.00.54.24;	author vitus;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	99.06.21.01.29.42;	author vitus;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	99.06.20.17.16.27;	author vitus;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	99.06.19.22.01.52;	author vitus;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	99.06.02.02.06.57;	author vitus;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	99.05.24.19.56.45;	author vitus;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	99.05.13.23.16.49;	author vitus;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	99.05.12.01.29.30;	author vitus;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	99.04.30.03.15.35;	author vitus;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	99.03.24.23.08.46;	author vitus;	state Exp;
+branches
+	1.13.1.1;
+next	1.12;
+
+1.12
+date	99.03.11.03.24.19;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	99.03.01.02.27.44;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.02.09.03.50.23;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	98.12.13.23.28.41;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	98.11.21.20.05.16;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	98.11.05.00.29.03;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	98.11.03.03.07.57;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	98.09.27.01.50.10;	author vitus;	state Stab;
+branches;
+next	1.4;
+
+1.4
+date	98.06.09.01.17.05;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.05.27.01.55.06;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.05.15.01.07.22;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.05.11.00.32.25;	author vitus;	state Exp;
+branches;
+next	;
+
+1.13.1.1
+date	99.04.30.18.47.52;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Seperate thread to scan OS/2 devices and existing RAID drives
+@
+
+
+3.2
+log
+@- define NORAID5: generate code for current VRAID.FLT, not the one
+  that might follow and support RAID5 (if it ever will)
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/drvscan.cpp,v $
+ * $Revision: 3.1 $
+ * $Date: 2003/09/24 10:43:06 $
+ * $Locker: vitus $
+ *
+ *
+ *	Seperate thread to scan OS/2 devices and existing RAID drives.
+ *
+ *
+ * $Log: drvscan.cpp,v $
+ * Revision 3.1  2003/09/24 10:43:06  vitus
+ * - added RAID 5 code (new major because of "stopped" development)
+ *
+ * Revision 2.13  2001/01/30 00:37:15  vitus
+ * - AnalyseVRDev2: now correctly passes valid/invalid to addChild()
+ * - WUM_INVCHILD: removed ioStartRebuild(), handled by filter
+ *
+ * Revision 2.12  2001/01/15 01:50:39  vitus
+ * - implemented WUM_INVCHILD, sets the child to invalid and posts the tree back
+ *
+ * Revision 2.11  2000/11/07 01:31:24  vitus
+ * - Verbose() calls use modname[] string
+ *
+ * Revision 2.10  2000/08/21 08:14:36  vitus
+ * - modifications for changed addChild() prototype
+ * - uses ioStartRebuild method of array instead of calling
+ *   DriverArrayRebuild() directly
+ *
+ * Revision 2.9  2000/08/05 02:57:16  vitus
+ * - added detection of rebuild state
+ * - added processing of WUM_REBUILD_DRV
+ *
+ * Revision 2.8  2000/06/15 01:18:23  vitus
+ * - method 'setFltHd' is called for hostdrives.  Should be used for all
+ *   arrays but this needs another IOCtl on vraid.flt
+ *
+ * Revision 2.7  2000/05/28 17:42:56  vitus
+ * - adjusted verbosity levels
+ * - moved partition analysis/creation to pcreate.cpp
+ *
+ * Revision 2.6  2000/05/13 16:43:59  vitus
+ * - clarified SayArea() messages
+ * - FindFreeExtSpace: removed 'no free entry' abort because there are never
+ *   more than 2 used entries and even if: the included extended partitions have
+ *   to be analysed.
+ *
+ * Revision 2.5  2000/04/15 23:50:12  vitus
+ * - IsProvidedByFlt: detection of OS/2 disk/filter device now in seperate function
+ *
+ * Revision 2.4  2000/04/10 01:09:00  vitus
+ * - converted calls to WinMessageBox() to MyMessageBox()
+ *
+ * Revision 2.3  2000/03/17 02:11:33  vitus
+ * - create extended partions arouch 7C partitions via addOwn()
+ *
+ * Revision 2.2  2000/03/09 23:40:16  vitus
+ * - scans and creates extended partitions correctly.
+ *   Well, at least it creates a PHYSDEV in the middle between two logical
+ *   drives.  To create a "logical" vraid partition out of a clear disk it's a
+ *   long, long way...
+ *
+ * Revision 2.1  2000/02/18 00:15:33  vitus
+ * - major changes to find VRAID partitions inside extended partitions
+ *   and to create those partitions.
+ * - uses PartTable class to handle partition sectors.
+ *
+ * Revision 1.24  1999/12/14 00:28:52  vitus
+ * - more error logging
+ *
+ * Revision 1.23  1999/10/01 01:29:37  vitus
+ * - AllocateOs2Devices: added code to detect OS/2 devices which are accessable
+ *   through VRAID.FLT as PHYSDEVICEs
+ *
+ * Revision 1.22  1999/07/05 00:54:24  vitus
+ * - calls addChild() with "config sector valid" flag
+ * - remove DriverEndSetup() call, this is done (or not done) in DriverClose()
+ *
+ * Revision 1.21  1999/06/21 01:29:42  vitus
+ * - corrected english spelling
+ *
+ * Revision 1.20  1999/06/20 17:16:27  vitus
+ * - AnalyseVRDev/AnalyseVRDev2: don't remove childs from global device table
+ *   before it's clear that the parent will be created.  A "creation delayed"
+ *   did lead to forgotten disks!
+ *
+ * Revision 1.19  1999/06/19 22:01:52  vitus
+ * - minor corrections to keep compiler happy
+ * - Scanning tests fSetupMode instead of calling DriverVersion()
+ * - OS/2 devices are opened here and a VOS2Disk constructed with the handle.
+ *   This way errors may be detected and reported.
+ *
+ * Revision 1.18  1999/06/02 02:06:57  vitus
+ * - AnalyseVRDev2: validates that all childs contain the same SEC_VRDEV2 contents
+ *   and updates status variables if not.  ValidateVSec2() implemented.
+ * - BuildDevTree: apDskInfo[i] is now cleared by Analyse*() itself.  Only do
+ *   it here if no Analyse*() seems to be correct
+ * - WUM_DELDRV: adds all childs to display before deleting the parent
+ *
+ * Revision 1.17  1999/05/24 19:56:45  vitus
+ * - completed WUM_REMCHILD: may now add the deleted device itself to container
+ *   if it's an PYHSDEVICE via vraid.flt.  In this case the partition can't be
+ *   deleted and VOS2Disk is an impossible solution.
+ *
+ * Revision 1.16  1999/05/13 23:16:49  vitus
+ * - implemented WUM_REMCHILD
+ *
+ * Revision 1.15  1999/05/12 01:29:30  vitus
+ * - WUM_DELPDEV: should detect VORdev vs. VFRDev and create the appropiate
+ *   disk object
+ * - RDFLAG* defines now unified (same as dsklayout.h)
+ * - AnalyseVRDev2: new sector layout
+ *
+ * Revision 1.14  1999/04/30 03:15:35  vitus
+ * - checks minimum size of VRAID partition (10MB)
+ * - when scanning free disk areas: start of n. areas (n>1) was undefined)
+ * - calls DriverStartSetup() and DriverEndSetup()
+ *
+ * Revision 1.13  1999/03/24 23:08:46  vitus
+ * - VMissing always added as "invalid"
+ * - WinPostMsg() instead of WinSendMsg()
+ *
+ * Revision 1.12  1999/03/11 03:24:19  vitus
+ * - include seperate class interface headers
+ * - corrected partition creation code
+ * - VMirror stuff enabled
+ *
+ * Revision 1.11  1999/03/01 02:27:44  vitus
+ * - include dskinfo.hpp for drvbuild.h
+ * - removed many routine just because of C++ design
+ *
+ * Revision 1.10  1999/02/09 03:50:23  vitus
+ * - switched to C++
+ * - moved analyse of SEC_VRDEV* to AnalyseVRDev resp AnalyseVRDev2
+ *
+ * Revision 1.9  1998/12/13 23:28:41  vitus
+ * - changed as global headers moved to /source/Lib
+ * - AllocateOs2Devices: detects which OS/2 devices are VRAID drives
+ *   and skips those devices
+ * - BuildDevTree: detects which array drives are used by OS/2 (see
+ *   AllocateOs2Devices) and forwards OS/2 device's flags to array drive
+ * - removed -*- beta -*- message, no longer true
+ *
+ * Revision 1.8  1998/11/21 20:05:16  vitus
+ * - BUGFIX: reenable AllocateOs2Devices() if BETA_PKG
+ * - creation of VRAID partition -> PHYSDEV = 0MB, fixed?
+ *
+ * Revision 1.7  1998/11/05 00:29:03  vitus
+ * - corrected 'VRAID.FLT found' message: it is possible to modify existent
+ *   PHYSDEVICEs (and higher), but in this beta it isn't possible to create
+ *   new PHYSDEVICEs (that makes a difference!)
+ *
+ * Revision 1.6  1998/11/03 03:07:57  vitus
+ * - modified for DSKINFO change: 'avail' element changed position
+ * - BuildDevTree: create new devices as 'avail = 1' and change this if
+ *   any child is 'avail = 0'
+ *
+ * Revision 1.5  1998/09/27 01:50:10  vitus
+ * - added -+- beta -+- message box explaining current restrictions
+ * - implemented AllocateFltDevices: asks raid.flt
+ * - added DSKACC_FLT to all the places
+ *
+ * Revision 1.4  1998/06/09 01:17:05  vitus
+ * - added existence of DSKTYPE_SINGLE VRAID sectors
+ * - corrected sector no/offset when reading higher VRAID sectors
+ * - BuildDevTree: drive size calculation now based on VRAID sector contents
+ *   (not found childs)
+ * - added WUM_DELPDEV: DeletePhysdev(), RemovePartition()
+ * - UpdateDsklayout: corrected saved drive sizes
+ * - added WUM_DELDRV: RemoveDrive()
+ * - DoPartitionIo() handles missing childs
+ *
+ * Revision 1.3  1998/05/27 01:55:06  vitus
+ * - DoAbsIo(), DoPartitionIo()
+ * - checks MBR signature
+ * - CreatePartition(), UpdatePhys(), CreatePhysdev(), UpdateDsklayout()
+ *
+ * Revision 1.2  1998/05/15 01:07:22  vitus
+ * - create each DSKINFO structure as own memory object
+ *
+ * Revision 1.1  1998/05/11 00:32:25  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-2001
+ */
+static char const vcid[]="$Id: drvscan.cpp,v 3.1 2003/09/24 10:43:06 vitus Exp vitus $";
+static char const modname[]="DrvScan";
+
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define __IBMC__	0
+#define INCL_DOS
+#define INCL_DOSDEVIOCTL
+#define INCL_ERRORS
+#define INCL_WIN
+#define INCL_GPI
+#include <os2.h>
+
+extern "C" {
+#include "../../../Lib/defines.h"
+#include "../../../Lib/verbose.h"
+#include "../../../Lib/physdsk.h"
+}
+
+#include "VSetup.h"
+#include "resources.h"
+#include "drvif.h"
+#include "dskinfo.hpp"
+#include "drvbuild.h"
+#include "pcreate.h"
+
+#include "PartTable.hpp"
+#include "Single.hpp"
+#include "Chain.hpp"
+#include "Stripe.hpp"
+#include "Mirror.hpp"
+#if !defined(NORAID5)
+# include "Raid5.hpp"
+#endif
+#include "Missing.hpp"
+
+
+
+
+#define WC_DRVSCAN	"DrvscanWindow"
+#define MAXDRIVES	(MAXCHILDREN*2)
+
+
+
+
+
+typedef struct _WORK {
+    PTHR_DRVSCAN self;
+    HAB		hab;				/* to retrieve errors */
+
+    VOS2Disk **	apOs2Dsk;			/* list of OS/2 accessable disks */
+    ULONG	cOs2Dsk;
+    VRDev     **apDskInfo;			/* list of devices with VRAID struc*/
+    ULONG	cDskInfo;
+    VRDev     **apEndPts;			/* analysis complete */
+    ULONG	cEndPts;
+} WORK, * PWORK;
+
+
+PUBLIC	USHORT	usHostId = 0;
+
+PRIVATE struct _OS2DEVID {
+    ULONG	os2idx;
+    UCHAR	fl;				/* 0: table entry free */
+    UCHAR	avail;
+    DEVID	id;
+    USHORT	hd;
+} ahsOs2Devid[MAXDRIVES];
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Private Routines ************************************************
+ * ******************************************************************* */
+
+
+/*# ----------------------------------------------------------------------
+ * SetArrayInfo(array_devid,array_flthd,os2idx,avail)
+ *
+ * PARAMETER
+ *	array_devid	device ID of array drive
+ *	array_flthd	vraid.flt handle of array drive
+ *	os2idx		index of OS/2 device residing here (PDsk*)
+ *			or -1u if no host drive
+ *	avail		0: locked by OS/2
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Stores some information gotten while scanning OS/2 devices on to
+ *	devices available via VRAID.FLT.
+ *
+ * REMARKS
+ */
+PRIVATE VOID
+SetArrayInfo(DEVID const array_devid, USHORT const array_flthd,
+	     ULONG const os2idx, UCHAR const avail)
+{
+    unsigned	i;
+
+    for( i = 0; i < MAXDRIVES; ++i )
+	if( ahsOs2Devid[i].fl == 0 )
+	{
+	    ahsOs2Devid[i].fl = 1;
+	    ahsOs2Devid[i].os2idx = os2idx;
+	    memcpy(ahsOs2Devid[i].id, array_devid, sizeof(array_devid));
+	    ahsOs2Devid[i].hd = array_flthd;
+	    ahsOs2Devid[i].avail = avail;
+	    break;
+	}
+
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * QueryArrayInfo(array_devid)
+ *
+ * PARAMETER
+ *	array_devid	device ID of array drive
+ *	os2idx		index of OS/2 device residing here (PDsk*)
+ *	avail		0: locked by OS/2
+ *
+ * RETURNS
+ *	struct _OS2DEVID *
+ *
+ * DESCRIPTION
+ *	Retrieves information stored by SetArrayInfo().
+ *
+ * REMARKS
+ */
+PRIVATE struct _OS2DEVID *
+QueryArrayInfo(DEVID const * const array_devid)
+{
+    unsigned	i;
+
+    for( i = 0; i < MAXDRIVES; ++i )
+	if( ahsOs2Devid[i].fl != 0
+	    &&  memcmp(ahsOs2Devid[i].id, array_devid, sizeof(array_devid)) == 0 )
+	{
+	    return &ahsOs2Devid[i];
+	}
+
+    return NULL;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * IsProvidedByFlt(newdev, acnt, ahd[], pcnt, phd[])
+ *
+ * PARAMETER
+ *	newdev			OS/2 disk to test
+ *	acnt, ahd[]		array handles
+ *	pcnt, phd[]		PHYSDEV handles
+ *
+ * RETURNS
+ *	TRUE			newdev is accessable via VRAID.FLT
+ *	FALSE			normal disk
+ *
+ * DESCRIPTION
+ *	Try to figure out whether 'newdev' is an array or PHYSDEV or just
+ *	any other disk.
+ *
+ * REMARKS
+ */
+PRIVATE BOOL
+IsProvidedByFlt(VOS2Disk * const newdev,
+		USHORT acnt, USHORT ahd[], USHORT pcnt, USHORT phd[])
+{
+    PVRAID_ARRAYINFO_DATA * ainfo;
+    PVRAID_PHYSINFO_DATA * pinfo;
+    USHORT	j;
+    BOOL	result;
+    BOOL	isarray = FALSE;
+    USHORT	accessed_array;
+    BOOL	isphys = FALSE;
+    APIRET	rc;
+
+
+    /* Allocate and initialize tables to hold array and physdev informations. */
+
+    ainfo = new PVRAID_ARRAYINFO_DATA[acnt];
+    for( j = 0; j < acnt; ++j )
+    {
+	ainfo[j] = new VRAID_ARRAYINFO_DATA;
+	memset(ainfo[j], 0, sizeof(VRAID_ARRAYINFO_DATA));
+    }
+
+    pinfo = new PVRAID_PHYSINFO_DATA[pcnt];
+    for( j = 0; j < pcnt; ++j )
+    {
+	pinfo[j] = new VRAID_PHYSINFO_DATA;
+	memset(pinfo[j], 0, sizeof(VRAID_PHYSINFO_DATA));
+    }
+
+
+    if( acnt != 0 )				/* if vraid.flt knows an array... */
+    {
+	unsigned	retry;
+	unsigned	flt_changes = 0;
+	PUCHAR		dummybuffer = new UCHAR[SECTOR_SIZE];
+
+	for( retry = 0; retry < 3; ++retry )
+	{
+	    VRAID_ARRAYINFO_DATA	this_info;
+	    USHORT			j;
+
+	    for( j = 0; j < acnt; ++j )
+		rc = DriverArrayinfo(ahd[j], ainfo[j]);
+
+	    rc = newdev->read(0, 1, dummybuffer);
+
+	    for( j = 0; j < acnt; ++j )
+	    {
+		Verbose(3,modname, "Testing array %u", j);
+		rc = DriverArrayinfo(ahd[j], &this_info);
+		if( rc != 0 )
+		    Verbose(1,modname, "Array Info %u - rc %lu", j, rc);
+		else if( this_info.reqcnt > ainfo[j]->reqcnt )
+		{
+		    Verbose(2,modname,
+			    "Array %u accessed when reading OS/2 Drive %lu",
+			    j, newdev->queryIndex());
+		    ++flt_changes;
+		    accessed_array = j;
+		}
+	    }
+	    if( flt_changes == 1 )
+	    {
+		isarray = TRUE;
+		assert( accessed_array <= acnt );
+		break;
+	    }
+	    else if( flt_changes == 0 )
+		break;			/* definitely no array */
+
+	    DosSleep(1000);		/* wait for peace :-) */
+	}
+	delete[] dummybuffer;
+    }
+
+    if( !isarray )
+    {
+	unsigned	retry;
+	unsigned	flt_changes = 0;
+	PUCHAR		dummybuffer = new UCHAR[SECTOR_SIZE];
+
+	for( retry = 0; retry < 3; ++retry )
+	{
+	    VRAID_PHYSINFO_DATA	this_info;
+	    USHORT		j;
+
+	    for( j = 0; j < pcnt; ++j )
+		rc = DriverPhysinfo(phd[j], pinfo[j]);
+
+	    rc = newdev->read(0, 1, dummybuffer);
+
+	    for( j = 0; j < pcnt; ++j )
+	    {
+		Verbose(3,modname, "Testing Physdev %u", j);
+		rc = DriverPhysinfo(phd[j], &this_info);
+		if( rc != 0 )
+		    Verbose(1,modname, "Physdev Info %u - rc %lu", j, rc);
+		else if( this_info.reqcnt > pinfo[j]->reqcnt )
+		{
+		    Verbose(2,modname,
+			    "PHYSDEV %u accessed when reading OS/2 disk %lu",
+			    j, newdev->queryIndex());
+		    ++flt_changes;
+		    /*accessed_phys = j;*/
+		}
+	    }
+	    if( flt_changes == 1 )
+	    {
+		isphys = TRUE;
+		break;
+	    }
+	    else if( flt_changes == 0 )
+		break;			/* definitely no array */
+
+	    DosSleep(1000);		/* wait for peace :-) */
+	}
+	delete[] dummybuffer;
+    }
+
+    if( isarray  ||  isphys )
+    {
+	if( isarray )
+	    SetArrayInfo(ainfo[accessed_array]->id, ahd[accessed_array],
+			 newdev->queryIndex(), newdev->isWritable());
+	result = TRUE;				/* accessable through VRAID.FLT! */
+    }
+    else
+    {
+	result = FALSE;
+    }
+
+
+    /* Remove any memory allocated in LIFO manner. */
+
+    for( j = 0; j < acnt; ++j )
+	delete ainfo[j];
+    delete[] ainfo;
+    for( j = 0; j < pcnt; ++j )
+	delete pinfo[j];
+    delete[] pinfo;
+
+    return result;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * AllocateFltDevices(work)
+ *
+ * PARAMETER
+ *	work		thread data
+ *
+ * RETURNS
+ *	count of found devices
+ *
+ * DESCRIPTION
+ *	Retrieve information about all devices accessible via
+ *	VRAID.FLT.
+ *
+ * REMARKS
+ */
+PRIVATE ULONG
+AllocateFltDevices(PWORK const work)
+{
+    APIRET	rc;
+    ULONG	i, idx;
+    USHORT	cnt;
+    PUSHORT	list;
+
+    Verbose(3,modname, "AllocateFltDevices");
+
+    idx = work->cDskInfo;			/* new index: behind already found
+						   devices (none) */
+    do
+    {
+	rc = DriverPhyslist(&cnt, &list);
+	if( rc )
+	{
+	    Verbose(1,modname, "DriverPhyslist - rc %lu", rc);
+	    cnt = 0;
+	    break;
+	}
+
+	for( i = 0; i < cnt; ++i )
+	{
+	    work->apDskInfo[idx] = new VFRDev(list[i]);
+
+	    ++work->cDskInfo;			/* keep this device! */
+
+	    Verbose(2,modname, "FLT drive capacity: %lu MBytes",
+		    work->apDskInfo[idx]->querySize() / 2ul / 1024);
+
+	    ++idx;
+	} /* end[while(every device)] */
+    }
+    while(0);					/* end[OS/2 devices] */
+
+    return idx;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * AllocateOs2Devices(work)
+ *
+ * PARAMETER
+ *	work		thread data
+ *
+ * RETURNS
+ *	count of found OS/2 devices
+ *
+ * DESCRIPTION
+ *	Retrieve information about all devices accessible via
+ *	the OS/2 API.
+ *
+ * REMARKS
+ */
+PRIVATE ULONG
+AllocateOs2Devices(PWORK const work)
+{
+    APIRET		rc;
+    ULONG		i, os2cnt;
+    USHORT		j;
+    USHORT		arraycnt = 0;
+    PUSHORT		arrayhd = NULL;
+    USHORT		physcnt = 0;
+    PUSHORT		physhd = NULL;
+
+
+    Verbose(3,modname, "AllocateOs2Devices");
+
+    /* For consistent display we need to now which array drive
+     * and which PHYSDEV is which OS/2 device.  What we need for this
+     * purpose:
+     * - a handle for every array drive and every PHYSDEV
+     * - room to keep at least a counter for each (we keep the whole info) */
+
+    if( (fSetupMode & SM_FLTAVAIL) )
+    {
+	do
+	{
+	    rc = DriverArraylist(&arraycnt, &arrayhd);
+	    if( rc )
+	    {
+		Verbose(1,modname, "DriverArraylist - rc %lu", rc);
+		arraycnt = 0;
+		break;
+	    }
+
+	}
+	while( 0 );
+	do
+	{
+	    rc = DriverPhyslist(&physcnt, &physhd);
+	    if( rc )
+	    {
+		Verbose(1,modname, "DriverPhyslist - rc %lu", rc);
+		physcnt = 0;
+		break;
+	    }
+
+	}
+	while( 0 );
+    }
+
+
+    rc = PDskEnum(&os2cnt);
+    if( rc )
+    {
+	Verbose(1,modname, "PDskEnum - rc %lu", rc);
+	os2cnt = 0;
+    }
+    for( i = 0; i < os2cnt; ++i )
+    {
+	/* Open physical device, this may fail! */
+
+	ULONG	handle;
+	rc = PDskOpen(i, &handle);
+	if( rc != 0 )
+	{
+	    Verbose(1,modname, "PDskOpen(%lu) - rc %lu", i, rc);
+	    MyMessageBox(2, HWND_DESKTOP,
+			 "An OS2 disk cannot be accessed.  There may be an"
+			 " instance of FDISK running somewhere.\n"
+			 "Please don't change drive configuration but end"
+			 " VSetup and any disk management software like FDISK"
+			 " and restart VSetup!");
+	    continue;
+	}
+
+	VOS2Disk * newdev = new VOS2Disk(i, handle);
+
+
+	/* Try to determine whether this device is provided by
+	 * VRAID.FLT.  Do this by reading some sectors and comparing
+	 * VRAID's request counters before and after the reading.
+	 * OBS: as we live in the multitasking world some other
+	 * process may by writing to a disk while we are don¡ng
+	 * this stuff.  It's ugly but can't be detected for sure.
+	 * Just do some consistency checks and retry if they fail. */
+
+	if( (fSetupMode & SM_FLTAVAIL) )
+	    if( IsProvidedByFlt(newdev, arraycnt, arrayhd, physcnt, physhd) )
+	    {
+		delete newdev;
+		continue;
+	    }
+
+
+
+	/* Keep this device: enter in table and increase counter. */
+
+	work->apOs2Dsk[work->cOs2Dsk] = newdev;
+	++work->cOs2Dsk;
+
+    } /* end[for(every device)] */
+
+
+    return os2cnt;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Routines to analyse VRAID own sectors ***************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * AnalyseVRDev(work,dsk,sec)
+ *
+ * PARAMETER
+ *	work		contains disk data (among other things)
+ *	dsk		which device was read?
+ *	sec		sector contents to analyse
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *
+ * REMARKS
+ */
+PRIVATE void
+AnalyseVRDev(PWORK const work,VRDev * dsk,PSEC_VRDEV const sec)
+{
+    USHORT	crc;
+
+    crc = Crc16(sec, SECTOR_SIZE-2);
+    if( crc != sec->crc )
+    {
+	Verbose(1,modname, "CRC error in VRAIDDEVICE sector (%#x, %#x)",
+		crc,sec->crc);
+	work->apEndPts[work->cEndPts++] = dsk;
+	return;
+    }
+
+
+    /* This is a valid VRAID sector.  It describes a new level
+     * of administration and will therefore result in a new DSKINFO. */
+
+    USHORT	j, k;
+    VRDrive	*newdrv;
+
+    switch( sec->u.s.type )
+    {
+      case RDTYPE_CHAIN:
+	newdrv = new VChain(sec->u.s.id, sec->u.s.children);
+	break;
+
+      case RDTYPE_STRIPE:
+	newdrv = new VStripe(sec->u.s.id, sec->u.s.children);
+	break;
+
+      case RDTYPE_SINGLE:
+	newdrv = new VSingle(sec->u.s.id);
+	break;
+
+      default:
+	Verbose(1,modname, "Unknown VRAID type %u", sec->u.s.type);
+	work->apEndPts[work->cEndPts++] = dsk;
+	return;
+    }
+
+
+    /* Link children to parent. */
+
+    for( j = 0; j < sec->u.s.children; ++j )
+    {
+	Boolean	found = False;
+
+	for( k = 0; k < work->cDskInfo; ++k )
+	{
+	    if( work->apDskInfo[k] == NULL )
+		continue;			/* skip empty entry */
+
+	    if( memcmp(work->apDskInfo[k]->queryID(),
+		       sec->u.s.child[j].id, sizeof(DEVID)) == 0 )
+	    {
+		found = True;
+		newdrv->addChild(work->apDskInfo[k], True);
+
+		break;
+	    }
+	}
+	if( found == False )
+	{
+	    VRDev *	dummy = new VMissing(sec->u.s.child[j].id,
+					     sec->u.s.child[j].size);
+	    newdrv->addChild(dummy, False, 0);
+	}
+    }
+
+
+    /* Remove children from search table as they may not be children
+     * of two parents. */
+
+    for( j = 0; j < newdrv->queryChildren(); ++j )
+    {
+	VRDev *	child = newdrv->getChild(j);
+
+	for( k = 0; k < work->cDskInfo; ++k )
+	{
+	    if( work->apDskInfo[k] == child )
+	    {
+		work->apDskInfo[k] = NULL;
+		break;
+	    }
+	}
+    }
+
+
+
+    struct _OS2DEVID * const info = QueryArrayInfo(newdrv->queryID());
+    if( info != 0 )
+    {
+	if( info->avail == 0 )
+	    newdrv->forceUnwritable();
+	newdrv->setFltHd(info->hd);
+    }
+    if( (sec->u.s.flags & RDFLAG_HOSTDRIVE) )
+    {
+	if( info != 0 )
+	    newdrv->setHostdrive(info->os2idx);
+	else
+	    newdrv->setHostdrive();
+	work->apEndPts[work->cEndPts++] = newdrv; 	/* reached host drive! */
+    }
+    else
+	work->apDskInfo[work->cDskInfo++] = newdrv;
+
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * ValidateVSec2(child,sec)
+ *
+ * PARAMETER
+ *	child		child to validate
+ *	sec		configuration space of sibling
+ *
+ * RETURNS
+ *	0		OK, use this child
+ *	/0		don't use it
+ *
+ * DESCRIPTION
+ *	This routine checks whether a VRDEV is a valid child as configured
+ *	in 'sec'.
+ *	Normally that means that 'child' contains the identical admin.
+ *	sector.  But whenever 'child' had problems during operation and
+ *	had to be deactivated those sectors may differ.  Certain combinations
+ *	are allowed, other not.  See below for details.
+ *
+ * REMARKS
+ *	OBS: there is a goto!
+ */
+PRIVATE int
+ValidateVSec2(VRDev * const child,PSEC_VRDEV2 const sec)
+{
+    int		result = 0;
+    APIRET	rc;
+    USHORT	i;
+    PSEC_VRDEV2 const	childsec = new SEC_VRDEV2;
+
+
+    Verbose(3,modname, "ValidateVSec2(child %p)", child);
+
+    do
+    {
+	++result;
+	if( childsec == NULL )
+	{
+	    Verbose(0,modname, "memory problem, can't validate child");
+	    break;
+	}
+
+	++result;
+	rc = child->read(1, 1, childsec);
+	if( rc != 0 )
+	{
+	    Verbose(0,modname, "read error, can't validate child");
+	    delete childsec;
+	    break;
+	}
+
+	++result;
+	if( memcmp(sec, childsec, SECTOR_SIZE) != 0 )
+	{
+	    if( memcmp(childsec->sectype, "VRAIDDEVICE2    ", 16) != 0 )
+		break;
+
+	    ++result;
+	    if( Crc16(childsec, SECTOR_SIZE-2) != childsec->crc )
+		break;
+
+	    /* 'child' contains a valid admin. sector which *could* be an
+	     * old instance of 'child'.
+	     * To be true 'child's sector has to be older and from the same
+	     * machine.  It has to define the same RAID1 array, too. */
+
+	    ++result;
+	    if( childsec->timestamp > sec->timestamp )
+	    {
+		/* This is impossible to handle the current way: we detected
+		 * a sibling which is more uptodate than the one we are creating
+		 * an array now.  Better stop the current creation and repeat
+		 * this stuff when scanning reached this child. */
+
+		result = -1;
+		break;
+	    }
+
+	    if( memcmp(childsec->u.s.id, sec->u.s.id, sizeof(DEVID)) != 0 )
+		break;
+
+	    ++result;
+	    if( childsec->u.s.type != sec->u.s.type )
+		break;
+
+	    ++result;
+	    if( childsec->u.s.children != sec->u.s.children )
+		break;
+
+	    ++result;
+	    for( i = 0; i < sec->u.s.children; ++i )
+	    {
+		if( memcmp(childsec->u.s.child[i].id, sec->u.s.child[i].id, sizeof(DEVID)) != 0 )
+		    goto XABORT;
+		if( childsec->u.s.child[i].size != sec->u.s.child[i].size )
+		    goto XABORT;
+	    }
+	}
+
+	/* When we finally reached this point 'child' may be used
+	 * to build a RAID1 array. */
+
+	result = 0;
+    }
+    while( 0 );
+
+  XABORT:
+    delete childsec;
+    return result;
+} /* end[ValidateVSec2] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * AnalyseVRDev2(work,sec)
+ *
+ * PARAMETER
+ *	work
+ *	dskidx		device from which 'sec' was read
+ *	sec		sector contents to analyse
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Analyses the newstyle VRAIDEVICE2 sector contents.
+ * 
+ * REMARKS
+ */
+PRIVATE void
+AnalyseVRDev2(PWORK const work,VRDev * dsk,PSEC_VRDEV2 const sec)
+{
+    USHORT	crc;
+
+    crc = Crc16(sec, SECTOR_SIZE-2);
+    if( crc != sec->crc )
+    {
+	Verbose(1,modname, "CRC error in VRAIDDEVICE2 sector (%#x, %#x)",
+		crc, sec->crc);
+	work->apEndPts[work->cEndPts++] = dsk;
+	return;
+    }
+
+
+    /* This is a valid VRAID sector.  It describes a new level
+     * of administration and will therefore result in a new object. */
+
+    USHORT			j, k;
+    VDriveWithRedundancy *	newdrv;
+
+    switch( sec->u.s.type )
+    {
+      case RDTYPE_MIRROR:
+	newdrv = new VMirror(sec->u.s.id, sec->u.s.children);
+#if 0
+	for( j = 0; j < sec->u.s.children; ++j )
+	{
+	    newdrv->setSize(sec->u.s.child[j].size); /* not bigger than stored! */
+	}
+#endif
+	break;
+
+#if !defined(NORAID5)
+      case RDTYPE_RAID5:
+	newdrv = new VRaid5(sec->u.s.id, sec->u.s.children);
+	break;
+#endif
+
+      default:
+	Verbose(1,modname, "Unknown VRAID type %u", sec->u.s.type);
+	work->apEndPts[work->cEndPts++] = dsk;
+	return;
+    }
+
+
+    /* Link children to parent. */
+
+    for( j = 0; j < sec->u.s.children; ++j )
+    {
+	Boolean	found = False;
+
+	for( k = 0; k < work->cDskInfo; ++k )
+	{
+	    if( work->apDskInfo[k] == NULL )
+		continue;			/* skip empty entry */
+
+	    if( memcmp(work->apDskInfo[k]->queryID(),
+		       sec->u.s.child[j].id, sizeof(DEVID)) == 0 )
+	    {
+		int	result;
+		result = ValidateVSec2(work->apDskInfo[k], sec);
+		if( result < 0 )
+		{
+		    Verbose(2,modname, "array creation delayed");
+		    delete newdrv;		/* don't create mirror */
+		    goto XABORT;
+		}
+		else if( result != 0 )
+		    continue;			/* don't use this child */
+
+
+		found = True;
+		newdrv->addChild(work->apDskInfo[k], True,
+				 (sec->u.s.child[j].flags & 0x01)
+				 ? -1ul : sec->u.s.child[j].valid);
+		break;
+	    }
+	}
+	if( found == False )
+	{
+	    VRDev * dummy = new VMissing(sec->u.s.child[j].id,
+					 sec->u.s.child[j].size);
+	    newdrv->addChild(dummy, False, 0);
+	}
+    }
+
+
+    /* Remove children from search table as they may not be children
+     * of two parents. */
+
+    for( j = 0; j < newdrv->queryChildren(); ++j )
+    {
+	VRDev *	child = newdrv->getChild(j);
+
+	for( k = 0; k < work->cDskInfo; ++k )
+	{
+	    if( work->apDskInfo[k] == child )
+	    {
+		work->apDskInfo[k] = NULL;
+		break;
+	    }
+	}
+    }
+
+
+    if( (sec->u.s.flags & RDFLAG_BUILDING) )
+    {
+	ULONG	bdone = (ULONG)-1;
+
+	for( j = 0; j < sec->u.s.children; ++j )
+	    if( !(sec->u.s.child[j].flags & 0x01) )
+		bdone = min(bdone,sec->u.s.child[j].valid);
+	newdrv->setBuild(bdone);		/* build in progress... */
+    }
+    else if( (sec->u.s.flags & RDFLAG_REBUILD) )
+    {
+	ULONG	bdone = sec->rebuild;
+
+	newdrv->setBuild(bdone, True);		/* rebuild in progress... */
+    }
+
+
+    {
+	struct _OS2DEVID * const info = QueryArrayInfo(newdrv->queryID());
+	if( info != 0 )
+	{
+	    if( info->avail == 0 )
+		newdrv->forceUnwritable();
+	    newdrv->setFltHd(info->hd);
+	}
+	if( (sec->u.s.flags & RDFLAG_HOSTDRIVE) )
+	{
+	    if( info != 0 )
+		newdrv->setHostdrive(info->os2idx);
+	    else
+		newdrv->setHostdrive();
+	    work->apEndPts[work->cEndPts++] = newdrv; /* reached host drive! */
+	}
+	else
+	    work->apDskInfo[work->cDskInfo++] = newdrv;
+    }
+
+  XABORT:
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * FindVRaidPartition(dsk,secno,pstart,psize)
+ *
+ * PARAMETER
+ *	dsk		OS/2 device
+ *	secno		sector no of partition sector
+ *	extstart	sector of first extended partition table
+ *	pstart		returns VRAID start (absolute)
+ *	psize		returns VRAID size
+ *
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Used to search recursive after a VRAID partition.
+ *
+ * REMARKS
+ */
+PRIVATE APIRET
+FindVRaidPartition(VOS2Disk * const dsk, ULONG const secno, ULONG extstart,
+		   PULONG const pstart, PULONG const psize)
+{
+    APIRET	rc = 0;
+    PartTable	pt(dsk, secno, true);
+
+
+    if( !pt.isValid() )
+	return rc;
+
+    if( secno != 0  &&  extstart == 0 )
+	extstart = secno;			/* first table is located here */
+
+    for( int j = 0; j < 4  &&  *psize == 0; ++j )
+    {
+	switch( pt.entry[j].SysIndicator )
+	{
+	  case VRAID_PARTTYPE:
+	    *pstart = secno + pt.entry[j].RelativeSectors;
+	    *psize = pt.entry[j].NumSectors;
+	    break;
+
+	  case EXTENDED_PARTTYPE:
+	    rc = FindVRaidPartition(dsk, extstart + pt.entry[j].RelativeSectors,
+				    extstart,
+				    pstart, psize);
+	    break;
+
+	  default:
+	    break;				/* ignore empty or other types */
+	}
+    }
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * BuildDevTree(work)
+ *
+ * PARAMETER
+ *	work
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Read all structures on all devices found so far and try
+ *	to create higher valued devices.
+ *
+ * REMARKS
+ */
+PRIVATE VOID
+BuildDevTree(PWORK const work)
+{
+    APIRET	rc;
+    ULONG	i;
+
+
+    /* Read partition table and PHYSDEV sector of every OS/2 device
+     * and create VORDev's or VOS2Drive from them. */
+
+    for( i = 0; i < work->cOs2Dsk; ++i )
+    {
+	VOS2Disk * const dsk = work->apOs2Dsk[i];
+	ULONG		partstart, partsize = 0;
+
+	if( dsk == NULL )
+	    continue;				/* skip empty entry */
+
+	rc = FindVRaidPartition(dsk, 0, 0, &partstart, &partsize);
+
+	if( partsize == 0 )
+	{
+	    Verbose(3,modname, "no VRAID partition on drive %u", i);
+
+	    VOS2Drive * drv = new VOS2Drive(dsk);
+	    work->apEndPts[work->cEndPts++] = drv;
+	    work->apOs2Dsk[i] = NULL;
+	}
+	else
+	{
+	    Verbose(2,modname, "found VRAID partition on drive %u, size %lu", i, partsize);
+	    VORDev * dev = new VORDev(dsk, partstart, partsize);
+	    work->apDskInfo[work->cDskInfo++] = dev;
+	}
+    } /* end[for every cOs2Dsk] */
+
+
+
+    /* Read VRAID sectors until no more devices remain (only HOSTDRIVES left).
+     * As we create higher levels of complexity in every loop, "offset = 1" is
+     * always the sector to read for the next step.  Difficult to explain but
+     * trust me. <g>*/
+
+    PUCHAR	buffer = new UCHAR[SECTOR_SIZE];
+    for(;;)
+    {
+	int		found = 0;
+	ULONG const	cnt = work->cDskInfo;
+
+	for( i = 0; i < cnt; ++i )
+	    if( work->apDskInfo[i] != NULL )
+	    {
+		++found;
+		break;
+	    }
+	if( found == 0 )			/* nothing left? */
+	    break;				/* end outer loop */
+
+	for( i = 0; i < cnt; ++i )
+	{
+	    VRDev * const	dev = work->apDskInfo[i];
+
+	    if( dev == NULL )
+		continue;			/* skip empty entry */
+
+	    rc = dev->read(1, 1, buffer);	/* config sector of next level */
+	    if( rc != 0 )
+	    {
+		Verbose(1,modname, "read error %lu, device ignored", rc);
+		delete dev;
+		work->apDskInfo[i] = NULL;
+		continue;
+	    }
+
+	    if( memcmp(buffer, "VRAIDDEVICE     ", 16) == 0 )
+		AnalyseVRDev(work, dev, (PSEC_VRDEV)buffer);
+	    else if( memcmp(buffer, "VRAIDDEVICE2    ", 16) == 0 )
+		AnalyseVRDev2(work, dev, (PSEC_VRDEV2)buffer);
+	    else
+	    {
+		work->apEndPts[work->cEndPts++] = dev;
+		work->apDskInfo[i] = NULL;
+	    }
+	}
+    } /* for(every admin sector) */
+    delete[] buffer;
+
+    return;
+} /* end[BuildDevTree] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CreatePhysdev(hwnd,disk,buffer)
+ *
+ * PARAMETER
+ *	hwnd		used for dialogs
+ *	disk		create on this VOS2Disk
+ *	buffer		512 byte buffer
+ *
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Analyse disk contents and ask user about where to create a
+ *	VRAID partition.  Update bootsector and 'disk' object.
+ *
+ * REMARKS
+ *	It's a little bit difficult:
+ *	- perhaps nothing to do (already modified)
+ *	- perhaps no partition at all
+ *	- perhaps many partitions and search for largest hole
+ */
+PRIVATE APIRET
+CreatePhysdev(HWND hwnd,VOS2Disk * const disk,VORDev ** dev)
+{
+    int		found = -1;			/* indices */
+    DSKAREA	info = {0};
+    int		i;
+    ULONG	ul;
+    APIRET	rc;
+
+    do
+    {
+	rc = FindFreeSpace(disk, &info, &found);
+	if( rc != 0 )
+	    break;
+
+	if( found != -1 )
+	{
+	    Verbose(0,modname, "VRAID partition already there, stopping");
+	    *dev = new VORDev(disk, info.area[found].start, info.area[found].size);
+	    break;				/* rc still 0 */
+	}
+
+	if( info.cnt == 0 )
+	{
+	    Verbose(1,modname, "No room on disk, aborting");
+	    MyMessageBox(3, HWND_DESKTOP,
+			 "There is no room on requested disk to create a"
+			 " VRAID partition.");
+	    rc = ERROR_HANDLE_DISK_FULL;
+	    break;
+	}
+
+
+	ul = WinDlgBox(HWND_DESKTOP, hwnd, AreaDlgProc,
+		       NULLHANDLE, IDW_DSKAREA, &info);
+	if( DID_OK != ul )
+	{
+	    Verbose(3,modname, "CreatePhysdev: user aborted");
+	    rc = ERROR_HANDLE_DISK_FULL;
+	    break;
+	}
+
+	struct _DSKAREA_ENTRY * vpart = &info.area[info.cnt];
+	vpart->type = VRAID_PARTTYPE;
+	vpart->bootable = 0;
+	if( vpart->ptsec == 0 )
+	    rc = CreatePriPartition(disk, vpart->ptsec, vpart);
+	else
+	{
+	    vpart->bootable = 0x80;
+	    rc = CreateLogPartition(disk, vpart->ptsec, vpart);
+	}
+	if( rc != 0 )
+	    break;
+
+
+	/* Last step: create VORDev object on that disk.  Start new:
+	 * clear SEC_PHYSDEV and first SEC_VRAID.  Immediately rewrite
+	 * configuration to create new ones. */
+
+	PUCHAR	p = new UCHAR[2*SECTOR_SIZE];
+	memset(p, 0, 2*SECTOR_SIZE);
+	rc = disk->write(vpart->start, 2, p);
+	if( rc != 0 )
+	    Verbose(1,modname, "CreatePhysdev: can't clear SEC_PHYSDEV- rc %lu", rc);
+	delete[] p;
+
+	*dev = new VORDev(disk, vpart->start, vpart->size);
+	(*dev)->ioSync();
+    }
+    while(0);
+
+    return rc;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Window Management ***********************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * DrvscanWindowProc(hwnd,msg,mp1,mp2)
+ *
+ * PARAMETER
+ *	hwnd,msg,mp1,mp2	see presentation manager reference
+ *
+ * RETURNS
+ *	MRESULT			see presentation manager reference
+ *
+ * DESPRIPTION
+ *	Window procedure (child of HWND_OBJECT) to coordinate drive
+ *	access (scan, update).
+ *
+ * REMARKS
+ */
+PRIVATE MRESULT EXPENTRY
+DrvscanWindowProc(HWND hwnd,ULONG msg,MPARAM mp1,MPARAM mp2)
+{
+    WORK * const work = (PWORK)WinQueryWindowPtr(hwnd, QWL_USER);
+    APIRET	rc;
+
+
+    switch( msg )
+    {
+      case WM_CREATE:
+	Verbose(4,modname, "WM_CREATE -> default");
+	CrcInit(0xA001);			/* CRC16 table */
+	if( (rc=QueryHostId(&usHostId)) != 0 )
+	{
+	    Verbose(0,modname, "couldn't determine host id");
+	    return 0;
+	}
+	break;
+
+
+	/* ============================================================
+	 * WM_CLOSE	-	this window closed
+	 */
+      case WM_CLOSE:
+	Verbose(4,modname, "WM_CLOSE");
+	break;
+
+
+	/* ============================================================
+	 * WUM_START	-	start normal processing
+	 */
+      case WUM_START:
+	Verbose(3,modname, "WUM_START");
+	{
+	    if( (fSetupMode & SM_FLTAVAIL) )
+	    {
+		AllocateFltDevices(work);
+		AllocateOs2Devices(work);
+	    }
+	    else
+		AllocateOs2Devices(work);
+	    BuildDevTree(work);
+
+	    ULONG	i;
+	    for( i = 0; i < work->cEndPts; ++i )
+	    {
+		VRDev * const	dev = work->apEndPts[i];
+
+		WinPostMsg(work->self->parent, WUM_DEVTREE, dev, MPFROMHWND(hwnd));
+	    }
+	}
+	return 0;
+
+
+	/* ============================================================
+	 * WUM_MKPDEV	-	create PHYSDEVICE
+	 */
+      case WUM_MKPDEV:
+	Verbose(3,modname, "WUM_MKPDEV");
+	{
+	    VOS2Drive *	drive = (VOS2Drive *)PVOIDFROMMP(mp1);
+	    VOS2Disk *	disk = drive->queryWhere();
+	    VORDev *	rdev;
+
+	    rc = CreatePhysdev(hwnd, disk, &rdev);
+	    if( rc == 0 )
+	    {
+                /* That's a special case: we want to delete a VOS2Drive *without*
+                 * deleting the VOS2Disk!  The ioDeleteYourself() method will
+                 * be used to "mark" the object that it shouldn't delete.
+                 * Kind of hack, eh? */
+
+                drive->ioDeleteYourself();
+                delete drive;
+
+		rdev->ioSync();
+		WinPostMsg(work->self->parent, WUM_DEVTREE, rdev, MPFROMHWND(hwnd));
+	    }
+	    else
+		WinPostMsg(work->self->parent, WUM_DEVTREE, drive, MPFROMHWND(hwnd));
+	}
+	return 0;
+
+
+	/* ============================================================
+	 * WUM_DELPDEV	-	delete PHYSDEVICE
+	 *
+	 * Currently the PHYSDEVICE has to be accessable from OS/2, a VORDev,
+	 * and VFRDev and their partitions (!) are only destroyable if
+	 * booted w/o VRAID.FLT.  But there should be a possibility to
+	 * destroy SEC_PHYSDEV from VFRDev and reboot to remove the partition...
+	 */
+      case WUM_DELPDEV:
+	Verbose(3,modname, "WUM_DELPDEV");
+	{
+	    VRDev *	dev = (VRDev *)PVOIDFROMMP(mp1);
+	    VOS2Disk *	disk = dev->queryWhere();
+
+
+	    dev->ioDeleteYourself();		/* removes SEC_PHYSDEV [+partition]*/
+
+	    if( disk != NULL )
+	    {
+		delete dev,	dev = NULL;
+
+		VOS2Drive *	drive = new VOS2Drive(disk);
+		WinPostMsg(work->self->parent, WUM_DEVTREE, drive, MPFROMHWND(hwnd));
+	    }
+	    else
+	    {
+		MyMessageBox(3, HWND_DESKTOP,
+			     "Make sure you delete the VRAID partition by hand"
+			     " after reboot.\nUse the context menu of the drives"
+			     " folder for this purpose.");
+		WinPostMsg(work->self->parent, WUM_DEVTREE, dev, MPFROMHWND(hwnd));
+	    }
+	}
+	return 0;
+
+
+	/* ============================================================
+	 * WUM_DEVTREE:
+	 *	A new devicetree has to be created (said the user).
+	 *	Update disk structures, recalculate all fields of affected
+	 *	structures and post this devicetree back to the drvsetup
+	 *	thread (for display).
+	 * OBS: all parts of the DEVTREE are already PHYSDEVs or more.
+	 */
+      case WUM_DEVTREE:
+	Verbose(3,modname, "WUM_DEVTREE");
+	{
+	    VRDev *	dev = (VRDev *)PVOIDFROMMP(mp1);
+
+	    dev->ioSync();			/* write to disk[s] */
+	    WinPostMsg(work->self->parent, WUM_DEVTREE, dev, MPFROMHWND(hwnd));
+	}
+	return 0;
+
+
+	/* ============================================================
+	 * WUM_DELDRV:
+	 *	Remove a VRAID drive.
+	 */
+      case WUM_DELDRV:
+	Verbose(3,modname, "WUM_DELDRV");
+	{
+	    VRDrive * const	drv = (VRDrive *)PVOIDFROMMP(mp1);
+
+	    /* Display all children which exist on disk. */
+
+	    for( int i = 0; i < drv->queryChildren(); ++i )
+	    {
+		VRDev *	const	child = drv->getChild(i);
+
+		if( child->isArray() != 0xFF )
+		    WinPostMsg(work->self->parent, WUM_DEVTREE, child, MPFROMHWND(hwnd));
+	    }
+
+	    drv->ioDeleteYourself();
+	    delete drv;
+	}
+	return 0;
+
+
+	/* ============================================================
+	 * WUM_REBUILD_DRV:
+	 *	let vraid.flt do the work
+	 */
+      case WUM_REBUILD_DRV:
+	Verbose(3,modname, "WUM_REBUILD_DRV");
+	{
+	    VDriveWithRedundancy* const drv= (VDriveWithRedundancy*)PVOIDFROMMP(mp1);
+	    assert( drv->isArray()==RDTYPE_MIRROR || drv->isArray()==RDTYPE_RAID5 );
+	    drv->ioStartRebuild(LONGFROMMP(mp2));
+	}
+	WinPostMsg(work->self->parent, WUM_DEVTREE, mp1, MPFROMHWND(hwnd));
+	return 0;
+
+
+	/* ============================================================
+	 * WUM_CLOSEDEV:
+	 *	A device isn't needed anymore.
+	 */
+      case WUM_CLOSEDEV:
+	Verbose(3,modname, "WUM_CLOSEDEV");
+	{
+	    VRDev * dev = (VRDev *)PVOIDFROMMP(mp1);
+	    delete dev;
+	}
+	return 0;
+
+
+	/* ============================================================
+	 * WUM_REMCHILD:
+	 *	Remove a child from a disk array.
+	 */
+      case WUM_REMCHILD:
+	Verbose(3,modname, "WUM_REMCHILD");
+	{
+	    Boolean	postchild = True;
+	    VRDev *	child = (VRDev *)PVOIDFROMMP(mp1);
+	    VDriveWithRedundancy * parent = (VDriveWithRedundancy *)PVOIDFROMMP(mp2);
+
+	    if( child->isArray() == 0xFF )	/* VMissing!  Don't post. */
+		postchild = False;
+
+	    parent->ioRemoveChild(child);
+
+	    VRDev * higher = parent;
+	    while( higher->getParent() != 0  )
+		higher = higher->getParent();
+	    WinPostMsg(work->self->parent, WUM_DEVTREE, higher, MPFROMHWND(hwnd));
+
+	    if( postchild == True )
+		WinPostMsg(work->self->parent, WUM_DEVTREE, child, MPFROMHWND(hwnd));
+	}
+	return 0;
+
+
+	/* ============================================================
+	 * WUM_INVCHILD:
+	 *	Invalidate a child of an array.
+	 */
+      case WUM_INVCHILD:
+	Verbose(3,modname, "WUM_INVCHILD");
+	{
+	    VRDev *	child = (VRDev *)PVOIDFROMMP(mp1);
+	    VDriveWithRedundancy * parent = (VDriveWithRedundancy *)PVOIDFROMMP(mp2);
+	    DEVID	id;
+
+	    memcpy(id, child->queryID(), sizeof(DEVID));
+	    parent->ioInvalidChild(id, 0);	/* from the very beginning */
+
+	    VRDev * higher = parent;
+	    while( higher->getParent() != 0  )
+		higher = higher->getParent();
+	    WinPostMsg(work->self->parent, WUM_DEVTREE, higher, MPFROMHWND(hwnd));
+	}
+	return 0;
+
+
+      default:
+	break;
+    } /* end[switch] */
+
+    return WinDefWindowProc(hwnd, msg, mp1, mp2);
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Public Entries **************************************************
+ * ******************************************************************* */
+
+
+/*# ----------------------------------------------------------------------
+ * DrvscanThread(dummy)
+ *
+ * PARAMETER
+ *	dummy		pointer to information from parent
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESPRIPTION
+ *	Runs as a seperate thread.
+ *
+ * REMARK
+ */
+PUBLIC VOID
+DrvscanThread(void *dummy)
+{
+    PTHR_DRVSCAN dta = (PTHR_DRVSCAN)dummy;
+    PWORK	work;
+    HMQ		hmq;
+    HWND	hwnd;
+    QMSG	qmsg;
+    BOOL	bool;
+
+    do
+    {
+	memset(ahsOs2Devid, 0, sizeof(ahsOs2Devid));
+
+	work = new WORK;
+	memset(work, 0, sizeof(*work));
+	work->self = dta;
+
+	work->apOs2Dsk = new VOS2Disk *[MAXDRIVES];
+	memset(work->apOs2Dsk, 0, MAXDRIVES * sizeof(VOS2Disk *));
+
+	work->apDskInfo = new VRDev *[MAXDRIVES];
+	memset(work->apDskInfo, 0, MAXDRIVES * sizeof(VRDev *));
+
+	work->apEndPts = new VRDev *[MAXDRIVES];
+
+	if( !(work->hab = WinInitialize(0)) )
+	{
+	    Verbose(0,modname, "WinInitialize failed!?!");
+	    break;
+	}
+
+	if( !(hmq = WinCreateMsgQueue(work->hab, 0)) )
+	{
+	    Verbose(0,modname, "WinCreateMsgQueue - error %#x",
+		    WinGetLastError(work->hab));
+	    break;
+	}
+	WinCancelShutdown(hmq, TRUE);		/* don't want to handle it */
+
+	if( !WinRegisterClass(work->hab, WC_DRVSCAN, DrvscanWindowProc,
+			      0, sizeof(PVOID)) )
+	{
+	    Verbose(0,modname, "WinRegisterClass - error %#x",
+		    WinGetLastError(work->hab));
+	    break;
+	}
+
+	hwnd = WinCreateWindow(HWND_OBJECT, WC_DRVSCAN, NULL,
+			       0,		/* style */
+			       0,0,0,0,		/* position,size */
+			       NULLHANDLE,	/* owner */
+			       HWND_BOTTOM,	/* behind which? */
+			       0,		/* id */
+			       NULL, NULL);
+	if( hwnd == NULL )
+	{
+	    Verbose(0,modname, "WinCreateWindow - error %#x",
+		    WinGetLastError(work->hab));
+	    break;
+	}
+
+	bool = WinSetWindowPtr(hwnd, QWL_USER, work);
+	if( bool == FALSE )
+	{
+	    MyMessageBox(0, HWND_DESKTOP,
+			 "WinSetWindowPtr failed - error %#",
+			 WinGetLastError(work->hab));
+	    break;
+	}
+
+	/* Message processing loop. */
+
+	WinPostMsg(hwnd, WUM_START, 0, 0);
+	while( WinGetMsg(work->hab, &qmsg, 0L, 0, 0) )
+	    WinDispatchMsg(work->hab, &qmsg);
+
+	/* Message processing ended (WM_QUIT sent), clean up. */
+
+	WinDestroyWindow(hwnd);
+	WinDestroyMsgQueue(hmq);
+	WinTerminate(work->hab);
+	delete work;
+    }
+    while(0);
+
+    Verbose(2,modname, "DrvScanThread: stopped");
+    WinPostMsg(dta->parent, WUM_THREADENDED, dta, 0);
+    return;
+}
+          @
+
+
+3.1
+log
+@- added RAID 5 code (new major because of "stopped" development)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.13 $
+ * $Date: 2001/01/30 00:37:15 $
+d12 3
+d186 1
+a186 1
+static char const vcid[]="$Id: drvscan.cpp,v 2.13 2001/01/30 00:37:15 vitus Exp vitus $";
+d221 3
+a223 1
+#include "Raid5.hpp"
+d980 6
+d988 1
+d992 1
+d1752 1
+@
+
+
+2.13
+log
+@- AnalyseVRDev2: now correctly passes valid/invalid to addChild()
+- WUM_INVCHILD: removed ioStartRebuild(), handled by filter
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.12 $
+ * $Date: 2001/01/15 01:50:39 $
+d12 4
+d183 1
+a183 1
+static char const vcid[]="$Id: drvscan.cpp,v 2.12 2001/01/15 01:50:39 vitus Exp vitus $";
+d218 1
+d977 4
+d1006 1
+a1006 1
+		    Verbose(2,modname, "MIRROR creation delayed");
+d1549 1
+a1549 1
+	    assert( drv->isArray() == RDTYPE_MIRROR );
+@
+
+
+2.12
+log
+@- implemented WUM_INVCHILD, sets the child to invalid and posts the tree back
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.11 $
+ * $Date: 2000/11/07 01:31:24 $
+d12 3
+d179 1
+a179 1
+static char const vcid[]="$Id: drvscan.cpp,v 2.11 2000/11/07 01:31:24 vitus Exp vitus $";
+d1007 2
+a1008 2
+				 (sec->u.s.child[j].flags & 0x01) != 0
+				 ? sec->u.s.child[j].valid : -1ul);
+d1044 1
+a1044 1
+	    if( (sec->u.s.child[j].flags & 0x01) == 0 )
+a1403 2
+		DriverStartSetup();		/* end [re]builds, etc. */
+
+a1599 1
+	    parent->ioStartRebuild(0);
+@
+
+
+2.11
+log
+@- Verbose() calls use modname[] string
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.10 $
+ * $Date: 2000/08/21 08:14:36 $
+d12 3
+d174 1
+a174 1
+ * This code is Copyright Vitus Jensen 1998-2000
+d176 1
+a176 1
+static char const vcid[]="$Id: drvscan.cpp,v 2.10 2000/08/21 08:14:36 vitus Exp vitus $";
+d1584 24
+@
+
+
+2.10
+log
+@- modifications for changed addChild() prototype
+- uses ioStartRebuild method of array instead of calling
+  DriverArrayRebuild() directly
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.9 $
+ * $Date: 2000/08/05 02:57:16 $
+d12 5
+d173 1
+a173 1
+static char const vcid[]="$Id: drvscan.cpp,v 2.9 2000/08/05 02:57:16 vitus Exp vitus $";
+d396 1
+a396 1
+		Verbose(3, "DrvScan", "Testing array %u", j);
+d399 1
+a399 1
+		    Verbose(1, "DrvScan", "Array Info %u - rc %lu", j, rc);
+d402 1
+a402 1
+		    Verbose(2, "DrvScan",
+d441 1
+a441 1
+		Verbose(3, "DrvScan", "Testing Physdev %u", j);
+d444 1
+a444 1
+		    Verbose(1, "DrvScan", "Physdev Info %u - rc %lu", j, rc);
+d447 1
+a447 1
+		    Verbose(2, "DrvScan",
+d518 1
+a518 1
+    Verbose(3, "DrvScan", "AllocateFltDevices");
+d527 1
+a527 1
+	    Verbose(1, "DrvSetup", "DriverPhyslist - rc %lu", rc);
+d538 1
+a538 1
+	    Verbose(2, "DrvSetup", "FLT drive capacity: %lu MBytes",
+d579 1
+a579 1
+    Verbose(3, "DrvScan", "AllocateOs2Devices");
+d594 1
+a594 1
+		Verbose(1, "DrvSetup", "DriverArraylist - rc %lu", rc);
+d606 1
+a606 1
+		Verbose(1, "DrvSetup", "DriverPhyslist - rc %lu", rc);
+d619 1
+a619 1
+	Verbose(1, "DrvSetup", "PDskEnum - rc %lu", rc);
+d630 1
+a630 1
+	    Verbose(1, "DrvScan", "PDskOpen(%lu) - rc %lu", i, rc);
+d703 1
+a703 1
+	Verbose(1, "DrvScan", "CRC error in VRAIDDEVICE sector (%#x, %#x)",
+d731 1
+a731 1
+	Verbose(1, "DrvScan", "Unknown VRAID type %u", sec->u.s.type);
+d840 1
+a840 1
+    Verbose(3,"DrvScan","ValidateVSec2(child %p)",child);
+d847 1
+a847 1
+	    Verbose(0, "DrvScan", "memory problem, can't validate child");
+d855 1
+a855 1
+	    Verbose(0, "DrvScan", "read error, can't validate child");
+d947 1
+a947 1
+	Verbose(1, "DrvScan", "CRC error in VRAIDDEVICE2 sector (%#x, %#x)",
+d967 1
+a967 1
+	Verbose(1, "DrvScan", "Unknown VRAID type %u", sec->u.s.type);
+d991 1
+a991 1
+		    Verbose(2,"DrvScan","MIRROR creation delayed");
+d1171 1
+a1171 1
+	    Verbose(3, "DrvScan", "no VRAID partition on drive %u", i);
+d1179 1
+a1179 1
+	    Verbose(2, "DrvScan", "found VRAID partition on drive %u, size %lu", i, partsize);
+d1217 1
+a1217 1
+		Verbose(1, "DrvScan", "read error %lu, device ignored", rc);
+d1280 1
+a1280 1
+	    Verbose(0, "DrvScan", "VRAID partition already there, stopping");
+d1287 1
+a1287 1
+	    Verbose(1, "DrvScan", "No room on disk, aborting");
+d1300 1
+a1300 1
+	    Verbose(3, "DrvScan", "CreatePhysdev: user aborted");
+d1327 1
+a1327 1
+	    Verbose(1,"DevScan","CreatePhysdev: can't clear SEC_PHYSDEV- rc %lu",rc);
+d1372 1
+a1372 1
+	Verbose(4, "DrvScan", "WM_CREATE -> default");
+d1376 1
+a1376 1
+	    Verbose(0, "DrvScan", "couldn't determine host id");
+d1386 1
+a1386 1
+	Verbose(4, "DrvScan", "WM_CLOSE");
+d1394 1
+a1394 1
+	Verbose(3, "DrvScan", "WUM_START");
+d1422 1
+a1422 1
+	Verbose(3, "DrvScan", "WUM_MKPDEV");
+d1457 1
+a1457 1
+	Verbose(3, "DrvScan", "WUM_DELPDEV");
+d1493 1
+a1493 1
+	Verbose(3, "DrvScan", "WUM_DEVTREE");
+d1508 1
+a1508 1
+	Verbose(3, "DrvScan", "WUM_DELDRV");
+d1533 1
+a1533 1
+	Verbose(1,modname, "WUM_REBUILD_DRV");
+d1548 1
+a1548 1
+	Verbose(3, "DrvScan", "WUM_CLOSEDEV");
+d1561 1
+a1561 1
+	Verbose(3, "DrvScan", "WUM_REMCHILD");
+d1641 1
+a1641 1
+	    Verbose(0, "DrvScan", "WinInitialize failed!?!");
+d1647 1
+a1647 1
+	    Verbose(0, "DrvScan", "WinCreateMsgQueue - error %#x",
+d1656 1
+a1656 1
+	    Verbose(0, "DrvSetup", "WinRegisterClass - error %#x",
+d1670 1
+a1670 1
+	    Verbose(0, "DrvScan", "WinCreateWindow - error %#x",
+d1699 1
+a1699 1
+    Verbose(2, "DrvScan", "DrvScanThread: stopped");
+@
+
+
+2.9
+log
+@- added detection of rebuild state
+- added processing of WUM_REBUILD_DRV
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.8 $
+ * $Date: 2000/06/15 01:18:23 $
+d12 4
+d168 1
+a168 1
+static char const vcid[]="$Id: drvscan.cpp,v 2.8 2000/06/15 01:18:23 vitus Exp vitus $";
+a174 1
+#include <limits.h>
+d756 1
+a756 1
+	    newdrv->addChild(dummy, False, False);
+d997 1
+a997 1
+				 ? True : False);
+d1005 1
+a1005 1
+	    newdrv->addChild(dummy, False, False);
+a1528 1
+	do
+a1530 1
+	    ULONG const		startsec = LONGFROMMP(mp2);
+d1532 1
+a1532 27
+
+	    USHORT	flt_hd = drv->queryFltHd();
+	    if( flt_hd == 0xFFFF )
+	    {
+		MyMessageBox(0, HWND_DESKTOP,
+			     "The array you selected isn't known to"
+			     " vraid.flt.  Therefore it can't be rebuild"
+			     " by the driver.  Please reboot to let"
+			     " vraid.flt analyze the new situation and"
+			     " retry the operation.");
+		break;
+	    }
+
+
+	    APIRET	rc;
+	    rc = DriverArrayRebuild(flt_hd, startsec);
+	    if( rc != 0 )
+	    {
+		MyMessageBox(0, HWND_DESKTOP,
+			     "The array you selected can't be rebuild"
+			     " by vraid.flt.  Either it has a RAID level"
+			     " below RAID 1 (mirroring) or you need to reboot"
+			     " to let vraid.flt analyze a new situation.\n"
+			     "In the latter case reboot and retry the operation.");
+		break;
+	    }
+	    drv->setBuild(startsec, True);	/* _re_build */
+a1533 1
+	while( 0 );
+@
+
+
+2.8
+log
+@- method 'setFltHd' is called for hostdrives.  Should be used for all
+  arrays but this needs another IOCtl on vraid.flt
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.7 $
+ * $Date: 2000/05/28 17:42:56 $
+d12 4
+d164 2
+a165 1
+static char const vcid[]="$Id: drvscan.cpp,v 2.7 2000/05/28 17:42:56 vitus Exp vitus $";
+d1034 6
+d1521 44
+d1575 1
+@
+
+
+2.7
+log
+@- adjusted verbosity levels
+- moved partition analysis/creation to pcreate.cpp
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.6 $
+ * $Date: 2000/05/13 16:43:59 $
+d12 4
+d160 1
+a160 1
+static char const vcid[]="$Id: drvscan.cpp,v 2.6 2000/05/13 16:43:59 vitus Exp vitus $";
+d227 1
+d241 1
+a241 1
+ * SetArrayInfo(array_devid,os2idx,avail)
+d245 1
+d247 1
+d260 2
+a261 1
+SetArrayInfo(DEVID const array_devid,ULONG const os2idx,UCHAR const avail)
+d271 1
+d329 1
+a329 1
+ *	Try to figure out whether 'os2idx' is an array or PHYSDEV or just
+d365 1
+a365 1
+    if( acnt != 0 )
+d457 1
+a457 1
+	    SetArrayInfo(ainfo[accessed_array]->id,
+a458 2
+
+
+d771 8
+a780 4
+	/* Reached host drive! */
+
+	struct _OS2DEVID * const info = QueryArrayInfo(newdrv->queryID());
+
+a781 3
+	{
+	    if( info->avail == 0 )
+		newdrv->forceUnwritable();
+a782 1
+	}
+d785 1
+a785 1
+	work->apEndPts[work->cEndPts++] = newdrv;
+d922 2
+a1030 1
+    if( (sec->u.s.flags & RDFLAG_HOSTDRIVE) )
+a1031 2
+	/* Reached host drive! */
+
+a1032 1
+
+d1037 9
+a1045 1
+	    newdrv->setHostdrive(info->os2idx);
+d1048 1
+a1048 2
+	    newdrv->setHostdrive();
+	work->apEndPts[work->cEndPts++] = newdrv;
+a1049 2
+    else
+	work->apDskInfo[work->cDskInfo++] = newdrv;
+d1346 1
+a1346 1
+    WORK * const work = (PWORK)WinQueryWindowPtr(hwnd, 0);
+d1640 1
+a1640 1
+	bool = WinSetWindowPtr(hwnd, 0, work);
+@
+
+
+2.6
+log
+@- clarified SayArea() messages
+- FindFreeExtSpace: removed 'no free entry' abort because there are never
+  more than 2 used entries and even if: the included extended partitions have
+  to be analysed.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.5 $
+ * $Date: 2000/04/15 23:50:12 $
+d7 1
+d10 1
+d12 6
+d156 1
+a156 1
+static char const vcid[]="$Id: drvscan.cpp,v 2.5 2000/04/15 23:50:12 vitus Exp vitus $";
+a180 1
+#include "vsetup.h"
+d184 1
+a197 1
+#define MIN_VRAID_PART	10240
+d820 1
+a820 1
+    Verbose(3,"DrvScan","ValidateVSec2( child %p)",child);
+a1212 603
+
+
+/* **********************************************************************
+ * **** Routines to analyse the partition layout and find free **********
+ * **** areas.  Results are stored in a DSKAREA structure. **************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * SayArea(level,msgstart,area)
+ *
+ * PARAMETER
+ *	level		verbosity level
+ *	msgstart	first part of message
+ *	area		pointer to area description
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Write infos about area to log.
+ *
+ * REMARKS
+ */
+PRIVATE void
+SayArea(unsigned level,PSZ const msgstart,struct _DSKAREA_ENTRY * area)
+{
+    Verbose(level, "DrvScan", "%s area (start %lu, size %lu), PT %lu, EXT %lu",
+	    msgstart, area->start, area->size, area->ptsec, area->extstart);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * ScanExtAllocated(disk, secno, seccnt, extstart, usedspace, found)
+ *
+ * PARAMETER
+ *	disk		OS/2 disk
+ *	secno		sector no of extended partition sector
+ *	seccnt		sector range described by partition table in 'secno'
+ *	extstart	position of first extended partition
+ *	usedspace	table of allocated areas, add here
+ *	found		return index of VRAID partition in 'info' if found
+ *
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Find allocated space in the range 'secno' (contains extended partition
+ *	table) and 'secno+seccnt'.  Enters this space into 'usedspace' table.
+ *
+ * REMARKS
+ */
+PRIVATE APIRET
+ScanExtAllocated(VOS2Disk * const disk,
+		 ULONG const secno, ULONG const seccnt,
+		 ULONG const extstart,
+		 PDSKAREA const usedspace, int * const found)
+{
+    APIRET	rc = 0;
+
+    Verbose(2, "DrvScan", "ScanExtAllocated(%lu, %lu)", secno, seccnt);
+
+    PartTable	pt(disk, secno, true);
+
+    /* Add used areas through going trough the partition entries.
+     * Detect already existing VRAID partition, too.
+     * There is no need to check for a free entry: only a single
+     * partition per table. */
+
+    for( unsigned i = 0; i < 4; ++i )
+    {
+	switch( pt.entry[i].SysIndicator )
+	{
+	  case 0:
+	    break;				/* empty partition entry  */
+
+	  case EXTENDED_PARTTYPE:
+	    rc = ScanExtAllocated(disk, extstart + pt.entry[i].RelativeSectors,
+				  pt.entry[i].NumSectors, extstart,
+				  usedspace, found);
+	    break;
+
+	  case VRAID_PARTTYPE:
+	    usedspace->area[usedspace->cnt].start
+		= secno + pt.entry[i].RelativeSectors;
+	    usedspace->area[usedspace->cnt].size = pt.entry[i].NumSectors;
+	    *found = usedspace->cnt++;
+	    break;
+
+	  default:
+	    usedspace->area[usedspace->cnt].start
+		= secno + pt.entry[i].RelativeSectors;
+	    usedspace->area[usedspace->cnt].size = pt.entry[i].NumSectors;
+	    usedspace->area[usedspace->cnt].ptsec = secno;
+	    usedspace->area[usedspace->cnt].extstart = extstart;
+	    SayArea(2, "ScanExtAllocated - found used",
+		    &usedspace->area[usedspace->cnt]);
+	    usedspace->cnt++;
+	    break;
+	}
+    }
+
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * FindFreeExtSpace(disk,secno,seccnt,freelist,found)
+ *
+ * PARAMETER
+ *	disk		OS/2 disk
+ *	secno		sector no of extended partition sector
+ *	seccnt		disk area described by partition table in 'secno'
+ *	freelist	table of free areas, add here
+ *	found		return index of VRAID partition in 'info' if found
+ *
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Find free space in the range 'secno' (contains extended partition table)
+ *	and 'secno+seccnt'.  Enters this space into 'info' table.
+ *
+ * REMARKS
+ */
+PRIVATE APIRET
+FindFreeExtSpace(VOS2Disk * const disk,
+		 ULONG const secno, ULONG const seccnt,
+		 PDSKAREA const freelist, int * const found)
+{
+    APIRET	rc = 0;
+    DSKAREA	allocated;
+
+
+    Verbose(2, "DrvScan", "FindFreeExtSpace(%lu, %lu)", secno, seccnt);
+    allocated.cnt = 0;
+
+    do
+    {
+	PartTable	pt(disk, secno, true);
+
+
+	/* Build list of free areas on disk. */
+	
+	/* 1st: build a list of used areas in 'allocated'.
+	 * Detect already existing VRAID partition, too. */
+
+	for( unsigned i = 0; i < 4; ++i )
+	{
+	    switch( pt.entry[i].SysIndicator )
+	    {
+	      case 0:
+		break;
+
+	      case EXTENDED_PARTTYPE:
+		rc = ScanExtAllocated(disk,
+				      secno + pt.entry[i].RelativeSectors,
+				      pt.entry[i].NumSectors, secno,
+				      &allocated, found);
+		if( rc == 0  &&  *found != -1 )
+		{
+		    /* There is a VRAID partition somethere inside the
+		     * extended partition and 'ScanExtAllocated()' found it.
+		     * Copy element from 'allocated' to 'freelist' and
+		     * adjust '*found'. */
+
+		    memcpy(&freelist->area[freelist->cnt], &allocated.area[*found],
+			   sizeof(struct _DSKAREA_ENTRY));
+		    *found = freelist->cnt++;
+		}
+		break;
+
+	      case VRAID_PARTTYPE:
+		freelist->area[freelist->cnt].start
+		    = secno + pt.entry[i].RelativeSectors;
+		freelist->area[freelist->cnt].size = pt.entry[i].NumSectors;
+		*found = freelist->cnt++;
+		break;
+
+	      default:
+		allocated.area[allocated.cnt].start
+		    = secno + pt.entry[i].RelativeSectors;
+		allocated.area[allocated.cnt].size = pt.entry[i].NumSectors;
+		allocated.area[allocated.cnt].ptsec = secno;
+		allocated.area[allocated.cnt].extstart = secno;
+		SayArea(2, "FindFreeExtSpace - found used",
+			&allocated.area[allocated.cnt]);
+		++allocated.cnt;
+		break;
+	    }
+	} /* end[for()] */
+
+	if( *found != -1 )
+	    break;				/* use the VRAID partition */
+
+
+
+	/* 2nd: build a list of all free areas in our range (secno+1
+	 * - secno+seccnt).  Check against all areas added to 'allocated'.
+	 * Don't accept free areas below a certain limit! */
+
+	ULONG const spt = disk->queryDPB().cSectorsPerTrack;
+	ULONG	ul;
+	Boolean	inside = false;
+
+	freelist->area[freelist->cnt].start = secno + spt;
+	for( ul = secno + spt; ul < secno + seccnt; ++ul )
+	{
+	    for( i = 0; i < allocated.cnt; ++i )
+	    {
+		if( ul == allocated.area[i].start )
+		{
+		    if( !inside )
+		    {
+			freelist->area[freelist->cnt].size
+			    = ul - freelist->area[freelist->cnt].start;
+			if( freelist->area[freelist->cnt].size >= MIN_VRAID_PART
+			    &&  freelist->area[freelist->cnt].size > spt )
+			{
+			    freelist->area[freelist->cnt].ptsec = secno;
+			    freelist->area[freelist->cnt].extstart = secno;
+			    SayArea(2, "FindFreeSpace - found free",
+				    &freelist->area[freelist->cnt]);
+			    ++freelist->cnt;
+			}
+			inside = true;
+		    }
+		    ul += allocated.area[i].size - 1;
+		    freelist->area[freelist->cnt].start = ul + 1;
+		    break;
+		}
+		else if( ul == allocated.area[i].start + allocated.area[i].size )
+		{
+		    inside = false;
+		}
+	    } /* end[for(every partition entry)] */
+	} /* end[for(every sector) */
+	if( !inside )
+	{
+	    freelist->area[freelist->cnt].size
+		= ul - freelist->area[freelist->cnt].start;
+	    freelist->area[freelist->cnt].ptsec = secno;
+	    freelist->area[freelist->cnt].extstart = secno;
+	    SayArea(2, "FindFreeSpace - found free", &freelist->area[freelist->cnt]);
+	    ++freelist->cnt;
+	}
+    }
+    while( 0 );
+
+    Verbose(3, "DrvScan", "FindFreeSpace - rc %lu", rc);
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * FindFreeSpace(disk,secno,seccnt,info,found)
+ *
+ * PARAMETER
+ *	disk		OS/2 disk
+ *	secno		sector no of partition sector
+ *	seccnt		disk area described by partition table in 'secno'
+ *	info		table of free areas, add here
+ *	found		return index of VRAID partition in 'info'
+ *
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Find free space in the range 'secno' (contains MBR partition table)
+ *	and 'secno+seccnt'.  Enters this space into 'info' table.
+ *
+ * REMARKS
+ */
+PRIVATE APIRET
+FindFreeSpace(VOS2Disk * const disk, ULONG const secno, ULONG const seccnt,
+	      PDSKAREA const info, int * const found)
+{
+    APIRET	rc = 0;
+
+
+    Verbose(2, "DrvScan", "FindFreeSpace(%lu, %lu)", secno, seccnt);
+
+    do
+    {
+	PartTable	pt(disk, secno, true);
+
+
+	/* Build list of free areas on disk. */
+
+	/* 1st: count used partition entries
+	 * Call FindFreeExtSpace() to detect free areas in extended partitions
+	 * Detect already existing VRAID partition. */
+
+	unsigned 	used, i;
+	for( used = i = 0; i < 4; ++i )
+	{
+	    switch( pt.entry[i].SysIndicator )
+	    {
+	      case 0:
+		break;
+
+	      case EXTENDED_PARTTYPE:
+		++used;
+		rc = FindFreeExtSpace(disk,
+				      secno + pt.entry[i].RelativeSectors,
+				      pt.entry[i].NumSectors, info, found);
+		break;
+
+	      case VRAID_PARTTYPE:
+		++used;
+		info->area[info->cnt].start = secno + pt.entry[i].RelativeSectors;
+		info->area[info->cnt].size = pt.entry[i].NumSectors;
+		*found = info->cnt++;
+		break;
+
+	      default:
+		++used;
+		break;
+	    }
+	} /* end[for()] */
+
+	if( used == 4 )
+	{
+	    Verbose(1, "DrvScan",
+		    "FindFreeSpace(%lu): no primary partition entry available",
+		    secno);
+	    break;				/* no error */
+	}
+	if( *found != -1 )
+	    break;				/* use the VRAID partition */
+
+
+	/* 2nd: build a list of all free areas in our range (secno+1
+	 * - secno+seccnt).  This is easy when the disk is completely
+	 * empty but becomes more completed with every partition defined.
+	 * Don't accept free areas below a certain limit! */
+
+	if( used == 0 )
+	{
+	    /* There isn't any partition defined!
+	     * So it's only one large area. */
+
+	    if( secno == 0 )
+		info->area[info->cnt].start
+		    = disk->queryDPB().cHeads * disk->queryDPB().cSectorsPerTrack;
+	    else
+		info->area[info->cnt].start
+		    = secno + disk->queryDPB().cSectorsPerTrack;
+	    info->area[info->cnt].size = seccnt - info->area[info->cnt].start;
+	    info->area[info->cnt].ptsec = secno;
+	    info->area[info->cnt].extstart = 0;
+	    SayArea(2, "FindFreeSpace - found free", &info->area[info->cnt]);
+	    ++info->cnt;
+	}
+	else
+	{
+	    ULONG const spt = disk->queryDPB().cSectorsPerTrack;
+	    ULONG	ul;
+	    BOOL	inside = FALSE;
+
+	    info->area[info->cnt].start = secno + spt;
+	    for( ul = secno + spt; ul < secno + seccnt; ++ul )
+	    {
+		for( i = 0; i < 4; ++i )
+		{
+		    if( ul == secno + pt.entry[i].RelativeSectors )
+		    {
+			if( !inside )
+			{
+			    info->area[info->cnt].size
+				= ul - info->area[info->cnt].start;
+			    if( info->area[info->cnt].size >= MIN_VRAID_PART
+				&&  info->area[info->cnt].size > spt )
+			    {
+				info->area[info->cnt].ptsec = secno;
+				info->area[info->cnt].extstart = 0;
+				SayArea(2, "FindFreeSpace - found free",
+					&info->area[info->cnt]);
+				++info->cnt;
+			    }
+			    inside = TRUE;
+			}
+			ul += pt.entry[i].NumSectors - 1;
+			info->area[info->cnt].start = ul + 1;
+			break;
+		    }
+		    else if( ul == (secno + pt.entry[i].RelativeSectors
+				    + pt.entry[i].NumSectors) )
+		    {
+			inside = FALSE;
+		    }
+		} /* end[for(every partition entry)] */
+	    } /* end[for(every sector) */
+	    if( !inside )
+	    {
+		info->area[info->cnt].size = ul - info->area[info->cnt].start;
+		info->area[info->cnt].ptsec = secno;
+		info->area[info->cnt].extstart = 0;
+		SayArea(2, "FindFreeSpace - found free", &info->area[info->cnt]);
+		++info->cnt;
+	    }
+	}
+    }
+    while( 0 );
+
+    Verbose(3, "DrvScan", "FindFreeSpace - rc %lu", rc);
+    return rc;
+}
+
+
+
+
+
+
+/* ******************************************************************* *
+ * **** Routines to create new paritions ***************************** *
+ * ******************************************************************* */
+
+
+/*# ----------------------------------------------------------------------
+ * CreateLogPartition(disk,vpart)
+ *
+ * PARAMETER
+ *	disk
+ *	area
+ *
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Create partition inside an 'extended partition'.
+ *	Adjust vpart->size according to geometry and update partition table(s).
+ *
+ * REMARKS
+ */
+PRIVATE APIRET
+CreateLogPartition(VOS2Disk * const disk,ULONG const ptsec,
+		   struct _DSKAREA_ENTRY * const vpart)
+{
+    assert( ptsec != 0 );
+    Verbose(2,"CreateLogPartition","start %lu, size %lu",vpart->start,vpart->size);
+    Verbose(2,"CreateLogPartition","table %lu", ptsec);
+
+    PartTable	pt(disk, ptsec, vpart->extstart);
+
+    do
+    {
+	/* Check current contents of partition table. */
+
+	int		log_idx = -1;
+	int		ext_idx = -1;
+	for( int i = 0; i < 4; ++i )
+	{
+	    switch( pt.entry[i].SysIndicator )
+	    {
+	      case EXTENDED_PARTTYPE:
+		ext_idx = i;
+		break;
+
+	      default:
+		log_idx = i;
+		break;
+
+	      case 0:
+		break;				/* nothing */
+	    }
+	}
+
+	if( log_idx != -1 )
+	{
+	    PPARTITIONENTRY const le = &pt.entry[log_idx];
+
+	    /* There is a logical partition in this table.  Lies the
+	     * free space before or after it? */
+
+	    if( ptsec + le->RelativeSectors > vpart->start )
+	    {
+		/* Free room before the logical partition.  This means
+		 * that it starts at head 1 and we have to create a new
+		 * partition table just before it (at head 0).
+		 * - create new partition table before 'le'
+		 * - move logical partition to new table
+		 * - move any extended partition to new table
+		 * - create reference to new table in old table
+		 * - add 'vpart' to current table */
+
+		if( le->BegHead != 1 )
+		{
+		    Verbose(1, "CreateLogPartition",
+			    "invalid partition entry %d in sector %lu",
+			    log_idx, ptsec);
+		    return (APIRET)-1;
+		}
+
+		ULONG const	spt = disk->queryDPB().cSectorsPerTrack;
+		PartTable	newpt(disk, ptsec + le->RelativeSectors - spt,
+				      vpart->extstart);
+		newpt.clear();			/* completely new! */
+
+		le->RelativeSectors = spt;
+		newpt.addPE(*le);
+		pt.delPE(le);
+
+		if( ext_idx != -1 )
+		{
+		    PPARTITIONENTRY const ee = &pt.entry[ext_idx];
+		    newpt.addPE(*ee);
+		    pt.delPE(ee);
+		}
+
+		pt.addForeign(EXTENDED_PARTTYPE, 0,
+			      newpt.queryPos(), le->NumSectors + spt);
+		pt.addOwn(VRAID_PARTTYPE, 0x80, vpart->start, vpart->size);
+	    }
+	    else
+	    {
+		/* Free room behind the logical partition:
+		 * - create table at start of free space (newpt)
+		 * - adjust 'vpart' to have room for that table
+		 * - move any extended partition entry from 'pt' to 'newpt'
+		 * - create entry in 'pt' for the new extended partition
+		 * - add 'vpart' to 'newpt' */
+
+		assert(ptsec + le->RelativeSectors + le->NumSectors == vpart->start);
+		ULONG const spt = disk->queryDPB().cSectorsPerTrack;
+		ULONG const newpt_pos = ptsec + le->RelativeSectors + le->NumSectors;
+		PartTable   newpt(disk, newpt_pos, vpart->extstart);
+		newpt.clear();			/* completely new! */
+
+		vpart->start += spt;
+		vpart->size -= spt;
+
+		ULONG	vpart_ext_size = vpart->size + spt;
+		if( ext_idx != -1 )
+		{
+		    PPARTITIONENTRY const ee = &pt.entry[ext_idx];
+		    vpart_ext_size
+			= ee->RelativeSectors + vpart->extstart - newpt.queryPos();
+
+		    newpt.addPE(*ee);
+		    pt.delPE(ee);
+		}
+
+		pt.addOwn(EXTENDED_PARTTYPE,0, newpt.queryPos(), vpart_ext_size);
+		newpt.addOwn(VRAID_PARTTYPE, 0x80, vpart->start, vpart->size);
+	    }
+	}
+	else
+	{
+	    /* No logical partition at all:
+	     * - add 'vpart' to table */
+
+	    pt.addOwn(VRAID_PARTTYPE, 0x80, vpart->start, vpart->size);
+	}
+    }
+    while( 0 );
+
+    return 0;
+} /* CreateLogPartition */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CreatePriPartition(disk,ptsec,part)
+ *
+ * PARAMETER
+ *	disk
+ *	ptsec
+ *	part
+ *
+ * RETURNS
+ *	0		OK
+ *
+ * DESCRIPTION
+ *	User selected an area, decoded in 'info->area[info->cnt]'.
+ *	Dialog changed .size element to selected percentage.
+ *	Now 
+ *
+ * REMARKS
+ */
+PRIVATE APIRET
+CreatePriPartition(VOS2Disk * const disk,ULONG const ptsec,
+		   struct _DSKAREA_ENTRY * const vpart)
+{
+    assert( ptsec == 0 );
+    Verbose(2,"CreatePriPartition","start %lu, size %lu",vpart->start,vpart->size);
+    Verbose(2,"CreatePriPartition","table %lu", ptsec);
+
+    PartTable	pt(disk, ptsec);
+    pt.addOwn(vpart->type, vpart->bootable, vpart->start, vpart->size);
+
+    return 0;
+}
+
+
+
+
+d1245 1
+a1245 1
+	rc = FindFreeSpace(disk, 0, disk->querySize(), &info, &found);
+d1343 1
+a1343 1
+	Verbose(3, "DrvScan", "WM_CREATE -> default");
+d1357 1
+a1357 1
+	Verbose(3, "DrvScan", "WM_CLOSE");
+@
+
+
+2.5
+log
+@- IsProvidedByFlt: detection of OS/2 disk/filter device now in seperate function
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.4 $
+ * $Date: 2000/04/10 01:09:00 $
+d10 3
+d148 1
+a148 1
+static char const vcid[]="$Id: drvscan.cpp,v 2.4 2000/04/10 01:09:00 vitus Exp vitus $";
+d1280 3
+d1302 2
+a1303 1
+	    SayArea(2, "ScanExtAllocated - found", &usedspace->area[usedspace->cnt]);
+a1305 3
+
+	  case 0:
+	    break;
+d1353 2
+a1354 2
+	/* 1st: free entry in partition table.  Detect already existing
+	 * VRAID partition, too. */
+d1356 1
+a1356 3
+	unsigned 	used, i;
+	int		free = -1;
+	for( used = i = 0; i < 4; ++i )
+a1360 1
+		free = i;
+a1363 1
+		++used;
+a1381 1
+		++used;
+a1388 1
+		++used;
+a1400 6
+	if( free == -1 )
+	{
+	    Verbose(1, "DrvScan", "FindFreeSpace(%lu): no partition entry available",
+		    secno);
+	    break;				/* no error */
+	}
+d1452 1
+a1452 1
+	    SayArea(2, "FindFreeSpace - found", &freelist->area[freelist->cnt]);
+d1499 4
+a1502 3
+	
+	/* 1st: free entry in partition table.  Detect already existing
+	 * VRAID partition, too. */
+a1504 1
+	int		free = -1;
+a1509 1
+		free = i;
+d1532 1
+a1532 1
+	if( free == -1 )
+d1534 2
+a1535 1
+	    Verbose(1, "DrvScan", "FindFreeSpace(%lu): no partition entry available",
+d1562 1
+a1562 1
+	    SayArea(2, "FindFreeSpace - found", &info->area[info->cnt]);
+d1587 1
+a1587 1
+				SayArea(2, "FindFreeSpace - found",
+d1609 1
+a1609 1
+		SayArea(2, "FindFreeSpace - found", &info->area[info->cnt]);
+@
+
+
+2.4
+log
+@- converted calls to WinMessageBox() to MyMessageBox()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.3 $
+ * $Date: 2000/03/17 02:11:33 $
+d10 3
+d145 1
+a145 1
+static char const vcid[]="$Id: drvscan.cpp,v 2.3 2000/03/17 02:11:33 vitus Exp vitus $";
+d298 168
+a544 1
+    PVRAID_ARRAYINFO_DATA * arrayinfo = NULL;
+a546 1
+    PVRAID_PHYSINFO_DATA * physinfo = NULL;
+a568 7
+	    arrayinfo = new PVRAID_ARRAYINFO_DATA[arraycnt];
+
+	    for( j = 0; j < arraycnt; ++j )
+	    {
+		arrayinfo[j] = new VRAID_ARRAYINFO_DATA;
+		memset(arrayinfo[j], 0, sizeof(VRAID_ARRAYINFO_DATA));
+	    }
+a580 7
+	    physinfo = new PVRAID_PHYSINFO_DATA[physcnt];
+
+	    for( j = 0; j < physcnt; ++j )
+	    {
+		physinfo[j] = new VRAID_PHYSINFO_DATA;
+		memset(physinfo[j], 0, sizeof(VRAID_PHYSINFO_DATA));
+	    }
+d622 1
+a622 7
+	{
+	    BOOL	isarray = FALSE;
+	    USHORT	accessed_array;
+	    BOOL	isphys = FALSE;
+	    /*USHORT	accessed_phys;*/
+
+	    if( arraycnt != 0 )
+a623 81
+		unsigned	retry;
+		unsigned	flt_changes = 0;
+		PUCHAR		dummybuffer = new UCHAR[SECTOR_SIZE];
+
+		for( retry = 0; retry < 3; ++retry )
+		{
+		    VRAID_ARRAYINFO_DATA	this_info;
+
+		    for( j = 0; j < arraycnt; ++j )
+			DriverArrayinfo(arrayhd[j], arrayinfo[j]);
+
+		    rc = newdev->read(0, 1, dummybuffer);
+
+		    for( j = 0; j < arraycnt; ++j )
+		    {
+			rc = DriverArrayinfo(arrayhd[j], &this_info);
+			if( rc == 0  &&  this_info.reqcnt > arrayinfo[j]->reqcnt )
+			{
+			    ++flt_changes;
+			    accessed_array = j;
+			}
+		    }
+		    if( flt_changes == 1 )
+		    {
+			isarray = TRUE;
+			assert( accessed_array <= arraycnt );
+			break;
+		    }
+		    else if( flt_changes == 0 )
+			break;			/* definitely no array */
+
+		    DosSleep(1000);		/* wait for peace :-) */
+		}
+		delete[] dummybuffer;
+	    }
+	    if( !isarray )
+	    {
+		unsigned	retry;
+		unsigned	flt_changes = 0;
+		PUCHAR		dummybuffer = new UCHAR[SECTOR_SIZE];
+
+		for( retry = 0; retry < 3; ++retry )
+		{
+		    VRAID_PHYSINFO_DATA	this_info;
+
+		    for( j = 0; j < physcnt; ++j )
+			DriverPhysinfo(physhd[j], physinfo[j]);
+
+		    rc = newdev->read(0, 1, dummybuffer);
+
+		    for( j = 0; j < physcnt; ++j )
+		    {
+			rc = DriverPhysinfo(physhd[j], &this_info);
+			if( rc == 0  &&  this_info.reqcnt > physinfo[j]->reqcnt )
+			{
+			    ++flt_changes;
+			    /*accessed_phys = j;*/
+			}
+		    }
+		    if( flt_changes == 1 )
+		    {
+			isphys = TRUE;
+			break;
+		    }
+		    else if( flt_changes == 0 )
+			break;			/* definitely no array */
+
+		    DosSleep(1000);		/* wait for peace :-) */
+		}
+		delete[] dummybuffer;
+	    }
+
+	    if( isarray  ||  isphys )
+	    {
+		if( isarray )
+		    SetArrayInfo(arrayinfo[accessed_array]->id,
+				 i, newdev->isWritable());
+
+		/* This OS/2 device is accessable through VRAID.FLT!
+		 * Remove any traces and skip to the next OS/2 device. */
+
+d627 1
+a627 1
+	} /* end[SM_FLTAVAIL?] */
+a636 9
+
+    if( arraycnt != 0 )
+    {
+	/* Remove any memory allocated in LIFO manner. */
+
+	for( j = 0; j < arraycnt; ++j )
+	    delete arrayinfo[j];
+	delete[] arrayinfo;
+    }
+@
+
+
+2.3
+log
+@- create extended partions arouch 7C partitions via addOwn()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.2 $
+ * $Date: 2000/03/09 23:40:16 $
+d10 3
+d142 1
+a142 1
+static char const vcid[]="$Id: drvscan.cpp,v 2.2 2000/03/09 23:40:16 vitus Exp vitus $";
+d165 1
+a170 1
+#include "proto.h"
+d446 6
+a451 7
+	    WinMessageBox(HWND_DESKTOP, HWND_DESKTOP,
+			  "An OS2 disk cannot be accessed.  There may be an"
+			  " instance of FDISK running somewhere.\n"
+			  "Please don't change drive configuration but end"
+			  " VSetup and any disk management software like FDISK"
+			  " and restart VSetup!", NULL,
+			  -1ul, MB_ENTER|MB_WARNING|MB_MOVEABLE);
+a1603 1
+    assert( pt.isValid() );
+d1804 3
+a1806 4
+	    WinMessageBox(HWND_DESKTOP, HWND_DESKTOP,
+			  "There is no room on requested disk to create a"
+			  " VRAID partition.", NULL,
+			  -1ul, MB_CANCEL|MB_WARNING|MB_MOVEABLE);
+d1990 4
+a1993 6
+		WinMessageBox(HWND_DESKTOP, HWND_DESKTOP,
+			      "Make sure you delete the VRAID partition by hand"
+			      " after reboot.\nUse the context menu of the drives"
+			      " folder for this purpose.", NULL,
+			      -1ul, MB_ENTER|MB_INFORMATION|MB_MOVEABLE);
+
+@
+
+
+2.2
+log
+@- scans and creates extended partitions correctly.
+  Well, at least it creates a PHYSDEV in the middle between two logical
+  drives.  To create a "logical" vraid partition out of a clear disk it's a
+  long, long way...
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.1 $
+ * $Date: 2000/02/18 00:15:33 $
+d10 6
+d139 1
+a139 1
+static char const vcid[]="$Id: drvscan.cpp,v 2.1 2000/02/18 00:15:33 vitus Exp vitus $";
+d1676 1
+a1676 1
+		 * - create table at start of free space
+d1678 2
+a1679 2
+		 * - move any extended partition entry to new table
+		 * - create entry 'pt' for the new extended partition
+d1696 1
+a1696 1
+			= ee->RelativeSectors + vpart->extstart - newpt_pos;
+d1702 1
+a1702 1
+		pt.addForeign(EXTENDED_PARTTYPE,0, newpt.queryPos(), vpart_ext_size);
+@
+
+
+2.1
+log
+@- major changes to find VRAID partitions inside extended partitions
+  and to create those partitions.
+- uses PartTable class to handle partition sectors.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.24 $
+ * $Date: 1999/12/14 00:28:52 $
+d10 5
+d133 1
+a133 1
+static char const vcid[]="$Id: drvscan.cpp,v 1.24 1999/12/14 00:28:52 vitus Exp vitus $";
+a176 1
+#define EXTENDED_PARTTYPE 0x05
+a205 11
+/* enough info to copy a partition entry */
+typedef struct _PARTITION {
+    UCHAR	type;
+    UCHAR	bootable;
+    ULONG	start;
+    ULONG	size;
+} PARTITION, *PPARTITION;
+
+
+
+
+d286 2
+a287 2
+ * CALL
+ *	AllocateFltDevices(work)
+d343 2
+a344 2
+ * CALL
+ *	AllocateOs2Devices(work)
+d976 2
+a977 1
+ *	secno		secto no of partition sector
+d990 2
+a991 2
+FindVRaidPartition(VOS2Disk * const dsk,ULONG const secno,
+		   PULONG const pstart,PULONG const psize)
+d994 1
+a994 1
+    PartTable	pt(dsk, secno);
+d1000 3
+d1013 2
+a1014 1
+	    rc = FindVRaidPartition(dsk, secno + pt.entry[j].RelativeSectors,
+a1045 1
+    PUCHAR	buffer = new UCHAR[SECTOR_SIZE];
+d1061 1
+a1061 1
+	rc = FindVRaidPartition(dsk, 0, &partstart, &partsize);
+d1086 1
+d1128 1
+a1129 1
+    delete[] buffer;
+d1147 4
+d1152 2
+d1162 239
+a1400 2
+    Verbose(level, "DrvScan", "%s area (start %lu, size %lu), PT %lu",
+	    msgstart, area->start, area->size, area->ptsec);
+d1420 2
+a1421 3
+ *	Find free space in the range 'secno' (contains partition table, either
+ *	MBR or extended) and 'secno+seccnt'.  Enters this space into 'info'
+ *	table.
+a1423 1
+ *	Recursive!
+d1426 2
+a1427 2
+FindFreeSpace(VOS2Disk * const disk,ULONG const secno,ULONG const seccnt,
+	      PDSKAREA const info,int * const found)
+d1429 1
+a1429 2
+    PMBR const	mbr = new MBR;
+    APIRET	rc;
+d1433 1
+d1436 1
+a1436 14
+	unsigned used, i;
+	int	free = -1;
+
+	rc = disk->read(secno, 1, mbr);
+	if( rc != 0 )
+	    break;
+
+	if( mbr->Signature != 0xAA55 )
+	{
+	    Verbose(1, "DrvScan", "invalid partition table in sector %lu",
+		    secno);
+	    memset(mbr, 0, sizeof(*mbr));
+	    mbr->Signature = 0xAA55;
+	}
+d1444 2
+d1448 1
+a1448 1
+	    switch( mbr->PartitionTable[i].SysIndicator )
+d1456 3
+a1458 4
+		rc = FindFreeSpace(disk,
+				   secno + mbr->PartitionTable[i].RelativeSectors,
+				   mbr->PartitionTable[i].NumSectors,
+				   info, found);
+d1463 2
+a1464 3
+		info->area[info->cnt].start
+		    = secno + mbr->PartitionTable[i].RelativeSectors;
+		info->area[info->cnt].size = mbr->PartitionTable[i].NumSectors;
+d1502 1
+d1512 1
+a1512 4
+	    if( secno == 0 )
+		info->area[info->cnt].start = disk->queryDPB().cHeads * spt;
+	    else
+		info->area[info->cnt].start = secno + spt;
+d1517 1
+a1517 1
+		    if( ul == secno + mbr->PartitionTable[i].RelativeSectors )
+d1527 1
+d1534 1
+a1534 1
+			ul += mbr->PartitionTable[i].NumSectors - 1;
+d1538 2
+a1539 2
+		    else if( ul == secno + mbr->PartitionTable[i].RelativeSectors
+			     + mbr->PartitionTable[i].NumSectors )
+d1549 1
+a1557 1
+    delete mbr;
+d1589 1
+a1589 1
+		   PPARTITION const vpart)
+a1590 4
+    PartTable	pt(disk, ptsec);
+    APIRET	rc = 0;
+
+
+d1594 2
+a1597 1
+
+d1628 1
+a1628 1
+	    if( le->RelativeSectors > vpart->start - ptsec )
+d1644 1
+a1644 2
+		    rc = (APIRET)-1;
+		    break;
+d1648 4
+a1651 1
+		PartTable	newpt(disk, ptsec + le->RelativeSectors - spt);
+d1653 1
+a1653 1
+		newpt.addPE(le);
+d1659 1
+a1659 3
+		    ee->RelativeSectors += pt.queryPos();
+		    ee->RelativeSectors -= newpt.queryPos();
+		    newpt.addPE(ee);
+d1673 8
+a1680 2
+		 * - create entry in old table for the new extended partition
+		 * - add 'vpart' to new table */
+a1681 2
+		ULONG const	spt = disk->queryDPB().cSectorsPerTrack;
+		PartTable	newpt(disk, ptsec + le->RelativeSectors);
+d1689 2
+a1690 3
+		    ee->RelativeSectors += pt.queryPos();
+		    ee->RelativeSectors -= newpt.queryPos();
+		    vpart_ext_size = ee->RelativeSectors;
+d1692 1
+a1692 1
+		    newpt.addPE(ee);
+d1696 1
+a1696 3
+		pt.addForeign(EXTENDED_PARTTYPE, 0,
+			      newpt.queryPos() - pt.queryPos(),
+			      vpart_ext_size);
+a1706 2
+
+	rc = pt.flush();
+d1710 1
+a1710 1
+    return rc;
+d1717 1
+a1717 1
+ * CreatePriPartition(disk,info)
+d1721 2
+a1722 1
+ *	info
+d1725 1
+a1725 1
+ *	APIRET
+d1730 1
+d1735 2
+a1736 1
+CreatePriPartition(VOS2Disk * const disk,ULONG const ptsec,PPARTITION const part)
+a1737 2
+    PartTable	pt(disk, ptsec);
+
+d1739 1
+a1739 1
+    Verbose(2,"CreatePriPartition","start %lu, %lu sectors",part->start,part->size);
+d1742 2
+d1745 1
+a1745 2
+    pt.addOwn(part->type, part->bootable, part->start, part->size);
+    return pt.flush();
+d1815 5
+a1819 4
+	PARTITION	part = {VRAID_PARTTYPE, 0,
+				info.area[info.cnt].start,info.area[info.cnt].size};
+	if( info.area[info.cnt].ptsec == 0 )
+	    rc = CreatePriPartition(disk, info.area[info.cnt].ptsec, &part);
+d1822 2
+a1823 2
+	    part.bootable = 0x80;
+	    rc = CreateLogPartition(disk, info.area[info.cnt].ptsec, &part);
+d1835 1
+a1835 1
+	rc = disk->write(info.area[info.cnt].start, 2, p);
+d1840 1
+a1840 2
+	*dev = new VORDev(disk, info.area[info.cnt].start,
+			  info.area[info.cnt].size);
+d1858 2
+a1859 2
+ * CALL
+ *	DrvscanWindowProc(hwnd,msg,mp1,mp2)
+a1936 1
+	    APIRET	rc = 0;
+d2096 2
+a2097 2
+ * CALL
+ *	DrvscanThread(dummy)
+@
+
+
+1.24
+log
+@- more error logging
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.23 $
+ * $Date: 1999/10/01 01:29:37 $
+d10 3
+d125 2
+a126 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+d128 1
+a128 1
+static char const vcid[]="$Id: drvscan.cpp,v 1.23 1999/10/01 01:29:37 vitus Exp vitus $";
+a147 1
+#include "../../../Lib/profile.h"		/* profile handling */
+d158 1
+d172 2
+d181 1
+a181 1
+    VOS2Disk **	apOs2Dsk;			// list of OS/2 accessable disks
+d183 1
+a183 1
+    VRDev     **apDskInfo;			// list of devices with VRAID struc.
+d185 1
+a185 1
+    VRDev     **apEndPts;			// analysis complete
+d202 11
+d221 2
+a222 2
+ * CALL
+ *	SetArrayInfo(array_devid,os2idx,avail)
+d259 2
+a260 2
+ * CALL
+ *	QueryArrayInfo(array_devid)
+d335 1
+a335 1
+	    Verbose(3, "DrvSetup", "FLT drive capacity: %lu MBytes",
+d585 5
+d591 2
+a592 2
+ * CALL
+ *	AnalyseVRDev(work,dsk,sec)
+d720 2
+a721 2
+ * CALL
+ *	ValidateVSec2(child,sec)
+d834 2
+a835 2
+ * CALL
+ *	AnalyseVRDev2(work,sec)
+d979 54
+a1032 2
+ * CALL
+ *	BuildDevTree(work)
+d1046 1
+a1046 1
+BuildDevTree(PWORK work)
+d1064 1
+a1064 3
+	rc = dsk->read(0, 1, buffer);
+
+	PMBR	sec = (PMBR)buffer;
+a1065 10
+	if( sec->Signature == 0xAA55 )
+	    for( int j = 0; j < 4; ++j )
+	    {
+		if( sec->PartitionTable[j].SysIndicator == VRAID_PARTTYPE )
+		{
+		    partstart = sec->PartitionTable[j].RelativeSectors;
+		    partsize = sec->PartitionTable[j].NumSectors;
+		    break;
+		}
+	    }
+d1068 1
+a1068 1
+	    Verbose(2, "DrvScan", "no VRAID partition on drive %u", i);
+d1076 1
+a1076 1
+	    Verbose(3, "DrvScan", "found VRAID partition on drive %u, size %lu", i, partsize);
+d1138 7
+d1146 22
+a1167 2
+ * CALL
+ *	CreatePartition(hwnd,disk,buffer)
+d1169 5
+a1173 3
+ *	hwnd		use for dialogs
+ *	disk		create on this VOS2Disk
+ *	buffer		512 byte buffer
+d1179 3
+a1181 2
+ *	Analyse disk contents and ask user about where to create a
+ *	VRAID partition.  Update bootsector and 'disk' object.
+d1184 1
+a1184 4
+ *	It's a little bit difficult:
+ *	- perhaps nothing to do (already modified)
+ *	- perhaps no partition at all
+ *	- perhaps many partitions and search for largest hole
+d1187 2
+a1188 1
+CreatePartition(HWND hwnd,VOS2Disk * disk,VORDev ** dev)
+a1190 4
+    int		free = -1, found = -1;		/* indices */
+    DSKAREA	info = {0};
+    int		i;
+    ULONG	used;
+d1193 2
+d1197 4
+a1200 1
+	rc = disk->read(0, 1, mbr);
+d1206 2
+a1207 1
+	    Verbose(1, "DrvScan", "clearing invalid MBR");
+d1214 1
+a1214 1
+
+d1220 3
+a1222 1
+	    if( mbr->PartitionTable[i].SysIndicator == 0 )
+d1224 20
+a1243 3
+	    else if( mbr->PartitionTable[i].SysIndicator == VRAID_PARTTYPE )
+	    {
+		found = i;
+d1246 1
+a1246 3
+	    else
+		++used;
+	}
+d1248 1
+a1248 9
+	if( -1 != found )
+	{
+	    Verbose(0, "DrvScan", "VRAID partition already there, stopping");
+	    *dev = new VORDev(disk,
+			      mbr->PartitionTable[found].RelativeSectors,
+			      mbr->PartitionTable[found].NumSectors);
+	    break;				/* rc still 0 */
+	}
+	if( -1 == free )
+d1250 3
+a1252 6
+	    Verbose(2, "DrvScan", "No partition entry available, aborting");
+	    WinMessageBox(HWND_DESKTOP, HWND_DESKTOP,
+			  "There is no free partition entry to create a VRAID partition.", "Warning",
+			  -1ul, MB_CANCEL|MB_WARNING|MB_MOVEABLE);
+	    rc = ERROR_HANDLE_DISK_FULL;
+	    break;
+d1254 2
+d1258 3
+a1260 3
+	/* 2nd: build a list of all free areas on the disk.  This is easy
+	 * when the disk is completely empty but becomes more completed
+	 * whith every partition defined.
+d1263 1
+a1263 1
+	if( 0 == used )
+d1265 2
+a1266 1
+	    /* There isn't any partition defined! */
+d1268 10
+a1277 3
+	    info.area[0].start = disk->queryDPB().cSectorsPerTrack;
+	    info.area[0].size = disk->querySize() - info.area[0].start;
+	    info.cnt = 1;			/* only one large area */
+a1280 1
+	    ULONG const	dsksize = disk->querySize();
+d1285 5
+a1289 3
+	    info.cnt = 0;			/* currently none */
+	    info.area[0].start = spt;
+	    for( ul = spt; ul < dsksize; ++ul )
+d1293 1
+a1293 1
+		    if( ul == mbr->PartitionTable[i].RelativeSectors )
+d1297 10
+a1306 4
+			    info.area[info.cnt].size
+				= ul - info.area[info.cnt].start;
+			    if( info.area[info.cnt].size >= MIN_VRAID_PART )
+				++info.cnt;
+d1310 1
+a1310 1
+			info.area[info.cnt].start = ul+1;
+d1313 1
+a1313 1
+		    else if( ul == mbr->PartitionTable[i].RelativeSectors
+d1322 74
+a1395 2
+		info.area[info.cnt].size = ul - info.area[info.cnt].start;
+		++info.cnt;
+d1399 172
+d1583 3
+a1585 3
+	used = WinDlgBox(HWND_DESKTOP, hwnd, AreaDlgProc,
+			 NULLHANDLE, IDW_DSKAREA, &info);
+	if( DID_OK != used )
+d1587 1
+a1587 1
+	    Verbose(3, "DrvScan", "user aborted");
+d1592 8
+a1599 33
+	/* User selected an area, dialog changed .size element to
+	 * selected percentage.
+	 * Adjust .size according to geometry, update MBR and write to disk. */
+
+	{
+	    DEVICEPARAMETERBLOCK dpb = disk->queryDPB();
+	    ULONG const	cylsize = disk->querySize() / dpb.cCylinders;
+	    ULONG	end = info.area[info.cnt].size + info.area[info.cnt].start;
+            USHORT      us;
+
+            /* Normalize ending point to last sector of cylinder!
+             * .start is already correct. */
+
+            end /= cylsize;
+            end *= cylsize;
+	    info.area[info.cnt].size = end - info.area[info.cnt].start;
+
+	    mbr->PartitionTable[free].BootIndicator = 0; /* don't boot from here */
+	    mbr->PartitionTable[free].BegHead
+		= (UCHAR)((info.area[info.cnt].start % cylsize)
+			  / dpb.cSectorsPerTrack);
+	    us = (USHORT)(info.area[info.cnt].start / cylsize);
+	    mbr->PartitionTable[free].BegSector = (UCHAR)((HIUCHAR(us) << 6) | 0x01);
+	    mbr->PartitionTable[free].BegCylinder = LOUCHAR(us);
+	    mbr->PartitionTable[free].SysIndicator = VRAID_PARTTYPE;
+	    mbr->PartitionTable[free].EndHead = (UCHAR)(dpb.cHeads - 0x01);
+	    us = (USHORT)((info.area[info.cnt].start + info.area[info.cnt].size)
+			  / cylsize - 1);
+	    mbr->PartitionTable[free].EndSector =
+		(UCHAR)((HIUCHAR(us) << 6) | dpb.cSectorsPerTrack);
+	    mbr->PartitionTable[free].EndCylinder = LOUCHAR(us);
+	    mbr->PartitionTable[free].RelativeSectors = info.area[info.cnt].start;
+	    mbr->PartitionTable[free].NumSectors = info.area[info.cnt].size;
+a1600 2
+
+	rc = disk->write(0, 1, mbr);
+a1601 2
+	{
+	    Verbose(1, "CreatePartition", "can't write MBR - rc %lu", rc);
+a1602 1
+	}
+d1606 2
+a1607 2
+	 * clear SEC_PHYSDEV and immedeately rewrite configuration to
+	 * create a new one. */
+d1609 3
+a1611 2
+	memset(mbr, 0, sizeof(*mbr));
+	rc = disk->write(info.area[info.cnt].start, 1, mbr);
+d1613 2
+a1614 1
+	    Verbose(1, "CreatePartition", "can't clear SEC_PHYSDEV - rc %lu", rc);
+a1621 1
+    delete mbr;
+d1673 1
+a1673 1
+	Verbose(2, "DrvScan", "WM_CLOSE");
+d1685 1
+a1685 1
+		DriverStartSetup();		// end [re]builds, etc.
+d1716 1
+a1716 1
+	    rc = CreatePartition(hwnd, disk, &rdev);
+d1841 1
+a1841 1
+	    if( child->isArray() == 0xFF )	// VMissing!  Don't post.
+@
+
+
+1.23
+log
+@- AllocateOs2Devices: added code to detect OS/2 devices which are accessable
+  through VRAID.FLT as PHYSDEVICEs
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.22 $
+ * $Date: 1999/07/05 00:54:24 $
+d10 4
+d125 1
+a125 1
+static char const vcid[]="$Id: drvscan.cpp,v 1.22 1999/07/05 00:54:24 vitus Exp vitus $";
+d1271 2
+d1274 1
+d1282 3
+a1284 1
+	disk->write(info.area[info.cnt].start, 1, mbr);
+@
+
+
+1.22
+log
+@- calls addChild() with "config sector valid" flag
+- remove DriverEndSetup() call, this is done (or not done) in DriverClose()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.21 $
+ * $Date: 1999/06/21 01:29:42 $
+d10 4
+d121 1
+a121 1
+static char const vcid[]="$Id: drvscan.cpp,v 1.21 1999/06/21 01:29:42 vitus Exp vitus $";
+d353 3
+d361 4
+a364 3
+     * is which OS/2 device.  What we need for this purpose:
+     * - a handle for every array drive
+     * - room to keep a counter for each */
+d383 20
+a402 4
+		if( arrayinfo[j] == NULL )
+		    Verbose(0, "DrvScan", "memory problem, ignored");
+		else
+		    memset(arrayinfo[j], 0, sizeof(VRAID_ARRAYINFO_DATA));
+d445 1
+a445 1
+	if( arraycnt != 0 )
+d447 4
+a450 5
+	    UCHAR		* dummybuffer = new UCHAR[SECTOR_SIZE];
+	    VRAID_ARRAYINFO_DATA	this_array_info;
+	    unsigned	flt_changes = 0;
+	    USHORT		accessed_array;
+	    unsigned	retry;
+d452 1
+a452 1
+	    for( retry = 0; retry < 3; ++retry )
+d454 3
+a456 2
+		for( j = 0; j < arraycnt; ++j )
+		    DriverArrayinfo(arrayhd[j], arrayinfo[j]);
+d458 6
+a463 1
+		rc = newdev->read(0, 1, dummybuffer);
+d465 31
+a495 1
+		for( j = 0; j < arraycnt; ++j )
+d497 17
+a513 3
+		    rc = DriverArrayinfo(arrayhd[j], &this_array_info);
+		    if( rc == 0
+			&&  this_array_info.reqcnt > arrayinfo[j]->reqcnt )
+d515 2
+a516 2
+			++flt_changes;
+			accessed_array = j;
+d518 4
+d523 1
+a523 3
+		if( flt_changes == 0  ||  flt_changes == 1 )
+		    break;
+		DosSleep(1000);		/* wait for peace :-) */
+d526 5
+a530 1
+	    delete[] dummybuffer;
+d532 2
+a533 4
+	    if( flt_changes == 1 )
+	    {
+		/* This OS/2 device is an array!  Remove any
+		 * traces and skip to the next OS/2 device. */
+a534 2
+		SetArrayInfo(arrayinfo[accessed_array]->id,
+			     i, newdev->isWritable());
+d538 1
+a538 1
+	} /* end[if arraycnt != 0] */
+@
+
+
+1.21
+log
+@- corrected english spelling
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.20 $
+ * $Date: 1999/06/20 17:16:27 $
+d10 3
+d117 1
+a117 1
+static char const vcid[]="$Id: drvscan.cpp,v 1.20 1999/06/20 17:16:27 vitus Exp vitus $";
+d562 1
+a562 1
+		newdrv->addChild(work->apDskInfo[k]);
+d571 1
+a571 1
+	    newdrv->addChild(dummy, False);
+d808 1
+a808 1
+		newdrv->addChild(work->apDskInfo[k],
+d818 1
+a818 1
+	    newdrv->addChild(dummy, False);
+a1259 4
+	if( (fSetupMode & SM_FLTAVAIL) )
+	{
+	    DriverEndSetup();			// start [re]build, etc.
+	}
+@
+
+
+1.20
+log
+@- AnalyseVRDev/AnalyseVRDev2: don't remove childs from global device table
+  before it's clear that the parent will be created.  A "creation delayed"
+  did lead to forgotten disks!
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.19 $
+ * $Date: 1999/06/19 22:01:52 $
+d10 5
+d114 1
+a114 1
+static char const vcid[]="$Id: drvscan.cpp,v 1.19 1999/06/19 22:01:52 vitus Exp vitus $";
+d155 1
+a155 1
+#define MAXDRIVES	(MAXCHILDS*2)
+d526 1
+a526 1
+	newdrv = new VChain(sec->u.s.id, sec->u.s.childs);
+d530 1
+a530 1
+	newdrv = new VStripe(sec->u.s.id, sec->u.s.childs);
+d544 1
+a544 1
+    /* Link childs to parent. */
+d546 1
+a546 1
+    for( j = 0; j < sec->u.s.childs; ++j )
+d573 1
+a573 1
+    /* Remove childs from search table as they may not be childs
+d576 1
+a576 1
+    for( j = 0; j < newdrv->queryChilds(); ++j )
+d702 1
+a702 1
+	    if( childsec->u.s.childs != sec->u.s.childs )
+d706 1
+a706 1
+	    for( i = 0; i < sec->u.s.childs; ++i )
+d768 1
+a768 1
+	newdrv = new VMirror(sec->u.s.id, sec->u.s.childs);
+d778 1
+a778 1
+    /* Link childs to parent. */
+d780 1
+a780 1
+    for( j = 0; j < sec->u.s.childs; ++j )
+d820 1
+a820 1
+    /* Remove childs from search table as they may not be childs
+d823 1
+a823 1
+    for( j = 0; j < newdrv->queryChilds(); ++j )
+d842 1
+a842 1
+	for( j = 0; j < sec->u.s.childs; ++j )
+d1390 1
+a1390 1
+	    /* Display all childs which exist on disk. */
+d1392 1
+a1392 1
+	    for( int i = 0; i < drv->queryChilds(); ++i )
+@
+
+
+1.19
+log
+@- minor corrections to keep compiler happy
+- Scanning tests fSetupMode instead of calling DriverVersion()
+- OS/2 devices are opened here and a VOS2Disk constructed with the handle.
+  This way errors may be detected and reported.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.18 $
+ * $Date: 1999/06/02 02:06:57 $
+d10 6
+d109 1
+a109 1
+static char const vcid[]="$Id: drvscan.cpp,v 1.18 1999/06/02 02:06:57 vitus Exp vitus $";
+a555 4
+		/* Remove child from search table as it may not be child
+		 * of two parents.  Any leave search loop for this child. */
+
+		work->apDskInfo[k] = NULL;
+d567 19
+a802 5
+
+		/* Remove child from search table as it may not be child
+		 * of two parents.  And leave search loop for this child. */
+
+		work->apDskInfo[k] = NULL;
+d811 18
+@
+
+
+1.18
+log
+@- AnalyseVRDev2: validates that all childs contain the same SEC_VRDEV2 contents
+  and updates status variables if not.  ValidateVSec2() implemented.
+- BuildDevTree: apDskInfo[i] is now cleared by Analyse*() itself.  Only do
+  it here if no Analyse*() seems to be correct
+- WUM_DELDRV: adds all childs to display before deleting the parent
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.17 $
+ * $Date: 1999/05/24 19:56:45 $
+d10 7
+d103 1
+a103 1
+static char const vcid[]="$Id: drvscan.cpp,v 1.17 1999/05/24 19:56:45 vitus Exp vitus $";
+d200 1
+a200 1
+SetArrayInfo(DEVID const array_devid,ULONG const os2idx,unsigned const avail)
+d379 18
+a396 1
+	VOS2Disk * newdev = new VOS2Disk(i);
+d616 2
+a617 1
+    USHORT	rc, i;
+d856 1
+a856 1
+    ULONG	i, off;
+d1032 1
+a1032 1
+			  -1, MB_CANCEL|MB_WARNING|MB_MOVEABLE);
+d1096 3
+a1098 2
+			  "There is no room on requested disk to create a VRAID partition.", "Warning",
+			  -1, MB_CANCEL|MB_WARNING|MB_MOVEABLE);
+d1132 4
+a1135 3
+		= (info.area[info.cnt].start % cylsize) / dpb.cSectorsPerTrack;
+	    us = info.area[info.cnt].start / cylsize;
+	    mbr->PartitionTable[free].BegSector = (HIUCHAR(us) << 6) | 1;
+d1138 3
+a1140 2
+	    mbr->PartitionTable[free].EndHead = dpb.cHeads - 1;
+	    us = (info.area[info.cnt].start + info.area[info.cnt].size) / cylsize -1;
+d1142 1
+a1142 1
+		(HIUCHAR(us) << 6) | dpb.cSectorsPerTrack;
+a1197 1
+    BOOL	bool;				/* usable by many messages */
+d1200 1
+d1232 1
+a1232 4
+	    ULONG	i;
+
+	    rc = DriverGetVersion((PUSHORT)&i);	/* ignore version */
+	    if( rc == 0 )
+a1233 2
+		fSetupMode |= SM_FLTAVAIL;
+
+d1242 2
+d1315 1
+a1315 1
+			      -1, MB_ENTER|MB_INFORMATION|MB_MOVEABLE);
+a1442 1
+    ULONG	flCreate;
+a1443 1
+    MRESULT	mres;
+@
+
+
+1.17
+log
+@- completed WUM_REMCHILD: may now add the deleted device itself to container
+  if it's an PYHSDEVICE via vraid.flt.  In this case the partition can't be
+  deleted and VOS2Disk is an impossible solution.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.16 $
+ * $Date: 1999/05/13 23:16:49 $
+d10 5
+d96 1
+a96 1
+static char const vcid[]="$Id: drvscan.cpp,v 1.16 1999/05/13 23:16:49 vitus Exp vitus $";
+d568 113
+d741 12
+d804 1
+d906 1
+a906 1
+		Verbose(1, "DrvScan", "BuildDevTree - rc %lu, device ignored", rc);
+d917 1
+d919 2
+a920 1
+	    work->apDskInfo[i] = NULL;
+d926 1
+a926 1
+}
+d1322 1
+a1322 1
+	Verbose(2, "DrvScan", "WUM_DELDRV");
+d1325 11
+d1347 1
+a1347 1
+	Verbose(2, "DrvScan", "WUM_CLOSEDEV");
+d1359 1
+a1359 1
+	Verbose(1, "DrvScan", "WUM_REMCHILD");
+@
+
+
+1.16
+log
+@- implemented WUM_REMCHILD
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.15 $
+ * $Date: 1999/05/12 01:29:30 $
+d10 3
+d91 1
+a91 1
+static char const vcid[]="$Id: drvscan.cpp,v 1.15 1999/05/12 01:29:30 vitus Exp vitus $";
+a1138 1
+#if 0 /*xxx*/
+a1139 1
+#endif
+a1140 2
+	    dev->ioDeleteYourself();		/* removes SEC_PHYSDEV + partition */
+	    delete dev,		dev = NULL;
+d1142 19
+a1160 4
+#if 0
+	    VOS2Drive *	drive = new VOS2Drive(disk);
+	    WinPostMsg(work->self->parent, WUM_DEVTREE, drive, MPFROMHWND(hwnd));
+#endif
+@
+
+
+1.15
+log
+@- WUM_DELPDEV: should detect VORdev vs. VFRDev and create the appropiate
+  disk object
+- RDFLAG* defines now unified (same as dsklayout.h)
+- AnalyseVRDev2: new sector layout
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.14 $
+ * $Date: 1999/04/30 03:15:35 $
+d10 6
+d88 1
+a88 1
+static char const vcid[]="$Id: drvscan.cpp,v 1.14 1999/04/30 03:15:35 vitus Exp vitus $";
+d1196 25
+@
+
+
+1.14
+log
+@- checks minimum size of VRAID partition (10MB)
+- when scanning free disk areas: start of n. areas (n>1) was undefined)
+- calls DriverStartSetup() and DriverEndSetup()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.13 $
+ * $Date: 1999/03/24 23:08:46 $
+d10 5
+d82 1
+a82 1
+static char const vcid[]="$Id: drvscan.cpp,v 1.13 1999/03/24 23:08:46 vitus Exp vitus $";
+a590 2
+	if( (sec->u.s.flags & RDFLAG_BUILDING) )
+	    newdrv->setBuild(sec->u.s.bdone);
+d599 1
+d634 1
+d636 9
+a644 1
+	newdrv->setBuild(sec->u.s.bdone);	/* build in progress... */
+d1129 2
+a1130 1
+	    VORDev *	dev = (VORDev *)PVOIDFROMMP(mp1);
+d1132 1
+d1137 1
+d1140 1
+@
+
+
+1.13
+log
+@- VMissing always added as "invalid"
+- WinPostMsg() instead of WinSendMsg()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.12 $
+ * $Date: 1999/03/11 03:24:19 $
+d10 4
+d77 1
+a77 1
+static char const vcid[]="$Id: drvscan.cpp,v 1.12 1999/03/11 03:24:19 vitus Exp vitus $";
+d119 1
+a119 1
+
+d820 1
+d823 3
+d857 6
+d890 1
+a890 1
+			    if( info.area[info.cnt].size != 0 )
+d895 1
+d1035 4
+d1051 1
+a1051 1
+	    rc = DriverGetVersion((PUSHORT)&i);		/* ignore version */
+d1055 2
+@
+
+
+1.13.1.1
+log
+@- checks minimum size of VRAID partition (10MB)
+- when scanning free disk areas: start of n. areas (n>1) was undefined
+  (overwriting other partitions and/or the MBR)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.13 $
+ * $Date: 1999/03/24 23:08:46 $
+a9 4
+ * Revision 1.13  1999/03/24 23:08:46  vitus
+ * - VMissing always added as "invalid"
+ * - WinPostMsg() instead of WinSendMsg()
+ *
+d73 1
+a73 1
+static char const vcid[]="$Id: drvscan.cpp,v 1.13 1999/03/24 23:08:46 vitus Exp vitus $";
+a114 1
+#define MIN_VRAID_PART	10240
+d876 1
+a876 1
+			    if( info.area[info.cnt].size >= MIN_VRAID_PART )
+a880 1
+ 			info.area[info.cnt].start = ul+1;
+@
+
+
+1.12
+log
+@- include seperate class interface headers
+- corrected partition creation code
+- VMirror stuff enabled
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.11 $
+ * $Date: 1999/03/01 02:27:44 $
+d10 5
+d73 1
+a73 1
+static char const vcid[]="$Id: drvscan.cpp,v 1.11 1999/03/01 02:27:44 vitus Exp vitus $";
+d514 1
+a514 1
+	    newdrv->addChild(dummy);
+d746 1
+a746 1
+	    rc = dev->read(1, 1, buffer);	// config sector of next level
+d749 1
+a749 1
+		Verbose(1, "DrvScan", "DoPartitionIo - rc %lu, device ignored", rc);
+d1099 1
+a1099 1
+	    delete dev;
+d1259 1
+a1259 1
+	WinSendMsg(hwnd, WUM_START, 0, 0);
+d1273 1
+a1273 1
+    WinSendMsg(dta->parent, WUM_THREADENDED, dta, 0);
+@
+
+
+1.11
+log
+@- include dskinfo.hpp for drvbuild.h
+- removed many routine just because of C++ design
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/02/09 03:50:23 $
+d10 4
+d68 1
+a68 1
+static char const vcid[]="$Id: drvscan.cpp,v 1.10 1999/02/09 03:50:23 vitus Exp vitus $";
+d99 6
+d121 1
+a121 1
+    VRDev     **apDskInfo;
+d123 1
+a123 1
+    VRDev     **apEndPts;
+d426 1
+a426 1
+ *	AnalyseVRDev(work,dskidx,sec)
+d429 1
+a429 1
+ *	dskidx		which device was read?
+d440 1
+a440 1
+AnalyseVRDev(PWORK const work,ULONG const dskidx,PSEC_VRDEV const sec)
+a441 1
+    VRDev *	dsk = work->apDskInfo[dskidx];
+a449 1
+	work->apDskInfo[dskidx] = NULL;
+d453 1
+d457 4
+d462 7
+a468 2
+	USHORT		j, k;
+	VRDrive	       *newdrv;
+d470 3
+a472 5
+	switch( sec->u.s.type )
+	{
+	  case RDTYPE_CHAIN:
+	    newdrv = new VChain(sec->u.s.id, sec->u.s.childs);
+	    break;
+d474 5
+a478 3
+	  case RDTYPE_STRIPE:
+	    newdrv = new VStripe(sec->u.s.id, sec->u.s.childs);
+	    break;
+a479 4
+	  case RDTYPE_SINGLE:
+	    newdrv = new VSingle(sec->u.s.id);
+	    break;
+	}
+d481 1
+d483 3
+a485 1
+	/* Link childs to parent. */
+d487 1
+a487 1
+	for( j = 0; j < sec->u.s.childs; ++j )
+d489 2
+a490 1
+	    Boolean	found = False;
+d492 2
+a493 1
+	    for( k = 0; k < work->cDskInfo; ++k )
+d495 2
+a496 2
+		if( work->apDskInfo[k] == NULL )
+		    continue;			/* skip empty entry */
+d498 2
+a499 5
+		if( memcmp(work->apDskInfo[k]->queryID(),
+			   sec->u.s.child[j].id, sizeof(DEVID)) == 0 )
+		{
+		    found = True;
+		    newdrv->addChild(work->apDskInfo[k]);
+d501 2
+a502 6
+		    /* Remove child from search table as it may not be child
+		     * of two parents.  Any leave search loop for this child. */
+
+		    work->apDskInfo[k] = NULL;
+		    break;
+		}
+a503 2
+	    if( found == False )
+		newdrv->addChild(NULL);
+d505 7
+d513 3
+a515 3
+	if( (sec->u.s.flags & RDFLAG_HOSTDRIVE) )
+	{
+	    /* Reached host drive! */
+d517 1
+a517 1
+	    struct _OS2DEVID * const info = QueryArrayInfo(newdrv->queryID());
+d519 5
+a523 9
+	    if( info != 0 )
+	    {
+		if( info->avail == 0 )
+		    newdrv->forceUnwritable();
+		newdrv->setHostdrive(info->os2idx);
+	    }
+	    else
+		newdrv->setHostdrive();
+	    work->apEndPts[work->cEndPts++] = newdrv;
+d526 2
+a527 1
+	    work->apDskInfo[work->cDskInfo++] = newdrv;
+d529 3
+d553 1
+a553 1
+AnalyseVRDev2(PWORK const work,ULONG const dskidx,PSEC_VRDEV2 const sec)
+a554 6
+#if 1
+    return;
+
+
+#else
+    VRDev *	dsk = work->apDskInfo[dskidx];
+d560 1
+a560 1
+	Verbose(1, "DrvScan", "CRC error in VRAIDDEVICE sector (%#x, %#x)",
+a562 1
+	work->apDskInfo[dskidx] = NULL;
+d568 4
+a571 1
+     * of administration and will therefore result in a new DSKINFO. */
+d573 1
+d575 5
+a579 2
+	USHORT			j, k;
+	VDriveWithRedundancy *	newdrv;
+d581 5
+a585 8
+	switch( sec->u.s.type )
+	{
+	  case DSKTYPE_MIRROR:
+	    newdrv = new VMirror(sec->u.s.id, sec->u.s.childs);
+	    if( (sec->u.s.flags & RDFLAG_BUILDING) )
+		newdrv->setBuild(sec->u.s.bdone);
+	    break;
+	}
+d587 1
+a587 1
+	/* Link childs to parent. */
+d589 5
+a593 1
+	for( j = 0; j < sec->u.s.childs; ++j )
+d595 2
+a596 1
+	    Boolean	found = False;
+d598 2
+a599 1
+	    for( k = 0; k < work->cDskInfo; ++k )
+d601 4
+a604 10
+		if( work->apDskInfo[k] == NULL )
+		    continue;			/* skip empty entry */
+
+		if( memcmp(work->apDskInfo[k]->queryID(),
+			   sec->u.s.child[j].id, sizeof(DEVID)) == 0 )
+		{
+		    found = True;
+		    newdrv->addChild(work->apDskInfo[k],
+				     (sec->u.s.child[j].flags & 0x01) != 0
+				     ? True : False);
+d606 2
+a607 2
+		    /* Remove child from search table as it may not be child
+		     * of two parents.  And leave search loop for this child. */
+d609 2
+a610 3
+		    work->apDskInfo[k] = NULL;
+		    break;
+		}
+a611 2
+	    if( found == False )
+		newdrv->addChild(NULL, False);
+d613 10
+d624 3
+a626 3
+	if( (sec->u.s.flags & RDFLAG_HOSTDRIVE) )
+	{
+	    /* Reached host drive! */
+d628 1
+a628 1
+	    struct _OS2DEVID * const info = QueryArrayInfo(newdrv->queryID());
+d630 5
+a634 9
+	    if( info != 0 )
+	    {
+		if( info->avail == 0 )
+		    newdrv->forceUnwritable();
+		newdrv->setHostdrive(info->os2idx);
+	    }
+	    else
+		newdrv->setHostdrive();
+	    work->apEndPts[work->cEndPts++] = newdrv;
+d637 2
+a638 1
+	    work->apDskInfo[work->cDskInfo++] = newdrv;
+d640 2
+a643 1
+#endif
+a671 16
+    /* Check 'work->apOs2Dsk[]': there may be entries of
+     * OS/2 devices not available to VSETUP.  Don't scan those
+     * devices.
+     * Is this correct?  There may be a FAT *and* a VRAID partition! */
+
+    for( i = 0; i < work->cOs2Dsk; ++i )
+    {
+	if( work->apOs2Dsk[i]->isWritable() == False )
+	{
+	    VOS2Drive * drv = new VOS2Drive(work->apOs2Dsk[i]);
+	    work->apEndPts[work->cEndPts++] = drv;
+	    work->apOs2Dsk[i] = NULL;
+	}
+    }
+
+
+d701 1
+a701 1
+	    VOS2Drive * drv = new VOS2Drive(work->apOs2Dsk[i]);
+d703 1
+a703 1
+	    work->apDskInfo[i] = NULL;
+d708 2
+a709 2
+	    VORDev * dev = new VORDev(work->apOs2Dsk[i], partstart, partsize);
+	    work->apDskInfo[i] = dev;		/* replace! */
+d715 4
+a718 2
+    /* Read VRAID sectors until no more
+     * devices remain (only HOSTDRIVES left). */
+d720 1
+a720 1
+    for( off = 1;; ++off )
+d727 1
+d729 2
+d741 1
+a741 1
+	    rc = dev->read(1, 1, buffer);
+d745 2
+a746 1
+		delete work->apDskInfo[i],	work->apDskInfo[i] = NULL;
+d751 1
+a751 3
+	    {
+		AnalyseVRDev(work, i, (PSEC_VRDEV)buffer);
+	    }
+d753 1
+a753 3
+	    {
+		AnalyseVRDev2(work, i, (PSEC_VRDEV2)buffer);
+	    }
+a754 3
+	    {
+		if( off != 1 )
+		    Verbose(1, "DrvScan", "missing VRAIDDEVICE mark");
+d756 1
+a756 3
+		work->apDskInfo[i] = NULL;
+		continue;
+	    }
+d836 4
+a839 1
+	    Verbose(1, "DrvScan", "No partition entry available, aborting");
+d895 3
+d918 10
+a927 6
+	    ULONG const	tracksize = disk->querySize() / dpb.cCylinders;
+	    ULONG	ul = info.area[info.cnt].size;
+
+	    if( info.area[info.cnt].start == dpb.cSectorsPerTrack )
+		ul = info.area[info.cnt].size + dpb.cSectorsPerTrack;
+	    info.area[info.cnt].size = (ul / tracksize) * tracksize;
+d931 4
+a934 4
+		= info.area[info.cnt].start % dpb.cSectorsPerTrack;
+	    mbr->PartitionTable[free].BegSector = 1;
+	    mbr->PartitionTable[free].BegCylinder
+		= info.area[info.cnt].start % tracksize;
+d937 4
+a940 3
+	    mbr->PartitionTable[free].EndSector = dpb.cSectorsPerTrack;
+	    mbr->PartitionTable[free].EndCylinder
+		= (info.area[info.cnt].start + info.area[info.cnt].size) / tracksize;
+d950 6
+a955 1
+	/* Last step: create VORDev object on that disk. */
+d959 1
+d963 1
+d1054 2
+a1055 1
+	    VOS2Disk *	disk = (VOS2Disk *)PVOIDFROMMP(mp1);
+d1062 8
+d1074 1
+a1074 1
+		WinPostMsg(work->self->parent, WUM_DEVTREE, disk, MPFROMHWND(hwnd));
+d1082 1
+a1082 1
+	 * Currently the PHYSDEVICE has to be accesseble from OS/2, a VORDev,
+d1104 4
+a1107 4
+	 *	A new devicetree has to be created (said the user).  Update
+	 *	disk structures, recalculate all fields of affected structures
+	 *	and post this devicetree back to the drvsetup thread
+	 *	(for display).
+@
+
+
+1.10
+log
+@- switched to C++
+- moved analyse of SEC_VRDEV* to AnalyseVRDev resp AnalyseVRDev2
+@
+text
+@d2 3
+a4 3
+ * $Source: r:/source/driver/raid/setup/RCS/drvscan.c,v $
+ * $Revision: 1.9 $
+ * $Date: 1998/12/13 23:28:41 $
+d9 5
+a13 1
+ * $Log: drvscan.c,v $
+d64 1
+a64 1
+static char const vcid[]="$Id: drvscan.c,v 1.9 1998/12/13 23:28:41 vitus Exp vitus $";
+d87 1
+d91 1
+d97 1
+d109 3
+a111 1
+    PDSKINFO *	apDskInfo;
+d113 1
+a113 1
+    PDSKINFO *	apEndPts;
+a135 106
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	DoAbsIo(dsk,write,secno,seccnt,buffer)
+ * PARAMETER
+ *	dsk		disk to access
+ *	write
+ *	secno		relativ to disk start
+ *	seccnt
+ *	buffer
+ *
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Read/Writes sectors from anywhere on a disk.
+ *
+ * REMARKS
+ */
+PRIVATE APIRET
+DoAbsIo(PDSKINFO const dsk,BOOL write,ULONG secno,ULONG seccnt,PVOID const buffer)
+{
+    APIRET rc;
+
+    if( dsk->acc == DSKACC_OS2 )
+    {
+	if( write )
+	    rc = PDskWrite(dsk->access.os2.hd, secno, seccnt, buffer);
+	else
+	    rc = PDskRead(dsk->access.os2.hd, secno, seccnt, buffer);
+    }
+    else
+	rc = 0xFFFF;
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	DoPartitionIo(dsk,write,offset,count,buffer)
+ * PARAMETER
+ *	dsk		disk to access
+ *	write		TRUE: write, FALSE: read
+ *	offset		offset in partition
+ *	count		how may sectors?
+ *	buffer		data to write, read
+ *
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Read/Writes sectors inside a VRAID partition.
+ *
+ * REMARKS
+ */
+PRIVATE APIRET
+DoPartitionIo(PDSKINFO const dsk,BOOL write,ULONG offset,ULONG count,PVOID buffer)
+{
+    APIRET	rc;
+    USHORT	i;
+
+    if( dsk == NULL )
+	return (write == TRUE ? 0 : 0xFFFF);	/* I/O to missing child, OK? */
+
+    switch( dsk->acc )
+    {
+      case DSKACC_OS2:
+	offset += dsk->kind.physical.partstart;
+	if( write )
+	    rc = PDskWrite(dsk->access.os2.hd, offset, count, buffer);
+	else
+	    rc = PDskRead(dsk->access.os2.hd, offset, count, buffer);
+	break;
+
+      case DSKACC_FLT:
+        {
+	    PUCHAR	p = (PUCHAR)buffer;
+
+	    for( i = 0; i < count; ++i, p += SECTOR_SIZE )
+	    {
+		rc = DriverPhysIO(dsk->access.flt.hd, write, offset+i, buffer);
+		if( rc != 0 )
+		    break;
+	    }
+	}
+	break;
+
+	/* I/O to virtual device. */
+      case DSKACC_NONE:
+	rc = 0;
+	for( i = 0; i < dsk->kind.vrd.childs; ++i )
+	    rc |= DoPartitionIo(dsk->kind.vrd.child[i], write,
+				offset+1, count, buffer);
+	break;
+
+      default:
+	rc = 0xFFFF;
+	break;
+    }
+
+    return rc;
+}
+
+
+
+d192 1
+a192 1
+QueryArrayInfo(DEVID const array_devid)
+d248 1
+a248 17
+	    work->apDskInfo[idx] = new DSKINFO;
+	    memset(work->apDskInfo[idx], 0, sizeof(DSKINFO));
+
+	    work->apDskInfo[idx]->acc = DSKACC_FLT;
+	    work->apDskInfo[idx]->access.flt.hd = list[i];
+
+	    /* Some informations may be nice. */
+
+	    rc = DriverPhysinfo(work->apDskInfo[idx]->access.flt.hd,
+				&work->apDskInfo[idx]->access.flt.partsize);
+	    if( rc != 0 )
+	    {
+		Verbose(1, "DrvSetup", "DriverPhysinfo(%#x) - rc %lu",
+			work->apDskInfo[idx]->access.flt.hd, rc);
+		delete work->apDskInfo[idx],	work->apDskInfo[idx] = NULL;
+		continue;
+	    }
+d253 1
+a253 6
+		    work->apDskInfo[idx]->access.flt.partsize / 2 / 1024);
+
+
+	    /* Assume this device may be changed by VSETUP.  Only
+	     * 'DSKACC_OS2' or top-level 'DSKACC_NONE' structures
+	     * should get a 'avail = 0'. */
+a254 1
+	    work->apDskInfo[idx]->writable = 1;
+d332 1
+a332 1
+    else
+d334 1
+a334 4
+	for( i = 0; i < os2cnt; ++i )
+	{
+	    PDSKINFO newdsk = new DSKINFO;
+	    memset(newdsk, 0, sizeof(*newdsk));
+a335 11
+	    newdsk->acc = DSKACC_OS2;
+	    newdsk->access.os2.os2idx = i;
+	    rc = PDskOpen(i, &newdsk->access.os2.hd);
+	    if( rc != 0 )
+	    {
+		Verbose(1, "DrvScan", "PDskOpen(%lu) - rc %lu", i, rc);
+		delete newdsk;
+		continue;
+	    }
+	    Verbose(3, "DrvScan", "======== Disk %lu, handle %lu ========",
+		    i, newdsk->access.os2.hd);
+d337 7
+d345 7
+a351 3
+	    /* And please, don't disturb us.  If it isn't possible
+	     * to do a PDskLock(), assume that a filesystem uses a
+	     * partition on this device and flag it as 'not avail'. */
+d353 1
+a353 2
+	    rc = PDskLock(newdsk->access.os2.hd);
+	    if( rc != 0 )
+d355 2
+a356 6
+		Verbose(2, "DrvScan", "PDskLock(%lu) - rc %lu", i, rc);
+		newdsk->writable = 0;
+	    }
+	    else
+	    {
+		/* We got this far: device is changable! */
+d358 1
+a358 2
+		newdsk->writable = 1;
+	    }
+d360 1
+a360 18
+
+	    /* Try to determine whether this device is provided by
+	     * VRAID.FLT.  Do this by reading some sectors and comparing
+	     * VRAID's request counters before and after the reading.
+	     * OBS: as we live in the multitasking world some other
+	     * process may by writing to a disk while we are don¡ng
+	     * this stuff.  It's ugly but can't be detected for sure.
+	     * Just do some consistency checks and retry if they fail. */
+
+	    if( arraycnt != 0 )
+	    {
+		UCHAR		* dummybuffer = new UCHAR[SECTOR_SIZE];
+		VRAID_ARRAYINFO_DATA	this_array_info;
+		unsigned	flt_changes = 0;
+		USHORT		accessed_array;
+		unsigned	retry;
+
+		for( retry = 0; retry < 3; ++retry )
+d362 3
+a364 6
+		    for( j = 0; j < arraycnt; ++j )
+			DriverArrayinfo(arrayhd[j], arrayinfo[j]);
+
+		    rc = PDskRead(newdsk->access.os2.hd, 0, 1, dummybuffer);
+
+		    for( j = 0; j < arraycnt; ++j )
+d366 2
+a367 7
+			rc = DriverArrayinfo(arrayhd[j], &this_array_info);
+			if( rc == 0
+			    &&  this_array_info.reqcnt > arrayinfo[j]->reqcnt )
+			{
+			    ++flt_changes;
+			    accessed_array = j;
+			}
+a368 3
+		    if( flt_changes == 0  ||  flt_changes == 1 )
+			break;
+		    DosSleep(1000);		/* wait for peace :-) */
+d370 4
+d375 1
+a375 1
+		delete[] dummybuffer;
+d377 4
+a380 16
+		if( flt_changes == 1 )
+		{
+		    /* This OS/2 device is an array!  Remove any
+		     * traces and skip to the next OS/2 device. */
+
+		    SetArrayInfo(arrayinfo[accessed_array]->id, i, newdsk->writable);
+		    PDskUnlock(newdsk->access.os2.hd);
+		    PDskClose(newdsk->access.os2.hd);
+		    delete newdsk;
+		    continue;
+		}
+	    } /* end[if arraycnt != 0] */
+
+
+	    /* Some informations may be nice: request/save DEVICEPARAMETERS
+	     * (heads, sectors).  This is used when creating partitions. */
+d382 3
+a384 7
+	    rc = PDskQueryParam(newdsk->access.os2.hd, &newdsk->access.os2.dp);
+	    if( rc != 0 )
+	    {
+		Verbose(1, "DrvSetup", "PDskQueryParam(%lu) - rc %lu", i, rc);
+		PDskUnlock(newdsk->access.os2.hd);
+		PDskClose(newdsk->access.os2.hd);
+		delete newdsk;
+d387 1
+a388 11
+	    newdsk->size = (ULONG)newdsk->access.os2.dp.cSectorsPerTrack
+		* newdsk->access.os2.dp.cHeads
+		* (ULONG)newdsk->access.os2.dp.cCylinders;
+
+	    Verbose(3, "DrvSetup", "physical drive parameters:");
+	    Verbose(3, "DrvSetup", "Cylinders: %d, Heads: %d, Sectors/Track: %d",
+		    newdsk->access.os2.dp.cCylinders,
+		    newdsk->access.os2.dp.cHeads,
+		    newdsk->access.os2.dp.cSectorsPerTrack);
+	    Verbose(3, "DrvSetup", "drive capacity: %lu MBytes",
+		    newdsk->size / 2 / 1024u);
+d390 1
+d392 2
+a393 1
+	    /* Keep this device: enter in table and increase counter. */
+d395 1
+a395 2
+	    work->apDskInfo[work->cDskInfo] = newdsk;
+	    ++work->cDskInfo;
+a396 2
+	} /* end[while(every device)] */
+    }
+d426 1
+d432 2
+a433 2
+    PDSKINFO const	dsk = work->apDskInfo[dskidx];
+    USHORT		crc;
+a448 1
+	PDSKINFO	newdsk = new DSKINFO;
+d450 1
+d452 4
+a455 17
+	memset(newdsk, 0, sizeof(DSKINFO));
+
+	newdsk->acc = DSKACC_NONE;
+	newdsk->type = sec->u.s.type;
+	newdsk->writable = 1;			/* assume 'changable' */
+	memcpy(newdsk->id, sec->u.s.id, sizeof(DEVID));
+	newdsk->kind.vrd.childs = sec->u.s.childs;
+
+	/* Calculate drive size. */
+
+	switch( newdsk->type )
+	{
+	  case DSKTYPE_CHAIN:
+	  case DSKTYPE_STRIPE:
+	    newdsk->size = 0;
+	    for( j = 0; j < sec->u.s.childs; ++j )
+		newdsk->size += sec->u.s.child[j].size;
+d458 2
+a459 2
+	  case DSKTYPE_SINGLE:
+	    newdsk->size = sec->u.s.child[0].size;
+d462 2
+a463 2
+	  default:
+	    newdsk->size = 0;
+d467 1
+d470 4
+a473 1
+	for( j = 0; j < newdsk->kind.vrd.childs; ++j )
+d477 1
+a477 1
+		    continue;		/* skip empty entry */
+d479 1
+a479 1
+		if( memcmp(work->apDskInfo[k]->id,
+d482 2
+a483 12
+		    /* Set double link between child and parent. */
+
+		    newdsk->kind.vrd.child[j] = work->apDskInfo[k];
+		    work->apDskInfo[k]->parent = newdsk;
+
+
+		    /* Pass any 'not available' condition to
+		     * parent: we can't modify a parent if we
+		     * can't write to any of it's childs! */
+
+		    if( work->apDskInfo[k]->writable == 0 )
+			newdsk->writable = 0;
+d485 2
+a486 4
+
+		    /* Remove child from search table as it may
+		     * not be child of two parents.  Any leave
+		     * search loop for this child. */
+d492 3
+d496 1
+a496 1
+	if( (sec->u.s.flags & 0x80) )
+d500 1
+a500 1
+	    struct _OS2DEVID * const info = QueryArrayInfo(newdsk->id);
+d505 2
+a506 3
+		    newdsk->writable = 0;
+		newdsk->access.none.os2_may_access = 1;
+		newdsk->access.none.os2idx = info->os2idx;
+d508 3
+a510 1
+	    work->apEndPts[work->cEndPts++] = newdsk;
+d513 1
+a513 1
+	    work->apDskInfo[work->cDskInfo++] = newdsk;
+d538 7
+a544 2
+    PDSKINFO const	dsk = work->apDskInfo[dskidx];
+    USHORT		crc;
+d550 1
+a550 1
+		crc,sec->crc);
+d561 2
+a562 18
+	USHORT		j, k;
+
+	PDSKINFO	newdsk = new DSKINFO;
+	memset(newdsk, 0, sizeof(DSKINFO));
+
+	newdsk->acc = DSKACC_NONE;
+	newdsk->type = sec->u.s.type;
+	newdsk->writable = 1;			/* assume 'changable' */
+	memcpy(newdsk->id, sec->u.s.id, sizeof(DEVID));
+
+	if( (sec->u.s.flags & RDFLAG_BUILDING) )
+	    newdsk->kind.vrd.build_nextb = sec->u.s.bdone;
+	else
+	    newdsk->kind.vrd.build_nextb = (ULONG)-1;
+
+	newdsk->kind.vrd.childs = sec->u.s.childs;
+
+	/* Calculate drive size. */
+d564 1
+a564 1
+	switch( newdsk->type )
+d567 3
+a569 5
+	    newdsk->size = sec->u.s.child[0].size;
+	    break;
+
+	  default:
+	    newdsk->size = 0;
+d575 4
+a578 1
+	for( j = 0; j < newdsk->kind.vrd.childs; ++j )
+d582 1
+a582 1
+		    continue;		/* skip empty entry */
+d584 1
+a584 1
+		if( memcmp(work->apDskInfo[k]->id,
+d587 4
+a590 9
+		    /* Set double link between child and parent. */
+
+		    newdsk->kind.vrd.child[j] = work->apDskInfo[k];
+		    work->apDskInfo[k]->parent = newdsk;
+
+
+		    /* Pass any 'not available' condition to
+		     * parent: we can't modify a paren if we
+		     * can't write to any of it's childs! */
+d592 2
+a593 12
+		    if( work->apDskInfo[k]->writable == 0 )
+			newdsk->writable = 0;
+
+		    /* There may be a child which isn't uptodate,
+		     * remember in newdsk. */
+
+		    if( (sec->u.s.child[j].flags & 0x01) == 0 )
+			newdsk->kind.vrd.child_needs_build[j] = 1;
+
+		    /* Remove child from search table as it may
+		     * not be child of two parents.  And leave
+		     * search loop for this child: we found it. */
+d599 3
+d607 1
+a607 1
+	    struct _OS2DEVID * const info = QueryArrayInfo(newdsk->id);
+d612 2
+a613 3
+		    newdsk->writable = 0;
+		newdsk->access.none.os2_may_access = 1;
+		newdsk->access.none.os2idx = info->os2idx;
+d615 3
+a617 1
+	    work->apEndPts[work->cEndPts++] = newdsk;
+d620 1
+a620 1
+	    work->apDskInfo[work->cDskInfo++] = newdsk;
+d622 1
+d624 1
+a651 5
+    if( buffer == NULL )
+    {
+	Verbose(0, "DrvScan", "memory problem");
+	return /*ERROR_NOT_ENOUGH_MEMORY*/;
+    }
+d653 1
+a653 1
+    /* Check 'work->apDskInfo[]': there may be entries of
+d658 1
+a658 1
+    for( i = 0; i < work->cDskInfo; ++i )
+d660 1
+a660 2
+	if( (work->apDskInfo[i]->acc == DSKACC_OS2
+	     &&  work->apDskInfo[i]->writable == 0) )
+d662 3
+a664 2
+	    work->apEndPts[work->cEndPts++] = work->apDskInfo[i];
+	    work->apDskInfo[i] = NULL;
+d669 2
+a670 1
+    /* Read partition table of every device. */
+d672 1
+a672 1
+    for( i = 0; i < work->cDskInfo; ++i )
+d674 2
+a675 1
+	PDSKINFO const	dsk = work->apDskInfo[i];
+a678 2
+	if( dsk->acc == DSKACC_FLT )
+	    continue;				/* skip: no partition table */
+d680 1
+a680 7
+	rc = DoAbsIo(dsk, FALSE, 0, 1, buffer);
+	if( rc != 0 )
+	{
+	    Verbose(1, "DrvScan", "DoAbsIo - rc %lu, device ignored", rc);
+	    delete work->apDskInfo[i],	work->apDskInfo[i] = NULL;
+	    continue;
+	}
+d682 1
+a682 3
+	{
+	    PMBR	sec = (PMBR)buffer;
+	    int		j;
+d684 4
+a687 2
+	    if( sec->Signature == 0xAA55 )
+		for( j = 0; j < 4; ++j )
+d689 3
+a691 8
+		    if( sec->PartitionTable[j].SysIndicator == VRAID_PARTTYPE )
+		    {
+			dsk->kind.physical.partstart
+			    = sec->PartitionTable[j].RelativeSectors;
+			dsk->kind.physical.partsize
+			    = sec->PartitionTable[j].NumSectors;
+			break;
+		    }
+a692 6
+	    if( dsk->kind.physical.partstart == 0 )
+	    {
+		Verbose(2, "DrvScan", "no VRAID partition on drive %u", i);
+		work->apEndPts[work->cEndPts++] = dsk;
+		work->apDskInfo[i] = NULL;
+		continue;
+d694 1
+a694 16
+	}
+    }
+
+    /* Read PHYSDEV sector on every remaining device. */
+
+    for( i = 0; i < work->cDskInfo; ++i )
+    {
+	PDSKINFO const		dsk = work->apDskInfo[i];
+	PSEC_PHYSDEV const	sec = (PSEC_PHYSDEV)buffer;
+	USHORT			crc;
+
+	if( dsk == NULL )
+	    continue;				/* skip empty entry */
+
+	rc = DoPartitionIo(dsk, FALSE, 0, 1, buffer);
+	if( rc != 0 )
+d696 1
+a696 4
+	    Verbose(1, "DrvScan", "DoPartitionIo - rc %lu, device ignored", rc);
+	    delete work->apDskInfo[i],	work->apDskInfo[i] = NULL;
+	    continue;
+	}
+d698 2
+a699 5
+	if( memcmp(sec->sectype, "PHYSDEVICE      ", 16) != 0 )
+	{
+	    Verbose(1, "DrvScan", "missing PHYSDEV mark");
+	    dsk->type = DSKTYPE_NONE;
+	    work->apEndPts[work->cEndPts++] = dsk;
+a700 1
+	    continue;
+d702 1
+a702 3
+
+	crc = Crc16(buffer, SECTOR_SIZE-2);
+	if( crc != sec->crc )
+d704 3
+a706 6
+	    Verbose(1, "DrvScan", "CRC error in PHYSDEV sector (%#x, %#x)",
+		    crc,sec->crc);
+	    dsk->type = DSKTYPE_NONE;
+	    work->apEndPts[work->cEndPts++] = dsk;
+	    work->apDskInfo[i] = NULL;
+	    continue;
+d708 2
+a709 5
+	memcpy(dsk->id, sec->u.s.id, sizeof(DEVID));
+	dsk->type = DSKTYPE_PDEV;
+	dsk->size = sec->u.s.size;
+	assert( dsk->size <= dsk->kind.physical.partsize - sec->u.s.adminspace );
+    } /* for(every device in info[]) */
+d728 1
+a728 1
+	    PDSKINFO const	dsk = work->apDskInfo[i];
+d730 1
+a730 1
+	    if( dsk == NULL )
+d733 1
+a733 1
+	    rc = DoPartitionIo(dsk, FALSE, 1, 1, buffer);
+d753 1
+a753 1
+		work->apEndPts[work->cEndPts++] = dsk;
+a766 1
+
+d769 1
+a769 1
+ *	CreatePartition(hwnd,dsk,buffer)
+d772 1
+a772 1
+ *	dsk		create on this device
+d774 1
+d779 2
+a780 1
+ *	Update bootsector according to 'dsk' structure.
+d789 1
+a789 1
+CreatePartition(HWND hwnd,PDSKINFO const dsk,PVOID buffer)
+d791 1
+a791 1
+    PMBR const	mbr = (PMBR)buffer;
+d800 1
+a800 1
+	rc = DoAbsIo(dsk, FALSE, 0, 1, buffer);
+a801 2
+	{
+	    Verbose(1, "DrvScan", "DoAbsIo - rc %u, cannot read MBR", rc);
+a802 1
+	}
+d829 3
+d845 2
+a846 5
+	    info.area[0].start = dsk->access.os2.dp.cSectorsPerTrack;
+	    info.area[0].size = dsk->access.os2.dp.cSectorsPerTrack
+		* dsk->access.os2.dp.cHeads
+		* dsk->access.os2.dp.cCylinders
+		- info.area[0].start;
+d851 2
+a852 3
+	    ULONG const	dsksize = dsk->access.os2.dp.cSectorsPerTrack
+		* dsk->access.os2.dp.cHeads
+		* dsk->access.os2.dp.cCylinders;
+d857 2
+a858 3
+	    info.area[0].start = dsk->access.os2.dp.cSectorsPerTrack;
+	    for( ul = dsk->access.os2.dp.cSectorsPerTrack;
+		 ul < dsksize; ++ul )
+d911 3
+a913 3
+	    ULONG const	tracksize = (dsk->access.os2.dp.cHeads
+				     * dsk->access.os2.dp.cSectorsPerTrack);
+	    ULONG	ul;
+d915 2
+a916 4
+	    if( info.area[info.cnt].start == dsk->access.os2.dp.cSectorsPerTrack )
+		ul = info.area[info.cnt].size + dsk->access.os2.dp.cSectorsPerTrack;
+	    else
+		ul = info.area[info.cnt].size;
+d921 1
+a921 1
+		= info.area[info.cnt].start % dsk->access.os2.dp.cSectorsPerTrack;
+d926 2
+a927 2
+	    mbr->PartitionTable[free].EndHead = dsk->access.os2.dp.cHeads - 1;
+	    mbr->PartitionTable[free].EndSector =dsk->access.os2.dp.cSectorsPerTrack;
+d934 1
+a934 76
+	rc = DoAbsIo(dsk, TRUE, 0, 1, buffer);
+	if( rc != 0 )
+	{
+	    Verbose(1, "DrvScan", "DoAbsIo - rc %lu, cannot write MBR",rc);
+	    break;
+	}
+
+	/* Update DSKINFO structure as last step. */
+
+	dsk->kind.physical.partstart = info.area[info.cnt].start;
+	dsk->kind.physical.partsize = info.area[info.cnt].size;
+	dsk->size = dsk->kind.physical.partsize; /* do we need this? */
+    }
+    while(0);
+
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	RemovePartition(dsk,buffer)
+ * PARAMETER
+ *	dsk		create on this device
+ *	buffer		512 byte buffer
+ *
+ * RETURNS
+ *	APIRET
+ *
+ * DESCRIPTION
+ *	Remove VRAID partition from bootsector.
+ *
+ * REMARKS
+ */
+PRIVATE APIRET
+RemovePartition(PDSKINFO const dsk,PVOID buffer)
+{
+    PMBR const	mbr = (PMBR)buffer;
+    int		found = -1;			/* indices */
+    int		i;
+    APIRET	rc;
+
+    do
+    {
+	rc = DoAbsIo(dsk, FALSE, 0, 1, buffer);
+	if( rc != 0 )
+	{
+	    Verbose(1, "DrvScan", "DoAbsIo - rc %u, cannot read MBR", rc);
+	    break;
+	}
+
+	if( mbr->Signature != 0xAA55 )
+	{
+	    Verbose(1, "DrvScan", "invalid MBR, done");
+	    break;				/* rc still 0 */
+	}
+
+	for( i = 0; i < 4; ++i )
+	{
+	    if( mbr->PartitionTable[i].SysIndicator == VRAID_PARTTYPE )
+	    {
+		memset(&mbr->PartitionTable[i], 0, sizeof(mbr->PartitionTable[i]));
+		found = i;
+		break;
+	    }
+	}
+
+	if( found == -1 )
+	{
+	    Verbose(0, "DrvScan", "no VRAID partition, done");
+	    break;				/* rc still 0 */
+	}
+
+	rc = DoAbsIo(dsk, TRUE, 0, 1, buffer);
+a935 2
+	{
+	    Verbose(1, "DrvScan", "DoAbsIo - rc %u, cannot writeMBR", rc);
+a936 38
+	}
+
+	/* Update DSKINFO structure as last step. */
+
+	dsk->kind.physical.partstart = 0;
+	dsk->kind.physical.partsize = 0;
+	dsk->type = DSKTYPE_NONE;
+    }
+    while(0);
+
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	UpdatePhys(dsk,buffer)
+ * PARAMETER
+ *	dsk
+ *	buffer		512 bytes free
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	'dsk' has been changed -> updte physical storage.
+ *
+ * REMARKS
+ *	Uses global 'usHostId' to build a device ID.
+ */
+PRIVATE APIRET
+UpdatePhys(PDSKINFO dsk,PVOID buffer)
+{
+    PSEC_PHYSDEV	sec = (PSEC_PHYSDEV)buffer;
+    int		modified = 0;
+    APIRET	rc;
+a937 6
+    rc = DoPartitionIo(dsk, FALSE, 0, 1, buffer);
+    if( rc )
+    {
+	Verbose(1, "DrvScan", "DoPartitionIo - rc %lu, not updated", rc);
+	return rc;
+    }
+d939 1
+a939 18
+    if( memcmp(sec->sectype, "PHYSDEVICE      ", 16) != 0
+	||  Crc16(buffer, SECTOR_SIZE-2) != sec->crc )
+    {
+	Verbose(1, "DrvScan", "new PHYSDEV sector");
+	++modified;
+	memset(sec, 0, sizeof(*sec));
+	memcpy(sec->sectype, "PHYSDEVICE      ", 16);
+
+	memcpy(dsk->id, &usHostId, sizeof(usHostId));
+	*(PULONG)&dsk->id[2] = time(NULL);
+	memcpy(sec->u.s.id, dsk->id, sizeof(DEVID));
+
+	sec->u.s.adminspace = VRAID_ADMINSECTORS;
+	dsk->size = sec->u.s.size = (dsk->kind.physical.partsize
+				     - sec->u.s.adminspace);
+    }
+    else
+	memcpy(dsk->id, sec->u.s.id, sizeof(DEVID));
+d941 2
+a942 68
+    if( dsk->size != sec->u.s.size )
+    {
+	++modified;
+	sec->u.s.size = dsk->size;
+    }
+
+    if( modified )
+    {
+	sec->timestamp = time(NULL);
+	sec->crc = Crc16(buffer, SECTOR_SIZE-2);
+	rc = DoPartitionIo(dsk, TRUE, 0, 1, buffer);
+	if( rc )
+	{
+	    Verbose(1, "DrvScan", "DoPartitionIo - rc %lu, not updated", rc);
+	    return rc;
+	}
+    }
+
+    if( rc == 0  &&  dsk->type == DSKTYPE_NONE )
+	dsk->type = DSKTYPE_PDEV;		/* still NONE? Now: PDEV */
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	CreatePhysdev(hwnd,dsk)
+ * PARAMETER
+ *	hwnd		to used for dialogs
+ *	dsk		create on this device
+ *
+ * RETURNS
+ *	0		OK
+ *
+ * DESCRIPTION
+ *	This device isn't a PHYSDEVICE so far.  So are two
+ *	possible reasons:
+ *	1. No VRAID partition
+ *	2. VRAID partition but no PHYSDEVICE sector.
+ *	Handle both!
+ *
+ * REMARKS
+ */
+PRIVATE APIRET
+CreatePhysdev(HWND hwnd,PDSKINFO const dsk)
+{
+    PUCHAR	buffer = new UCHAR[SECTOR_SIZE];
+    APIRET	rc = 0;
+
+    assert(dsk->acc != DSKACC_NONE);
+    assert(dsk->type == DSKTYPE_NONE);
+    if( buffer == NULL )
+    {
+	Verbose(0, "DrvScan", "memory problem");
+	return ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    do
+    {
+	if( dsk->kind.physical.partsize == 0 )
+	{
+	    rc = CreatePartition(hwnd, dsk, buffer);
+	    if( rc != 0 )
+		break;
+	}
+	rc = UpdatePhys(dsk, buffer);
+a951 258
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	DeletePhysdev(hwnd,dsk)
+ * PARAMETER
+ *	hwnd		to used for dialogs
+ *	dsk		remove PHYSDEV from this device
+ *
+ * RETURNS
+ *	0		OK
+ *
+ * DESCRIPTION
+ *	This device is a PHYSDEVICE so far.  Delete PHYSDEV
+ *	sector and VRAID parttion.
+ *	Keep 'dsk' as DSKTYPE_NONE.
+ *
+ * REMARKS
+ */
+PRIVATE APIRET
+DeletePhysdev(HWND hwnd,PDSKINFO const dsk)
+{
+    PUCHAR	buffer = new UCHAR[SECTOR_SIZE];
+    APIRET	rc = 0;
+
+    assert(dsk->acc != DSKACC_NONE);
+    assert(dsk->type == DSKTYPE_PDEV);
+    if( buffer == NULL )
+    {
+	Verbose(0, "DrvScan", "memory problem");
+	return ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    memset(buffer, 0, SECTOR_SIZE);
+    rc = DoPartitionIo(dsk, TRUE, 0, 1, buffer); /* clear PHYSDEV sector */
+    rc = RemovePartition(dsk, buffer);
+
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	UpdateDsklayout(dsk)
+ * PARAMETER
+ *	dsk
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	'dsk' has been changed by the user -> update physical storage.
+ *
+ * REMARKS
+ */
+PRIVATE VOID
+UpdateDsklayout(PDSKINFO dsk)
+{
+    PUCHAR	buffer = new UCHAR[SECTOR_SIZE];
+    USHORT	i;
+    ULONG	ul;
+
+
+    if( dsk->acc == DSKACC_NONE )		/* virtual drive? */
+    {
+	PSEC_VRDEV	sec = (PSEC_VRDEV)buffer;
+
+	/* First: fill configuration sector of current level. */
+
+	memset(sec, 0, sizeof(*sec));
+	memcpy(sec->sectype, "VRAIDDEVICE     ", 16);
+	sec->timestamp = time(NULL);
+
+	memcpy(dsk->id, &usHostId, sizeof(usHostId));
+	*(PULONG)&dsk->id[2] = time(NULL);
+	memcpy(sec->u.s.id, dsk->id, sizeof(DEVID));
+
+	sec->u.s.type = dsk->type;
+	sec->u.s.flags = (dsk->parent != 0 ? 0 : 0x80);
+
+	sec->u.s.childs = dsk->kind.vrd.childs;
+
+	/* 2nd: recalculate drive size, correct size of childs.
+	 * The current values were only wild guesses. */
+
+	switch( dsk->type )
+	{
+	  case DSKTYPE_SINGLE:
+	    dsk->size = dsk->kind.vrd.child[0]->size;
+	    sec->u.s.child[0].size = dsk->kind.vrd.child[0]->size;
+	    break;
+
+	  case DSKTYPE_CHAIN:
+	    dsk->size = 0;
+	    for( i = 0; i < dsk->kind.vrd.childs; ++i )
+	    {
+		dsk->size += dsk->kind.vrd.child[i]->size;
+		sec->u.s.child[i].size = dsk->kind.vrd.child[i]->size;
+	    }
+	    break;
+
+	  case DSKTYPE_STRIPE:
+	    dsk->size = 0;
+	    ul = ULONG_MAX;
+	    for( i = 0; i < dsk->kind.vrd.childs; ++i )
+	    {
+		ul = min(ul,dsk->kind.vrd.child[i]->size);
+	    }
+	    for( i = 0; i < dsk->kind.vrd.childs; ++i )
+	    {
+		sec->u.s.child[i].size = ul;
+		dsk->size += ul;
+	    }
+	    break;
+
+	  case DSKTYPE_MIRROR:
+	    ul = ULONG_MAX;
+	    for( i = 0; i < dsk->kind.vrd.childs; ++i )
+	    {
+		ul = min(ul,dsk->kind.vrd.child[i]->size);
+	    }
+	    for( i = 0; i < dsk->kind.vrd.childs; ++i )
+	    {
+		sec->u.s.child[i].size = ul;
+	    }
+	    dsk->size = ul;
+	    break;
+
+	  case DSKTYPE_RAID4:
+	  case DSKTYPE_RAID5:
+	  default:
+	    assert(0);
+	    break;
+	}
+
+	/* 3rd: update all childs and record their IDs. */
+
+	for( i = 0; i < dsk->kind.vrd.childs; ++i )
+	{
+	    UpdateDsklayout(dsk->kind.vrd.child[i]);
+	    memcpy(sec->u.s.child[i].id,
+		   dsk->kind.vrd.child[i]->id, sizeof(DEVID));
+	}
+
+	/* Last: write administrative sector of current level. */
+
+	sec->crc = Crc16(buffer, SECTOR_SIZE-2);
+	DoPartitionIo(dsk, TRUE, 0, 1, buffer);
+    } /* end[if(DSKACC_NONE)] */
+    else
+    {
+	/* This is a device with direct relation to a physical device.
+	 * Verify/write PHYSDEVICE sector. */
+
+	UpdatePhys(dsk, buffer);
+    }
+
+    delete[] buffer;
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	RemoveDrive(dsk)
+ * PARAMETER
+ *	dsk
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Remove any traces of PHYSDSK dsk from physical storage.
+ *
+ * REMARKS
+ */
+PRIVATE VOID
+RemoveDrive(PDSKINFO dsk)
+{
+    PUCHAR	buffer = new UCHAR[SECTOR_SIZE];
+    USHORT	i;
+    ULONG	ul;
+
+    if( buffer == NULL )
+    {
+	Verbose(0, "DrvScan", "memory problem");
+	return /*ERROR_NOT_ENOUGH_MEMORY*/;
+    }
+
+    assert( dsk->acc == DSKACC_NONE );
+
+    /* 1st: update all childs (parent removed -> marked in sector) */
+
+    for( i = 0; i < dsk->kind.vrd.childs; ++i )
+    {
+	PDSKINFO	child = dsk->kind.vrd.child[i];
+
+	if( child != NULL )
+	{
+	    dsk->kind.vrd.child[i]->parent = NULL;
+	    UpdateDsklayout(dsk->kind.vrd.child[i]);
+	}
+    }
+
+    /* Last: clear administrative sector of current level. */
+
+    memset(buffer, 0, SECTOR_SIZE);
+    DoPartitionIo(dsk, TRUE, 1, 1, buffer);
+
+    delete[] buffer;
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	FreeDevice(dsk)
+ * PARAMETER
+ *	dsk
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Free device[-tree] and release it's resources.
+ *
+ * REMARKS
+ */
+PRIVATE void
+FreeDevice(PDSKINFO dsk)
+{
+    APIRET	rc;
+    ULONG	i;
+
+    Verbose(3, "DrvScan", "FreeDevice");
+
+    if( dsk->acc == DSKACC_NONE )
+	delete dsk;
+    else if( dsk->acc == DSKACC_FLT )		/* via driver */
+        delete dsk;
+    else if( dsk->acc == DSKACC_OS2 )
+    {
+	rc = PDskUnlock(dsk->access.os2.hd);
+	if( rc != 0 )
+	    Verbose(0, "DrvSetup", "PDskUnlock - rc %lu", rc);
+
+	rc = PDskClose(dsk->access.os2.hd);
+	delete dsk;
+    }
+
+    return;
+}
+
+
+
+
+d1022 1
+a1022 1
+		PDSKINFO const	dsk = work->apEndPts[i];
+d1024 1
+a1024 1
+		WinPostMsg(work->self->parent, WUM_DEVTREE, dsk, MPFROMHWND(hwnd));
+d1036 3
+a1038 1
+	    PDSKINFO	dsk = (PDSKINFO)PVOIDFROMMP(mp1);
+d1040 8
+a1047 2
+	    CreatePhysdev(hwnd, dsk);
+	    WinPostMsg(work->self->parent, WUM_DEVTREE, dsk, MPFROMHWND(hwnd));
+d1054 5
+d1063 5
+a1067 1
+	    PDSKINFO	dsk = (PDSKINFO)PVOIDFROMMP(mp1);
+d1069 2
+a1070 2
+	    DeletePhysdev(hwnd, dsk);
+	    WinPostMsg(work->self->parent, WUM_DEVTREE, dsk, MPFROMHWND(hwnd));
+d1086 1
+a1086 1
+	    PDSKINFO	dsk = (PDSKINFO)PVOIDFROMMP(mp1);
+d1088 2
+a1089 2
+	    UpdateDsklayout(dsk);		/* write to disk[s] */
+	    WinPostMsg(work->self->parent, WUM_DEVTREE, dsk, MPFROMHWND(hwnd));
+d1101 3
+a1103 3
+	    PDSKINFO	dsk = (PDSKINFO)PVOIDFROMMP(mp1);
+
+	    RemoveDrive(dsk);
+d1110 1
+a1110 1
+	 *	A device isn't need anymore.
+d1115 2
+a1116 3
+	    PDSKINFO	dsk = (PDSKINFO)PVOIDFROMMP(mp1);
+
+	    FreeDevice(dsk);
+d1172 5
+a1176 2
+	work->apDskInfo = new PDSKINFO[MAXDRIVES];
+	memset(work->apDskInfo, 0, MAXDRIVES * sizeof(PDSKINFO));
+d1178 1
+a1178 1
+	work->apEndPts = new PDSKINFO[MAXDRIVES];
+@
+
+
+1.9
+log
+@- changed as global headers moved to /source/Lib
+- AllocateOs2Devices: detects which OS/2 devices are VRAID drives
+  and skips those devices
+- BuildDevTree: detects which array drives are used by OS/2 (see
+  AllocateOs2Devices) and forwards OS/2 device's flags to array drive
+- removed -*- beta -*- message, no longer true
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1998/11/21 20:05:16 $
+d10 8
+d57 2
+a58 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+d60 1
+a60 1
+static char const vcid[]="$Id: drvscan.c,v 1.8 1998/11/21 20:05:16 vitus Exp vitus $";
+d69 1
+d77 1
+d82 1
+d204 1
+a204 1
+	    PUCHAR	p = buffer;
+d218 3
+a220 3
+	for( i = 0; i < dsk->kind.virtual.childs; ++i )
+	    rc |= DoPartitionIo(dsk->kind.virtual.child[i], write,
+			     offset+1, count, buffer);
+d246 1
+a246 1
+ *	Stores some information got while scanning OS/2 devices on to
+d345 1
+a345 5
+	    if( (work->apDskInfo[idx] = malloc(sizeof(DSKINFO))) == NULL )
+	    {
+		Verbose(0, "DrvScan", "memory problem");
+		break;
+	    }
+d359 1
+a359 1
+		free(work->apDskInfo[idx]),	work->apDskInfo[idx] = NULL;
+d373 1
+a373 1
+	    work->apDskInfo[idx]->avail = 1;
+a408 1
+    PVOID		dummybuffer;
+d430 2
+a431 7
+	    arrayinfo = malloc(arraycnt * sizeof(PVRAID_ARRAYINFO_DATA));
+	    if( arrayinfo == NULL )
+	    {
+		Verbose(0, "DrvScan", "memory problem");
+		arraycnt = 0;
+		break;
+	    }
+d434 1
+a434 1
+		arrayinfo[j] = malloc(sizeof(VRAID_ARRAYINFO_DATA));
+a441 14
+	if( arraycnt != 0 )
+	{
+	    dummybuffer = malloc(SECTOR_SIZE);
+	    if( dummybuffer == NULL )
+	    {
+		/* This is a really bad situation: we
+		 * have all data to access all array drives but
+		 * we don't have a buffer fot I/Os to OS/2 devices.
+		 * What to do?  Ignore annay array info, it's
+		 * better to loose memory than to generate SYS3175 */
+
+		arraycnt = 0;
+	    }
+	}
+d455 1
+a455 7
+	    PDSKINFO const	newdsk = malloc(sizeof(*newdsk));
+
+	    if( newdsk == NULL )
+	    {
+		Verbose(0, "DrvScan", "memory problem");
+		break;
+	    }
+d464 1
+a464 1
+		free(newdsk);
+d479 1
+a479 1
+		newdsk->avail = 0;
+d485 1
+a485 1
+		newdsk->avail = 1;
+d499 1
+d527 2
+d534 1
+a534 1
+		    SetArrayInfo(arrayinfo[accessed_array]->id, i, newdsk->avail);
+d537 1
+a537 1
+		    free(newdsk);
+d552 1
+a552 1
+		free(newdsk);
+a580 1
+	free(dummybuffer);
+d582 2
+a583 2
+	    free(arrayinfo[j]);
+	free(arrayinfo);
+d592 252
+d862 1
+a862 1
+    PUCHAR	buffer = malloc(SECTOR_SIZE);
+d880 1
+a880 1
+	     &&  work->apDskInfo[i]->avail == 0) )
+d903 1
+a903 1
+	    free(work->apDskInfo[i]),	work->apDskInfo[i] = NULL;
+d908 1
+a908 1
+	    PMBR	sec = (PVOID)buffer;
+d938 1
+a938 1
+	PSEC_PHYSDEV const	sec = (PVOID)buffer;
+d948 1
+a948 1
+	    free(work->apDskInfo[i]),	work->apDskInfo[i] = NULL;
+a994 2
+	    PSEC_VRDEV const	sec = (PVOID)buffer;
+	    USHORT		crc;
+d997 1
+a997 1
+		continue;			/* skip empty entries */
+d1003 1
+a1003 1
+		free(work->apDskInfo[i]),	work->apDskInfo[i] = NULL;
+d1007 9
+a1015 1
+	    if( memcmp(sec->sectype, "VRAIDDEVICE     ", 16) != 0 )
+a1022 107
+
+	    crc = Crc16(buffer, SECTOR_SIZE-2);
+	    if( crc != sec->crc )
+	    {
+		Verbose(1, "DrvScan",
+			"CRC error in VRAIDDEVICE sector (%#x, %#x)",
+			crc,sec->crc);
+		work->apEndPts[work->cEndPts++] = dsk;
+		work->apDskInfo[i] = NULL;
+		continue;
+	    }
+
+	    /* This is a valid VRAID sector.  It describes a new level
+	     * of administration and will therefore result in a new
+	     * DSKINFO structure. */
+
+	    {
+		PDSKINFO	new = malloc(sizeof(DSKINFO));
+		USHORT		j, k;
+
+		if( new == NULL )
+		{
+		    Verbose(0, "DrvScan", "memory problem");
+		    continue;			/* skip this device */
+		}
+		memset(new, 0, sizeof(DSKINFO));
+
+		new->acc = DSKACC_NONE;
+		new->type = sec->u.s.type;
+		new->avail = 1;			/* assume 'changable' */
+		memcpy(new->id, sec->u.s.id, sizeof(DEVID));
+		new->kind.virtual.childs = sec->u.s.childs;
+
+		/* Calculate drive size. */
+
+		switch( new->type )
+		{
+		  case DSKTYPE_CHAIN:
+		  case DSKTYPE_STRIPE:
+		    new->size = 0;
+		    for( j = 0; j < sec->u.s.childs; ++j )
+			new->size += sec->u.s.child[j].size;
+		    break;
+
+		  case DSKTYPE_SINGLE:
+		  case DSKTYPE_MIRROR:
+		    new->size = sec->u.s.child[0].size;
+		    break;
+
+		  default:
+		    new->size = 0;
+		    break;
+		}
+
+		/* Link childs to parent. */
+
+		for( j = 0; j < new->kind.virtual.childs; ++j )
+		    for( k = 0; k < work->cDskInfo; ++k )
+		    {
+			if( work->apDskInfo[k] == NULL )
+			    continue;		/* skip empty entry */
+
+			if( memcmp(work->apDskInfo[k]->id,
+				   sec->u.s.child[j].id, sizeof(DEVID)) == 0 )
+			{
+			    /* Set double link between child
+			     * and parent. */
+
+			    new->kind.virtual.child[j] = work->apDskInfo[k];
+			    work->apDskInfo[k]->parent = new;
+
+
+			    /* Pass any 'not available' condition to
+			     * parent: we can't modify a paren if we
+			     * can't write to any of it's childs! */
+
+			    if( work->apDskInfo[k]->avail == 0 )
+				new->avail = 0;
+
+
+			    /* Remove child from search table as it may
+			     * not be child of two parents.  Any leave
+			     * search loop for this child. */
+
+			    work->apDskInfo[k] = NULL;
+			    break;
+			}
+		    }
+
+		if( (sec->u.s.flags & 0x80) )
+		{
+		    /* Reached host drive! */
+
+		    struct _OS2DEVID * const info = QueryArrayInfo(new->id);
+
+		    if( info != 0 )
+		    {
+			if( info->avail == 0 )
+			    new->avail = 0;
+			new->access.none.valid = 1;
+			new->access.none.os2idx = info->os2idx;
+		    }
+		    work->apEndPts[work->cEndPts++] = new;
+		}
+		else
+		    work->apDskInfo[work->cDskInfo++] = new;
+	    }
+d1026 1
+a1026 1
+    free(buffer);
+d1056 1
+a1056 1
+    PMBR const	mbr = buffer;
+d1245 1
+a1245 1
+    PMBR const	mbr = buffer;
+d1321 1
+a1321 1
+    PSEC_PHYSDEV	sec = buffer;
+d1399 1
+a1399 1
+    PVOID const	buffer = malloc(SECTOR_SIZE);
+d1448 1
+a1448 1
+    PVOID const	buffer = malloc(SECTOR_SIZE);
+d1486 1
+a1486 1
+    PVOID const	buffer = malloc(SECTOR_SIZE);
+a1489 5
+    if( buffer == NULL )
+    {
+	Verbose(0, "DrvScan", "memory problem");
+	return /*ERROR_NOT_ENOUGH_MEMORY*/;
+    }
+d1493 1
+a1493 1
+	PSEC_VRDEV	sec = buffer;
+d1508 1
+a1508 1
+	sec->u.s.childs = dsk->kind.virtual.childs;
+d1516 2
+a1517 2
+	    dsk->size = dsk->kind.virtual.child[0]->size;
+	    sec->u.s.child[0].size = dsk->kind.virtual.child[0]->size;
+d1522 1
+a1522 1
+	    for( i = 0; i < dsk->kind.virtual.childs; ++i )
+d1524 2
+a1525 2
+		dsk->size += dsk->kind.virtual.child[i]->size;
+		sec->u.s.child[i].size = dsk->kind.virtual.child[i]->size;
+d1532 1
+a1532 1
+	    for( i = 0; i < dsk->kind.virtual.childs; ++i )
+d1534 1
+a1534 1
+		ul = min(ul,dsk->kind.virtual.child[i]->size);
+d1536 1
+a1536 1
+	    for( i = 0; i < dsk->kind.virtual.childs; ++i )
+d1545 1
+a1545 1
+	    for( i = 0; i < dsk->kind.virtual.childs; ++i )
+d1547 1
+a1547 1
+		ul = min(ul,dsk->kind.virtual.child[i]->size);
+d1549 1
+a1549 1
+	    for( i = 0; i < dsk->kind.virtual.childs; ++i )
+d1565 1
+a1565 1
+	for( i = 0; i < dsk->kind.virtual.childs; ++i )
+d1567 1
+a1567 1
+	    UpdateDsklayout(dsk->kind.virtual.child[i]);
+d1569 1
+a1569 1
+		   dsk->kind.virtual.child[i]->id, sizeof(DEVID));
+d1585 1
+a1585 1
+    free(buffer);
+d1608 1
+a1608 1
+    PVOID const	buffer = malloc(SECTOR_SIZE);
+d1622 1
+a1622 1
+    for( i = 0; i < dsk->kind.virtual.childs; ++i )
+d1624 1
+a1624 1
+	PDSKINFO	child = dsk->kind.virtual.child[i];
+d1628 2
+a1629 2
+	    dsk->kind.virtual.child[i]->parent = NULL;
+	    UpdateDsklayout(dsk->kind.virtual.child[i]);
+d1638 1
+a1638 1
+    free(buffer);
+d1667 3
+a1669 8
+    {
+	free(dsk);
+    }
+    else if( dsk->acc == DSKACC_FLT )
+    {
+						/* via driver */
+        free(dsk);
+    }
+d1677 1
+a1677 1
+	free(dsk);
+d1710 1
+a1710 1
+    WORK * const work = WinQueryWindowPtr(hwnd, 0);
+d1770 1
+a1770 1
+	    PDSKINFO	dsk = PVOIDFROMMP(mp1);
+d1784 1
+a1784 1
+	    PDSKINFO	dsk = PVOIDFROMMP(mp1);
+d1803 1
+a1803 1
+	    PDSKINFO	dsk = PVOIDFROMMP(mp1);
+d1818 1
+a1818 1
+	    PDSKINFO	dsk = PVOIDFROMMP(mp1);
+d1832 1
+a1832 1
+	    PDSKINFO	dsk = PVOIDFROMMP(mp1);
+d1873 1
+a1873 1
+    PTHR_DRVSCAN dta = dummy;
+d1884 5
+a1888 3
+	do
+	{
+	    memset(ahsOs2Devid, 0, sizeof(ahsOs2Devid));
+d1890 2
+a1891 12
+	    work = malloc(sizeof(WORK));
+	    if( work == NULL )
+		break;
+	    memset(work, 0, sizeof(*work));
+	    work->self = dta;
+	    work->apDskInfo = malloc(MAXDRIVES * sizeof(PDSKINFO));
+	    if( work->apDskInfo == NULL )
+	    {
+		free(work),	work = NULL;
+		break;
+	    }
+	    memset(work->apDskInfo, 0, MAXDRIVES * sizeof(PDSKINFO));
+d1893 1
+a1893 14
+	    work->apEndPts = malloc(MAXDRIVES * sizeof(PDSKINFO));
+	    if( work->apEndPts == NULL )
+	    {
+		free(work->apDskInfo),	work->apDskInfo = NULL;
+		free(work),		work = NULL;
+		break;
+	    }
+	}
+	while(0);
+	if( work == NULL )
+	{
+	    Verbose(0, "DrvScan", "DrvScanThread - memory problem");
+	    break;
+	}
+d1951 1
+a1951 1
+	free(work);
+@
+
+
+1.8
+log
+@- BUGFIX: reenable AllocateOs2Devices() if BETA_PKG
+- creation of VRAID partition -> PHYSDEV = 0MB, fixed?
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1998/11/05 00:29:03 $
+d10 4
+d52 1
+a52 1
+static char const id[]="$Id: drvscan.c,v 1.7 1998/11/05 00:29:03 vitus Exp vitus $";
+d68 4
+a71 4
+#include "../../../tools/defines.h"
+#include "../../../tools/verbose.h"
+#include "../../../tools/profile.h"		/* profile handling */
+#include "../../../tools/physdsk.h"
+d74 1
+a75 1
+#include "drvif.h"
+a83 14
+char const szFoundFlt[] = "=== Found installed VRAID.FLT! ===\n"
+"Modifications may be done as usual but keep"
+" in mind that it isn't possible to detect which OS/2 drive letter"
+" resides on which array drive.\n"
+"You should be carefull when destroying arrays, otherwise you reboot"
+" and will miss drive letter D: containing your most valuable data...\n"
+#if defined(_BETA_PKG)
+"In this beta version it is not possible to define new PHYSDEVICEs while"
+" VRAID.FLT is running as it is not possible to detect the identity of an"
+" OS/2 device and an array drive.  Please remove 'BASEDEV=VRAID.FLT' from"
+" C:/Config.Sys if you want to define new PHYSDEVICEs."
+#endif
+"";
+
+d100 7
+d116 1
+a116 1
+/*#
+d118 1
+d120 6
+d127 2
+a128 1
+ * GLOBAL
+d130 2
+d154 1
+a154 1
+/*#
+d158 6
+d165 2
+a166 1
+ * GLOBAL
+d168 2
+d223 73
+a295 1
+/*#
+d300 1
+d303 1
+a303 2
+ * GLOBAL
+ *	(none)
+d378 1
+a378 1
+/*#
+d383 1
+d385 2
+a386 3
+ *	count of found devices
+ * GLOBAL
+ *	(none)
+d396 8
+a403 3
+    APIRET	rc;
+    ULONG	i, idx;
+    ULONG	cnt;
+d407 6
+a412 3
+    idx = work->cDskInfo;			/* new index: behind already found
+						   devices (via VRAID.FLT) */
+    do
+d414 28
+a441 2
+	rc = PDskEnum(&cnt);
+	if( rc )
+d443 11
+a453 3
+	    Verbose(1, "DrvSetup", "PDskEnum - rc %lu", rc);
+	    cnt = 0;
+	    break;
+d455 1
+d457 10
+a466 1
+	for( i = 0; i < cnt; ++i )
+d468 3
+a470 1
+	    if( (work->apDskInfo[idx] = malloc(sizeof(DSKINFO))) == NULL )
+d475 1
+a475 1
+	    memset(work->apDskInfo[idx], 0, sizeof(DSKINFO));
+d477 3
+a479 3
+	    work->apDskInfo[idx]->acc = DSKACC_OS2;
+	    work->apDskInfo[idx]->access.os2.idx = idx;
+	    rc = PDskOpen(i, &work->apDskInfo[idx]->access.os2.hd);
+d482 2
+a483 2
+		Verbose(1, "DrvScan", "PDskOpen(%lu) - rc %lu", idx, rc);
+		free(work->apDskInfo[idx]),	work->apDskInfo[idx] = NULL;
+d487 71
+a557 1
+		    i, work->apDskInfo[idx]->access.os2.hd);
+d562 1
+a562 2
+	    rc = PDskQueryParam(work->apDskInfo[idx]->access.os2.hd,
+				&work->apDskInfo[idx]->access.os2.dp);
+d565 4
+a568 3
+		Verbose(1, "DrvSetup", "PDskQueryParam - rc %lu", rc);
+		rc = PDskClose(work->apDskInfo[idx]->access.os2.hd);
+		free(work->apDskInfo[idx]),	work->apDskInfo[idx] = NULL;
+d572 3
+a574 1
+	    ++work->cDskInfo;			/* keep this device! */
+d578 3
+a580 3
+		    work->apDskInfo[idx]->access.os2.dp.cCylinders,
+		    work->apDskInfo[idx]->access.os2.dp.cHeads,
+		    work->apDskInfo[idx]->access.os2.dp.cSectorsPerTrack);
+d582 1
+a582 4
+		    (ULONG)work->apDskInfo[idx]->access.os2.dp.cSectorsPerTrack
+		    * work->apDskInfo[idx]->access.os2.dp.cHeads
+		    * (ULONG)work->apDskInfo[idx]->access.os2.dp.cCylinders
+		    / 2 / 1024);
+d585 1
+a585 3
+	    /* And please, don't disturb us.  If it isn't possible
+	     * to do a PdskLock(), assume that a filesystem uses a
+	     * partition on this device and flag it as 'not avail'. */
+d587 2
+a588 8
+	    rc = PDskLock(work->apDskInfo[idx]->access.os2.hd);
+	    if( rc != 0 )
+	    {
+		Verbose(2, "DrvScan", "PDskLock - rc %lu", rc);
+		work->apDskInfo[idx]->avail = 0;
+		++idx;
+		continue;
+	    }
+d590 2
+d593 3
+a595 1
+	    /* We got this far: device is changable! */
+d597 4
+a600 3
+	    work->apDskInfo[idx]->avail = 1;
+	    ++idx;
+	} /* end[while(every device)] */
+a601 1
+    while(0);					/* end[OS/2 devices] */
+d603 1
+a603 1
+    return idx;
+d609 1
+a609 1
+/*#
+d614 1
+d617 1
+a617 2
+ * GLOBAL
+ *	(none)
+d638 1
+a638 1
+     * OS/2 device not available to VSETUP.  Don't scan those
+d872 14
+a885 1
+		    work->apEndPts[work->cEndPts++] = new; /* host drive! */
+d900 1
+a900 1
+/*#
+d908 2
+a909 1
+ * GLOBAL
+d1093 1
+a1093 1
+/*#
+d1099 1
+d1101 2
+a1102 1
+ * GLOBAL
+d1168 1
+a1168 1
+/*#
+d1174 1
+d1177 1
+a1177 2
+ * GLOBAL
+ *	usHostId
+d1179 2
+d1182 1
+d1243 1
+a1243 1
+/*#
+d1249 1
+d1252 1
+a1252 2
+ * GLOBAL
+ *	(none)
+d1294 1
+a1294 1
+/*#
+d1300 1
+d1303 1
+a1303 2
+ * GLOBAL
+ *	(none)
+d1335 1
+a1335 1
+/*#
+d1340 1
+d1343 1
+a1343 1
+ * GLOBAL
+d1345 2
+d1349 1
+a1349 1
+PRIVATE void
+d1463 1
+a1463 1
+/*#
+d1470 1
+a1470 1
+ * GLOBAL
+d1472 2
+d1476 1
+a1476 1
+PRIVATE void
+d1516 1
+a1516 1
+/*#
+d1523 1
+a1523 1
+ * GLOBAL
+d1568 1
+a1568 1
+/*
+d1573 1
+d1576 1
+a1576 2
+ * GLOBAL
+ *	none
+d1578 3
+a1580 1
+ *	Window procedure
+d1622 2
+a1623 3
+		WinMessageBox(HWND_DESKTOP, hwnd,
+			      (PSZ)szFoundFlt, "VRAID.FLT found",
+			      -1, MB_ENTER|MB_WARNING|MB_MOVEABLE);
+a1624 1
+#if !defined(_BETA_PKG)
+a1625 1
+#endif
+d1732 1
+a1732 1
+/*
+d1737 1
+d1739 2
+a1740 3
+ *	none
+ * GLOBAL
+ *	none
+d1746 1
+a1746 1
+PUBLIC void
+d1762 2
+@
+
+
+1.7
+log
+@- corrected 'VRAID.FLT found' message: it is possible to modify existent
+  PHYSDEVICEs (and higher), but in this beta it isn't possible to create
+  new PHYSDEVICEs (that makes a difference!)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1998/11/03 03:07:57 $
+d10 5
+d48 1
+a48 1
+static char const id[]="$Id: drvscan.c,v 1.6 1998/11/03 03:07:57 vitus Exp vitus $";
+d862 1
+d1218 1
+a1218 1
+    }
+d1388 1
+a1388 2
+		AllocateFltDevices(work);
+	    if( rc == 0 )
+d1392 1
+d1394 3
+a1398 1
+#endif
+@
+
+
+1.6
+log
+@- modified for DSKINFO change: 'avail' element changed position
+- BuildDevTree: create new devices as 'avail = 1' and change this if
+  any child is 'avail = 0'
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1998/09/27 01:50:10 $
+d10 5
+d43 1
+a43 1
+static char const id[]="$Id: drvscan.c,v 1.5 1998/09/27 01:50:10 vitus Stab vitus $";
+d75 6
+d82 4
+a85 9
+# define FLTF_MSG	\
+	" -+- beta -+- beta -+- beta -+- beta -+- beta -+- beta -+- beta -+-\n" \
+	"The identity of driver reported array drives and OS/2 devices" \
+	" can't be detected.  Therefore:\n"	\
+	"* OS/2 devices are ignored in drive scan.\n"	\
+	"* no modification of array drives is possible\n"	\
+	"Remove VRAID.FLT from C:/Config.Sys, if you want to"	\
+	" define new or modify existent drive arrays!\n"	\
+	" -+- beta -+- beta -+- beta -+- beta -+- beta -+- beta -+- beta -+-\n"
+d87 3
+a1382 1
+#if defined(_BETA_PKG)
+d1384 2
+a1385 1
+		WinMessageBox(HWND_DESKTOP, hwnd, FLTF_MSG, "VRAID.FLT found",
+d1387 1
+d1389 1
+a1390 1
+		AllocateOs2Devices(work);
+@
+
+
+1.5
+log
+@- added -+- beta -+- message box explaining current restrictions
+- implemented AllocateFltDevices: asks raid.flt
+- added DSKACC_FLT to all the places
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1998/06/09 01:17:05 $
+d10 5
+d38 1
+a38 1
+static char const id[]="$Id: drvscan.c,v 1.4 1998/06/09 01:17:05 vitus Exp vitus $";
+d259 6
+a264 1
+	    work->apDskInfo[idx]->access.flt.avail = 1;
+d333 2
+a334 1
+	    /* Some informations may be nice. */
+d359 4
+a362 1
+	    /* And please, don't disturb us. */
+d368 1
+a368 1
+		work->apDskInfo[idx]->access.os2.avail = 0;
+d372 5
+a376 1
+	    work->apDskInfo[idx]->access.os2.avail = 1;
+d416 4
+a419 1
+    /* Initialize local table. */
+d424 1
+a424 1
+	     &&  work->apDskInfo[i]->access.os2.avail == 0) )
+d431 1
+d590 1
+d626 3
+d631 16
+a646 3
+			    work->apDskInfo[k] = NULL; /* may not be analyzed
+							  any more */
+			    break;		/* leave search for child */
+d725 1
+a725 1
+	if( found != -1 )
+d730 1
+a730 1
+	if( free == -1 )
+d737 1
+a737 1
+	if( used == 0 )
+d800 1
+a800 1
+	if( used != DID_OK )
+@
+
+
+1.4
+log
+@- added existence of DSKTYPE_SINGLE VRAID sectors
+- corrected sector no/offset when reading higher VRAID sectors
+- BuildDevTree: drive size calculation now based on VRAID sector contents
+  (not found childs)
+- added WUM_DELPDEV: DeletePhysdev(), RemovePartition()
+- UpdateDsklayout: corrected saved drive sizes
+- added WUM_DELDRV: RemoveDrive()
+- DoPartitionIo() handles missing childs
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/raid/setup/RCS/drvscan.c,v $
+ * $Revision: 1.3 $
+ * $Date: 1998/05/27 01:55:06 $
+d7 1
+a7 1
+ * Seperate thread to scan OS/2 devices and existing RAID drives.
+d10 10
+d33 1
+a33 1
+static char const id[]="$Id: drvscan.c,v 1.3 1998/05/27 01:55:06 vitus Exp vitus $";
+d56 2
+a59 5
+extern void	CrcInit(USHORT polynom);
+extern USHORT	Crc16(PVOID buffer,USHORT cb);
+extern APIRET	QueryHostId(PUSHORT const id);
+
+PUBLIC	USHORT	usHostId = 0;
+d61 2
+d65 11
+a75 2
+#define WC_DRVSCAN	"DrvscanWindow"
+#define MAXDRIVES	(MAXCHILDS*2)
+d89 3
+d130 1
+d156 13
+d190 78
+d270 1
+a270 1
+ *	count
+d272 1
+d274 1
+d282 1
+a282 1
+AllocateOs2Devices(PWORK work)
+d285 1
+a285 1
+    ULONG	i, idx = 0;
+d289 3
+d402 2
+a403 2
+	if( work->apDskInfo[i]->acc == DSKACC_OS2
+	    &&  work->apDskInfo[i]->access.os2.avail == 0 )
+d418 2
+d1256 1
+a1256 1
+    else if( dsk->acc == DSKACC_RAID )
+d1332 10
+a1341 1
+	    AllocateOs2Devices(work);
+@
+
+
+1.3
+log
+@- DoAbsIo(), DoPartitionIo()
+- checks MBR signature
+- CreatePartition(), UpdatePhys(), CreatePhysdev(), UpdateDsklayout()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1998/05/15 01:07:22 $
+d10 5
+d23 1
+a23 1
+static char const id[]="$Id: drvscan.c,v 1.2 1998/05/15 01:07:22 vitus Exp vitus $";
+d29 1
+d121 3
+d225 4
+a228 5
+		    (ULONG)((work->apDskInfo[idx]->access.os2.dp.cSectorsPerTrack
+			     * (ULONG)SECTOR_SIZE
+			     * work->apDskInfo[idx]->access.os2.dp.cHeads
+			     * (ULONG)work->apDskInfo[idx]->access.os2.dp.cCylinders)
+			    / 1024) / 1024);
+d374 3
+a376 11
+	dsk->size = dsk->kind.physical.partsize
+	    - dsk->kind.physical.partstart - sec->u.s.adminspace;
+
+	if( (sec->u.s.flags & 0x80) )
+	{				/* host drive! */
+	    dsk->type = DSKTYPE_SINGLE;
+	    work->apEndPts[work->cEndPts++] = dsk;
+	    work->apDskInfo[i] = NULL;
+	}
+	else
+	    dsk->type = DSKTYPE_PDEV;
+d388 1
+a388 1
+	for( i = 0; i < work->cDskInfo; ++i )
+a389 1
+	    {
+a390 2
+		break;
+	    }
+d403 1
+a403 1
+	    rc = DoPartitionIo(dsk, FALSE, off, 1, buffer);
+a447 1
+		new->size = 0;
+d451 21
+a474 1
+		{
+a482 14
+			    switch( new->type )
+			    {
+			      case DSKTYPE_CHAIN:
+			      case DSKTYPE_STRIPE:
+				new->size += work->apDskInfo[k]->size;
+				break;
+
+			      case DSKTYPE_MIRROR:
+				new->size = work->apDskInfo[k]->size;
+				break;
+
+			      default:
+				break;
+			    }
+a489 1
+		}
+d700 73
+d811 2
+a812 2
+	sec->u.s.size != (dsk->kind.physical.partsize
+			  - dsk->kind.physical.partstart - sec->u.s.adminspace);
+d896 41
+d951 1
+d978 54
+a1031 1
+	/* Second: update all childs and record their IDs. */
+a1037 1
+	    sec->u.s.child[i].size = dsk->kind.virtual.child[i]->size;
+d1042 1
+a1050 1
+	free(buffer);
+d1053 52
+d1233 12
+d1246 1
+d1266 3
+d1270 11
+a1280 1
+	    WinPostMsg(work->self->parent, WUM_DEVTREE, dsk, MPFROMHWND(hwnd));
+d1293 1
+@
+
+
+1.2
+log
+@- create each DSKINFO structure as own memory object
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1998/05/11 00:32:25 $
+d10 3
+d18 1
+a18 1
+static char const vcid[]="$Id: drvscan.c,v 1.1 1998/05/11 00:32:25 vitus Exp vitus $";
+d20 1
+d24 1
+d36 1
+a36 1
+#include "../dsklayout.h"
+d39 2
+a40 2
+#include "physdsk.h"
+#include "drvscan.h"
+d44 3
+a68 1
+
+d82 29
+a110 1
+DoDeviceIo(PDSKINFO const dsk,BOOL write,ULONG offset,ULONG count,PVOID buffer)
+d113 1
+d118 1
+a118 2
+	if( dsk->type == DSKTYPE_PDEV )
+	    offset += dsk->kind.physical.partstart;
+d125 8
+d152 2
+a153 1
+ *	Build drive informations.
+d189 1
+a189 1
+		Verbose(0, "DrvScan", "PDskOpen(%lu) - rc %lu", idx, rc);
+d193 1
+a193 1
+	    Verbose(2, "DrvScan", "======== Disk %lu, handle %lu ========",
+d202 1
+a202 1
+		Verbose(0, "DrvSetup", "PDskQueryParam - rc %lu", rc);
+d227 1
+a227 1
+		Verbose(0, "DrvScan", "PDskLock - rc %lu", rc);
+d254 3
+d269 1
+a269 1
+	return;
+d293 1
+a293 1
+	rc = DoDeviceIo(dsk, FALSE, 0, 1, buffer);
+d296 1
+a296 1
+	    Verbose(0, "DrvScan", "DpDeviceIo - rc %lu, device ignored", rc);
+d305 2
+a306 3
+	    for( j = 0; j < 4; ++j )
+	    {
+		if( sec->PartitionTable[j].SysIndicator == VRAID_PARTTYPE )
+d308 8
+a315 5
+		    dsk->kind.physical.partstart
+			= sec->PartitionTable[j].RelativeSectors;
+		    dsk->kind.physical.partsize
+			= sec->PartitionTable[j].NumSectors;
+		    break;
+a316 1
+	    }
+d319 1
+a319 1
+		Verbose(1, "DrvScan", "no VRAID partition on drive %u", i);
+d338 1
+a338 1
+	rc = DoDeviceIo(dsk, FALSE, dsk->kind.physical.partstart, 1, buffer);
+d341 1
+a341 1
+	    Verbose(0, "DrvScan", "DoDeviceIo - rc %lu, device ignored", rc);
+d348 2
+a349 1
+	    Verbose(0, "DrvScan", "missing PHYSDEV mark");
+d358 1
+a358 1
+	    Verbose(0, "DrvScan", "CRC error in PHYSDEV sector (%#x, %#x)",
+d360 1
+d406 1
+a406 1
+	    rc = DoDeviceIo(dsk, FALSE, off, 1, buffer);
+d409 1
+a409 1
+		Verbose(0, "DrvScan", "DoDeviceIo - rc %lu, device ignored", rc);
+d417 1
+a417 1
+		    Verbose(0, "DrvScan", "missing VRAIDDEVICE mark");
+d426 2
+a427 1
+		Verbose(0, "DrvScan", "CRC error in VRAIDDEVICE sector (%#x, %#x)",
+d505 1
+d508 1
+a508 1
+ *	FreeDevices(work)
+d510 3
+a512 1
+ *	work
+d516 2
+d519 4
+d524 2
+a525 2
+PRIVATE void
+FreeDevices(PWORK work)
+d527 5
+a532 1
+    ULONG	i;
+d534 1
+a534 2
+    Verbose(3, "DrvScan", "FreeOs2Devices");
+    for( i = 0; i < MAXDRIVES; ++i )
+d536 15
+a550 2
+	if( work->apDskInfo[i] == NULL )
+	    continue;				/* ignore free entry */
+d552 1
+a552 1
+	if( work->apDskInfo[i]->acc == DSKACC_NONE )
+d554 91
+a644 1
+	    free(work->apDskInfo[i]),	work->apDskInfo[i] = NULL;
+d646 5
+a650 1
+	else if( work->apDskInfo[i]->acc == DSKACC_RAID )
+d652 23
+a674 2
+	    ;					/* via driver */
+	    free(work->apDskInfo[i]),	work->apDskInfo[i] = NULL;
+d676 3
+a678 1
+	else if( work->apDskInfo[i]->acc == DSKACC_OS2 )
+d680 127
+a806 1
+	    rc = PDskUnlock(work->apDskInfo[i]->access.os2.hd);
+d808 5
+a812 1
+		Verbose(0, "DrvSetup", "PDskUnlock - rc %lu", rc);
+d814 56
+a869 2
+	    rc = PDskClose(work->apDskInfo[i]->access.os2.hd);
+	    free(work->apDskInfo[i]),	work->apDskInfo[i] = NULL;
+d871 58
+d961 1
+d966 1
+a966 1
+	Verbose(2, "DrvScan", "WM_CREATE -> default");
+d968 5
+d975 1
+d977 1
+a977 4
+	 * WM_DESTROY	-	this window destroyed
+	 *	This message may be posted after WM_CLOSE or without
+	 *	any WM_CLOSE (if user close per windowlist).
+	 *	So do here the same as in WM_CLOSE (if possible).
+d979 2
+a980 3
+      case WM_DESTROY:
+	Verbose(3, "DrvScan", "WM_DESTROY");
+	FreeDevices(work);
+d984 3
+d998 1
+a998 2
+		WinPostMsg(work->self->parent, WUM_DEVTREE,
+			   dsk, MPFROMHWND(hwnd));
+d1001 50
+a1050 1
+	break;
+d1187 1
+a1187 1
+    Verbose(2, "DrvScan", "DrvScamThread: stopped");
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 3
+a11 1
+ * $Log$
+d15 1
+a15 1
+static char const vcid[]="$Id$";
+d50 1
+a50 1
+    PDSKINFO	aDskInfo;
+d68 35
+d133 10
+a142 3
+	    work->aDskInfo[idx].acc = DSKACC_OS2;
+	    work->aDskInfo[idx].access.os2.idx = idx;
+	    rc = PDskOpen(i, &work->aDskInfo[idx].access.os2.hd);
+d146 1
+d150 1
+a150 1
+		    i, work->aDskInfo[idx].access.os2.hd);
+d154 2
+a155 2
+	    rc = PDskQueryParam(work->aDskInfo[idx].access.os2.hd,
+				&work->aDskInfo[idx].access.os2.dp);
+d159 2
+a160 2
+		rc = PDskClose(work->aDskInfo[idx].access.os2.hd);
+		work->aDskInfo[idx].access.os2.hd = 0;
+d168 3
+a170 3
+		    work->aDskInfo[idx].access.os2.dp.cCylinders,
+		    work->aDskInfo[idx].access.os2.dp.cHeads,
+		    work->aDskInfo[idx].access.os2.dp.cSectorsPerTrack);
+d172 1
+a172 1
+		    (ULONG)((work->aDskInfo[idx].access.os2.dp.cSectorsPerTrack
+d174 2
+a175 2
+			     * work->aDskInfo[idx].access.os2.dp.cHeads
+			     * (ULONG)work->aDskInfo[idx].access.os2.dp.cCylinders)
+d180 1
+a180 1
+	    rc = PDskLock(work->aDskInfo[idx].access.os2.hd);
+d184 1
+a184 1
+		work->aDskInfo[idx].access.os2.avail = 0;
+d188 1
+a188 1
+	    work->aDskInfo[idx].access.os2.avail = 1;
+d202 1
+a202 1
+ *	BuildDevTree(cnt)
+d204 1
+d206 1
+d208 1
+a215 2
+    ULONG	cnt = work->cDskInfo;
+    PDSKINFO *	info = malloc(cnt * sizeof(PDSKINFO));
+d219 1
+a219 1
+    if( buffer == NULL  ||  info == NULL )
+d227 1
+a227 1
+    for( i = 0; i < cnt; ++i )
+d229 2
+a230 1
+	if( work->aDskInfo[i].access.os2.avail == 0 )
+d232 2
+a233 2
+	    work->apEndPts[work->cEndPts++] = &work->aDskInfo[i];
+	    info[i] = NULL;
+a234 2
+	else
+	    info[i] = &work->aDskInfo[i];
+d239 1
+a239 1
+    for( i = 0; i < cnt; ++i )
+d241 3
+a243 1
+	if( info[i] == NULL )
+d246 1
+a246 1
+	rc = PDskRead(info[i]->access.os2.hd, 0, 1, buffer);
+d249 2
+a250 2
+	    Verbose(0, "DrvScan", "PDskRead - rc %lu, device ignored", rc);
+	    info[i] = NULL;			/* ignore device */
+d262 1
+a262 1
+		    info[i]->kind.physical.partstart
+d264 1
+a264 1
+		    info[i]->kind.physical.partsize
+d269 1
+a269 1
+	    if( info[i]->kind.physical.partstart == 0 )
+d272 2
+a273 2
+		work->apEndPts[work->cEndPts++] = info[i];
+		info[i] = NULL;
+d281 1
+a281 1
+    for( i = 0; i < cnt; ++i )
+d283 1
+d287 1
+a287 1
+	if( info[i] == NULL )
+d290 1
+a290 2
+	rc = PDskRead(info[i]->access.os2.hd,
+		      info[i]->kind.physical.partstart, 1,buffer);
+d293 2
+a294 2
+	    Verbose(0, "DrvScan", "PDskRead - rc %lu, device ignored", rc);
+	    info[i] = NULL;			/* ignore device */
+d301 3
+a303 3
+	    work->apEndPts[work->cEndPts++] = info[i];
+	    info[i] = NULL;
+	    continue;				/* skip this device */
+d311 8
+a318 7
+	    work->apEndPts[work->cEndPts++] = info[i];
+	    info[i] = NULL;
+	    continue;				/* skip this device */
+	}
+	memcpy(info[i]->id, sec->u.s.id, sizeof(DEVID));
+	info[i]->size = info[i]->kind.physical.partsize
+	    - info[i]->kind.physical.partstart - sec->u.s.adminspace;
+d321 3
+a323 2
+	    work->apEndPts[work->cEndPts++] = info[i];
+	    info[i] = NULL;
+d325 2
+d330 2
+a331 1
+    /* Read VRAID sectors until no more devices remain. */
+d335 2
+a336 1
+	int	found = 0;
+d338 2
+a339 2
+	for( i = 0; i < cnt; ++i )
+	    if( info[i] != NULL )
+d349 1
+d353 2
+a354 2
+	    if( info[i] == NULL )
+		continue;			/* skip empty entry */
+d356 1
+a356 2
+	    rc = PDskRead(info[i]->access.os2.hd,
+			  info[i]->kind.physical.partstart+off, 1,buffer);
+d359 2
+a360 2
+		Verbose(0, "DrvScan", "PDskRead - rc %lu, device ignored", rc);
+		info[i] = NULL;			/* ignore device */
+d366 1
+a366 3
+		if( off == 1 )
+		    info[i]->type = DSKTYPE_PDEV;
+		else
+d368 3
+a370 3
+		work->apEndPts[work->cEndPts++] = info[i];
+		info[i] = NULL;
+		continue;			/* skip this device */
+d378 3
+a380 3
+		work->apEndPts[work->cEndPts++] = info[i];
+		info[i] = NULL;
+		continue;				/* skip this device */
+d388 1
+a388 1
+		PDSKINFO	dsk = &work->aDskInfo[work->cDskInfo++];
+d391 12
+a402 5
+		dsk->acc = DSKACC_NONE;
+		dsk->type = sec->u.s.type;
+		dsk->size = 0;
+		memcpy(dsk->id, sec->u.s.id, sizeof(DEVID));
+		dsk->kind.virtual.childs = sec->u.s.childs;
+d406 1
+a406 1
+		for( j = 0; j < dsk->kind.virtual.childs; ++j )
+d408 1
+a408 1
+		    for( k = 0; k < cnt; ++k )
+d410 1
+a410 1
+			if( info[k] == NULL )
+d412 2
+a413 1
+			if( memcmp(info[k]->id,
+d416 1
+a416 1
+			    switch( dsk->type )
+d420 1
+a420 1
+				dsk->size += info[k]->size;
+d422 1
+d424 1
+a424 1
+				dsk->size = info[k]->size;
+d426 1
+d430 4
+a433 3
+			    dsk->kind.virtual.child[j] = info[k];
+			    info[k]->parent = dsk;
+			    info[k] = NULL;	/* may not be analyzed any more */
+d440 1
+a440 4
+		{				/* host drive! */
+		    work->apEndPts[work->cEndPts++] = dsk;
+		    info[i] = NULL;
+		}
+d442 1
+a442 3
+		{
+		    info[i] = dsk;		/* enter parent instead of child */
+		}
+d447 1
+d473 2
+a474 4
+	if( work->aDskInfo[i].acc == 0  ||  work->aDskInfo[i].acc == DSKACC_RAID )
+	    continue;				/* empty entry or via driver */
+	if( work->aDskInfo[i].access.os2.hd == 0 )
+	    continue;				/* freed entry */
+d476 5
+a480 2
+	rc = PDskUnlock(work->aDskInfo[i].access.os2.hd);
+	if( rc != 0 )
+d482 11
+a492 1
+	    Verbose(0, "DrvSetup", "PDskUnlock - rc %lu", rc);
+a493 2
+	rc = PDskClose(work->aDskInfo[i].access.os2.hd);
+	work->aDskInfo[i].access.os2.hd = 0;
+d555 4
+a558 1
+		WinPostMsg(work->self->parent, WUM_DEVTREE, work->apEndPts[i], NULL);
+d615 2
+a616 2
+	    work->aDskInfo = malloc(MAXDRIVES * sizeof(DSKINFO));
+	    if( work->aDskInfo == NULL )
+d621 2
+a622 1
+	    memset(work->aDskInfo, 0, MAXDRIVES * sizeof(DSKINFO));
+d626 1
+a626 1
+		free(work->apEndPts),	work->apEndPts = NULL;
+d699 1
+a699 1
+    WinSendMsg(dta->parent, WUM_THREADEND, dta, 0);
+@

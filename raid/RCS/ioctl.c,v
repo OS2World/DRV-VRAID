@@ -1,0 +1,1980 @@
+head	2.4;
+access;
+symbols
+	vrflt031113:2.4
+	vrflt010903:2.4
+	PREV010803:2.4
+	VRAIDv0_85:2.4
+	VRAIDv0_84:2.4
+	VRAIDv0_82:1.12
+	VRAIDv0_70:1.8
+	VRAIDv0_60:1.5
+	VRAIDv0_51:1.4
+	VRAIDv0_50:1.4
+	VRAIDv0_40:1.3
+	VRAIDv0_30:1.3
+	ALPHA1:1.2;
+locks; strict;
+comment	@ * @;
+
+
+2.4
+date	2001.02.11.01.24.56;	author vitus;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2000.08.22.01.58.07;	author vitus;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2000.07.24.23.57.30;	author vitus;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.06.15.01.04.24;	author vitus;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2000.04.15.22.23.05;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	99.10.01.00.58.20;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.09.23.23.03.08;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.07.05.01.42.12;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.06.20.17.31.28;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.05.12.01.54.22;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.04.21.00.30.09;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	98.12.13.22.29.59;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	98.09.27.16.08.02;	author vitus;	state Stab;
+branches;
+next	1.3;
+
+1.3
+date	98.06.26.22.38.12;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.05.29.01.44.20;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.02.18.00.03.13;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@General IOCtl interface
+@
+
+
+2.4
+log
+@- changed all routines to return DRVSTATUS
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/RCS/ioctl.c,v $
+ * $Revision: 2.3 $
+ * $Date: 2000/08/22 01:58:07 $
+ * $Locker: vitus $
+ *
+ *	General IOCtl interface
+ *
+ * $Log: ioctl.c,v $
+ * Revision 2.3  2000/08/22 01:58:07  vitus
+ * - implemented VRAID_SET_CHILD_STATE
+ *
+ * Revision 2.2  2000/07/24 23:57:30  vitus
+ * - implemented VRAID_START_REBUILD
+ * - VRD.ioctl() may now returns error code
+ *
+ * Revision 2.1  2000/06/15 01:04:24  vitus
+ * - removed most calls to DevHelp_VerifyAccess.  Not neccessary on the IOCtl
+ *   packets itself (see OS2PDD mailing list)
+ * - implmented VRAID_VERIFY_ARRAY
+ *
+ * Revision 1.12  2000/04/15 22:23:05  vitus
+ * - more debug messages
+ *
+ * Revision 1.11  1999/10/01 00:58:20  vitus
+ * - QueryPhysinfo: returns new fields in VRAID_PHYSINFO_DATA (request/busy counts)
+ *   if caller has enough room in his buffer.
+ *
+ * Revision 1.10  1999/09/23 23:03:08  vitus
+ * - defined all DBGMSG() strings as located in CONST segment
+ *
+ * Revision 1.9  1999/07/05 01:42:12  vitus
+ * - VRAID_START_SETUP: do SaveArrayInfos() first to let VSetup know the current
+ *   states and have this current state saved if VSetup inhibits saves on shutdown.
+ *
+ * Revision 1.8  1999/06/20 17:31:28  vitus
+ * - DriverVersion: return some flags, too
+ * - ChangeBeeper() implemented
+ *
+ * Revision 1.7  1999/05/12 01:54:22  vitus
+ * - added VRAID_START_SETUP, VRAID_END_SETUP
+ *
+ * Revision 1.6  1999/04/21 00:30:09  vitus
+ * - DoAdminIO: switched from PhysdevPartIO() and offset calculation
+ *   to ProcessAdminIO() and offset 1 (fix!)
+ *
+ * Revision 1.5  1998/12/13 22:29:59  vitus
+ * - implemented VRAID_QUERY_ARRAYLIST and VRAID_QUERY_ARRAYINFO
+ *
+ * Revision 1.4  1998/09/27 16:08:02  vitus
+ * - implemented VRAID_QUERY_PHYSLIST, VRAID_QUERY_PHYSINFO, VRAID_ADMINSEC_IO
+ *
+ * Revision 1.3  1998/06/26 22:38:12  vitus
+ * - switched to DDK macros (cli, sti, pushf)
+ * - corrected swapable segment name (uppercase)
+ *
+ * Revision 1.2  1998/05/29 01:44:20  vitus
+ * - added debug level parameter to DEBMSG macro
+ *
+ * Revision 1.1  1998/02/18 00:03:13  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1997-2001
+ */
+#if defined(__WATCOMC__)
+# pragma off (unreferenced)
+#endif
+static char const id[]="$Id: ioctl.c,v 2.3 2000/08/22 01:58:07 vitus Exp vitus $";
+#if defined(__WATCOMC__)
+# pragma on (unreferenced)
+#endif
+
+#include <string.h>
+
+#define INCL_NOBASEAPI
+#define INCL_DOSERRORS
+#include "os2intf.h"
+#include <bseerr.h>
+
+#include "vraid.h"
+#include "proto.h"
+#include "extern.h"
+
+#include "vraidpub.h"
+
+
+
+
+/* Save messages here.  This buffer is located in a swapable
+ * data segment and may only access at task time!
+ * OBS: M$-C tends to allocate a const containing the
+ * segment of these variables.  To prevent this use strange code
+ * and no optimization at all. */
+
+#define _inswap		_based(_segname("SwapData"))
+PRIVATE USHORT _inswap	iNextString = 0;
+PRIVATE UCHAR _inswap	DisplayBuffer[DISPLAYBUFFER_SIZE];
+
+
+
+
+#if defined(DEBUG)
+CONSTMSG dszIoctlParam2small[]=	"\r\n[IOCtl %w] need >=2 bytes parameter!";
+CONSTMSG dszIoctlData2small[]=	"\r\n[IOCtl %w] need >=2 bytes data buffer!";
+CONSTMSG dszIoctlDAccess[]= 	"\r\n[IOCtl %w] data buffer too small/invalid!";
+
+CONSTMSG dszInvPHandle[]=	"\r\n[Hd2Dev] didn't find handle %w in table";
+CONSTMSG dszInvHHandle[]= 	"\r\n[Hd2Drv] didn't find handle %w in table";
+
+CONSTMSG dszQueryPInfo[]= 	"\r\n[QueryPhysinfo] handle %w";
+CONSTMSG dszQueryAInfo[]= 	"\r\n[QueryArrayinfo] handle %w";
+CONSTMSG dszVerifyArray[]= 	"\r\n[VerifyArray] handle %w";
+CONSTMSG dszStartRebuild[]= 	"\r\n[StartRebuild] handle %w";
+CONSTMSG dszSetChildState[]= 	"\r\n[SetChildState] handle %w";
+
+CONSTMSG dszQueryPListWrite[]="\r\n[QueryPhyslist] data buffer can't be written to!";
+CONSTMSG dszQueryPListIndex[]=	"\r\n[QueryPhyslist] index %w = handle %w!";
+CONSTMSG dszQAListAccess[]= "\r\n[QueryArraylist] data buffer can't be written to!";
+CONSTMSG dszQAListIndex[]=	"\r\n[QueryArraylist] index %w = handle %w!";
+CONSTMSG dszDAIoLock[]=		"\r\n[DoAdminIO] DevHelp_Lock(%p) failed!";
+CONSTMSG dszDAIoPhys[]=		"\r\n[DoAdminIO] DevHelp_VirtToPhys(%p) failed!";
+CONSTMSG dszScreen[]=		"\r\n--- screen --- %s";
+CONSTMSG dszIoctlUnknownCat[]=	"\r\nUnknown IOCtl category %w";
+CONSTMSG dszIoctlUnknownFct[]=	"\r\nUnknown IOCtl function %w";
+#endif
+
+
+
+
+
+
+/* Macro to verify that a certain memory range is
+ * readable/writable (depending on w). */
+
+#define CheckPointer(p,s,w)	DevHelp_VerifyAccess(FP_SEL(p),(s),FP_OFF(p),(w))
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Private Support Routines ****************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * Hd2Dev(hd)
+ *
+ * PARAMETER
+ *	hd		handle as provided by application
+ * RETURNS
+ *	PVRDEVHDR	physical device header
+ * GLOBAL
+ *	apPDev, cPDev
+ * DESCRIPTION
+ *	Translate handle reported to and provided by application
+ *	back to a VRDEVHDR pointer.
+ *
+ * REMARKS
+ */
+PRIVATE PVRDEVHDR NEAR
+Hd2Dev(USHORT const hd)
+{
+    USHORT	i;
+
+    for( i = 0; i < cPDev; ++i )
+	if( OFFSETOF(apPDev[i]) == hd )
+	    return apPDev[i];
+
+    DEBMSG1(DBG_LEVEL1,dszInvPHandle,hd);
+    return NULL;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * Hd2Drv(hd)
+ *
+ * PARAMETER
+ *	hd		handle as provided by application
+ * RETURNS
+ *	PHOSTDRIVE	host drive structure
+ * GLOBAL
+ *	apHDrv, cHDrv
+ * DESCRIPTION
+ *	Translate handle reported to and provided by application
+ *	back to a HOSTDRIVE pointer.
+ *
+ * REMARKS
+ */
+PRIVATE PHOSTDRIVE NEAR
+Hd2Drv(USHORT const hd)
+{
+    USHORT	i;
+
+    for( i = 0; i < cHDrv; ++i )
+	if( OFFSETOF(apHDrv[i]) == hd )
+	    return apHDrv[i];
+
+    DEBMSG1(DBG_LEVEL1,dszInvHHandle,hd);
+    return NULL;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** A Function for every IOCtl **************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * DriverVersion(rp)
+ *
+ * PARAMETER
+ *	request packet
+ * RETURNS
+ *	driver status word
+ * GLOBAL
+ *	(none)
+ * DESPRIPTION
+ *	Returns version of this driver.  Coded like the MS-DOS
+ *	version number.
+ *
+ * REMARKS
+ */
+PRIVATE DRVSTATUS NEAR
+DriverVersion(PRP_GENIOCTL rp)
+{
+    PUSHORT const	datasize = &rp->DataLen;
+    USHORT const	dsize = (*datasize == 0 ? 0xFFFF : *datasize);
+    PVRAID_VER_DATA const data = (PVRAID_VER_DATA)rp->DataPacket;
+    USHORT		cb;
+    DRVSTATUS		rc = STATUS_DONE;
+
+
+    do
+    {
+	cb = sizeof(data->version);		/* only version ... */
+	if( dsize < cb  ||  CheckPointer(rp->DataPacket, cb, 1) )
+	{
+	    rc = STATUS_ERR_INVPARAM;
+	    break;
+	}
+
+	data->version = MAKEUSHORT(SUBVERSION,VERSION);
+
+
+	cb += sizeof(data->flags);
+	if( dsize < cb  ||  CheckPointer(rp->DataPacket, cb, 1) )
+	    break;				/* not enough room */
+
+	data->flags = (UCHAR)uRegLevel;
+	if( (fDriverFlags & DF_SETUPWRITTEN) )
+	    data->flags |= 0x10;
+	if( (fDriverFlags & DF_BEEPDISABLED) )
+	    data->flags |= 0x20;
+
+
+	cb += sizeof(data->builds);
+	if( dsize < cb  ||  CheckPointer(rp->DataPacket, cb, 1) )
+	    break;				/* not enough room */
+
+	data->builds = cBuildProcess;
+    }
+    while( 0 );
+
+    return rc;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * ReadMessages(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ * RETURNS
+ *	driver status word
+ * GLOBAL
+ *	DisplayBuffer,iNextString
+ * DESPRIPTION
+ *	Copies message buffer to user buffer.
+ *
+ * REMARKS
+ *	Remember to append another 0 byte to end of buffer!  See SaveMessage()
+ */
+#pragma optimize("",off)			/* keep optimizer quiet */
+PRIVATE DRVSTATUS NEAR
+ReadMessages(PRP_GENIOCTL rp)
+{
+    PUSHORT const	datasize = &rp->DataLen;
+    USHORT		dsize = (*datasize == 0 ? 0xFFFF : *datasize);
+    PVRAID_MSGS_DATA const data = (PVRAID_MSGS_DATA)rp->DataPacket;
+    PUSHORT		pcbMsg = &iNextString;
+    PUCHAR		pMsg = DisplayBuffer;
+    DRVSTATUS		rc = STATUS_ERR_INVPARAM;
+
+
+    *datasize = *pcbMsg + FIELDOFFSET(VRAID_MSGS_DATA,msg) + 1;
+
+    if( dsize < FIELDOFFSET(VRAID_MSGS_DATA,msg)
+	||  CheckPointer(data, FIELDOFFSET(VRAID_MSGS_DATA,msg), 1) )
+	return rc;
+    data->cb = *datasize;			/* tell caller */
+
+    if( dsize > *datasize )
+	dsize = *datasize;
+    if( CheckPointer(data, dsize, 1) )
+	return rc;
+
+    /* If some bytes available in caller buffer (more than
+     * just 'cb'), copy part/all of message buffer. */
+
+    if( dsize - FIELDOFFSET(VRAID_MSGS_DATA,msg) > 0 )
+	_fmemcpy(data->msg, pMsg, dsize - FIELDOFFSET(VRAID_MSGS_DATA,msg));
+
+    return STATUS_DONE;
+}
+#pragma optimize("",)
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * ClearMessages(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ * RETURNS
+ *	driver status word
+ * GLOBAL
+ *	iNextString
+ * DESPRIPTION
+ *	Removes all messages from DisplayBuffer.
+ *
+ * REMARKS
+ */
+#pragma optimize("",off)			/* keep optimizer quiet */
+PRIVATE DRVSTATUS NEAR
+ClearMessages(PRP_GENIOCTL rp)
+{
+    PUSHORT const	parmsize = &rp->ParmLen;
+    PUSHORT const	datasize = &rp->DataLen;
+
+    PUSHORT	pi = &iNextString;
+    USHORT	rc = STATUS_DONE;
+
+    *parmsize = 0;
+    *datasize = 0;
+
+    *pi = 0;					/* to beginning of buffer */
+    return rc;
+}
+#pragma optimize("",)
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * QueryPhyslist(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ * RETURNS
+ *	driver status word
+ * GLOBAL
+ *	apPDev, cPDev
+ * DESPRIPTION
+ *	Copies table to user buffer.
+ *
+ * REMARKS
+ */
+PRIVATE DRVSTATUS NEAR
+QueryPhyslist(PRP_GENIOCTL rp)
+{
+    PUSHORT const	datasize = &rp->DataLen;
+    USHORT		dsize = (*datasize == 0 ? 0xFFFF : *datasize);
+    PVRAID_PHYSLIST_DATA const data = (PVOID)rp->DataPacket;
+    USHORT		i;
+    DRVSTATUS		rc = STATUS_ERR_INVPARAM;
+
+
+    *datasize = cPDev * sizeof(USHORT) + FIELDOFFSET(VRAID_PHYSLIST_DATA,hd);
+
+    do
+    {
+	if( dsize < FIELDOFFSET(VRAID_PHYSLIST_DATA,hd)
+	    ||  CheckPointer(data, FIELDOFFSET(VRAID_PHYSLIST_DATA,hd), 1) )
+	{
+	    DEBMSG1(DBG_LEVEL1,dszIoctlData2small,rp->rph.Cmd);
+	    break;
+	}
+	data->cb = *datasize;			/* tell caller */
+
+	if( dsize > *datasize )
+	    dsize = *datasize;
+	if( CheckPointer(data, dsize, 1) )
+	{
+	    DEBMSG(DBG_LEVEL1,dszQueryPListWrite);
+	    break;
+	}
+
+	/* If some bytes available in caller buffer (more than
+	 * just 'cb'), copy part/all of message buffer. */
+
+	for( i = 0;
+	     i * sizeof(USHORT) + FIELDOFFSET(VRAID_PHYSLIST_DATA,hd) < dsize;
+	     ++i )
+	{
+	    data->hd[i] = OFFSETOF(apPDev[i]);	/* 'hd'? Take structure pointer! */
+	    DEBMSG2(DBG_PATH,dszQueryPListIndex,i,data->hd[i]);
+	}
+	rc = STATUS_DONE;
+    }
+    while(0);
+
+    return rc;
+} /* end[QueryPhyslist()] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * QueryPhysinfo(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ * RETURNS
+ *	driver status word
+ * GLOBAL
+ *	apPDev, cPDev
+ * DESPRIPTION
+ *	Copies physical information to user buffer.
+ *
+ * REMARKS
+ */
+PRIVATE DRVSTATUS NEAR
+QueryPhysinfo(PRP_GENIOCTL rp)
+{
+    PUSHORT const	parmsize = &rp->ParmLen;
+    PUSHORT const	datasize = &rp->DataLen;
+    USHORT const	psize = (*parmsize == 0 ? 0xFFFF : *parmsize);
+    USHORT const	dsize = (*datasize == 0 ? 0xFFFF : *datasize);
+    PUSHORT const	parm = (PUSHORT)rp->ParmPacket;
+    PVRAID_PHYSINFO_DATA const data = (PVRAID_PHYSINFO_DATA)rp->DataPacket;
+
+    DRVSTATUS		rc;
+
+
+    /* Fill the (still not updated) size fields of the DosDevIOCtl()
+     * call with the very maximum bytes count returned.
+     * Despite the fact that this isn't passed to the application
+     * we can use those values later in our function. */
+
+    *parmsize = sizeof(USHORT);
+    *datasize = sizeof(VRAID_PHYSINFO_DATA);
+
+    do
+    {
+	PVRDEVHDR	vrd;
+
+	if( psize < sizeof(USHORT)  ||  CheckPointer(parm, sizeof(USHORT), 0) )
+	{
+	    DEBMSG1(DBG_LEVEL1,dszIoctlParam2small,rp->rph.Cmd);
+	    rc = STATUS_ERR_INVPARAM;
+	    break;
+	}
+
+	vrd = Hd2Dev(*parm);
+	if( vrd == NULL )
+	{
+	    rc = STATUS_ERR_UNKUNIT;
+	    break;
+	}
+
+	DEBMSG1(DBG_LEVEL1,dszQueryPInfo,*parm);
+	if( dsize < FIELDOFFSET(VRAID_PHYSINFO_DATA,adapter)
+	    ||  CheckPointer(data, FIELDOFFSET(VRAID_PHYSINFO_DATA,adapter), 1) )
+	{
+	    DEBMSG1(DBG_LEVEL1,dszIoctlData2small,rp->rph.Cmd);
+	    rc = STATUS_ERR_INVPARAM;
+	    break;
+	}
+
+	data->cb = *datasize;			/* tell caller, there is room */
+
+
+	/* If enough bytes available: fill structure. */
+
+	if( dsize >= FIELDOFFSET(VRAID_PHYSINFO_DATA,reqcnt) )
+	{
+	    if( CheckPointer(data, FIELDOFFSET(VRAID_PHYSINFO_DATA,reqcnt), 1) )
+	    {
+		rc = STATUS_ERR_INVPARAM;
+		break;
+	    }
+
+	    /* We should cast 'vrd' to type PVRDPHYS, but ... that type
+	     * is internal to physdev.c! */
+
+	    data->adapter = 0;
+	    data->target = 0;
+	    data->lun = 0;
+	    data->partsize = vrd->size;
+	    data->totalsize = 0;
+	}
+	if( dsize >= sizeof(VRAID_PHYSINFO_DATA) )
+	{
+	    if( CheckPointer(data, sizeof(VRAID_PHYSINFO_DATA), 1) )
+	    {
+		rc = STATUS_ERR_INVPARAM;
+		break;
+	    }
+
+	    data->reqcnt = vrd->iocnt;
+	    data->busycnt = vrd->busycnt;
+	}
+
+
+	rc = STATUS_DONE;
+    }
+    while(0);
+
+    return rc;
+} /* end[QueryPhysinfo] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * QueryArraylist(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ * RETURNS
+ *	driver status word
+ * GLOBAL
+ *	apHDrv, cHDrv
+ * DESPRIPTION
+ *	Copies table to user buffer.
+ *
+ * REMARKS
+ */
+PRIVATE DRVSTATUS NEAR
+QueryArraylist(PRP_GENIOCTL rp)
+{
+    PUSHORT const	datasize = &rp->DataLen;
+    USHORT		dsize = (*datasize == 0 ? 0xFFFF : *datasize);
+    PVRAID_ARRAYLIST_DATA const data = (PVOID)rp->DataPacket;
+    USHORT		i;
+    DRVSTATUS		rc = STATUS_ERR_INVPARAM;
+
+
+    *datasize = cHDrv * sizeof(USHORT) + FIELDOFFSET(VRAID_ARRAYLIST_DATA,hd);
+
+    do
+    {
+	if( dsize < FIELDOFFSET(VRAID_ARRAYLIST_DATA,hd)
+	    ||  CheckPointer(data, FIELDOFFSET(VRAID_ARRAYLIST_DATA,hd), 1) )
+	{
+	    DEBMSG1(DBG_LEVEL1,dszIoctlData2small,rp->rph.Cmd);
+	    break;
+	}
+	data->cb = *datasize;			/* tell caller */
+
+	if( dsize > *datasize )
+	    dsize = *datasize;
+	if( CheckPointer(data, dsize, 1) )
+	{
+	    DEBMSG(DBG_LEVEL1,dszQAListAccess);
+	    break;
+	}
+
+	/* If some bytes available in caller buffer (more than
+	 * just 'cb'), copy part/all of message buffer. */
+
+	for( i = 0;
+	     i * sizeof(USHORT) + FIELDOFFSET(VRAID_ARRAYLIST_DATA,hd) < dsize;
+	     ++i )
+	{
+	    data->hd[i] = OFFSETOF(apHDrv[i]);	/* 'hd'? Take structure pointer! */
+	    DEBMSG2(DBG_PATH,dszQAListIndex,i,data->hd[i]);
+	}
+	rc = STATUS_DONE;
+    }
+    while(0);
+
+    return rc;
+} /* end[QueryArraylist()] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * QueryArrayinfo(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ *	apHDrv, cHDrv
+ *
+ * RETURNS
+ *	driver status word
+ *
+ * DESPRIPTION
+ *	Copies array drive information to user buffer.
+ *
+ * REMARKS
+ */
+PRIVATE DRVSTATUS NEAR
+QueryArrayinfo(PRP_GENIOCTL rp)
+{
+    PUSHORT const	parmsize = &rp->ParmLen;
+    PUSHORT const	datasize = &rp->DataLen;
+    USHORT const	psize = (*parmsize == 0 ? 0xFFFF : *parmsize);
+    USHORT const	dsize = (*datasize == 0 ? 0xFFFF : *datasize);
+    PUSHORT const	parm = (PUSHORT)rp->ParmPacket;
+    PVRAID_ARRAYINFO_DATA const data = (PVRAID_ARRAYINFO_DATA)rp->DataPacket;
+
+    DRVSTATUS		rc;
+
+
+    *parmsize = sizeof(USHORT);
+    *datasize = sizeof(VRAID_ARRAYINFO_DATA);
+
+    do
+    {
+	PHOSTDRIVE	drv;
+
+	if( psize < sizeof(USHORT) )
+	{
+	    DEBMSG1(DBG_LEVEL1,dszIoctlParam2small,rp->rph.Cmd);
+	    rc = STATUS_ERR_INVPARAM;
+	    break;
+	}
+
+	drv = Hd2Drv(*parm);
+	if( drv == NULL )
+	{
+	    rc = STATUS_ERR_UNKUNIT;
+	    break;
+	}
+
+	DEBMSG1(DBG_LEVEL1,dszQueryAInfo,*parm);
+	if( dsize < FIELDOFFSET(VRAID_ARRAYINFO_DATA,id) )
+	{
+	    DEBMSG1(DBG_LEVEL1,dszIoctlData2small,rp->rph.Cmd);
+	    rc = STATUS_ERR_INVPARAM;
+	    break;
+	}
+
+	data->cb = *datasize;			/* tell caller */
+
+
+	/* If enough bytes available: fill structure. */
+
+	if( dsize >= sizeof(VRAID_ARRAYINFO_DATA) )
+	{
+	    drv->child->ioctl(drv->child, VRDIOCTL_INFO, 0, data);
+	    data->reqcnt = drv->ReqCnt;		/* overlay request counter */
+	}
+
+	rc = STATUS_DONE;
+    }
+    while(0);
+
+    return rc;
+} /* end[QueryArrayinfo] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * VerifyArray(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ *	apHDrv, cHDrv
+ *
+ * RETURNS
+ *	driver status word
+ *
+ * DESPRIPTION
+ *	Verifies data integry.
+ *
+ * REMARKS
+ */
+PRIVATE DRVSTATUS NEAR
+VerifyArray(PRP_GENIOCTL rp)
+{
+    PUSHORT const	parmsize = &rp->ParmLen;
+    PUSHORT const	datasize = &rp->DataLen;
+    USHORT const	psize = (*parmsize == 0 ? 0xFFFF : *parmsize);
+    USHORT const	dsize = (*datasize == 0 ? 0xFFFF : *datasize);
+    PVRAID_VERIFY_PARM const	parm = (PVOID)rp->ParmPacket;
+    PVRAID_ARRAYINFO_DATA const data = (PVOID)rp->DataPacket;
+
+    USHORT		us;
+    DRVSTATUS		rc;
+
+
+    *parmsize = sizeof(VRAID_VERIFY_PARM);
+    *datasize = sizeof(VRAID_ARRAYINFO_DATA);
+
+    do
+    {
+	PHOSTDRIVE	drv;
+
+	if( psize < sizeof(VRAID_VERIFY_PARM) )
+	{
+	    DEBMSG1(DBG_LEVEL1,dszIoctlData2small,rp->rph.Cmd);
+	    rc = STATUS_ERR_INVPARAM;
+	    break;
+	}
+
+	drv = Hd2Drv(parm->handle);
+	if( drv == NULL )
+	{
+	    rc = STATUS_ERR_UNKUNIT;
+	    break;
+	}
+	DEBMSG1(DBG_LEVEL2,dszVerifyArray,parm->handle);
+
+	drv->child->ioctl(drv->child, VRDIOCTL_QUERY_CHILDREN, 0, &us);
+	*datasize += us * (sizeof(VRAID_VERIFY_DATA) - 1
+			   + parm->seccnt * SECTOR_SIZE);
+
+	if( dsize < *datasize )
+	{
+	    DEBMSG1(DBG_LEVEL1,dszIoctlDAccess,rp->rph.Cmd);
+	    rc = STATUS_ERR_INVPARAM;
+	    break;
+	}
+
+	data->cb = *datasize;			/* tell caller */
+
+
+	rc = drv->child->ioctl(drv->child, VRDIOCTL_VERIFY, parm, data);
+	data->reqcnt = drv->ReqCnt;		/* overlay request counter */
+
+	if( rc == 0 )
+	    rc = STATUS_DONE;
+    }
+    while(0);
+
+    return rc;
+} /* end[VerifyArray] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * StartRebuild(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ *	apHDrv, cHDrv
+ *
+ * RETURNS
+ *	driver status word
+ *
+ * DESPRIPTION
+ *	Forces array to rebuild.
+ *
+ * REMARKS
+ */
+PRIVATE DRVSTATUS NEAR
+StartRebuild(PRP_GENIOCTL rp)
+{
+    PUSHORT const	parmsize = &rp->ParmLen;
+    PUSHORT const	datasize = &rp->DataLen;
+    USHORT const	psize = (*parmsize == 0 ? 0xFFFF : *parmsize);
+    USHORT const	dsize = (*datasize == 0 ? 0xFFFF : *datasize);
+    PVRAID_REBUILD_PARM const	parm = (PVOID)rp->ParmPacket;
+    PVRAID_ARRAYINFO_DATA const data = (PVOID)rp->DataPacket;
+
+    DRVSTATUS		rc;
+
+
+    *parmsize = sizeof(VRAID_REBUILD_PARM);
+    *datasize = sizeof(VRAID_ARRAYINFO_DATA);
+
+    do
+    {
+	PHOSTDRIVE	drv;
+
+	if( psize < sizeof(VRAID_REBUILD_PARM) )
+	{
+	    DEBMSG1(DBG_LEVEL1,dszIoctlData2small,rp->rph.Cmd);
+	    rc = STATUS_ERR_INVPARAM;
+	    break;
+	}
+
+	drv = Hd2Drv(parm->handle);
+	if( drv == NULL )
+	{
+	    rc = STATUS_ERR_UNKUNIT;
+	    break;
+	}
+	DEBMSG1(DBG_LEVEL1,dszStartRebuild,parm->handle);
+
+	data->cb = *datasize;			/* tell caller */
+
+
+	rc = drv->child->ioctl(drv->child, VRDIOCTL_START_REBUILD, parm, data);
+	data->reqcnt = drv->ReqCnt;		/* overlay request counter */
+
+	if( rc == 0 )
+	    rc = STATUS_DONE;
+    }
+    while(0);
+
+    return rc;
+} /* end[StartRebuild] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * SetChildState(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ *	apHDrv, cHDrv
+ *
+ * RETURNS
+ *	driver status word
+ *
+ * DESPRIPTION
+ *	Tells array something about a child.
+ *
+ * REMARKS
+ */
+PRIVATE DRVSTATUS NEAR
+SetChildState(PRP_GENIOCTL rp)
+{
+    PUSHORT const	parmsize = &rp->ParmLen;
+    PUSHORT const	datasize = &rp->DataLen;
+    USHORT const	psize = (*parmsize == 0 ? 0xFFFF : *parmsize);
+    USHORT const	dsize = (*datasize == 0 ? 0xFFFF : *datasize);
+    PVRAID_CHILD_PARAM const	parm = (PVOID)rp->ParmPacket;
+    PVOID const 	data = (PVOID)rp->DataPacket;
+
+    DRVSTATUS		rc;
+
+
+    *parmsize = sizeof(PVRAID_CHILD_PARAM);
+    *datasize = 0;
+
+    do
+    {
+	PHOSTDRIVE	drv;
+
+	if( psize < sizeof(PVRAID_CHILD_PARAM) )
+	{
+	    DEBMSG1(DBG_LEVEL1,dszIoctlData2small,rp->rph.Cmd);
+	    rc = STATUS_ERR_INVPARAM;
+	    break;
+	}
+
+	drv = Hd2Drv(parm->handle);
+	if( drv == NULL )
+	{
+	    rc = STATUS_ERR_UNKUNIT;
+	    break;
+	}
+	DEBMSG1(DBG_LEVEL1,dszSetChildState,parm->handle);
+
+
+	rc = drv->child->ioctl(drv->child, VRDIOCTL_CHILD_STATE, parm, data);
+	if( rc == 0 )
+	    rc = STATUS_DONE;
+    }
+    while(0);
+
+    return rc;
+} /* end[SetChildState] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DoAdminIO(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ * RETURNS
+ *	driver status word
+ * GLOBAL
+ *	apPDev, cPDev
+ * DESPRIPTION
+ *	Read a single sector from administratiive area.
+ *
+ * REMARKS
+ */
+PRIVATE DRVSTATUS NEAR
+DoAdminIO(PRP_GENIOCTL rp)
+{
+    PUSHORT const	parmsize = &rp->ParmLen;
+    PUSHORT const	datasize = &rp->DataLen;
+    USHORT const	psize = (*parmsize == 0 ? 0xFFFF : *parmsize);
+    USHORT const	dsize = (*datasize == 0 ? 0xFFFF : *datasize);
+    PVRAID_IO_PARM const parm = (PVOID)rp->ParmPacket;
+    PVOID const		data = rp->DataPacket;
+    DRVSTATUS		rc;
+
+
+    *parmsize = sizeof(VRAID_IO_PARM);
+    *datasize = SECTOR_SIZE;
+
+    do
+    {
+	PVRDEVHDR	vrd;
+	ULONG		phys, hLock;
+
+	if( psize < sizeof(VRAID_IO_PARM)
+	    ||  CheckPointer(parm, sizeof(VRAID_IO_PARM), 0) )
+	{
+	    DEBMSG1(DBG_LEVEL1,dszIoctlParam2small,rp->rph.Cmd);
+	    rc = STATUS_ERR_INVPARAM;
+	    break;
+	}
+	if( dsize < SECTOR_SIZE  ||  CheckPointer(data, SECTOR_SIZE, 1) )
+	{
+	    DEBMSG1(DBG_LEVEL1,dszIoctlData2small,rp->rph.Cmd);
+	    rc = STATUS_ERR_INVPARAM;
+	    break;
+	}
+
+	vrd = Hd2Dev(parm->hd);
+	if( vrd == NULL )
+	{
+	    rc = STATUS_ERR_UNKUNIT;
+	    break;
+	}
+
+
+	if( DevHelp_Lock(FP_SEL(data), LOCKTYPE_LONG_ANYMEM, 0, &hLock) )
+	{
+	    DEBMSG1(DBG_LEVEL1,dszDAIoLock,data);
+	    rc = STATUS_ERR_INVPARAM;
+	    break;
+	}
+	if( DevHelp_VirtToPhys(data, &phys) )
+	{
+	    DEBMSG1(DBG_LEVEL1,dszDAIoPhys,data);
+	    DevHelp_UnLock(hLock);
+	    rc = STATUS_ERR_INVPARAM;
+	    break;
+	}
+
+	if( (parm->flags & VIOF_WRITE) )
+	    fDriverFlags |= DF_SETUPWRITTEN;
+	rc = ProcessAdminIO(vrd, (parm->flags & VIOF_WRITE ? TRUE : FALSE),
+			    parm->partsecno, 1, phys);
+
+	DevHelp_UnLock(hLock);			/* release memory lock */
+	if( rc )
+	    break;
+	rc = STATUS_DONE;
+    }
+    while(0);
+
+    return rc;
+} /* end[DoAdminIO] */
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * ChangeBeeper(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ *
+ * RETURNS
+ *	driver status word
+ *
+ * DESPRIPTION
+ *	Allows to disable/enable beeping.
+ *
+ * REMARKS
+ */
+PRIVATE DRVSTATUS NEAR
+ChangeBeeper(PRP_GENIOCTL const rp)
+{
+    PUSHORT const	parmsize = &rp->ParmLen;
+    PUSHORT const	datasize = &rp->DataLen;
+    USHORT const	psize = (*parmsize == 0 ? 0xFFFF : *parmsize);
+    USHORT const	dsize = (*datasize == 0 ? 0xFFFF : *datasize);
+    PUSHORT const	parm = (PUSHORT)rp->ParmPacket;
+
+
+    *parmsize = sizeof(USHORT);
+    *datasize = 0;
+
+    if( psize < sizeof(USHORT)  ||  CheckPointer(parm, sizeof(USHORT), 0) )
+    {
+	DEBMSG1(DBG_LEVEL1,dszIoctlParam2small,rp->rph.Cmd);
+	return STATUS_ERR_INVPARAM;
+    }
+
+    if( *parm == 0 )
+	fDriverFlags |= DF_BEEPDISABLED;
+    else
+	fDriverFlags &= ~DF_BEEPDISABLED;
+
+    return STATUS_DONE;
+} /* end[ChangeBeeper] */
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Public Entries **************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * SaveMessage(void)
+ *
+ * PARAMETER
+ *	none
+ * RETURNS
+ *	nothing
+ * GLOBAL
+ *	szMsgBuffer,msgBuffer		message
+ *	DisplayBuffer,iNextString	swapdata buffer
+ * DESPRIPTION
+ *	Copies 'szMsgBuffer' to swapdata buffer and, if still
+ *	in init phase 1, to screen via DevHelp_Save_Messsage.
+ *
+ * REMARKS
+ */
+#pragma optimize("",off)
+PUBLIC void NEAR
+SaveMessage(void)
+{
+    PUSHORT	pi = &iNextString;
+
+    pushf();
+    cli();
+    if( *pi+_fstrlen(szMsgBuffer) < DISPLAYBUFFER_SIZE )
+    {
+	_fstrcpy(&DisplayBuffer[*pi], szMsgBuffer);
+	*pi += _fstrlen(szMsgBuffer) + 1;
+	DisplayBuffer[*pi] = '\0';		/* double 0 */
+    }
+    popf();
+
+    DEBMSG1(DBG_ALL,dszScreen,(PSZ)szMsgBuffer);
+    if( !(fDriverFlags & DF_INIT1DONE) )
+	DevHelp_Save_Message((NPBYTE)&msgBuffer);
+    return;
+}
+#pragma optimize("",)
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * GenIOCtl(rp)
+ *
+ * PARAMETER
+ *	rp		request packet
+ * RETURNS
+ *	driver status word
+ * GLOBAL
+ *	none
+ * DESPRIPTION
+ *	Calls approbiate subfunction.
+ * REMARKS
+ */
+PUBLIC DRVSTATUS
+GenIOCtl(PRP_GENIOCTL rp)
+{
+    DRVSTATUS	rc;
+
+
+    if( rp->Category != IOCTL_VRAID_CATEGORY )
+    {
+	DEBMSG1(DBG_LEVEL1,dszIoctlUnknownCat,rp->Category);
+	return STATUS_ERR_UNKCMD;
+    }
+
+    switch( rp->Function )
+    {
+      case VRAID_QUERY_VERSION:
+	rc = DriverVersion(rp);
+	break;
+
+      case VRAID_READ_MSGS:
+	rc = ReadMessages(rp);
+	break;
+
+      case VRAID_CLEAR_MSGS:
+	rc = ClearMessages(rp);
+	break;
+
+      case VRAID_QUERY_PHYSLIST:
+	rc = QueryPhyslist(rp);
+	break;
+
+      case VRAID_QUERY_PHYSINFO:
+	rc = QueryPhysinfo(rp);
+	break;
+
+      case VRAID_QUERY_ARRAYLIST:
+	rc = QueryArraylist(rp);
+	break;
+
+      case VRAID_QUERY_ARRAYINFO:
+	rc = QueryArrayinfo(rp);
+	break;
+
+      case VRAID_VERIFY_ARRAY:
+	rc = VerifyArray(rp);
+	break;
+
+      case VRAID_START_REBUILD:
+	rc = StartRebuild(rp);
+	break;
+
+      case VRAID_SET_CHILD_STATE:
+	rc = SetChildState(rp);
+	break;
+
+      case VRAID_ADMINSEC_IO:
+	rc = DoAdminIO(rp);
+	break;
+
+      case VRAID_START_SETUP:
+	SaveArrayInfos();			/* just in case it gets modified */
+	fDriverFlags |= DF_SETUPACTIVE;
+	rc = STATUS_DONE;
+	break;
+
+      case VRAID_END_SETUP:
+	fDriverFlags &= ~DF_SETUPACTIVE;
+	rc = STATUS_DONE;
+	break;
+
+      case VRAID_SET_BEEPER:
+	rc = ChangeBeeper(rp);
+	break;
+
+      default:
+	DEBMSG1(DBG_LEVEL1,dszIoctlUnknownFct,rp->Function);
+	rc = STATUS_ERR_UNKCMD;
+	break;
+    }
+
+    return rc;
+}
+@
+
+
+2.3
+log
+@- implemented VRAID_SET_CHILD_STATE
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.2 $
+ * $Date: 2000/07/24 23:57:30 $
+d10 3
+d63 1
+a63 1
+ * This code is Copyright Vitus Jensen 1997-2000
+d68 1
+a68 1
+static char const id[]="$Id: ioctl.c,v 2.2 2000/07/24 23:57:30 vitus Exp vitus $";
+d229 1
+a229 1
+PRIVATE USHORT NEAR
+d236 1
+a236 1
+    USHORT		rc = STATUS_DONE;
+d292 1
+a292 1
+PRIVATE USHORT NEAR
+d300 2
+a301 1
+    USHORT		rc = STATUS_ERR_INVPARAM;
+d343 1
+a343 1
+PRIVATE USHORT NEAR
+d377 1
+a377 1
+PRIVATE USHORT NEAR
+d384 2
+a385 1
+    USHORT		rc = STATUS_ERR_INVPARAM;
+d441 1
+a441 1
+PRIVATE USHORT NEAR
+d451 1
+a451 1
+    USHORT		rc;
+d548 1
+a548 1
+PRIVATE USHORT NEAR
+d555 2
+a556 1
+    USHORT		rc = STATUS_ERR_INVPARAM;
+d613 1
+a613 1
+PRIVATE USHORT NEAR
+d623 1
+a623 1
+    USHORT		rc;
+d691 1
+a691 1
+PRIVATE USHORT NEAR
+d701 2
+a702 1
+    USHORT		us, rc;
+d770 1
+a770 1
+PRIVATE USHORT NEAR
+d780 1
+a780 1
+    USHORT		rc;
+d837 1
+a837 1
+PRIVATE USHORT NEAR
+d847 1
+a847 1
+    USHORT		rc;
+d899 1
+a899 1
+PRIVATE USHORT NEAR
+d906 4
+a909 3
+    PVRAID_IO_PARM const	parm = (PVOID)rp->ParmPacket;
+    PVOID const			data = rp->DataPacket;
+    USHORT		rc;
+d987 1
+a987 1
+PRIVATE USHORT NEAR
+d1078 1
+a1078 1
+PUBLIC USHORT
+d1081 2
+a1082 1
+    USHORT rc;
+@
+
+
+2.2
+log
+@- implemented VRAID_START_REBUILD
+- VRD.ioctl() may now returns error code
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.1 $
+ * $Date: 2000/06/15 01:04:24 $
+d10 4
+d65 1
+a65 1
+static char const id[]="$Id: ioctl.c,v 2.1 2000/06/15 01:04:24 vitus Exp vitus $";
+d111 1
+d718 1
+a718 1
+	DEBMSG1(DBG_LEVEL1,dszVerifyArray,parm->handle);
+d816 63
+d1117 4
+@
+
+
+2.1
+log
+@- removed most calls to DevHelp_VerifyAccess.  Not neccessary on the IOCtl
+  packets itself (see OS2PDD mailing list)
+- implmented VRAID_VERIFY_ARRAY
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.12 $
+ * $Date: 2000/04/15 22:23:05 $
+d10 5
+d61 1
+a61 1
+static char const id[]="$Id: ioctl.c,v 1.12 2000/04/15 22:23:05 vitus Exp vitus $";
+d106 1
+d729 1
+a729 1
+	drv->child->ioctl(drv->child, VRDIOCTL_VERIFY, parm, data);
+d732 2
+a733 1
+	rc = STATUS_DONE;
+d744 67
+d1045 4
+@
+
+
+1.12
+log
+@- more debug messages
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.11 $
+ * $Date: 1999/10/01 00:58:20 $
+d10 3
+d50 2
+a51 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1997-99
+d56 1
+a56 1
+static char const id[]="$Id: ioctl.c,v 1.11 1999/10/01 00:58:20 vitus Exp vitus $";
+d91 11
+a101 1
+CONSTMSG dszQueryPList2small[]=	"\r\n[QueryPhyslist] need >=2 bytes data buffer!";
+a103 5
+CONSTMSG dszQueryPInfo[]= 	"\r\n[QueryPhysinfo] handle %w";
+CONSTMSG dszQPInfo2small[]= "\r\n[QueryPhysinfo] need at least 2 bytes parameter!";
+CONSTMSG dszQPInfoHandle[]=	"\r\n[QueryPhysinfo] didn't find handle %w in table";
+CONSTMSG dszQPInfoAccess[]=	"\r\n[QueryPhysinfo] data buffer too small/invalid!";
+CONSTMSG dszQAList2small[]=	"\r\n[QueryArraylist] need >=2 bytes data buffer!";
+a105 7
+CONSTMSG dszQueryAInfo[]= 	"\r\n[QueryArrayinfo] handle %w";
+CONSTMSG dszQAInfo2small[]= "\r\n[QueryArrayinfo] need at least 2 bytes parameter!";
+CONSTMSG dszQAInfoHandle[]= "\r\n[QueryArrayinfo] didn't find handle %w in table";
+CONSTMSG dszQAInfoAccess[]= "\r\n[QueryArrayinfo] data buffer too small/invalid!";
+CONSTMSG dszDAIoPAccess[]=	"\r\n[DoAdminIO] parameter buffer too small/invalid";
+CONSTMSG dszDAIoDAccess[]=	"\r\n[DoAdminIO] data buffer too small/invalid";
+CONSTMSG dszDAIoHandle[]=	"\r\n[DoAdminIO] didn't find handle %w in table";
+a107 1
+CONSTMSG dszCBeepPAccess[]= "\r\n[ChangeBeeper] parameterbuffer too small/invalid!";
+d155 2
+d186 2
+d378 1
+a378 1
+	    DEBMSG(DBG_LEVEL1,dszQueryPList2small);
+d452 1
+a452 1
+	    DEBMSG(DBG_LEVEL1,dszQPInfo2small);
+a459 1
+	    DEBMSG1(DBG_LEVEL1,dszQPInfoHandle,*parm);
+d468 1
+a468 1
+	    DEBMSG(DBG_LEVEL1,dszQPInfoAccess);
+d548 1
+a548 1
+	    DEBMSG(DBG_LEVEL1,dszQAList2small);
+d616 1
+a616 1
+	if( psize < sizeof(USHORT)  ||  CheckPointer(parm, sizeof(USHORT), 0) )
+d618 1
+a618 1
+	    DEBMSG(DBG_LEVEL1,dszQAInfo2small);
+a625 1
+	    DEBMSG1(DBG_LEVEL1,dszQAInfoHandle,*parm);
+d631 1
+a631 2
+	if( dsize < FIELDOFFSET(VRAID_ARRAYINFO_DATA,id)
+	    ||  CheckPointer(data, FIELDOFFSET(VRAID_ARRAYINFO_DATA,id), 1) )
+d633 1
+a633 1
+	    DEBMSG(DBG_LEVEL1,dszQAInfoAccess);
+d645 67
+a711 5
+	    if( CheckPointer(data, sizeof(VRAID_ARRAYINFO_DATA), 1) )
+	    {
+		rc = STATUS_ERR_INVPARAM;
+		break;
+	    }
+d713 5
+a717 3
+	    _fmemcpy(data->id, drv->child->id, sizeof(drv->child->id));
+	    data->size = drv->child->size;
+	    data->reqcnt = drv->ReqCnt;
+d720 6
+d731 1
+a731 1
+} /* end[QueryArrayinfo] */
+d772 1
+a772 1
+	    DEBMSG(DBG_LEVEL1,dszDAIoPAccess);
+d778 1
+a778 1
+	    DEBMSG(DBG_LEVEL1,dszDAIoDAccess);
+a785 1
+	    DEBMSG1(DBG_LEVEL1,dszDAIoHandle,parm->hd);
+d852 1
+a852 1
+	DEBMSG(DBG_LEVEL1,dszCBeepPAccess);
+d967 4
+@
+
+
+1.11
+log
+@- QueryPhysinfo: returns new fields in VRAID_PHYSINFO_DATA (request/busy counts)
+  if caller has enough room in his buffer.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/09/23 23:03:08 $
+d10 4
+d53 1
+a53 1
+static char const id[]="$Id: ioctl.c,v 1.10 1999/09/23 23:03:08 vitus Exp vitus $";
+d91 1
+d98 1
+d461 1
+d628 1
+@
+
+
+1.10
+log
+@- defined all DBGMSG() strings as located in CONST segment
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/07/05 01:42:12 $
+d10 3
+d49 1
+a49 1
+static char const id[]="$Id: ioctl.c,v 1.9 1999/07/05 01:42:12 vitus Exp vitus $";
+d127 2
+a128 2
+ * CALL
+ *	Hd2Dev(hd)
+d156 2
+a157 2
+ * CALL
+ *	Hd2Drv(hd)
+d191 2
+a192 2
+ * CALL
+ *	DriverVersion(rp)
+d253 2
+a254 2
+ * CALL
+ *	ReadMessages(rp)
+d304 2
+a305 2
+ * CALL
+ *	ClearMessages(rp)
+d339 2
+a340 2
+ * CALL
+ *	QueryPhyslist(rp)
+d402 2
+a403 2
+ * CALL
+ *	QueryPhysinfo(rp)
+d428 5
+d463 1
+a463 1
+	data->cb = *datasize;			/* tell caller */
+d468 1
+a468 1
+	if( dsize >= sizeof(VRAID_PHYSINFO_DATA) )
+d470 1
+a470 1
+	    if( CheckPointer(data, sizeof(VRAID_PHYSINFO_DATA), 1) )
+d485 12
+d509 2
+a510 2
+ * CALL
+ *	QueryArraylist(rp)
+d572 2
+a573 2
+ * CALL
+ *	QueryArrayinfo(rp)
+d658 2
+a659 2
+ * CALL
+ *	DoAdminIO(rp)
+d746 2
+a747 2
+ * CALL
+ *	ChangeBeeper(rp)
+d796 2
+a797 2
+ * CALL
+ *	SaveMessage(void)
+d838 2
+a839 2
+ * CALL
+ *	GenIOCtl(rp)
+@
+
+
+1.9
+log
+@- VRAID_START_SETUP: do SaveArrayInfos() first to let VSetup know the current
+  states and have this current state saved if VSetup inhibits saves on shutdown.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/06/20 17:31:28 $
+d10 4
+d46 1
+a46 1
+static char const id[]="$Id: ioctl.c,v 1.8 1999/06/20 17:31:28 vitus Exp vitus $";
+d79 30
+d365 1
+a365 1
+	    DEBMSG(DBG_LEVEL1,"\r\n[QueryPhyslist] need >=2 bytes data buffer!");
+d374 1
+a374 1
+	    DEBMSG(DBG_LEVEL1,"\r\n[QueryPhyslist] data buffer can't be written to!");
+d386 1
+a386 1
+	    DEBMSG2(DBG_PATH,"\r\n[QueryPhyslist] index %w = handle %w!",i,data->hd[i]);
+d434 1
+a434 1
+	    DEBMSG(DBG_LEVEL1,"\r\n[QueryPhysinfo] need at least 2 bytes parameter!");
+d442 1
+a442 1
+	    DEBMSG1(DBG_LEVEL1,"\r\n[QueryPhysinfo] didn't find handle %w in table",*parm);
+d450 1
+a450 1
+	    DEBMSG(DBG_LEVEL1,"\r\n[QueryPhysinfo] data buffer too small/invalid!");
+d518 1
+a518 1
+	    DEBMSG(DBG_LEVEL1,"\r\n[QueryArraylist] need >=2 bytes data buffer!");
+d527 1
+a527 1
+	    DEBMSG(DBG_LEVEL1,"\r\n[QueryArraylist] data buffer can't be written to!");
+d539 1
+a539 1
+	    DEBMSG2(DBG_PATH,"\r\n[QueryArraylist] index %w = handle %w!",i,data->hd[i]);
+d588 1
+a588 1
+	    DEBMSG(DBG_LEVEL1,"\r\n[QueryArrayinfo] need at least 2 bytes parameter!");
+d596 1
+a596 1
+	    DEBMSG1(DBG_LEVEL1,"\r\n[QueryArrayinfo] didn't find handle %w in table",*parm);
+d604 1
+a604 1
+	    DEBMSG(DBG_LEVEL1,"\r\n[QueryArrayinfo] data buffer too small/invalid!");
+d673 1
+a673 1
+	    DEBMSG(DBG_LEVEL1,"\r\n[DoAdminIO] parameter buffer too small/invalid");
+d679 1
+a679 1
+	    DEBMSG(DBG_LEVEL1,"\r\n[DoAdminIO] data buffer too small/invalid");
+d687 1
+a687 1
+	    DEBMSG1(DBG_LEVEL1,"\r\n[DoAdminIO] didn't find handle %w in table",parm->hd);
+d695 1
+a695 1
+	    DEBMSG1(DBG_LEVEL1,"\r\n[DoAdminIO] DevHelp_Lock(%p) failed!",data);
+d701 1
+a701 1
+	    DEBMSG1(DBG_LEVEL1,"\r\n[DoAdminIO] DevHelp_VirtToPhys(%p) failed!",data);
+d754 1
+a754 1
+	DEBMSG(DBG_LEVEL1,"\r\n[ChangeBeeper] parameterbuffer too small/invalid!");
+d807 1
+a807 1
+    DEBMSG1(DBG_ALL,"\r\n--- screen --- %s",(PSZ)szMsgBuffer);
+d837 1
+a837 1
+	DEBMSG1(DBG_LEVEL1,"\r\nUnknown IOCtl category %w",rp->Category);
+d891 1
+a891 1
+	DEBMSG1(DBG_LEVEL1,"\r\nUnknown IOCtl function %w",rp->Function);
+@
+
+
+1.8
+log
+@- DriverVersion: return some flags, too
+- ChangeBeeper() implemented
+@
+text
+@d3 3
+a5 3
+ * $Revision: 1.7 $
+ * $Date: 1999/05/12 01:54:22 $
+ * Im Editor bei $Locker: vitus $
+d10 4
+d42 1
+a42 1
+static char const id[]="$Id: ioctl.c,v 1.7 1999/05/12 01:54:22 vitus Exp vitus $";
+d842 1
+@
+
+
+1.7
+log
+@- added VRAID_START_SETUP, VRAID_END_SETUP
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1999/04/21 00:30:09 $
+d10 3
+d38 1
+a38 1
+static char const id[]="$Id: ioctl.c,v 1.6 1999/04/21 00:30:09 vitus Exp vitus $";
+d170 30
+d201 3
+a203 3
+    if( dsize < sizeof(VRAID_VER_DATA)
+	||  CheckPointer(rp->DataPacket, sizeof(VRAID_VER_DATA), 1) )
+	return STATUS_ERR_INVPARAM;
+d205 1
+a205 5
+    data->version = MAKEUSHORT(SUBVERSION,VERSION);
+    data->flags = (UCHAR)uRegLevel;
+    if( (fDriverFlags & DF_SETUPWRITTEN) )
+	data->flags |= 0x10;
+    return STATUS_DONE;
+d211 1
+a211 1
+/*#
+d262 1
+a262 1
+/*#
+d687 44
+d845 4
+@
+
+
+1.6
+log
+@- DoAdminIO: switched from PhysdevPartIO() and offset calculation
+  to ProcessAdminIO() and offset 1 (fix!)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1998/12/13 22:29:59 $
+d10 4
+d30 1
+a30 1
+ * This code is Copyright Vitus Jensen 1997-98
+d35 1
+a35 1
+static char const id[]="$Id: ioctl.c,v 1.5 1998/12/13 22:29:59 vitus Exp vitus $";
+d174 2
+d640 2
+d726 1
+d764 10
+d775 1
+@
+
+
+1.5
+log
+@- implemented VRAID_QUERY_ARRAYLIST and VRAID_QUERY_ARRAYINFO
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1998/09/27 16:08:02 $
+d10 3
+d31 1
+a31 1
+static char const id[]="$Id: ioctl.c,v 1.4 1998/09/27 16:08:02 vitus Stab vitus $";
+d142 1
+a142 1
+/*#
+d483 2
+d487 1
+a487 2
+ * GLOBAL
+ *	apHDrv, cHDrv
+d634 2
+a635 2
+	rc = PhysdevPartIO(vrd, (parm->flags & VIOF_WRITE ? TRUE : FALSE),
+			   parm->partsecno, 1, phys);
+@
+
+
+1.4
+log
+@- implemented VRAID_QUERY_PHYSLIST, VRAID_QUERY_PHYSINFO, VRAID_ADMINSEC_IO
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1998/06/26 22:38:12 $
+d10 3
+d28 1
+a28 1
+static char const id[]="$Id: ioctl.c,v 1.3 1998/06/26 22:38:12 vitus Exp vitus $";
+d75 1
+a75 1
+/*#
+d104 30
+d166 1
+a166 1
+    data->flags = 0;
+d259 1
+a259 1
+/*#
+d278 1
+a278 1
+    PVRAID_PHYSLIST_DATA const data = (PVRAID_PHYSLIST_DATA)rp->DataPacket;
+d317 1
+a317 1
+}
+d322 1
+a322 1
+/*#
+d412 149
+a560 1
+/*#
+d652 1
+a652 1
+/*#
+d694 1
+a694 1
+/*#
+d737 8
+@
+
+
+1.3
+log
+@- switched to DDK macros (cli, sti, pushf)
+- corrected swapable segment name (uppercase)
+@
+text
+@d3 3
+a5 3
+ * $Revision: 1.2 $
+ * $Date: 1998/05/29 01:44:20 $
+ * $Locker: vitus $
+d7 1
+a7 1
+ * General IOCtl interface
+a8 1
+ * History: see bottom of file
+d10 4
+d22 7
+a28 3
+#pragma off (unreferenced)
+static char const id[]="$Id: ioctl.c,v 1.2 1998/05/29 01:44:20 vitus Exp vitus $";
+#pragma on (unreferenced)
+d68 38
+a106 2
+ * NAME
+ *	DriverVersion
+d114 1
+a114 1
+ *	none
+d118 1
+a140 2
+ * NAME
+ *	ReadMessages
+d151 1
+d153 1
+d166 1
+a166 1
+    *datasize = *pcbMsg + FIELDOFFSET(VRAID_MSGS_DATA,msg);
+d173 2
+a174 2
+    if( dsize > *pcbMsg + FIELDOFFSET(VRAID_MSGS_DATA,msg) )
+	dsize = *pcbMsg + FIELDOFFSET(VRAID_MSGS_DATA,msg);
+a181 1
+    {
+a182 1
+    }
+a191 2
+ * NAME
+ *	ClearMessages
+d201 2
+a202 1
+ *	Removes messages from DisplayBuffer.
+d226 239
+a471 2
+ * NAME
+ *	SaveMessage
+d484 1
+d499 1
+a513 2
+ * NAME
+ *	GenIOCtl
+d539 1
+a539 1
+	rc = DriverVersion( rp );
+d543 1
+a543 1
+	rc = ReadMessages( rp );
+d547 13
+a559 1
+	rc = ClearMessages( rp );
+a568 2
+
+
+@
+
+
+1.2
+log
+@- added debug level parameter to DEBMSG macro
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/raid/RCS/ioctl.c,v $
+ * $Revision: 1.1 $
+ * $Date: 1998/02/18 00:03:13 $
+d10 6
+d20 1
+a20 1
+static char vcid[]="$Id: ioctl.c,v 1.1 1998/02/18 00:03:13 vitus Exp vitus $";
+d45 1
+a45 1
+#define _inswap		_based(_segname("SWAPDATA"))
+d214 2
+a215 1
+    DISABLE();
+d221 2
+a222 1
+    ENABLE();
+a280 8
+
+/* History:
+ *
+ * $Log: ioctl.c,v $
+ * Revision 1.1  1998/02/18 00:03:13  vitus
+ * Initial revision
+ *
+ */
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d14 1
+a14 1
+static char vcid[]="$Id: ioctl.c,v 1.4 1997/12/16 02:24:16 vitus Exp $";
+d215 1
+a215 1
+    DEBMSG1("\r\n%s",(PSZ)szMsgBuffer);
+d276 4
+a279 1
+ * $Log$
+@

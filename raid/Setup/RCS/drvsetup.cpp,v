@@ -1,0 +1,4667 @@
+head	3.2;
+access;
+symbols
+	VSETUPv0_84:2.15
+	VSETUP_82:2.9
+	VSETUPv0_80:2.6
+	VSETUPv0_71:1.11
+	VSETUPv0_70:1.11
+	VSETUPv0_60:1.7
+	VSETUPv0_52:1.6
+	VSETUPv0_51:1.6
+	VSETUPv0_50:1.5
+	VSETUPv0_20:1.4;
+locks; strict;
+comment	@ * @;
+
+
+3.2
+date	2006.01.16.21.20.30;	author vitus;	state Exp;
+branches;
+next	3.1;
+
+3.1
+date	2003.09.24.10.43.54;	author vitus;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2001.01.15.01.41.13;	author vitus;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2000.11.07.01.30.19;	author vitus;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2000.08.21.08.11.20;	author vitus;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2000.08.05.02.58.30;	author vitus;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2000.05.28.17.44.09;	author vitus;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2000.05.15.22.59.01;	author vitus;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2000.04.10.01.12.09;	author vitus;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2000.03.09.23.42.41;	author vitus;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	99.07.05.01.00.08;	author vitus;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	99.06.21.01.29.26;	author vitus;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	99.06.19.21.59.31;	author vitus;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	99.06.02.02.18.00;	author vitus;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	99.05.13.23.04.18;	author vitus;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	99.04.16.01.03.21;	author vitus;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	99.04.13.01.24.08;	author vitus;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	99.03.24.23.06.00;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.03.08.05.05.34;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.03.01.02.26.05;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.02.09.02.49.48;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	98.12.17.02.22.02;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	98.11.03.03.03.48;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	98.09.27.01.52.03;	author vitus;	state Stab;
+branches;
+next	1.4;
+
+1.4
+date	98.06.09.01.25.56;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.05.27.01.58.23;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.05.18.23.03.00;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.05.06.22.06.37;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Select/define RAID devices.
+@
+
+
+3.2
+log
+@- define NORAID5: generate code for current VRAID.FLT, not the one
+  that might follow and support RAID5 (if it ever will)
+- more verbose calls
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/drvsetup.cpp,v $
+ * $Revision: 3.1 $
+ * $Date: 2003/09/24 10:43:54 $
+ * $Locker: vitus $
+ *
+ *	Select/define RAID devices.
+ *
+ * $Log: drvsetup.cpp,v $
+ * Revision 3.1  2003/09/24 10:43:54  vitus
+ * - added RAID 5 code (new major because of "stopped" development)
+ *
+ * Revision 2.15  2001/01/15 01:41:13  vitus
+ * - changed handling of poup window.  It got too complicated to determine
+ *   which entry to enable/disable.  Hopefully it's now easier.
+ * - implemtned IDM_INVALID_CHILD related code
+ *
+ * Revision 2.14  2000/11/07 01:30:19  vitus
+ * - WUM_DEVTREE: only save scanner HWND on first message
+ *
+ * Revision 2.13  2000/08/21 08:11:20  vitus
+ * - moved filter access checking to DrvVerifyThread()
+ * - modifications for changed addChild() prototype
+ *
+ * Revision 2.12  2000/08/05 02:58:30  vitus
+ * - Rebuild and Verify are now in the context menue.  Added processing for them
+ *
+ * Revision 2.11  2000/05/28 17:44:09  vitus
+ * - adjusted verbosity levels
+ *
+ * Revision 2.10  2000/05/15 22:59:01  vitus
+ * - added calls to PPSubclassWindow(), saves presentation parameters
+ *
+ * Revision 2.9  2000/04/10 01:12:09  vitus
+ * - converted calls to WinMessageBox() to MyMessageBox()
+ *
+ * Revision 2.8  2000/03/09 23:42:41  vitus
+ * - changed C++ to C comments
+ * - adjusted verbosity levels
+ *
+ * Revision 2.7  1999/07/05 01:00:08  vitus
+ * - DragOver: corrected source/destination handling, should now work
+ *
+ * Revision 2.6  1999/06/21 01:29:26  vitus
+ * - corrected english spelling
+ *
+ * Revision 2.5  1999/06/19 21:59:31  vitus
+ * - minor corrections to keep compiler happy
+ *
+ * Revision 2.4  1999/06/02 02:18:00  vitus
+ * - DoPopup: IDM_REMOVE_CHILD only possible if another child is valid
+ * - IDM_DESTROY_DRV: WUM_DELDRV handles adding childs to container
+ *
+ * Revision 2.3  1999/05/13 23:04:18  vitus
+ * - all warning messages include drive ID
+ * - implemented IDM_REMOVE_CHILD: warns, posts WUM_REMCHILD
+ *
+ * Revision 2.2  1999/04/16 01:03:21  vitus
+ * - DragDrop: update complete tree when dropping on a child
+ *
+ * Revision 2.1  1999/04/13 01:24:08  vitus
+ * - implemented first step of drag-n-drop support: add something to chain, mirror
+ *
+ * Revision 1.11  1999/03/24 23:06:00  vitus
+ * - corrected popup menue on new array drives, did contain remove PHYSDEV...
+ * - WinPostMsg() instead of WinSendMsg()
+ *
+ * Revision 1.10  1999/03/08 05:05:34  vitus
+ * - uses queryIcon() method, all local icon handling removed
+ *
+ * Revision 1.9  1999/03/01 02:26:05  vitus
+ * - include dskinfo.hpp for drvbuild.h
+ * - reworked code because DSKINFO != VRDev
+ *
+ * Revision 1.8  1999/02/09 02:49:48  vitus
+ * - Umstellung auf C++
+ *
+ * Revision 1.7  1998/12/17 02:22:02  vitus
+ * - display "OS/2 Device x" at host drives
+ *
+ * Revision 1.6  1998/11/03 03:03:48  vitus
+ * - new DEVICE structures get 'avail = 0' if any of their childs are
+ *   'avail = 0' otherwise they are created as 'avail = 1'
+ * - modified for DSKINFO change: 'avail' element changed position
+ *
+ * Revision 1.5  1998/09/27 01:52:03  vitus
+ * - added "disabled" icons for pdevs and arrays
+ * - different messages why double click isn't possible
+ * - recognizes  DSKACC_FLT
+ *
+ * Revision 1.4  1998/06/09 01:25:56  vitus
+ * - seperate description for PHYSDEV devices to display logical
+ *   size (not partition size)
+ * - explanation of lower RAID levels
+ * - implemented context menue IDM_DELETE_PDEV
+ *
+ * Revision 1.3  1998/05/27 01:58:23  vitus
+ * - another icon: missing device
+ * - implemented IDM_CREATE_PDEV
+ *
+ * Revision 1.2  1998/05/18 23:03:00  vitus
+ * - seperate thread to scan/build devices/-tree
+ * - displays devices with 3 diff. icons
+ * - popup menu plus actions (not complete)
+ *
+ * Revision 1.1  1998/05/06 22:06:37  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-2001
+ */
+static char const vcid[]="$Id: drvsetup.cpp,v 3.1 2003/09/24 10:43:54 vitus Exp vitus $";
+static char const modname[]="DrvSetup";
+
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <stdlib.h>
+
+#define INCL_DOS
+#define INCL_DOSDEVIOCTL
+#define INCL_ERRORS
+#define INCL_WIN
+#define INCL_WINSTDDRAG
+#define INCL_GPI
+#include <os2.h>
+
+extern "C" {
+#include "../../../Lib/defines.h"
+#include "../../../Lib/verbose.h"
+#include "../../../Lib/profile.h"		/* profile handling */
+#include "../../../Lib/pphnd.h"			/* presparam handling */
+}
+#include "VSetup.h"
+#include "resources.h"
+#include "../dsklayout.h"
+#include "dskinfo.hpp"
+#include "drvbuild.h"
+#include "drverify.h"
+
+#include "Single.hpp"
+#include "Chain.hpp"
+#include "Stripe.hpp"
+#include "Mirror.hpp"
+#if !defined(NORAID5)
+# include "Raid5.hpp"
+#endif
+
+#include "drvsetup.h"
+
+extern USHORT	usHostId;
+
+
+
+
+
+
+#define WC_DRVSETUP	"DrvsetupWindow"
+
+
+
+typedef struct _WORK {
+    PTHR_DRVSETUP self;
+    HAB		hab;				/* to retrieve errors */
+    HWND	hwndCnr, hwndScanner;
+    HWND	hwndNonePopup;
+    HWND	hwndSngPopup;
+    HWND	hwndMulPopup;
+
+    PMYRECORD	pmrMenu;			/* this record has menu attached */
+
+    PMYRECORD	pmrDragSource;			/* this is dragged */
+    PMYRECORD	pmrDragDestination;		/* to this record */ 
+} WORK, * PWORK;
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Private Data ****************************************************
+ * ******************************************************************* */
+
+PRIVATE LONG	rgbBackground = RGB_ERROR;
+PRIVATE LONG	rgbForeground = RGB_ERROR;
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Window related Routines *****************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * LoadPresParam(app)
+ *
+ * PARAMETER
+ * RETURNS
+ * GLOBAL
+ * DESCRIPTION
+ *	If RGB value of background/foreground isn't set, retrieve
+ *	system standard values first.
+ *	Second: read profile settings, won't change anything if
+ *	settings aren't defined.
+ *
+ * REMARKS
+ */
+PRIVATE VOID
+LoadPresParam(char * app)
+{
+    if( rgbBackground == RGB_ERROR )
+    {
+	unsigned	cb;
+
+	rgbBackground = WinQuerySysColor(HWND_DESKTOP, SYSCLR_WINDOW, 0);
+	cb = sizeof(rgbBackground);
+	ProfileRead(app, "Background", &cb, &rgbBackground);
+    }
+    if( rgbForeground == RGB_ERROR )
+    {
+	unsigned	cb;
+
+	rgbForeground = WinQuerySysColor(HWND_DESKTOP, SYSCLR_OUTPUTTEXT, 0);
+	cb = sizeof(rgbForeground);
+	ProfileRead(app, "Foreground", &cb, &rgbForeground );
+    }
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CreateCnr(hwndClient,work)
+ *
+ * PARAMETER
+ *	hwndClient
+ *	work
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		can't create
+ *
+ * DESCRIPTION
+ *	Creates a new container inside 'hwndClient'.
+ *
+ * REMARKS
+ */
+PRIVATE int
+CreateCnr(HWND hwndClient,PWORK work)
+{
+    SWP		size;
+    CNRINFO	cnrinfo;
+
+    WinQueryWindowPos(hwndClient, &size);
+    Verbose(4,modname, "client window %u,%u %u,%u",
+	    size.x, size.y, size.cx, size.cy);
+
+    work->hwndCnr = WinCreateWindow(hwndClient, WC_CONTAINER,
+				    NULL,
+				    WS_VISIBLE
+				    |CCS_AUTOPOSITION|CCS_MINIRECORDCORE
+				    |CCS_VERIFYPOINTERS
+				    |CCS_EXTENDSEL|CCS_READONLY,
+				    0, 0, size.cx, size.cy,
+				    hwndClient, HWND_TOP,
+				    IDW_DRVCN, NULL, NULL);
+    if( work->hwndCnr == NULLHANDLE )
+    {
+	MyMessageBox(0, HWND_DESKTOP,
+		     "WinCreateWindow(...,WC_CONTAINER,...) - error %#x",
+		     WinGetLastError(work->hab));
+	return 1;
+    }
+    PPSubclassWindow(work->hwndCnr, WC_DRVSETUP);
+
+    memset(&cnrinfo, 0, sizeof(cnrinfo));
+    cnrinfo.cb = sizeof(cnrinfo);
+    cnrinfo.flWindowAttr = CV_TREE|CV_ICON |CA_TREELINE;
+    WinSendMsg(work->hwndCnr, CM_SETCNRINFO,
+	       MPFROMP(&cnrinfo), MPFROMLONG(CMA_FLWINDOWATTR));
+
+
+    /* 1st: menues */
+
+    work->hwndNonePopup = WinLoadMenu(HWND_OBJECT, NULLHANDLE, IDPM_NODRV);
+    work->hwndSngPopup = WinLoadMenu(HWND_OBJECT, NULLHANDLE, IDPM_SNGDRV);
+    work->hwndMulPopup = WinLoadMenu(HWND_OBJECT, NULLHANDLE, IDPM_MULDRV);
+    if( work->hwndSngPopup == NULLHANDLE
+	||  work->hwndMulPopup == NULLHANDLE
+	||  work->hwndNonePopup == NULLHANDLE )
+	Verbose(1,modname, "WinLoadMenu failed (last error %#x)", WinGetLastError(work->hab));
+    Verbose(4, "DrvSetup", "popup menues %#x,%#x,%#x", work->hwndSngPopup, work->hwndMulPopup, work->hwndNonePopup);
+
+    PPSubclassWindow(work->hwndNonePopup, WC_DRVSETUP);
+    PPSubclassWindow(work->hwndSngPopup, WC_DRVSETUP);
+    PPSubclassWindow(work->hwndMulPopup, WC_DRVSETUP);
+
+
+    /* Container is now ready to accept items. */
+
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DoPopup(hwndClient,work)
+ *
+ * PARAMETER
+ *	hwndClient		client area (container)
+ *	work			PWORK
+ *
+ * RETURNS
+ *	TRUE		???
+ *
+ * DESCRIPTION
+ *	The user requested that the menu be displayed.
+ *
+ *	Pseudo code (EDM/2 1#5):
+ *	if mouse over a container record
+ *	    if record is selected
+ *		add source emphasis to all selected records
+ *	    else
+ *		add source emphasis to this record
+ *	else
+ *	    select this whole container
+ *	call WinPopupMenu
+ *	undo source empasis changes
+ *
+ * REMARKS
+ *	Note that there's a bug in the container such that
+ *	if the user uses the keyboard to do this, we don't get
+ *	notified, so that is why this function is called
+ *	from both WM_CONTROL/CN_CONTEXTMENU and WM_CONTEXTMENU.
+ */
+PRIVATE BOOL
+DoPopup(HWND hwndClient,PWORK const work)
+{
+    HWND		popup = NULLHANDLE;
+    BOOL		bSet;
+
+    POINTL		ptlMouse;
+    WinQueryPointerPos(HWND_DESKTOP, &ptlMouse);
+
+    QUERYRECFROMRECT	qrfrQuery;
+    qrfrQuery.cb = sizeof(QUERYRECFROMRECT);
+    qrfrQuery.rect.xLeft = ptlMouse.x;
+    qrfrQuery.rect.xRight = ptlMouse.x+1;
+    qrfrQuery.rect.yBottom = ptlMouse.y;
+    qrfrQuery.rect.yTop = ptlMouse.y+1;
+    WinMapWindowPoints(HWND_DESKTOP, hwndClient, (PPOINTL)&qrfrQuery.rect, 2);
+
+    qrfrQuery.fsSearch = CMA_PARTIAL|CMA_ITEMORDER;
+
+    work->pmrMenu
+	= (PMYRECORD)WinSendMsg(work->hwndCnr, CM_QUERYRECORDFROMRECT,
+				MPFROMP(CMA_FIRST), MPFROMP(&qrfrQuery));
+
+    if( work->pmrMenu != NULL )
+    {
+	if( (work->pmrMenu->record.flRecordAttr & CRA_INUSE) != 0 )
+	{
+	    ULONG	cnt = 0;
+
+	    bSet = TRUE;
+	    SearchCnr(work->hwndCnr, (PFNSRCH)EmphInuse2Source, &bSet, &cnt, NULL);
+	    Verbose(2,modname, "DoPopup: %lu records in use", cnt);
+#if 0
+	    if( cnt == 1 )
+		popup = work->hwndSngPopup;
+	    else
+#endif
+		popup = work->hwndMulPopup;
+	}
+	else
+	{
+	    popup = work->hwndSngPopup;
+	    WinSendMsg(work->hwndCnr, CM_SETRECORDEMPHASIS,
+		       MPFROMP(work->pmrMenu), MPFROM2SHORT(TRUE,CRA_SOURCE));
+	}
+    }
+    else
+    {
+	popup = work->hwndNonePopup;
+	WinSendMsg(work->hwndCnr, CM_SETRECORDEMPHASIS,
+		   MPFROMP(NULL), MPFROM2SHORT(TRUE,CRA_SOURCE));
+    }
+
+    WinPopupMenu(HWND_DESKTOP, hwndClient, popup,
+		 ptlMouse.x, ptlMouse.y,
+		 0,
+		 PU_HCONSTRAIN | PU_VCONSTRAIN | PU_NONE
+		 | PU_KEYBOARD | PU_MOUSEBUTTON1 | PU_MOUSEBUTTON2);
+
+
+    if( popup == work->hwndSngPopup )
+    {
+	/* Single icon selected, modify menu according to drive type. */
+
+	WinEnableMenuItem(popup, IDM_CREATE_PDEV, FALSE); /* assume: nothing */
+	WinEnableMenuItem(popup, IDM_DELETE_PDEV, FALSE);
+	WinEnableMenuItem(popup, IDM_REMOVE_CHILD, FALSE);
+	WinEnableMenuItem(popup, IDM_INVALID_CHILD, FALSE);
+	WinEnableMenuItem(popup, IDM_DESTROY_DRV, FALSE);
+	WinEnableMenuItem(popup, IDM_VERIFY_DRV, FALSE);
+	WinEnableMenuItem(popup, IDM_REBUILD_DRV, FALSE);
+
+	if( work->pmrMenu->dsk != NULL )
+	{
+	    /* Figure out the verify / rebuild option.  They are
+	     * independ from a possible array structure. */
+
+	    if( work->pmrMenu->dsk != NULL )
+	    {
+		switch( work->pmrMenu->dsk->isArray() )
+		{
+		  case RDTYPE_MIRROR:
+#if !defined(NORAID5)
+		  case RDTYPE_RAID4:
+		  case RDTYPE_RAID5:
+#endif
+		  {
+		      VDriveWithRedundancy * const array
+			  = (VDriveWithRedundancy*)work->pmrMenu->dsk;
+
+		      if( array->queryState() == Ready )
+		      {
+			  WinEnableMenuItem(popup, IDM_VERIFY_DRV, TRUE);
+			  WinEnableMenuItem(popup, IDM_REBUILD_DRV, TRUE);
+		      }
+		  }
+		  break;
+
+		  default:
+		    break;
+		}
+	    }
+
+
+	    /* Figure out whether this is a child which can be removed
+	     * or declared as invalid. */
+
+	    if( work->pmrMenu->dsk->getParent() != NULL )
+	    {
+		VRDrive * const	parent = work->pmrMenu->dsk->getParent();
+
+		/* "dsk->parent != 0"
+		 * This is part of a larger drive array.
+		 * - it can't be destroyed as there is something
+		 *	 relying on it.
+		 * Nothing can be done.  Exceptions:
+		 * - the parent is RAID 1 and this child isn't the last
+		 *   valid child.
+		 * - the parent is RAID 5 and higher and this child is
+		 *   in "stand by" mode. */
+
+		if( work->pmrMenu->dsk->getParent()->isArray() == RDTYPE_MIRROR )
+		{
+		    int const	cnt = parent->queryChildren();
+		    int		i, v;
+
+		    for( i = v = 0; i < cnt; ++i )
+		    {
+			VRDev * const	vrd = parent->getChild(i);
+			if( vrd != work->pmrMenu->dsk
+			    &&  parent->isValidChild(i) == True )
+			    ++v;
+		    }
+		    if( v != 0 )
+		    {
+			/* Oh, there is another valid one!  So we can
+			 * be removed... */
+
+			WinEnableMenuItem(popup, IDM_REMOVE_CHILD, TRUE);
+			WinEnableMenuItem(popup, IDM_INVALID_CHILD, TRUE);
+		    }
+		}
+
+	    }
+
+	    /* May this disk / drive / array be destroyed? */
+
+	    if( work->pmrMenu->dsk->getParent() == NULL
+		&&  work->pmrMenu->dsk->isArray() != 0 )
+	    {
+		WinEnableMenuItem(popup, IDM_DESTROY_DRV, TRUE);
+	    }
+
+	    /* Something to create a PHYSDEV on? */
+
+	    if( work->pmrMenu->dsk->getParent() == NULL
+		&&  work->pmrMenu->dsk->isArray() == 0
+		&&  work->pmrMenu->dsk->isWritable() == True
+		&&  work->pmrMenu->dsk->isHostdrive() == True )
+	    {
+		WinEnableMenuItem(popup, IDM_CREATE_PDEV, TRUE);
+	    }
+
+	    /* A PHYSDEV which could be deleted? */
+
+	    if( work->pmrMenu->dsk->getParent() == NULL
+		&&  work->pmrMenu->dsk->isArray() == 0
+		&&  work->pmrMenu->dsk->isWritable() == True
+		&&  work->pmrMenu->dsk->isHostdrive() == False )
+	    {
+		WinEnableMenuItem(popup, IDM_DELETE_PDEV, TRUE);
+	    }
+	}
+    } /* hwndSngPopup */
+
+    return TRUE;				/* xxx TRUE? */
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DisplayDisk(work,parent,dsk)
+ *
+ * PARAMETER
+ *	work		thread specific data
+ *	parent		drive to which 'dsk' is a child
+ *	dsk		drive to display
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Display device tree (recursive).
+ *
+ * REMARKS
+ */
+PRIVATE void
+DisplayDisk(PWORK work,PMYRECORD parent,VRDev * dsk)
+{
+    RECORDINSERT	ins;
+    PMYRECORD		address;
+    char *		descr;
+    ULONG const		extra = sizeof(MYRECORD)-sizeof(MINIRECORDCORE);
+
+
+    address = (PMYRECORD)WinSendMsg(work->hwndCnr, CM_ALLOCRECORD,
+				    MPFROMLONG(extra), MPFROMLONG(1));
+    Verbose(4,modname, "CM_ALLOCRECORD: %#x",address);
+
+    address->dsk = dsk;
+    descr = dsk->allocateDescription();
+    address->record.hptrIcon = dsk->queryIcon();
+    address->record.pszIcon = descr;
+
+    memset(&ins, 0, sizeof(ins));
+    ins.cb = sizeof(ins);
+    ins.pRecordOrder = (PRECORDCORE)CMA_END;
+    ins.pRecordParent = (PRECORDCORE)parent;	/* none (only RAID drives have) */
+    ins.zOrder = CMA_TOP;
+    ins.fInvalidateRecord = TRUE;		/* invalidate record now/later */
+    ins.cRecordsInsert = 1;
+
+
+    int	i;
+    i = (int)WinSendMsg(work->hwndCnr, CM_INSERTRECORD,
+			  MPFROMP(address), MPFROMP(&ins));
+    if( i == 0 )
+	Verbose(1,modname, "WinSendMsg(CM_INSERTRECORD) failed - last error %#x", WinGetLastError(work->hab));
+    else if( dsk != NULL  &&  dsk->isArray() )
+    {
+	VRDrive *	drv = (VRDrive *)dsk;	/* we are sure it's at least this */
+
+	for( i = 0; i < drv->queryChildren(); ++i )
+	    DisplayDisk(work, address, drv->getChild(i));
+    }
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DragInit(hwndClient,work,drag)
+ *
+ * PARAMETER
+ *	hwndClient		handle of client window, never (?) used
+ *	work			window work structure
+ *	drag			describes drag operation
+ *
+ * RETURNS
+ *	0			always
+ *
+ * DESCRIPTION
+ *	Called whenever a drag'n drop operation is requested by the
+ *	user.  Verifies source record (valid PHYSDEVICE or higher, writable,
+ *	etc.) and starts dragging by calling the approbiate Drg*() routines.
+ *
+ * REMARKS
+ */
+PRIVATE MRESULT
+DragInit(HWND hwndClient,PWORK const work,PCNRDRAGINIT const drag)
+{
+    Verbose(2,modname, "DragInit: record %#x", drag->pRecord);
+    if( drag->pRecord == NULL )
+	return 0;				/* no record selected */
+    if( work->pmrDragSource != NULL )
+	return 0;				/* already active drag */
+
+
+    /* Analyse drive to be dragged for logical possible and impossible
+     * operations. */
+
+    VRDev * const rdev = ((PMYRECORD)drag->pRecord)->dsk;
+    if( rdev->getParent() != NULL )
+	return 0;				/* sorry, no dragging of children */
+    if( rdev->isWritable() == False )
+	return 0;				/* can't write = no drag */
+    if( rdev->isHostdrive() == True  &&  rdev->isArray() == 0 )
+	return 0;				/* not even PHYSDEVICE! */
+
+
+    /* Well, all informations tell me it is valid to drag
+     * this drive around.  Tell presentation manager! */
+
+    Verbose(2,modname, "DragInit: record passed checks");
+    work->pmrDragSource = (PMYRECORD)drag->pRecord;
+
+    PDRAGINFO	dinfo = DrgAllocDraginfo(1);
+    DRAGITEM	ditem;
+    ditem.hwndItem = hwndClient;
+    ditem.ulItemID = (ULONG)drag->pRecord;
+    ditem.hstrType = DrgAddStrHandle("DRT_CUSTOMER");
+    ditem.hstrRMF = DrgAddStrHandle("DRM_SHAREMEM,DRM_UNKNOWN");
+    ditem.fsControl = DC_REMOVEABLEMEDIA;	/* can't be recovered... */
+    ditem.fsSupportedOps = DO_MOVEABLE;
+
+    DrgSetDragitem(dinfo,			/* Set item in DRAGINFO */
+		   &ditem,			/* Pointer to DRAGITEM */
+		   sizeof(ditem),		/* Size of DRAGITEM */
+		   0);				/* Index of DRAGITEM */
+
+    DRAGIMAGE	dimage;
+    dimage.cb = sizeof(DRAGIMAGE);		/* Initialize DRAGIMAGE */
+    dimage.cptl = 0;				/* Not a polygon */
+    dimage.hImage = work->pmrDragSource->dsk->queryIcon();
+    dimage.fl = DRG_ICON;			/* Dragging an icon */
+    dimage.cxOffset = 0;			/* No hotspot */
+    dimage.cyOffset = 0;
+
+    /*hDrop =*/ DrgDrag(hwndClient,		/* initiate drag */
+			dinfo,			/* DRAGINFO structure */
+			&dimage,		/* DRAGIMAGE structure */
+			1,			/* Only one DRAGIMAGE */
+			VK_ENDDRAG,		/* End of drag indicator */
+			NULL);			/* Reserved */
+ 
+    DrgFreeDraginfo(dinfo);			/* Free DRAGINFO struct */
+
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DragLeave(hwndClient,work,drag)
+ *
+ * PARAMETER
+ *	hwndClient		handle of client window, never (?) used
+ *	work			window work structure
+ *	drag			describes drag operation
+ * RETURNS
+ *	0
+ *
+ * DESCRIPTION
+ *	Drag operation aborted.  Cleanup work area.
+ *
+ * REMARKS
+ */
+PRIVATE MRESULT
+DragLeave(HWND hwndClient,PWORK const work,PCNRDRAGINFO drag)
+{
+    Verbose(2,modname, "DragLeave, record %#x", drag->pRecord);
+
+    work->pmrDragSource = NULL;			/* reflect in work area */
+    work->pmrDragDestination = NULL;
+    return 0;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DragOver(hwndClient,work,drag)
+ *
+ * PARAMETER
+ *	hwndClient		handle of client window, never (?) used
+ *	work			window work structure
+ *	drag			describes drag operation
+ *
+ * RETURNS
+ *	Information abount drap operation's status DOR_*, DO_*
+ *
+ * DESCRIPTION
+ *	Called whenever a dragged object changes it's position above
+ *	our client area.  Has to determine wehther a drop would be possible.
+ *	As we have to do those checks anyway, keep references in global
+ *	variables for DROP operation.
+ *
+ * REMARKS
+ *	Valid target for dropping are RDTYPE_MIRROR and RDTYPE_CHAIN.  Adding
+ *	to any other target would destroy their data or require another user
+ *	interaction (type of new VRAID drive).		xxx
+ *
+ */
+PRIVATE MRESULT
+DragOver(HWND hwndClient,PWORK const work,PCNRDRAGINFO drag)
+{
+    Verbose(2,modname, "DragOver, record %#x", drag->pRecord);
+
+
+    /* Check the destination: if pRecord is NULL, the target of
+     * drop operation is the container background.  This drop
+     * doesn't make sense. */
+
+    if( drag->pRecord == NULL )
+    {
+	Verbose(2,modname, "DragOver, no target");
+	return MRFROM2SHORT(DOR_NODROP,DO_DEFAULT);
+    }
+
+
+    /* Determine position of dragged object (= mouse pointer). */
+
+    POINTL		ptlMouse;
+    WinQueryPointerPos(HWND_DESKTOP, &ptlMouse);
+
+    QUERYRECFROMRECT	qrfrQuery;
+    qrfrQuery.cb = sizeof(QUERYRECFROMRECT);
+    qrfrQuery.rect.xLeft = ptlMouse.x;
+    qrfrQuery.rect.xRight = ptlMouse.x+1;
+    qrfrQuery.rect.yBottom = ptlMouse.y;
+    qrfrQuery.rect.yTop = ptlMouse.y+1;
+    WinMapWindowPoints(HWND_DESKTOP, hwndClient, (PPOINTL)&qrfrQuery.rect, 2);
+
+    qrfrQuery.fsSearch = CMA_PARTIAL|CMA_ITEMORDER;
+
+
+    /* Are there any objects located below the dragged object? */
+
+    work->pmrDragDestination
+	= (PMYRECORD)WinSendMsg(work->hwndCnr, CM_QUERYRECORDFROMRECT,
+				MPFROMP(CMA_FIRST), MPFROMP(&qrfrQuery));
+    if( work->pmrDragDestination == NULL )
+    {
+	Verbose(2,modname, "DragOver, no destination");
+	return MRFROM2SHORT(DOR_NODROP,DO_DEFAULT);
+    }
+
+    if( work->pmrDragDestination != (PMYRECORD)drag->pRecord )
+    {
+	Verbose(1,modname, "DragOver, pRecord != pmrDragDestination!");
+	return MRFROM2SHORT(DOR_NODROP,DO_DEFAULT);
+    }
+
+
+    /* Now let us have a look at the destination: is it possible
+     * to add something to it? */
+
+    VRDev * const rdev = work->pmrDragDestination->dsk;
+    UCHAR const	rdtype = rdev->isArray();
+
+    Verbose(2,modname, "DragOver, destination %#x", rdev);
+    if( work->pmrDragSource->dsk == rdev )
+    {
+	Verbose(2,modname, "DragOver, source == destination!");
+	return MRFROM2SHORT(DOR_NODROP,DO_DEFAULT);
+    }
+
+
+    switch( rdtype )
+    {
+	/* Mirroring:
+	 *	Always possible to add another child.  But the child should
+	 *	be large enough... */
+      case RDTYPE_MIRROR:
+	if( work->pmrDragSource->dsk->querySize() < rdev->querySize() )
+	{
+	    Verbose(2,modname, "DragOver, source too small (%lu < %lu)",work->pmrDragSource->dsk->querySize(),rdev->querySize());
+	    work->pmrDragDestination = NULL;
+	    return MRFROM2SHORT(DOR_NODROP,DO_DEFAULT);
+	}
+	break;
+
+	/* Chaining:
+	 *	Adding another children means increasing the size
+	 *	of the array.  Impossible with a parent! */
+      case RDTYPE_CHAIN:
+	if( rdev->getParent() != NULL )
+	{
+	    /* There is a parent: we aren't allowed to change
+	     * destinations size! */
+
+	    Verbose(2,modname, "DragOver, bad destination");
+	    work->pmrDragDestination = NULL;
+	    return MRFROM2SHORT(DOR_NODROP,DO_DEFAULT);
+	}
+	break;
+
+	/* Striping, PHYSDEV, nothing:
+	 *	Adding a child destroys user data or creates
+	 *	a new level.  Create a new array instead. */
+      default:
+	Verbose(2,modname, "DragOver, bad destination type");
+	work->pmrDragDestination = NULL;
+	return MRFROM2SHORT(DOR_NODROP,DO_DEFAULT);
+    }
+
+    Verbose(4,modname, "DragOver, destination is acceptable");
+    return MRFROM2SHORT(DOR_DROP,DO_MOVE);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DragDrop(hwndClient,work,drag)
+ *
+ * PARAMETER
+ *	hwndClient		handle of client window, never (?) used
+ *	work			window work structure
+ *	drag			describes drag operation
+ * RETURNS
+ *	0
+ *
+ * DESCRIPTION
+ *	Handles the dropping of a PHYSDEV or higher onto an array.
+ *
+ * REMARKS
+ *	Since we would not receive a DM_DROP message unless a DOR_DROP reply
+ *	had been given for a DM_DRAGOVER, we can assume we have successfully
+ *	validated that we can accept the drop. Note that drag would have
+ *	sent another DM_DRAGOVER if the operation had changed.
+ *
+ *	Therefore we don't have to re-validate the operation.
+ *	We can go ahead and perform the operation.
+ */
+PRIVATE MRESULT
+DragDrop(HWND hwndClient,PWORK const work,PCNRDRAGINFO drag)
+{
+    VRDev * const dest = ((PMYRECORD)drag->pRecord)->dsk;
+    char	str[200];
+    DEVID const	* id;
+    ULONG	response;
+
+    Verbose(2,modname, "DragDrop, record %#x", drag->pRecord);
+
+    if( drag->pDragInfo->hwndSource != hwndClient )
+    {
+	Verbose(2,modname, "DragDrop, can't use external data");
+	return 0;
+    }
+
+    id = work->pmrDragSource->dsk->queryID();
+
+
+    /* All checks have been done by 'DragOver()', so just execute
+     * what is requested. */
+
+    switch( dest->isArray() )
+    {
+      case RDTYPE_MIRROR:
+      case RDTYPE_CHAIN:
+	sprintf(str, "This will destroy all data on the"
+		" dropped device ID %02X%02X%02X%02X%02X%02X.\n"
+		"Are you sure you want to do this?",
+		(*id)[0],(*id)[1],(*id)[2],(*id)[3],(*id)[4],(*id)[5]);
+	response = WinMessageBox(HWND_DESKTOP, hwndClient,
+				 str, "Just curious...",
+				 -1UL, MB_YESNO|MB_QUERY|MB_MOVEABLE);
+	if( response == MBID_YES )
+	{
+	    PMINIRECORDCORE	ap[2];
+	    PMYRECORD		myrcd = (PMYRECORD)drag->pRecord;
+
+	    ((VRDrive *)dest)->addChild(work->pmrDragSource->dsk, False, 0);
+	    if( dest->isArray() == RDTYPE_MIRROR )
+		((VDriveWithRedundancy *)dest)->setBuild(0);
+
+
+	    /* Remove new child and destination (destinations parent)
+	     * from container.
+	     * We need the parent to the whole tree. */
+
+	    VRDev *	highest = dest;
+	    while( highest->getParent() != 0 )
+		highest = highest->getParent();
+	    SearchCnr(work->hwndCnr, (PFNSRCH)LookupDisk, highest, &myrcd, NULL);
+	    Verbose(2,modname, "DragDrop: found as record %lu", myrcd);
+
+	    ap[0] = (PMINIRECORDCORE)work->pmrDragSource;
+	    ap[1] = (PMINIRECORDCORE)myrcd;
+	    WinSendMsg(work->hwndCnr, CM_REMOVERECORD,
+		       MPFROMP(ap), MPFROM2SHORT(2, CMA_FREE|CMA_INVALIDATE));
+
+
+	    /* Post a message to the scanner thread.  This will result in
+	     * disk update and reposting the device tree to our thread,
+	     * now properly configured. */
+
+	    WinPostMsg(work->hwndScanner, WUM_DEVTREE, highest, NULL);
+	}
+	break;
+
+      case 0:					/* no array: PHYSDEV */
+      default:
+	assert( 0 );
+	break;
+    }
+
+
+    /* Cleanup. */
+
+    work->pmrDragSource = NULL;
+    work->pmrDragDestination = NULL;
+    return 0;
+}
+
+
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DrvsetupWindowProc(hwnd,msg,mp1,mp2)
+ *
+ * PARAMETER
+ *	hwnd,msg,mp1,mp2	see presentation manager reference
+ * RETURNS
+ *	MRESULT			see presentation manager reference
+ * GLOBAL
+ *	none
+ * DESPRIPTION
+ *	Window procedure
+ *
+ * REMARKS
+ */
+PRIVATE MRESULT EXPENTRY
+DrvsetupWindowProc(HWND hwnd,ULONG msg,MPARAM mp1,MPARAM mp2)
+{
+    static int	regular = FALSE;		/* in message loop? */
+    WORK * const work = (PWORK)WinQueryWindowPtr(hwnd, QWL_USER);
+    BOOL	bool;				/* usable by many messages */
+
+    switch( msg )
+    {
+	/* ============================================================
+	 * WUM_START:
+	 *	window configuration ended, application enters
+	 *	message loop. All further messages are caused
+	 *	by the user.
+	 */
+      case WUM_START:
+	Verbose(4,modname, "WUM_START");
+	CreateCnr(hwnd, work);
+	{
+	    int			tid;
+	    PTHR_DRVSCAN	dta = new THR_DRVSCAN;
+
+	    dta->parent = hwnd;
+	    tid = _beginthread(DrvscanThread, NULL, STACK_SIZE, dta);
+	    if( tid == -1 )
+		Verbose(1,modname, "_beginthread(DrvscanThread) failed - errno %u", errno);
+	}
+	regular = TRUE;
+	return 0;
+
+
+      case WUM_DEVTREE:
+	Verbose(3,modname, "WUM_DEVTREE");
+	if( work->hwndScanner == NULLHANDLE )
+	{
+	    HWND const	hwnd = HWNDFROMMP(mp2);
+
+	    /* There very first time the connection between scanner and
+	     * display thread are build by passing windows handles. */
+
+	    assert( WinIsWindow(work->hab, hwnd) == TRUE ); /* has to be valid */
+	    work->hwndScanner = hwnd;
+	}
+	DisplayDisk(work, NULL, (VRDev *)PVOIDFROMMP(mp1));
+	return 0;
+
+
+      case WUM_THREADENDED:
+	Verbose(3,modname, "WUM_THREADENDED");
+	{
+	    PTHR_VERIFY	dta = (PTHR_VERIFY)PVOIDFROMMP(mp1);
+
+	    WinPostMsg(hwnd, WUM_DEVTREE, dta->drv, NULL);
+	    delete dta;
+	}
+	return 0;
+
+
+	/* ============================================================
+	 * WM_CONTROL	-	Information from container
+	 *
+	 */
+      case WM_CONTROL:
+	Verbose(4,modname, "WM_CONTROL");
+	{
+	    USHORT const	id = SHORT1FROMMP(mp1);
+	    USHORT const	ncode = SHORT2FROMMP(mp1);
+
+
+	    switch( ncode )
+	    {
+		/* The user requested that the menu be displayed.  Note
+		 * that there's a bug in the container such that if the
+		 * user uses the keyboard to do this, we don't get notified. */
+
+	      case CN_CONTEXTMENU:
+		Verbose(4,modname, "WM_CONTROL (id %#x, CN_CONTEXTMENU)", id);
+		DoPopup(hwnd, work);
+		break;
+
+	      case CN_ENTER:
+		Verbose(4,modname, "WM_CONTROL (id %#x, CN_ENTER)",id);
+		{
+		    PNOTIFYRECORDENTER	rec = (PNOTIFYRECORDENTER)PVOIDFROMMP(mp2);
+
+		    if( rec == NULL )
+			return 0;		/* dblk click on background? */
+
+		    VRDev *	dsk = ((PMYRECORD)(rec->pRecord))->dsk;
+		    if( dsk == NULL )
+			MyMessageBox(0, hwnd,
+				     "Internal error, can't use NULL device");
+		    else if( dsk->getParent() != NULL )
+			MyMessageBox(1, hwnd,
+				     "Can't work on this device,"
+				     " remove parent first.");
+		    else if( dsk->isHostdrive()  &&  dsk->isArray() == 0 )
+			MyMessageBox(1, hwnd,
+				     "Can't work on this device,"
+				     " create physdevice first.");
+		    else if( !dsk->isWritable() )
+			MyMessageBox(1, hwnd,
+				     "This device (or part of it) is in use"
+				     " by OS/2, remove recognized filesystems"
+				     " first.");
+		    else
+		    {
+			bool = (BOOL)WinSendMsg(rec->hwndCnr,
+						CM_SETRECORDEMPHASIS,
+						MPFROMP(rec->pRecord),
+						MPFROM2SHORT(TRUE,CRA_INUSE));
+			if( bool == FALSE )
+			    Verbose(1,modname, "WinSendMsg(CM_SETRECORDEMPHASIS) failed - last error %#x)", WinGetLastError(work->hab));
+		    }
+		}
+		return 0;
+
+
+	      case CN_INITDRAG:
+		Verbose(4,modname, "WM_CONTROL (id %#x, CN_INITDRAG)", id);
+		return DragInit(hwnd, work,(PCNRDRAGINIT)PVOIDFROMMP(mp2));
+
+	      case CN_DRAGOVER:
+		Verbose(4,modname, "WM_CONTROL (id %#x, CN_DRAGOVER)", id);
+		return DragOver(hwnd, work, (PCNRDRAGINFO)PVOIDFROMMP(mp2));
+
+	      case CN_DRAGLEAVE:
+		Verbose(4,modname, "WM_CONTROL (id %#x, CN_DRAGLEAVE)", id);
+		return DragLeave(hwnd, work, (PCNRDRAGINFO)PVOIDFROMMP(mp2));
+
+	      case CN_DROP:
+		Verbose(4,modname, "WM_CONTROL (id %#x, CN_DROP)", id);
+		return DragDrop(hwnd, work, (PCNRDRAGINFO)PVOIDFROMMP(mp2));
+
+	      default:
+		Verbose(4,modname, "WM_CONTROL (id %#x, notify code %#x)", id, ncode);
+		break;
+	    }
+	}
+	break;
+
+
+	/* ============================================================
+	 * WM_CONTEXTMENU	- create popup menu
+	 */
+      case WM_CONTEXTMENU:
+	Verbose(4,modname, "WM_CONTEXTMENU");
+	DoPopup(hwnd, work);
+	break;
+
+
+	/* ============================================================
+	 * WM_MENUEND	- popup menu is removed
+	 *	Ich weiá, auf welchem Record das Menu steht, welches Menu
+	 *	es war.  Auch welcher Punkt ausgew„hlt wurde??
+	 */
+      case WM_MENUEND:
+	Verbose(4,modname, "WM_MENUEND");
+	if( work->pmrMenu == NULL )
+	{
+	    WinSendMsg(work->hwndCnr, CM_SETRECORDEMPHASIS,
+		       MPFROMP(NULL), MPFROM2SHORT(FALSE,CRA_SOURCE));
+	}
+	else
+	{
+	    ULONG	dummy;
+
+	    /* Remove any remaining source emphasis. */
+
+	    bool = FALSE;
+	    dummy = 0;
+	    SearchCnr(work->hwndCnr, (PFNSRCH)EmphSource, &bool, &dummy, NULL);
+	}
+	break;
+
+
+	/* ============================================================
+	 * WM_COMMAND	-	command issued
+	 *	Currently only virtual keys
+	 */
+      case WM_COMMAND:
+	Verbose(4,modname, "WM_COMMAND");
+	{
+	    USHORT const cmd = SHORT1FROMMP(mp1);
+	    ULONG	dummy;
+
+	    switch( cmd )
+	    {
+		/* IDM_CREATE_PDEV:
+		 *	Create a PHYSDEV (partition and PHYSDEVICE sector)
+		 *	on an OS/2 disk. */
+	      case IDM_CREATE_PDEV:
+		Verbose(3,modname, "WM_COMMAND, IDM_CREATE_PDEV");
+		{
+		    PMINIRECORDCORE	ap[1] = {(PMINIRECORDCORE)work->pmrMenu};
+
+		    /* Remove from container */
+
+		    WinSendMsg(work->hwndCnr, CM_REMOVERECORD,
+			       MPFROMP(ap), MPFROM2SHORT(1,CMA_FREE|CMA_INVALIDATE));
+
+		    /* Send this VRDev to Scanner Thread.  It will assume
+		     * that it's a VOS2Drive so make sure it is! */
+
+		    WinPostMsg(work->hwndScanner, WUM_MKPDEV,
+			       work->pmrMenu->dsk, NULL);
+		}
+		return 0;
+
+
+		/* IDM_COMBINE_DRV:
+		 *	Combine one or more devices into a VRAID device. */
+	      case IDM_COMBINE_DRV:
+		Verbose(3,modname, "WM_COMMAND, IDM_COMBINE_DRV");
+		{
+		    DRVBUILD	info;
+		    ULONG	ul;
+
+		    /* Query container for entries "in-use". */
+
+		    info.cnt = 0;
+		    SearchCnr(work->hwndCnr, (PFNSRCH)QueryInuse,
+			      &info.cnt, info.child, NULL);
+		    Verbose(2,modname, "%lu drives are \"in-use\"",info.cnt);
+
+		    /* Let user select type to create. */
+
+		    ul = WinDlgBox(HWND_DESKTOP, hwnd, DrvtypeDlgProc,
+				   NULLHANDLE, IDW_DRVTYPE, &info);
+		    if( DID_OK == ul  &&  info.type != RDTYPE_RAID4 )
+		    {
+			/* Build new drive object, update parent/child
+			 * relations and pass this tree to drvscan thread.
+			 * That thread will update disk strutures
+			 * and repost a message to us to display the tree. */
+
+			VRDrive * drv;
+			DEVID	newid;
+
+			memcpy(&newid[0], &usHostId, sizeof(usHostId));
+			*(PULONG)&newid[2] = time(NULL);
+
+			switch( info.type )
+			{
+			  case RDTYPE_SINGLE:
+			    drv = new VSingle(newid);
+			    break;
+			  case RDTYPE_CHAIN:
+			    drv = new VChain(newid, (int)info.cnt);
+			    break;
+			  case RDTYPE_STRIPE:
+			    drv = new VStripe(newid, (int)info.cnt);
+			    break;
+			  case RDTYPE_MIRROR:
+			    drv = new VMirror(newid, (int)info.cnt);
+			    break;
+#if !defined(NORAID5)
+			  case RDTYPE_RAID5:
+			    drv = new VRaid5(newid, (int)info.cnt);
+			    break;
+#endif
+			}
+
+			/* Add children to 'drv'.  On arrays w/o redundancy all
+			 * children have to be valid.  On other a build process
+			 * should be forced to allow later verify runs.
+			 * (otherwise it's not technically neccessary to build
+			 * a RAID 1 array!) */
+
+			for( ul = 0; ul < info.cnt; ++ul )
+			{
+			    PMINIRECORDCORE	ap[1]
+				= {(PMINIRECORDCORE)info.child[ul]};
+
+			    if( info.type == RDTYPE_MIRROR  &&  ul != 0 )
+				drv->addChild(info.child[ul]->dsk, False, 0);
+			    else
+				drv->addChild(info.child[ul]->dsk, False);
+			    if( !info.child[ul]->dsk->isWritable() )
+				drv->forceUnwritable();
+
+			    /* Remove from container */
+
+			    WinSendMsg(work->hwndCnr, CM_REMOVERECORD,
+				       MPFROMP(ap),
+				       MPFROM2SHORT(1, CMA_FREE|CMA_INVALIDATE));
+			}
+			WinPostMsg(work->hwndScanner, WUM_DEVTREE, drv, NULL);
+		    }
+		    else
+		    {
+			bool = FALSE;
+			dummy = 0;
+			SearchCnr(work->hwndCnr, (PFNSRCH)EmphInuse, &bool, &dummy, NULL);
+		    }
+		}
+		return 0;
+
+
+		/* IDM_VERIFY_DRV:
+		 *	Verify redundance information. */
+	      case IDM_VERIFY_DRV:
+		Verbose(4,modname, "WM_COMMAND, IDM_VERIFY_DRV");
+		{
+		    /* Start Thread to do the verification. */
+
+		    int		tid;
+		    PTHR_VERIFY	dta = new THR_VERIFY;
+
+		    assert( work->pmrMenu->dsk->isArray() >= RDTYPE_MIRROR );
+		    dta->parent = hwnd;
+		    VDriveWithRedundancy * drv
+			= (VDriveWithRedundancy *)work->pmrMenu->dsk;
+		    dta->drv = drv;
+
+		    Verbose(2,modname,"Starting DrvVerifyThread()");
+		    tid = _beginthread(DrvVerifyThread, NULL, STACK_SIZE, dta);
+		    if( tid == -1 )
+		    {
+			Verbose(1,modname, "_beginthread(DrvVerifyThread) failed - errno %u", errno);
+		    }
+		    else
+		    {
+			PMINIRECORDCORE	ap[1] = {(PMINIRECORDCORE)work->pmrMenu};
+
+			/* OK, remove from container */
+
+			WinSendMsg(work->hwndCnr, CM_REMOVERECORD,
+				   MPFROMP(ap),
+				   MPFROM2SHORT(1,CMA_FREE|CMA_INVALIDATE));
+		    }
+		}
+		return 0;
+
+
+		/* IDM_REBUILD_DRV:
+		 *	Start rebuild process. */
+	      case IDM_REBUILD_DRV:
+		Verbose(4,modname, "WM_COMMAND, IDM_REBUILD_DRV");
+
+		/* First: make sure, no record is selected. */
+
+		bool = FALSE;
+		dummy = 0;
+		SearchCnr(work->hwndCnr, (PFNSRCH)EmphInuse, &bool, &dummy, NULL);
+
+		/* Second: let the user confirm the action */
+
+		ULONG	response;
+		response = WinMessageBox(HWND_DESKTOP, hwnd,
+					 "Starting a Rebuild will degrade"
+					 " performance when accessing the array.\n"
+					 "Are you sure you want to start a Rebuild?",
+					 "Just curious...",
+					 -1UL, MB_YESNO|MB_QUERY|MB_MOVEABLE);
+		if( response == MBID_YES )
+		{
+		    PMINIRECORDCORE	ap[1] = {(PMINIRECORDCORE)work->pmrMenu};
+
+		    /* Remove from container */
+
+		    WinSendMsg(work->hwndCnr, CM_REMOVERECORD,
+			       MPFROMP(ap),
+			       MPFROM2SHORT(1,CMA_FREE|CMA_INVALIDATE));
+
+		    /* Post to scanner thread to let it do the setup. */
+
+		    VRDrive * drv = (VRDrive *)work->pmrMenu->dsk;
+		    assert( drv->isArray() >= RDTYPE_MIRROR );
+		    Verbose(0,modname, "About to post WUM_REBUILD_DRV to %u",
+			    drv->queryFltHd());
+		    bool = WinPostMsg(work->hwndScanner, WUM_REBUILD_DRV, drv, 0);
+		    if( FALSE == bool )
+			Verbose(0,modname, "WinPostMsg(WUM_REBUILD_DRV,) failed");
+		}
+		return 0;
+
+
+		/* IDM_DESTROY_DRV:
+		 *	Destroy a VRAID drive.  All parameters are OK, just
+		 *	verify with the user and execute! */
+	      case IDM_DESTROY_DRV:
+		Verbose(3,modname, "WM_COMMAND, IDM_DESTROY_DRV");
+
+		/* First: make sure, no record is selected. */
+
+		bool = FALSE;
+		dummy = 0;
+		SearchCnr(work->hwndCnr, (PFNSRCH)EmphInuse, &bool, &dummy, NULL);
+
+		/* Second: ask user and destroy. */
+
+	        {
+		    VRDrive *	drv = (VRDrive *)work->pmrMenu->dsk; /* !!! */
+		    ULONG	response;
+
+		    response = WinMessageBox(HWND_DESKTOP, hwnd,
+					     "Are you sure?", "Just curious...",
+					     -1UL, MB_YESNO|MB_QUERY|MB_MOVEABLE);
+		    if( response == MBID_YES )
+		    {
+			PMINIRECORDCORE	ap[1] = {(PMINIRECORDCORE)work->pmrMenu};
+
+			/* Remove from container */
+
+			WinSendMsg(work->hwndCnr, CM_REMOVERECORD,
+				    MPFROMP(ap),
+				    MPFROM2SHORT(1,CMA_FREE|CMA_INVALIDATE));
+
+			/* Remove from disk.  Will post WUM_DEVTREE for all
+			 * children that exist. */
+
+			WinPostMsg(work->hwndScanner, WUM_DELDRV, drv, NULL);
+		    }
+		}
+		return 0;
+
+
+		/* IDM_DELETE_PDEV:
+		 *	Remove PHYSDEVICE sector (and partition) from a disk. */
+	      case IDM_DELETE_PDEV:
+		Verbose(3,modname, "WM_COMMAND, IDM_DELETE_PDEV");
+
+		/* First: make sure, no record is selected. */
+
+		bool = FALSE;
+		dummy = 0;
+		SearchCnr(work->hwndCnr, (PFNSRCH)EmphInuse, &bool, &dummy, NULL);
+		
+		/* Second: ask user and destroy. */
+
+	        {
+		    VRDev *	rdev = work->pmrMenu->dsk;
+		    DEVID const * id = rdev->queryID();
+		    char	str[200];
+
+		    sprintf(str,"Are you sure you want to destroy"
+			    " ID %02X%02X%02X%02X%02X%02X?",
+			    (*id)[0],(*id)[1],(*id)[2],(*id)[3],(*id)[4],(*id)[5]);
+
+		    ULONG	response;
+		    response = WinMessageBox(HWND_DESKTOP, hwnd,
+					     str, "Just curious...",
+					     -1UL, MB_YESNO|MB_QUERY|MB_MOVEABLE);
+		    if( response == MBID_YES )
+		    {
+			PMINIRECORDCORE	ap[1] = {(PMINIRECORDCORE)work->pmrMenu};
+
+			/* Remove from container */
+
+			WinSendMsg(work->hwndCnr, CM_REMOVERECORD,
+				    MPFROMP(ap),
+				    MPFROM2SHORT(1,CMA_FREE|CMA_INVALIDATE));
+
+			WinPostMsg(work->hwndScanner, WUM_DELPDEV, rdev, NULL);
+		    }
+		}
+		return 0;
+
+
+		/* IDM_REMOVE_CHILD:
+		 *	Remove part of array. */
+	      case IDM_REMOVE_CHILD:
+		Verbose(3,modname, "WM_COMMAND, IDM_REMOVE_CHILD");
+
+		/* First: make sure, no record is selected. */
+
+		bool = FALSE;
+		dummy = 0;
+		SearchCnr(work->hwndCnr, (PFNSRCH)EmphInuse, &bool, &dummy, NULL);
+
+		/* Second: ask user and destroy. */
+
+	        {
+		    VRDev *	rdev = work->pmrMenu->dsk;
+		    DEVID const * id = rdev->queryID();
+		    char	str[200];
+
+		    sprintf(str,"Are you sure you want to remove"
+			    " ID %02X%02X%02X%02X%02X%02X from array?",
+			    (*id)[0],(*id)[1],(*id)[2],(*id)[3],(*id)[4],(*id)[5]);
+
+		    ULONG	response;
+		    response = WinMessageBox(HWND_DESKTOP, hwnd,
+					     str, "Just curious...",
+					     -1UL, MB_YESNO|MB_QUERY|MB_MOVEABLE);
+		    if( response == MBID_YES )
+		    {
+			PMINIRECORDCORE	ap[1];
+			PMYRECORD	myrcd;
+			VRDrive *	parent = rdev->getParent();
+
+			/* Remove complete tree from container. */
+
+			VRDev *	highest = parent;
+			while( highest->getParent() != 0 )
+			    highest = highest->getParent();
+			SearchCnr(work->hwndCnr, (PFNSRCH)LookupDisk,
+				  highest, &myrcd, NULL);
+			ap[0] = (PMINIRECORDCORE)myrcd;
+
+			WinSendMsg(work->hwndCnr, CM_REMOVERECORD,
+				   MPFROMP(ap),
+				   MPFROM2SHORT(1,CMA_FREE|CMA_INVALIDATE));
+
+			/* Post message to drive scanner.  It will remove
+			 * the child and post two WUM_DEVTREE back to us. */
+
+			WinPostMsg(work->hwndScanner, WUM_REMCHILD, rdev, parent);
+		    }
+		}
+		return 0;
+
+
+		/* IDM_INVALID_CHILD:
+		 *	Declare part of an array as containing invalid data. */
+	      case IDM_INVALID_CHILD:
+		Verbose(3,modname, "WM_COMMAND, IDM_INVALID_CHILD");
+
+		/* First: make sure, no record is selected. */
+
+		bool = FALSE;
+		dummy = 0;
+		SearchCnr(work->hwndCnr, (PFNSRCH)EmphInuse, &bool, &dummy, NULL);
+
+		/* Second: ask user and pass work to scanner. */
+
+	        {
+		    VRDev *	rdev = work->pmrMenu->dsk;
+		    DEVID const * id = rdev->queryID();
+		    char	str[200];
+
+		    sprintf(str,"Are you sure you want to declare"
+			    " ID %02X%02X%02X%02X%02X%02X as invalid?"
+			    "\nArray rebuild will start as soon as you"
+			    " leave VSetup.",
+			    (*id)[0],(*id)[1],(*id)[2],(*id)[3],(*id)[4],(*id)[5]);
+
+		    ULONG	response;
+		    response = WinMessageBox(HWND_DESKTOP, hwnd,
+					     str, "Just curious...",
+					     -1UL, MB_YESNO|MB_QUERY|MB_MOVEABLE);
+		    if( response == MBID_YES )
+		    {
+			PMINIRECORDCORE	ap[1];
+			PMYRECORD	myrcd;
+			VRDrive *	parent = rdev->getParent();
+
+			/* Remove complete tree from container. */
+
+			VRDev *	highest = parent;
+			while( highest->getParent() != 0 )
+			    highest = highest->getParent();
+			SearchCnr(work->hwndCnr, (PFNSRCH)LookupDisk,
+				  highest, &myrcd, NULL);
+			ap[0] = (PMINIRECORDCORE)myrcd;
+
+			WinSendMsg(work->hwndCnr, CM_REMOVERECORD,
+				   MPFROMP(ap),
+				   MPFROM2SHORT(1,CMA_FREE|CMA_INVALIDATE));
+
+			/* Post message to drive scanner.  It will remove
+			 * the child and post two WUM_DEVTREE back to us. */
+
+			WinPostMsg(work->hwndScanner, WUM_INVCHILD, rdev, parent);
+		    }
+		}
+		return 0;
+
+
+
+		/* IDM_REMOVE_SEL:
+		 *	Remove selected state from all icons. */
+	      case IDM_REMOVE_SEL:
+		bool = FALSE;
+		dummy = 0;
+		SearchCnr(work->hwndCnr, (PFNSRCH)EmphInuse, &bool, &dummy, NULL);
+		return 0;
+
+
+	      default:
+		Verbose(2,modname, "WM_COMMAND %u", cmd);
+		break;				/* ignore */
+	    }
+	}
+	break;					/* continue with default */
+
+
+	/* ============================================================
+	 * WM_CREATE	-	window created
+	 *	Window created but not yet visible
+	 */
+      case WM_CREATE:
+	Verbose(4,modname, "WM_CREATE");
+	LoadPresParam(WC_DRVSETUP);
+	break;					/* keep on going... */
+
+
+	/* ============================================================
+	 * WM_CLOSE	-	this window closed
+	 *	Stop all further processing, cleanup.	
+	 */
+      case WM_CLOSE:
+	Verbose(4,modname, "WM_CLOSE");
+	{
+	    DRVBUILD	info;
+	    ULONG	ul;
+
+	    /* Query container for all entries "in-use". */
+
+	    info.cnt = 0;
+	    SearchCnr(work->hwndCnr, (PFNSRCH)QueryAny,
+		      &info.cnt, info.child, NULL);
+	    Verbose(2,modname, "%lu drives are available", info.cnt);
+	    for( ul = 0; ul < info.cnt; ++ul )
+	    {
+		WinPostMsg(work->hwndScanner, WUM_CLOSEDEV,
+			   info.child[ul]->dsk, NULL);
+	    }
+	}
+	WinPostMsg(work->hwndScanner, WM_CLOSE, 0, 0);
+	break;					/* continue... */
+
+
+	/* ============================================================
+	 * WM_DESTROY	-	this window destroyed
+	 *	This message may be posted after WM_CLOSE or without
+	 *	any WM_CLOSE (if user close per windowlist).
+	 *	So do here the same as in WM_CLOSE (if possible).
+	 */
+      case WM_DESTROY:
+	Verbose(4,modname, "WM_DESTROY");
+	{
+	    WinDestroyWindow(work->hwndSngPopup);
+	    WinDestroyWindow(work->hwndMulPopup);
+	    WinDestroyWindow(work->hwndCnr);
+	    WinPostMsg(work->self->parent, WUM_THREADENDED, work->self, 0);
+	}
+	break;
+
+
+	/* ============================================================
+	 * WM_SIZE	-	client area resized
+	 *	All child windows of client area have to be
+	 *	resized, too.
+	 *	Don't issue this message before WUM_START has been processed!
+	 */
+      case WM_SIZE:
+	Verbose(4,modname, "WM_SIZE");
+	{
+	    SWP		size;
+
+	    if( WinQueryWindowPos(WinQueryWindow(hwnd, QW_PARENT), &size) == TRUE )
+		ProfileWrite(WC_DRVSETUP, "Size", sizeof(size), &size);
+
+	    if( WinQueryWindowPos(hwnd, &size) == TRUE )
+		WinSetWindowPos(work->hwndCnr, HWND_TOP,
+				0, 0,
+				SHORT1FROMMP(mp2), SHORT2FROMMP(mp2),
+				SWP_SIZE|SWP_MOVE|SWP_SHOW|SWP_ACTIVATE);
+	}
+	break;
+
+
+	/* ============================================================
+	 * WM_MOVE:
+	 *	Parent window has moved, record new position in profile.
+	 */
+      case WM_MOVE:
+	Verbose(4,modname, "WM_MOVE");
+	{
+	    SWP	swp;
+
+	    if( WinQueryWindowPos(WinQueryWindow(hwnd, QW_PARENT), &swp) == TRUE )
+		ProfileWrite(WC_DRVSETUP, "Position", sizeof(swp), &swp);
+	}
+	break;
+
+
+	/* ============================================================
+	 * WM_QUERYTRACKINFO	-	restrict size of window
+	 *	I never saw this message.
+	 */
+      case WM_QUERYTRACKINFO:
+	{
+	    USHORT const tf = SHORT1FROMMP(mp1);
+
+	    Verbose(1,modname, "WM_QUERYTRACKINFO (tracking flags %#x)",tf);
+	}
+	break;				/* has to do default processing! */
+
+
+	/* ============================================================
+	 * WM_PRESPARAMCHANGED:
+	 *	Notifies the program that a certain presentation
+	 *	parameter was changed.
+	 */
+      case WM_PRESPARAMCHANGED:
+	{
+	    char	fontname[256];
+	    ULONG	cb;
+
+	    Verbose(4,modname, "WM_PRESPARAMCHANGED(type %#x)", LONGFROMMP(mp1));
+	    if( work == NULL )
+		break;
+
+	    switch( LONGFROMMP(mp1) )
+	    {
+	      case PP_FOREGROUNDCOLOR:
+		cb = WinQueryPresParam(hwnd, PP_FOREGROUNDCOLOR, 0, NULL,
+				       sizeof(rgbForeground), &rgbForeground,
+				       QPF_NOINHERIT);
+		if( cb == 0 )
+		    Verbose(1,modname, "WinQueryPresParam failed - last error %#x", WinGetLastError(work->hab));
+		else
+		{
+		    Verbose(2,modname, "Set foreground colour to %#x", rgbForeground);
+		    ProfileWrite(WC_DRVSETUP, "Foreground", sizeof(rgbForeground), &rgbForeground);
+		    WinInvalidateRect(hwnd, NULL, FALSE);
+		}
+		break;
+
+	      case PP_BACKGROUNDCOLOR:
+		cb = WinQueryPresParam(hwnd, PP_BACKGROUNDCOLOR, 0, NULL,
+				       sizeof(rgbBackground), &rgbBackground,
+				       QPF_NOINHERIT);
+		if( cb == 0 )
+		    Verbose(1,modname, "WinQueryPresParam failed - last error %#x", WinGetLastError(work->hab));
+		else
+		{
+		    Verbose(2,modname, "Set background colour to %#x", rgbBackground);
+		    ProfileWrite(WC_DRVSETUP, "Background", sizeof(rgbBackground), &rgbBackground);
+		    WinInvalidateRect(hwnd, NULL, FALSE);
+		}
+		break;
+		    
+	      case PP_FONTNAMESIZE:
+		cb = WinQueryPresParam(hwnd, PP_FONTNAMESIZE, 0, NULL,
+				       sizeof(fontname), fontname,
+				       QPF_NOINHERIT);
+		if( cb == 0 )
+		    Verbose(1,modname, "WinQueryPresParam failed - last error %#x", WinGetLastError(work->hab));
+		else
+		{
+		    Verbose(2,modname, "Set font to \"%s\"", fontname);
+		    ProfileWrite(WC_DRVSETUP, "Font", strlen(fontname), &fontname);
+		    WinInvalidateRect(hwnd, NULL, FALSE);
+		}
+		break;
+
+	      default:
+		Verbose(1,modname, "WM_PRESPARAMCHANGED(unsupported type %#x)", LONGFROMMP(mp1));
+		break;
+	    }
+	} /* end[case(WM_PRESPARAMCHANGED)] */
+      break;
+
+
+      /* ============================================================
+       * WM_ERASEBACKGROUND:
+       *	Should system erase?
+       */
+      case WM_ERASEBACKGROUND:
+	return (MRESULT)TRUE;
+
+
+      default:
+	break;
+    } /* end[switch] */
+
+    return WinDefWindowProc(hwnd, msg, mp1, mp2);
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Public Entries **************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * DrvsetupThread(dummy)
+ *
+ * PARAMETER
+ *	dummy		pointer to information from parent
+ * RETURNS
+ *	none
+ * GLOBAL
+ *	none
+ * DESPRIPTION
+ *	Runs as a seperate thread.
+ *
+ * REMARK
+ */
+PUBLIC void
+DrvsetupThread(void *dummy)
+{
+    PTHR_DRVSETUP const dta = (PTHR_DRVSETUP)dummy;
+    HMQ		hmq;
+    HWND	hwndFrame, hwndClient;
+    ULONG	flCreate;
+    QMSG	qmsg;
+    BOOL	bool;
+    PWORK	work;
+
+    Verbose(2,modname, "startup");
+    do
+    {
+	work = new WORK;
+	memset(work, 0, sizeof(WORK));
+	work->self = dta;
+
+	if( !(work->hab = WinInitialize(0)) )
+	{
+	    Verbose(0,modname, "WinInitialize failed!?!");
+	    break;
+	}
+
+	if( !(hmq = WinCreateMsgQueue(work->hab, 0)) )
+	{
+	    Verbose(0,modname, "WinCreateMsgQueue - error %#x", WinGetLastError(work->hab));
+	    break;
+	}
+	WinCancelShutdown(hmq, TRUE);		/* don't want to handle it */
+
+	if( !WinRegisterClass(work->hab, WC_DRVSETUP, DrvsetupWindowProc,
+			      CS_MOVENOTIFY, sizeof(PVOID)) )
+	{
+	    Verbose(0,modname, "WinRegisterClass - error %#x", WinGetLastError(work->hab));
+	    break;
+	}
+
+	flCreate = FCF_SIZEBORDER | FCF_TASKLIST | FCF_SYSMENU | FCF_TITLEBAR
+	    | FCF_ICON | FCF_MINMAX;
+
+	hwndFrame = WinCreateStdWindow(HWND_DESKTOP, WS_ANIMATE, &flCreate,
+				       WC_DRVSETUP,
+				       "VSetup - Drive Definition Window",
+				       0, 0,
+				       IDW_DRVSETUP, &hwndClient);
+
+	if( hwndFrame == 0  ||  hwndClient == 0 )
+	{
+	    Verbose(0,modname, "WinCreateStdWindow - error %#x", WinGetLastError(work->hab));
+	    break;				/* couldn't create window for some
+						   reason. */
+	}
+	PPSubclassWindow(WinWindowFromID(hwndFrame, FID_MENU), WC_DRVSETUP);
+	PPSubclassWindow(WinWindowFromID(hwndFrame, FID_TITLEBAR), WC_DRVSETUP);
+	PPSubclassWindow(WinWindowFromID(hwndFrame, FID_SYSMENU), WC_DRVSETUP);
+
+	/* Configure element of window or add more elements to window. */
+
+	bool = WinSetWindowPtr(hwndClient, QWL_USER, work);
+	if( bool == FALSE )
+	{
+	    MyMessageBox(0, HWND_DESKTOP,
+			 "WinSetWindowPtr failed - error %#",
+			 WinGetLastError(work->hab));
+	    break;
+	}
+
+	WinPostMsg(hwndClient, WUM_START, 0, 0);
+
+	/* All done, show window now (make visible)
+	 * and start processing messages. */
+	{
+	    SWP		swp, tmp;
+	    unsigned	cb;
+	    BOOL	bool;
+
+	    /* Change our window size and position
+	     * to recommanded or saved values. */
+
+	    WinQueryTaskSizePos(work->hab, 0, &swp);
+
+	    cb = sizeof(tmp);
+	    if( ProfileRead(WC_DRVSETUP, "Size", &cb, &tmp) == 0 )
+	    {
+		Verbose(4,modname, "Copying old size of window");
+		swp.cx = tmp.cx;
+		swp.cy = tmp.cy;
+		swp.fl |= SWP_SIZE;
+	    }
+	    cb = sizeof(tmp);
+	    if( ProfileRead(WC_DRVSETUP, "Position", &cb, &tmp) == 0 )
+	    {
+		Verbose(4,modname, "Copying old position of window");
+		swp.x = tmp.x;
+		swp.y = tmp.y;
+		swp.fl |= SWP_MOVE;
+	    }
+
+	    swp.fl |= SWP_SHOW;
+	    bool = WinSetWindowPos(hwndFrame, HWND_TOP,
+				   swp.x, swp.y, swp.cx, swp.cy, swp.fl);
+	    if( bool == FALSE )
+		Verbose(1,modname, "WinSetWindowPos failed (last error %#x)", WinGetLastError(work->hab));
+	}
+
+	/* Message processing loop. */
+
+	while( WinGetMsg(work->hab, &qmsg, 0L, 0, 0) )
+	    WinDispatchMsg(work->hab, &qmsg);
+
+	/* Message processing ended (WM_QUIT sent), clean up. */
+
+	WinDestroyWindow(hwndFrame);
+	WinDestroyMsgQueue(hmq);
+	WinTerminate(work->hab);
+	delete work;
+    }
+    while(0);
+
+    Verbose(2,modname, "DrvSetupThread: stopped");
+    return;
+}
+@
+
+
+3.1
+log
+@- added RAID 5 code (new major because of "stopped" development)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.15 $
+ * $Date: 2001/01/15 01:41:13 $
+d10 3
+d111 1
+a111 1
+static char const vcid[]="$Id: drvsetup.cpp,v 2.15 2001/01/15 01:41:13 vitus Exp vitus $";
+d145 3
+a147 1
+#include "Raid5.hpp"
+d259 1
+a259 1
+    Verbose(4, "DrvSetup", "client window %u,%u %u,%u",
+d295 2
+a296 4
+	Verbose(1, "DrvSetup", "WinLoadMenu failed (last error %#x)",
+		WinGetLastError(work->hab));
+    Verbose(4, "DrvSetup", "popup menues %#x,%#x,%#x",
+	    work->hwndSngPopup, work->hwndMulPopup, work->hwndNonePopup);
+d372 1
+a372 1
+	    Verbose(2, "DrvSetup", "DoPopup: %lu records in use", cnt);
+d423 1
+d426 1
+d548 1
+a548 1
+    Verbose(4, "DrvSetup", "CM_ALLOCRECORD: %#x",address);
+d568 1
+a568 2
+	Verbose(1, "DrvSetup", "WinSendMsg(CM_INSERTRECORD) failed - last error %#x",
+		WinGetLastError(work->hab));
+d603 1
+a603 2
+    Verbose(2, "DrvSetup", "DragInit: record %#x",drag->pRecord);
+
+d625 1
+a625 1
+    Verbose(2, "DrvSetup", "DragInit: record passed checks");
+d683 1
+a683 1
+    Verbose(2, "DrvSetup", "DragLeave, record %#x", drag->pRecord);
+d719 1
+a719 1
+    Verbose(2, "DrvSetup", "DragOver, record %#x", drag->pRecord);
+d728 1
+a728 1
+	Verbose(2, "DrvSetup", "DragOver, no target");
+d756 1
+a756 1
+	Verbose(2, "DrvSetup", "DragOver, no destination");
+d762 1
+a762 1
+	Verbose(1, "DrvSetup", "DragOver, pRecord != pmrDragDestination!");
+d773 1
+a773 1
+    Verbose(2, "DrvSetup", "DragOver, destination %#x", rdev);
+d776 1
+a776 1
+	Verbose(2, "DrvSetup", "DragOver, source == destination!");
+d789 1
+a789 1
+	    Verbose(2, "DrvSetup", "DragOver, source too small");
+d804 1
+a804 1
+	    Verbose(2, "DrvSetup", "DragOver, bad destination");
+d814 1
+a814 1
+	Verbose(2, "DrvSetup", "DragOver, bad destination type");
+d819 1
+a819 1
+    Verbose(4, "DrvSetup", "DragOver, destination is acceptable");
+d856 1
+a856 1
+    Verbose(2, "DrvSetup", "DragDrop, record %#x", drag->pRecord);
+d860 1
+a860 1
+	Verbose(2, "DrvSetup", "DragDrop, can't use external data");
+d899 1
+a899 1
+	    Verbose(2, "DrvSetup", "DragDrop: found as record %lu", myrcd);
+d964 1
+a964 1
+	Verbose(4, "DrvSetup", "WUM_START");
+d973 1
+a973 2
+		Verbose(1, "DrvSetup",
+			"_beginthread(DrvscanThread) failed - errno %u", errno);
+d980 1
+a980 1
+	Verbose(3, "DrvSetup", "WUM_DEVTREE");
+d996 1
+a996 1
+	Verbose(3, "DrvSetup", "WUM_THREADENDED");
+d1011 1
+a1011 1
+	Verbose(4, "DrvSetup", "WM_CONTROL");
+d1024 1
+a1024 1
+		Verbose(4, "DrvSetup", "WM_CONTROL (id %#x, CN_CONTEXTMENU)", id);
+d1029 1
+a1029 1
+		Verbose(4, "DrvSetup", "WM_CONTROL (id %#x, CN_ENTER)",id);
+d1060 1
+a1060 4
+			    Verbose(1, "DrvSetup",
+				    "WinSendMsg(CM_SETRECORDEMPHASIS) failed"
+				    " - last error %#x)",
+				    WinGetLastError(work->hab));
+d1067 1
+a1067 1
+		Verbose(4, "DrvSetup", "WM_CONTROL (id %#x, CN_INITDRAG)", id);
+d1071 1
+a1071 1
+		Verbose(4, "DrvSetup", "WM_CONTROL (id %#x, CN_DRAGOVER)", id);
+d1075 1
+a1075 1
+		Verbose(4, "DrvSetup", "WM_CONTROL (id %#x, CN_DRAGLEAVE)", id);
+d1079 1
+a1079 1
+		Verbose(4, "DrvSetup", "WM_CONTROL (id %#x, CN_DROP)", id);
+d1083 1
+a1083 2
+		Verbose(4, "DrvSetup", "WM_CONTROL (id %#x, notify code %#x)",
+			id,ncode);
+d1094 1
+a1094 1
+	Verbose(4, "DrvSetup", "WM_CONTEXTMENU");
+d1105 1
+a1105 1
+	Verbose(4, "DrvSetup", "WM_MENUEND");
+d1129 1
+a1129 1
+	Verbose(4, "DrvSetup", "WM_COMMAND");
+d1140 1
+a1140 1
+		Verbose(3, "DrvSetup", "WM_COMMAND, IDM_CREATE_PDEV");
+d1161 1
+a1161 1
+		Verbose(3, "DrvSetup", "WM_COMMAND, IDM_COMBINE_DRV");
+d1171 1
+a1171 1
+		    Verbose(2, "DrvSetup", "%lu drives are \"in-use\"",info.cnt);
+d1204 1
+d1208 1
+d1267 1
+a1267 3
+			Verbose(1,modname,
+				"_beginthread(DrvVerifyThread) failed - errno %u",
+				errno);
+d1330 1
+a1330 1
+		Verbose(3, "DrvSetup", "WM_COMMAND, IDM_DESTROY_DRV");
+d1369 1
+a1369 1
+		Verbose(3, "DrvSetup", "WM_COMMAND, IDM_DELETE_PDEV");
+d1411 1
+a1411 1
+		Verbose(3, "DrvSetup", "WM_COMMAND, IDM_REMOVE_CHILD");
+d1465 1
+a1465 1
+		Verbose(3, "DrvSetup", "WM_COMMAND, IDM_INVALID_CHILD");
+d1529 1
+a1529 1
+		Verbose(2, "DrvSetup", "WM_COMMAND %u", cmd);
+d1541 1
+a1541 1
+	Verbose(4, "DrvSetup", "WM_CREATE");
+d1551 1
+a1551 1
+	Verbose(4, "DrvSetup", "WM_CLOSE");
+d1561 1
+a1561 1
+	    Verbose(2, "DrvSetup", "%lu drives are available", info.cnt);
+d1579 1
+a1579 1
+	Verbose(4, "DrvSetup", "WM_DESTROY");
+d1596 1
+a1596 1
+	Verbose(4, "DrvSetup", "WM_SIZE");
+d1617 1
+a1617 1
+	Verbose(4, "DrvSetup", "WM_MOVE");
+d1635 1
+a1635 1
+	    Verbose(1, "DrvSetup", "WM_QUERYTRACKINFO (tracking flags %#x)",tf);
+d1650 1
+a1650 1
+	    Verbose(4, "DrvSetup", "WM_PRESPARAMCHANGED(type %#x)", LONGFROMMP(mp1));
+d1661 1
+a1661 3
+		    Verbose(1, "DrvSetup",
+			    "WinQueryPresParam failed - last error %#x",
+			    WinGetLastError(work->hab));
+d1664 2
+a1665 4
+		    Verbose(2, "DrvSetup", "Set foreground colour to %#x",
+			    rgbForeground);
+		    ProfileWrite(WC_DRVSETUP, "Foreground",
+				 sizeof(rgbForeground), &rgbForeground);
+d1675 1
+a1675 3
+		    Verbose(1, "DrvSetup",
+			    "WinQueryPresParam failed - last error %#x",
+			    WinGetLastError(work->hab));
+d1678 2
+a1679 4
+		    Verbose(2, "DrvSetup", "Set background colour to %#x",
+			    rgbBackground);
+		    ProfileWrite(WC_DRVSETUP, "Background",
+				 sizeof(rgbBackground), &rgbBackground);
+d1689 1
+a1689 3
+		    Verbose(1, "DrvSetup",
+			    "WinQueryPresParam failed - last error %#x",
+			    WinGetLastError(work->hab));
+d1692 1
+a1692 1
+		    Verbose(2, "DrvSetup", "Set font to \"%s\"", fontname);
+d1699 1
+a1699 2
+		Verbose(1, "DrvSetup", "WM_PRESPARAMCHANGED(unsupported type %#x)",
+			LONGFROMMP(mp1));
+d1755 1
+a1755 1
+    Verbose(2, "DrvSetup", "startup");
+d1764 1
+a1764 1
+	    Verbose(0, "DrvSetup", "WinInitialize failed!?!");
+d1770 1
+a1770 2
+	    Verbose(0, "DrvSetup", "WinCreateMsgQueue - error %#x",
+		    WinGetLastError(work->hab));
+d1778 1
+a1778 2
+	    Verbose(0, "DrvSetup", "WinRegisterClass - error %#x",
+		    WinGetLastError(work->hab));
+d1793 1
+a1793 2
+	    Verbose(0, "DrvSetup", "WinCreateStdWindow - error %#x",
+		    WinGetLastError(work->hab));
+d1829 1
+a1829 1
+		Verbose(4, "DrvSetup", "Copying old size of window");
+d1837 1
+a1837 1
+		Verbose(4, "DrvSetup", "Copying old position of window");
+d1847 1
+a1847 2
+		Verbose(1, "DrvSetup", "WinSetWindowPos failed (last error %#x)",
+			WinGetLastError(work->hab));
+d1864 1
+a1864 1
+    Verbose(2, "DrvSetup", "DrvSetupThread: stopped");
+@
+
+
+2.15
+log
+@- changed handling of poup window.  It got too complicated to determine
+  which entry to enable/disable.  Hopefully it's now easier.
+- implemtned IDM_INVALID_CHILD related code
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.14 $
+ * $Date: 2000/11/07 01:30:19 $
+d10 5
+d108 1
+a108 1
+static char const vcid[]="$Id: drvsetup.cpp,v 2.14 2000/11/07 01:30:19 vitus Exp vitus $";
+d142 1
+d1179 1
+a1179 1
+		    if( DID_OK == ul )
+d1206 3
+d1318 1
+a1318 1
+		    assert( drv->isArray() == RDTYPE_MIRROR );
+@
+
+
+2.14
+log
+@- WUM_DEVTREE: only save scanner HWND on first message
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.13 $
+ * $Date: 2000/08/21 08:11:20 $
+d10 3
+d101 1
+a101 1
+ * This code is Copyright Vitus Jensen 1998-2000
+d103 1
+a103 1
+static char const vcid[]="$Id: drvsetup.cpp,v 2.13 2000/08/21 08:11:20 vitus Exp vitus $";
+d391 1
+d394 9
+a402 1
+	/* Single drive selected, modify menu according to drive type. */
+d404 1
+a404 1
+	if( work->pmrMenu->dsk == NULL )
+d406 26
+a431 1
+	    /* This part is missing.  Nothing can be done. */
+a432 10
+	    WinEnableMenuItem(popup, IDM_CREATE_PDEV, FALSE);
+	    WinEnableMenuItem(popup, IDM_DELETE_PDEV, FALSE);
+	    WinEnableMenuItem(popup, IDM_REMOVE_CHILD, FALSE);
+	    WinEnableMenuItem(popup, IDM_DESTROY_DRV, FALSE);
+	    WinEnableMenuItem(popup, IDM_VERIFY_DRV, FALSE);
+	    WinEnableMenuItem(popup, IDM_REBUILD_DRV, FALSE);
+	}
+	else if( work->pmrMenu->dsk->getParent() != NULL )
+	{
+	    VRDrive * const	parent = work->pmrMenu->dsk->getParent();
+d434 2
+a435 7
+	    /* "dsk->parent != 0" 
+	     * This is part of a larger drive array.  Nothing
+	     * can be done.  Exceptions:
+	     * - the parent is RAID 1 and this child isn't the last
+	     *   valid child.
+	     * - the parent is RAID 5 and higher and this child is
+	     *   in "stand by" mode. */
+d437 1
+a437 1
+	    if( work->pmrMenu->dsk->getParent()->isArray() == RDTYPE_MIRROR )
+d439 1
+a439 2
+		int const	cnt = parent->queryChildren();
+		int		i, v;
+d441 11
+a451 1
+		for( i = v = 0; i < cnt; ++i )
+d453 18
+a470 4
+		    VRDev * const	vrd = parent->getChild(i);
+		    if( vrd != work->pmrMenu->dsk
+			&&  parent->isValidChild(i) == True )
+			++v;
+d472 1
+a472 4
+		if( v != 0 )
+		    WinEnableMenuItem(popup, IDM_REMOVE_CHILD, TRUE);
+		else
+		    WinEnableMenuItem(popup, IDM_REMOVE_CHILD, FALSE);
+d474 5
+a478 6
+	    else
+		WinEnableMenuItem(popup, IDM_REMOVE_CHILD, FALSE);
+	    WinEnableMenuItem(popup, IDM_CREATE_PDEV, FALSE);
+	    WinEnableMenuItem(popup, IDM_DELETE_PDEV, FALSE);
+	    WinEnableMenuItem(popup, IDM_DESTROY_DRV, FALSE);
+	    switch( work->pmrMenu->dsk->isArray() )
+d480 1
+a480 11
+	      case RDTYPE_MIRROR:
+	      case RDTYPE_RAID4:
+	      case RDTYPE_RAID5:
+		WinEnableMenuItem(popup, IDM_VERIFY_DRV, TRUE);
+		WinEnableMenuItem(popup, IDM_REBUILD_DRV, TRUE);
+		break;
+
+	      default:
+		WinEnableMenuItem(popup, IDM_VERIFY_DRV, FALSE);
+		WinEnableMenuItem(popup, IDM_REBUILD_DRV, FALSE);
+		break;
+a481 5
+	}
+	else if( work->pmrMenu->dsk->isWritable() == False )
+	{
+	    /* dsk->acc == DSKACC_OS2 && dsk->writable == 0
+	     * Can't be written to: nothing can be done, too. */
+d483 1
+a483 10
+	    WinEnableMenuItem(popup, IDM_CREATE_PDEV, FALSE);
+	    WinEnableMenuItem(popup, IDM_DELETE_PDEV, FALSE);
+	    WinEnableMenuItem(popup, IDM_REMOVE_CHILD, FALSE);
+	    WinEnableMenuItem(popup, IDM_DESTROY_DRV, FALSE);
+	    WinEnableMenuItem(popup, IDM_VERIFY_DRV, FALSE);
+	    WinEnableMenuItem(popup, IDM_REBUILD_DRV, FALSE);
+	}
+	else if( work->pmrMenu->dsk->isArray() != 0 )
+	{
+	    /* Well, this is a drive array.  May be destroyed. */
+d485 4
+a488 5
+	    WinEnableMenuItem(popup, IDM_CREATE_PDEV, FALSE);
+	    WinEnableMenuItem(popup, IDM_DELETE_PDEV, FALSE);
+	    WinEnableMenuItem(popup, IDM_DESTROY_DRV, TRUE);
+	    WinEnableMenuItem(popup, IDM_REMOVE_CHILD, FALSE);
+	    switch( work->pmrMenu->dsk->isArray() )
+d490 1
+a490 11
+	      case RDTYPE_MIRROR:
+	      case RDTYPE_RAID4:
+	      case RDTYPE_RAID5:
+		WinEnableMenuItem(popup, IDM_VERIFY_DRV, TRUE);
+		WinEnableMenuItem(popup, IDM_REBUILD_DRV, TRUE);
+		break;
+
+	      default:
+		WinEnableMenuItem(popup, IDM_VERIFY_DRV, FALSE);
+		WinEnableMenuItem(popup, IDM_REBUILD_DRV, FALSE);
+		break;
+a491 5
+	}
+	else if( work->pmrMenu->dsk->isHostdrive() == True )
+	{
+	    /* An OS/2 drive which doesn't contain a filesystem.
+	     * Create a PHYSDEV and it's ready for use. */
+d493 1
+a493 11
+	    WinEnableMenuItem(popup, IDM_CREATE_PDEV, TRUE);
+	    WinEnableMenuItem(popup, IDM_DELETE_PDEV, FALSE);
+	    WinEnableMenuItem(popup, IDM_DESTROY_DRV, FALSE);
+	    WinEnableMenuItem(popup, IDM_REMOVE_CHILD, FALSE);
+	    WinEnableMenuItem(popup, IDM_VERIFY_DRV, FALSE);
+	    WinEnableMenuItem(popup, IDM_REBUILD_DRV, FALSE);
+	}
+	else
+	{
+	    /* dsk->type == DSKTYPE_PDEV
+	     * A PHYSDEV (but not part of an array). */
+d495 7
+a501 6
+	    WinEnableMenuItem(popup, IDM_CREATE_PDEV, FALSE);
+	    WinEnableMenuItem(popup, IDM_DELETE_PDEV, TRUE);
+	    WinEnableMenuItem(popup, IDM_DESTROY_DRV, FALSE);
+	    WinEnableMenuItem(popup, IDM_REMOVE_CHILD, FALSE);
+	    WinEnableMenuItem(popup, IDM_VERIFY_DRV, FALSE);
+	    WinEnableMenuItem(popup, IDM_REBUILD_DRV, FALSE);
+a1295 1
+		Verbose(0,modname, "User answered %lu on rebuild question",response);
+d1453 57
+@
+
+
+2.13
+log
+@- moved filter access checking to DrvVerifyThread()
+- modifications for changed addChild() prototype
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.12 $
+ * $Date: 2000/08/05 02:58:30 $
+d10 4
+d100 1
+a100 1
+static char const vcid[]="$Id: drvsetup.cpp,v 2.12 2000/08/05 02:58:30 vitus Exp vitus $";
+a909 1
+	    
+d981 10
+a990 1
+	work->hwndScanner = HWNDFROMMP(mp2);
+d1287 1
+a1287 1
+		Verbose(1,modname, "WM_COMMAND, IDM_REBUILD_DRV");
+d1304 1
+d1317 1
+a1317 1
+		    VRDrive   * drv = (VRDrive *)work->pmrMenu->dsk;
+d1319 5
+a1323 1
+		    WinPostMsg(work->hwndScanner, WUM_REBUILD_DRV, drv, 0);
+@
+
+
+2.12
+log
+@- Rebuild and Verify are now in the context menue.  Added processing for them
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.11 $
+ * $Date: 2000/05/28 17:44:09 $
+d10 3
+d96 1
+a96 1
+static char const vcid[]="$Id: drvsetup.cpp,v 2.11 2000/05/28 17:44:09 vitus Exp vitus $";
+d565 1
+a565 1
+	VRDrive *	drv = (VRDrive *)dsk;	/* xxx  hack? */
+d881 1
+a881 1
+	    ((VRDrive *)dest)->addChild(work->pmrDragSource->dsk, False, False);
+d1210 1
+a1210 1
+				drv->addChild(info.child[ul]->dsk, False, False);
+d1212 1
+a1212 1
+				drv->addChild(info.child[ul]->dsk, False, True);
+a1237 3
+#if 0
+		return 0;
+#endif
+d1244 1
+a1244 1
+		    assert( work->pmrMenu->dsk->isArray() );
+d1246 2
+a1247 1
+		    VRDrive   * drv = (VRDrive *)work->pmrMenu->dsk;
+a1248 11
+		    dta->flthd = drv->queryFltHd();
+		    if( dta->flthd == 0xFFFF )
+		    {
+			MyMessageBox(0, HWND_DESKTOP,
+				     "The array you selected isn't known to"
+				     " vraid.flt.  Therefore it can't be verified"
+				     " by the driver.  Please reboot to let"
+				     " vraid.flt analyze the new situation and"
+				     " retry the operation.");
+			return 0;
+		    }
+d1250 1
+a1250 1
+		    Verbose(2,modname, "Starting DrvVerifyThread(hd %u)", dta->flthd);
+@
+
+
+2.11
+log
+@- adjusted verbosity levels
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.10 $
+ * $Date: 2000/05/15 22:59:01 $
+d10 3
+d93 2
+a94 1
+static char const vcid[]="$Id: drvsetup.cpp,v 2.10 2000/05/15 22:59:01 vitus Exp vitus $";
+a101 1
+#define __IBMC__	0
+d121 1
+d279 5
+d391 1
+d393 2
+a394 1
+	    WinEnableMenuItem(popup, IDM_REMOVE_CHILD, FALSE);
+d430 14
+d452 1
+d454 2
+a455 1
+	    WinEnableMenuItem(popup, IDM_REMOVE_CHILD, FALSE);
+d457 1
+a457 1
+	else if(  work->pmrMenu->dsk->isArray() != 0 )
+d465 14
+d489 2
+d501 2
+d867 2
+a868 2
+		" dropped device ID %02X%02X%02X%02X%02X%02X."
+		"  Are you sure you want to do this?",
+d879 3
+d903 1
+d945 1
+a945 1
+    WORK * const work = (PWORK)WinQueryWindowPtr(hwnd, 0);
+d980 11
+d1125 3
+d1146 1
+d1195 5
+a1199 3
+			/* Add children to 'drv'.  Up to now all children
+			 * can be declared 'valid'.
+			 * This may change with RAID4 or RAID5.		xxx */
+d1206 4
+a1209 1
+			    drv->addChild(info.child[ul]->dsk, False, True);
+d1231 58
+a1288 3
+		/* IDM_REMOVE_SEL:
+		 *	Remove selected state from all icons. */
+	      case IDM_REMOVE_SEL:
+d1292 26
+d1360 3
+d1402 3
+d1457 9
+d1755 1
+a1755 1
+	bool = WinSetWindowPtr(hwndClient, 0, work);
+@
+
+
+2.10
+log
+@- added calls to PPSubclassWindow(), saves presentation parameters
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.9 $
+ * $Date: 2000/04/10 01:12:09 $
+d10 3
+d90 1
+a90 1
+static char const vcid[]="$Id: drvsetup.cpp,v 2.9 2000/04/10 01:12:09 vitus Exp vitus $";
+d234 1
+a234 1
+    Verbose(3, "DrvSetup", "client window %u,%u %u,%u",
+d272 1
+a272 1
+    Verbose(3, "DrvSetup", "popup menues %#x,%#x,%#x",
+d493 1
+a493 1
+    Verbose(3, "DrvSetup", "CM_ALLOCRECORD: %#x",address);
+d766 1
+a766 1
+    Verbose(3, "DrvSetup", "DragOver, destination is acceptable");
+d908 1
+a908 1
+	Verbose(3, "DrvSetup", "WUM_START");
+d936 1
+a936 1
+	Verbose(3, "DrvSetup", "WM_CONTROL");
+d949 1
+a949 1
+		Verbose(3, "DrvSetup", "WM_CONTROL (id %#x, CN_CONTEXTMENU)", id);
+d954 1
+a954 1
+		Verbose(3, "DrvSetup", "WM_CONTROL (id %#x, CN_ENTER)",id);
+d995 1
+a995 1
+		Verbose(3, "DrvSetup", "WM_CONTROL (id %#x, CN_INITDRAG)", id);
+d999 1
+a999 1
+		Verbose(3, "DrvSetup", "WM_CONTROL (id %#x, CN_DRAGOVER)", id);
+d1003 1
+a1003 1
+		Verbose(3, "DrvSetup", "WM_CONTROL (id %#x, CN_DRAGLEAVE)", id);
+d1007 1
+a1007 1
+		Verbose(3, "DrvSetup", "WM_CONTROL (id %#x, CN_DROP)", id);
+d1011 1
+a1011 1
+		Verbose(3, "DrvSetup", "WM_CONTROL (id %#x, notify code %#x)",
+d1023 1
+a1023 1
+	Verbose(3, "DrvSetup", "WM_CONTEXTMENU");
+d1034 1
+a1034 1
+	Verbose(3, "DrvSetup", "WM_MENUEND");
+d1058 1
+a1058 1
+	Verbose(3, "DrvSetup", "WM_COMMAND");
+d1314 1
+a1314 1
+	Verbose(3, "DrvSetup", "WM_CREATE");
+d1324 1
+a1324 1
+	Verbose(3, "DrvSetup", "WM_CLOSE");
+d1352 1
+a1352 1
+	Verbose(3, "DrvSetup", "WM_DESTROY");
+d1369 1
+a1369 1
+	Verbose(3, "DrvSetup", "WM_SIZE");
+d1390 1
+a1390 1
+	Verbose(3, "DrvSetup", "WM_MOVE");
+d1423 1
+a1423 1
+	    Verbose(3, "DrvSetup", "WM_PRESPARAMCHANGED(type %#x)", LONGFROMMP(mp1));
+d1616 1
+a1616 1
+		Verbose(3, "DrvSetup", "Copying old size of window");
+d1624 1
+a1624 1
+		Verbose(3, "DrvSetup", "Copying old position of window");
+@
+
+
+2.9
+log
+@- converted calls to WinMessageBox() to MyMessageBox()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.8 $
+ * $Date: 2000/03/09 23:42:41 $
+d10 3
+d87 1
+a87 1
+static char const vcid[]="$Id: drvsetup.cpp,v 2.8 2000/03/09 23:42:41 vitus Exp vitus $";
+d108 1
+d235 8
+a242 8
+					  NULL,
+					  WS_VISIBLE
+					  |CCS_AUTOPOSITION|CCS_MINIRECORDCORE
+					  |CCS_VERIFYPOINTERS
+					  |CCS_EXTENDSEL|CCS_READONLY,
+					  0, 0, size.cx, size.cy,
+					  hwndClient, HWND_TOP,
+					  IDW_DRVCN, NULL, NULL);
+d250 1
+d1581 3
+@
+
+
+2.8
+log
+@- changed C++ to C comments
+- adjusted verbosity levels
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.7 $
+ * $Date: 1999/07/05 01:00:08 $
+d10 4
+d84 1
+a84 1
+static char const vcid[]="$Id: drvsetup.cpp,v 2.7 1999/07/05 01:00:08 vitus Exp vitus $";
+d106 1
+a107 1
+#include "vsetup.h"
+d955 2
+a956 3
+			WinMessageBox(HWND_DESKTOP, hwnd,
+				      "Internal error, can't use NULL device",
+				      NULL, -1UL, MB_CANCEL|MB_ERROR|MB_MOVEABLE);
+d958 3
+a960 4
+			WinMessageBox(HWND_DESKTOP, hwnd,
+				      "Can't work on this device,"
+				      " remove parent first.",
+				      NULL, -1UL, MB_CANCEL|MB_ERROR|MB_MOVEABLE);
+d962 3
+a964 4
+			WinMessageBox(HWND_DESKTOP, hwnd,
+				      "Can't work on this device,"
+				      " create physdevice first.",
+				      NULL, -1UL, MB_CANCEL|MB_ERROR|MB_MOVEABLE);
+d966 4
+a969 5
+			WinMessageBox(HWND_DESKTOP, hwnd,
+				      "This device (or part of it) is in use"
+				      " by OS/2, remove recognized filesystems"
+				      " first.",
+				      NULL, -1UL, MB_CANCEL|MB_ERROR|MB_MOVEABLE);
+@
+
+
+2.7
+log
+@- DragOver: corrected source/destination handling, should now work
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.6 $
+ * $Date: 1999/06/21 01:29:26 $
+d10 3
+d77 2
+a78 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+d80 1
+a80 1
+static char const vcid[]="$Id: drvsetup.cpp,v 2.6 1999/06/21 01:29:26 vitus Exp vitus $";
+d162 2
+a163 2
+ * CALL
+ *	LoadPresParam(app)
+d201 2
+a202 2
+ * CALL
+ *	CreateCnr(hwndClient,work)
+d272 2
+a273 2
+ * CALL
+ *	DoPopup(hwndClient,work)
+d456 2
+a457 2
+ * CALL
+ *	DisplayDisk(work,parent,dsk)
+d505 1
+a505 1
+	VRDrive *	drv = (VRDrive *)dsk;	// xxx  hack?
+d517 2
+a518 2
+ * CALL
+ *	DragInit(hwndClient,work,drag)
+d540 1
+a540 1
+	return 0;				// no record selected
+d542 1
+a542 1
+	return 0;				// already active drag
+d550 1
+a550 1
+	return 0;				// sorry, no dragging of children
+d552 1
+a552 1
+	return 0;				// can't write = no drag
+d554 1
+a554 1
+	return 0;				// not even PHYSDEVICE!
+d569 1
+a569 1
+    ditem.fsControl = DC_REMOVEABLEMEDIA;	// can't be recovered...
+d601 2
+a602 2
+ * CALL
+ *	DragLeave(hwndClient,work,drag)
+d620 1
+a620 1
+    work->pmrDragSource = NULL;			// reflect in work area
+d629 2
+a630 2
+ * CALL
+ *	DragOver(hwndClient,work,drag)
+d762 2
+a763 2
+ * CALL
+ *	DragDrop(hwndClient,work,drag)
+d847 1
+a847 1
+      case 0:					// no array: PHYSDEV
+d867 2
+a868 2
+ * CALL
+ *	DrvsetupWindowProc(hwnd,msg,mp1,mp2)
+d913 1
+a913 1
+	Verbose(2, "DrvSetup", "WUM_DEVTREE");
+d937 1
+a937 2
+		Verbose(2, "DrvSetup",
+			"WM_CONTROL (id %#x, CN_CONTEXTMENU)", id);
+d942 1
+a942 1
+		Verbose(2, "DrvSetup", "WM_CONTROL (id %#x, CN_ENTER)",id);
+d987 1
+a987 1
+		Verbose(2, "DrvSetup", "WM_CONTROL (id %#x, CN_INITDRAG)", id);
+d991 1
+a991 1
+		Verbose(2, "DrvSetup", "WM_CONTROL (id %#x, CN_DRAGOVER)", id);
+d995 1
+a995 1
+		Verbose(2, "DrvSetup", "WM_CONTROL (id %#x, CN_DRAGLEAVE)", id);
+d999 1
+a999 1
+		Verbose(2, "DrvSetup", "WM_CONTROL (id %#x, CN_DROP)", id);
+d1015 1
+a1015 1
+	Verbose(2, "DrvSetup", "WM_CONTEXTMENU");
+d1026 1
+a1026 1
+	Verbose(2, "DrvSetup", "WM_MENUEND");
+d1058 1
+a1058 1
+		Verbose(2, "DrvSetup", "WM_COMMAND, IDM_CREATE_PDEV");
+d1078 1
+a1078 1
+		Verbose(2, "DrvSetup", "WM_COMMAND, IDM_COMBINE_DRV");
+d1167 1
+a1167 1
+		Verbose(2, "DrvSetup", "WM_COMMAND, IDM_DESTROY_DRV");
+d1178 1
+a1178 1
+		    VRDrive *	drv = (VRDrive *)work->pmrMenu->dsk; // !!!
+d1203 1
+a1203 1
+		Verbose(2, "DrvSetup", "WM_COMMAND, IDM_DELETE_PDEV");
+d1242 1
+a1242 1
+		Verbose(2, "DrvSetup", "WM_COMMAND, IDM_REMOVE_CHILD");
+d1507 2
+a1508 2
+ * CALL
+ *	DrvsetupThread(dummy)
+@
+
+
+2.6
+log
+@- corrected english spelling
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.5 $
+ * $Date: 1999/06/19 21:59:31 $
+d10 3
+d77 1
+a77 1
+static char const vcid[]="$Id: drvsetup.cpp,v 2.5 1999/06/19 21:59:31 vitus Exp vitus $";
+d654 3
+a656 2
+    /* I don't think this is possible, but: are we dragging
+     * an icon or just empty space (background)? */
+d660 2
+a661 2
+	work->pmrDragDestination = NULL;
+	return MRFROM2SHORT(DOR_NEVERDROP,DO_UNKNOWN);
+d692 6
+d706 6
+d818 1
+a818 1
+	    ((VRDrive *)dest)->addChild(work->pmrDragSource->dsk, False);
+d1130 1
+a1130 1
+			    drv->addChild(info.child[ul]->dsk, True);
+@
+
+
+2.5
+log
+@- minor corrections to keep compiler happy
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.4 $
+ * $Date: 1999/06/02 02:18:00 $
+d10 3
+d74 1
+a74 1
+static char const vcid[]="$Id: drvsetup.cpp,v 2.4 1999/06/02 02:18:00 vitus Exp vitus $";
+d381 1
+a381 1
+		int const	cnt = parent->queryChilds();
+d501 1
+a501 1
+	for( i = 0; i < drv->queryChilds(); ++i )
+d544 1
+a544 1
+	return 0;				// sorry, no dragging of childs
+d712 1
+a712 1
+	 *	Adding another childs means increasing the size
+d1105 1
+a1105 1
+			/* Add childs to 'drv'.  Up to now all childs
+d1177 1
+a1177 1
+			 * childs that exist. */
+@
+
+
+2.4
+log
+@- DoPopup: IDM_REMOVE_CHILD only possible if another child is valid
+- IDM_DESTROY_DRV: WUM_DELDRV handles adding childs to container
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.3 $
+ * $Date: 1999/05/13 23:04:18 $
+d10 4
+d71 1
+a71 1
+static char const vcid[]="$Id: drvsetup.cpp,v 2.3 1999/05/13 23:04:18 vitus Exp vitus $";
+d468 1
+a468 1
+    ULONG		i;
+d487 3
+a489 1
+    i = (ULONG)WinSendMsg(work->hwndCnr, CM_INSERTRECORD,
+d493 1
+a493 1
+		i, WinGetLastError(work->hab));
+d793 1
+a793 1
+				 -1, MB_YESNO|MB_QUERY|MB_MOVEABLE);
+d877 1
+a877 1
+	    int	tid;
+d881 4
+a884 1
+	    _beginthread(DrvscanThread, NULL, STACK_SIZE, dta);
+d906 1
+a906 1
+	    POINTL		ptlMouse;
+d932 1
+a932 1
+				      NULL, -1, MB_CANCEL|MB_ERROR|MB_MOVEABLE);
+d937 1
+a937 1
+				      NULL, -1, MB_CANCEL|MB_ERROR|MB_MOVEABLE);
+d942 1
+a942 1
+				      NULL, -1, MB_CANCEL|MB_ERROR|MB_MOVEABLE);
+d948 1
+a948 1
+				      NULL, -1, MB_CANCEL|MB_ERROR|MB_MOVEABLE);
+d1092 1
+a1092 1
+			    drv = new VChain(newid ,info.cnt);
+d1095 1
+a1095 1
+			    drv = new VStripe(newid, info.cnt);
+d1098 1
+a1098 1
+			    drv = new VMirror(newid, info.cnt);
+d1162 1
+a1162 2
+					     -1,
+					     MB_YESNO|MB_QUERY|MB_MOVEABLE);
+d1204 1
+a1204 1
+					     -1, MB_YESNO|MB_QUERY|MB_MOVEABLE);
+d1243 1
+a1243 1
+					     -1, MB_YESNO|MB_QUERY|MB_MOVEABLE);
+a1392 1
+	    int		error;
+a1506 1
+    MRESULT	mres;
+@
+
+
+2.3
+log
+@- all warning messages include drive ID
+- implemented IDM_REMOVE_CHILD: warns, posts WUM_REMCHILD
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.2 $
+ * $Date: 1999/04/16 01:03:21 $
+d10 4
+d67 1
+a67 1
+static char const vcid[]="$Id: drvsetup.cpp,v 2.2 1999/04/16 01:03:21 vitus Exp vitus $";
+d362 2
+d367 2
+a368 1
+	     * - the parent is RAID 1
+d373 16
+a388 1
+		WinEnableMenuItem(popup, IDM_REMOVE_CHILD, TRUE);
+d1165 2
+a1167 9
+			/* Add childs to container (recursive!)
+			 * and remove parent (about to be destroyed). */
+
+			for( int i = 0; i < drv->queryChilds(); ++i )
+			{
+			    VRDev *	child = drv->getChild(i);
+			    if( child != 0 )
+				DisplayDisk(work, NULL, child);
+			}
+d1191 1
+a1191 1
+			    id[0],id[1],id[2],id[3],id[4],id[5]);
+@
+
+
+2.2
+log
+@- DragDrop: update complete tree when dropping on a child
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.1 $
+ * $Date: 1999/04/13 01:24:08 $
+d10 3
+d63 1
+a63 1
+static char const vcid[]="$Id: drvsetup.cpp,v 2.1 1999/04/13 01:24:08 vitus Exp vitus $";
+d354 1
+d360 4
+a363 1
+	     * can be done. */
+d365 4
+d381 1
+d390 1
+d400 1
+d410 1
+d500 1
+a500 1
+    Verbose(1, "DrvSetup", "DragInit: record %#x",drag->pRecord);
+d523 1
+a523 1
+    Verbose(1, "DrvSetup", "DragInit: record passed checks");
+d581 1
+a581 1
+    Verbose(0, "DrvSetup", "DragLeave, record %#x", drag->pRecord);
+d617 1
+a617 1
+    Verbose(0, "DrvSetup", "DragOver, record %#x", drag->pRecord);
+d653 1
+a653 1
+	Verbose(0, "DrvSetup", "DragOver, no destination");
+d664 1
+a664 1
+    Verbose(0, "DrvSetup", "DragOver, destination %#x", rdev);
+d674 1
+a674 1
+	    Verbose(0, "DrvSetup", "DragOver, source too small");
+d689 1
+a689 1
+	    Verbose(0, "DrvSetup", "DragOver, bad destination");
+d699 1
+a699 1
+	Verbose(0, "DrvSetup", "DragOver, bad destination type");
+d704 1
+a704 1
+    Verbose(0, "DrvSetup", "DragOver, destination is acceptable");
+d737 2
+d741 1
+a741 1
+    Verbose(1, "DrvSetup", "DragDrop, record %#x", drag->pRecord);
+d745 1
+a745 1
+	Verbose(0, "DrvSetup", "DragDrop, can't use external data");
+d749 2
+d759 4
+d764 2
+a765 5
+				 "This will destroy all data on the"
+				 " dropped device.  Are you sure you"
+				 " want to do this?", "Just curious...",
+				 -1,
+				 MB_YESNO|MB_QUERY|MB_MOVEABLE);
+a1068 8
+#if 0
+			  case RDTYPE_RAID4:
+			    drv = new VRaid4(newid, info.cnt);
+			    break;
+			  case RDTYPE_RAID5:
+			    drv = new VRaid5(newid, info.cnt);
+			    break;
+#endif
+d1171 7
+a1178 1
+
+d1180 2
+a1181 3
+					     "Are you sure?", "Just curious...",
+					     -1,
+					     MB_YESNO|MB_QUERY|MB_MOVEABLE);
+d1193 51
+@
+
+
+2.1
+log
+@- implemented first step of drag-n-drop support: add something to chain, mirror
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.11 $
+ * $Date: 1999/03/24 23:06:00 $
+d10 3
+d60 1
+a60 1
+static char const vcid[]="$Id: drvsetup.cpp,v 1.11 1999/03/24 23:06:00 vitus Exp vitus $";
+d100 2
+d749 1
+a749 1
+	    VRDev	* highest = dest;
+d753 5
+d760 2
+d763 2
+a764 5
+	    /* Remove new child and destination (destinations parent)
+	     * from container. */
+
+	    ap[0] =(PMINIRECORDCORE)work->pmrDragSource;
+	    ap[1] = (PMINIRECORDCORE)drag->pRecord;
+d773 1
+a773 1
+	    WinPostMsg(work->hwndScanner, WUM_DEVTREE, dest, NULL);
+d1209 1
+a1209 1
+	    /* Query container for entries "in-use". */
+@
+
+
+1.11
+log
+@- corrected popup menue on new array drives, did contain remove PHYSDEV...
+- WinPostMsg() instead of WinSendMsg()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/03/08 05:05:34 $
+d10 4
+d57 1
+a57 1
+static char const vcid[]="$Id: drvsetup.cpp,v 1.10 1999/03/08 05:05:34 vitus Exp vitus $";
+d70 1
+d109 4
+a112 1
+    PMYRECORD	pmrMenu;		/* this record has menu attached */
+a279 5
+    POINTL		ptlMouse;
+    PMYRECORD		pmcrRecord;
+    QUERYRECORDRECT	qrrDelta;
+    RECTL		rclDelta;
+    QUERYRECFROMRECT	qrfrQuery;
+d282 1
+d285 1
+d295 3
+a297 4
+    work->pmrMenu = (PMYRECORD)WinSendMsg(work->hwndCnr,
+					  CM_QUERYRECORDFROMRECT,
+					  MPFROMP(CMA_FIRST),
+					  MPFROMP(&qrfrQuery));
+d461 328
+d904 17
+d1052 1
+a1052 1
+			 * This may change with RAID4 or RAID5. xxx */
+d1169 1
+a1170 1
+		return 0;
+a1524 1
+
+@
+
+
+1.10
+log
+@- uses queryIcon() method, all local icon handling removed
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/03/01 02:26:05 $
+d10 3
+d53 1
+a53 1
+static char const vcid[]="$Id: drvsetup.cpp,v 1.9 1999/03/01 02:26:05 vitus Exp vitus $";
+d238 1
+a238 1
+/*#
+d242 3
+d246 1
+d362 8
+d372 2
+a373 4
+	    if(  work->pmrMenu->dsk->isArray() != 0 )
+	    {
+		/* dsk->acc == DSKACC_NONE
+		 * Well, this is a drive array.  May be destroyed. */
+d375 3
+a377 13
+		WinEnableMenuItem(popup, IDM_CREATE_PDEV, FALSE);
+		WinEnableMenuItem(popup, IDM_DELETE_PDEV, FALSE);
+		WinEnableMenuItem(popup, IDM_DESTROY_DRV, TRUE);
+	    }
+	    else
+	    {
+		/* An OS/2 drive which doesn't contain a filesystem.
+		 * Create a PHYSDEV and it's ready for use. */
+
+		WinEnableMenuItem(popup, IDM_CREATE_PDEV, TRUE);
+		WinEnableMenuItem(popup, IDM_DELETE_PDEV, FALSE);
+		WinEnableMenuItem(popup, IDM_DESTROY_DRV, FALSE);
+	    }
+d388 1
+a388 1
+    }
+d701 4
+d710 1
+a710 1
+			    drv->addChild(info.child[ul]->dsk);
+d859 1
+a859 1
+		WinSendMsg(work->hwndScanner, WUM_CLOSEDEV,
+d1120 1
+a1120 1
+	WinSendMsg(hwndClient, WUM_START, 0, 0);
+@
+
+
+1.9
+log
+@- include dskinfo.hpp for drvbuild.h
+- reworked code because DSKINFO != VRDev
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/02/09 02:49:48 $
+d10 4
+d50 1
+a50 1
+static char const vcid[]="$Id: drvsetup.cpp,v 1.8 1999/02/09 02:49:48 vitus Exp vitus $";
+d77 5
+a96 7
+    HPOINTER	hFreeIcon;			/* available, no PHYSDEV */
+    HPOINTER	hLockedIcon;			/* locked by OS/2 */
+    HPOINTER	hPDevIcon;			/* PHYSDEV */
+    HPOINTER	hArrayIcon;			/* HOSTDRIVE */
+    HPOINTER	hMissingIcon;			/* missing part of VRAIDDEVICE */
+    HPOINTER	hDisabledPDevIcon;		/* PDEV which can't be changed */
+    HPOINTER	hDisabledArrayIcon;		/* ARRAY which can't be changed */
+d125 1
+a125 1
+/*#
+a193 1
+#if 1
+a194 1
+#endif
+d214 1
+a214 13
+    /* Need some more resources:
+     * 1st: icons */
+
+    work->hLockedIcon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_LOCKEDDRIVE);
+    work->hFreeIcon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_FREEDRIVE);
+    work->hPDevIcon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_PDEVDRIVE);
+    work->hArrayIcon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_RAIDDRIVE);
+    work->hMissingIcon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_MISSINGDRIVE);
+    work->hDisabledPDevIcon=WinLoadPointer(HWND_DESKTOP,NULLHANDLE,ICO_DISABLEDPDEV);
+    work->hDisabledArrayIcon = WinLoadPointer(HWND_DESKTOP,NULLHANDLE,ICO_DISABLEDARRAY);
+
+
+    /* 2nd: menues */
+d422 2
+a423 32
+    if( dsk == NULL )
+    {
+	/* Missing drive!  Display a special icon. */
+
+	descr = "missing part of RAID device";
+	address->record.hptrIcon = work->hMissingIcon;
+    }
+    else
+    {
+	descr = dsk->allocateDescription();
+	if( dsk->isArray() )
+	{
+	    if( dsk->isWritable() )
+		address->record.hptrIcon = work->hArrayIcon;
+	    else
+		address->record.hptrIcon = work->hDisabledArrayIcon;
+	}
+	else if( dsk->isHostdrive() )		// OS/2 drive?
+	{
+	    if( dsk->isWritable() )
+		address->record.hptrIcon = work->hFreeIcon;
+	    else
+		address->record.hptrIcon = work->hLockedIcon;
+	}
+	else
+	{
+	    if( dsk->isWritable() )
+		address->record.hptrIcon = work->hPDevIcon;
+	    else
+		address->record.hptrIcon = work->hDisabledPDevIcon;
+	}
+    }
+d634 2
+a635 1
+		    /* Send this DSKINFO to Scanner Thread. */
+d663 1
+a663 1
+			/* Build new DSKINFO structure, update parent/child
+a684 1
+#if 0
+d688 1
+d868 6
+a873 5
+	WinDestroyWindow(work->hwndSngPopup);
+	WinDestroyWindow(work->hwndMulPopup);
+	WinDestroyPointer(work->hFreeIcon);
+	WinDestroyWindow(work->hwndCnr);
+	WinPostMsg(work->self->parent, WUM_THREADENDED, work->self, 0);
+@
+
+
+1.8
+log
+@- Umstellung auf C++
+@
+text
+@d2 3
+a4 3
+ * $Source: r:/source/driver/raid/setup/RCS/drvsetup.c,v $
+ * $Revision: 1.7 $
+ * $Date: 1998/12/17 02:22:02 $
+d9 4
+a12 1
+ * $Log: drvsetup.c,v $
+d46 1
+a46 1
+static char const vcid[]="$Id: drvsetup.c,v 1.7 1998/12/17 02:22:02 vitus Exp vitus $";
+d51 1
+d70 1
+d75 3
+d348 1
+a348 1
+	else if( work->pmrMenu->dsk->parent != 0 )
+d350 2
+a351 1
+	    /* This is part of a larger drive array.  Nothing
+d358 1
+a358 2
+	else if( work->pmrMenu->dsk->acc == DSKACC_OS2
+		 &&  work->pmrMenu->dsk->writable == 0 )
+d360 2
+a361 2
+	    /* This is an OS/2 device which can't be locked (because
+	     * a filesystem exists).  Nothing can be done, too. */
+d367 1
+a367 1
+	else if( work->pmrMenu->dsk->acc == DSKACC_NONE )
+d369 4
+a372 3
+	    /* Well, this is a drive array.  May be destroyed
+	     * if no partition resides on array (the identical
+	     * OS/2 device could be locked). */
+a373 2
+	    if( work->pmrMenu->dsk->writable == 0 )
+	    {
+d376 1
+a376 1
+		WinEnableMenuItem(popup, IDM_DESTROY_DRV, FALSE);
+d380 4
+a383 1
+		WinEnableMenuItem(popup, IDM_CREATE_PDEV, FALSE);
+d385 1
+a385 1
+		WinEnableMenuItem(popup, IDM_DESTROY_DRV, TRUE);
+d388 1
+a388 1
+	else if( work->pmrMenu->dsk->type == DSKTYPE_NONE )
+d390 2
+a391 10
+	    /* An OS/2 device which doesn't contain a filesystem.
+	     * Create a PHYSDEV and it's ready for use. */
+
+	    WinEnableMenuItem(popup, IDM_CREATE_PDEV, TRUE);
+	    WinEnableMenuItem(popup, IDM_DELETE_PDEV, FALSE);
+	    WinEnableMenuItem(popup, IDM_DESTROY_DRV, FALSE);
+	}
+	else if( work->pmrMenu->dsk->type == DSKTYPE_PDEV )
+	{
+	    /* A PHYSDEV (but not part of an array). */
+d420 2
+a421 2
+PRIVATE VOID
+DisplayDisk(PWORK work,PMYRECORD parent,PDSKINFO dsk)
+d441 1
+a441 1
+    else if( dsk->acc == DSKACC_OS2 )
+d443 2
+a444 1
+	if( dsk->type == DSKTYPE_NONE )
+d446 2
+a447 6
+	    descr = new char[80];
+	    sprintf(descr, "OS/2 Device %lu\n%lu MByte",
+		    dsk->access.os2.os2idx, dsk->size / 2 / 1024u);
+
+	    if( dsk->writable == 0 )
+		address->record.hptrIcon = work->hLockedIcon;
+d449 1
+a449 1
+		address->record.hptrIcon = work->hFreeIcon;
+d451 1
+a451 1
+	else					/* DSKTYPE_PDEV */
+d453 4
+a456 4
+	    descr = new char[80];
+	    sprintf(descr, "PHYSDEV (OS/2 Device %lu)\n%lu MByte",
+		    dsk->access.os2.os2idx, dsk->size / 2 / 1024u);
+	    address->record.hptrIcon = work->hPDevIcon;
+a457 9
+    }
+    else if( dsk->acc == DSKACC_FLT )
+    {
+	descr = new char[80];
+	sprintf(descr, "PHYSDEV (filter device handle %#x)\n%lu MByte partition",
+		dsk->access.flt.hd, dsk->access.flt.partsize / 2 / 1024);
+
+	if( dsk->writable )
+	    address->record.hptrIcon = work->hPDevIcon;
+a458 7
+	    address->record.hptrIcon = work->hDisabledPDevIcon;
+    }
+    else if( dsk->acc == DSKACC_NONE )
+    {
+	descr = new char[120];
+
+	switch( dsk->type )
+d460 4
+a463 21
+	  case DSKTYPE_SINGLE:
+	    strcpy(descr, "Single");
+	    break;
+	  case DSKTYPE_CHAIN:
+	    strcpy(descr, "Chaining");
+	    break;
+	  case DSKTYPE_STRIPE:
+	    strcpy(descr, "RAID 0 (Striping)");
+	    break;
+	  case DSKTYPE_MIRROR:
+	    strcpy(descr, "RAID 1 (Mirroring)");
+	    break;
+	  case DSKTYPE_RAID4:
+	    strcpy(descr, "RAID 4");
+	    break;
+	  case DSKTYPE_RAID5:
+	    strcpy(descr, "RAID 5");
+	    break;
+	  default:
+	    strcpy(descr, "RAID ?");
+	    break;
+a464 10
+	if( dsk->access.none.os2_may_access )
+	    sprintf(&descr[strlen(descr)], " (OS/2 Device %lu)",
+		    dsk->access.none.os2idx);
+	sprintf(&descr[strlen(descr)], "\n%lu MByte",
+		dsk->size / 2 / 1024);
+
+	if( dsk->writable )
+	    address->record.hptrIcon = work->hArrayIcon;
+	else
+	    address->record.hptrIcon = work->hDisabledArrayIcon;
+d479 3
+a481 4
+	Verbose(1, "DrvSetup",
+		"WinSendMsg(CM_INSERTRECORD) failed - last error %#x",
+		i,WinGetLastError(work->hab));
+    else
+d483 4
+a486 5
+	if( dsk != NULL  &&  dsk->acc == DSKACC_NONE ) /* may have childs */
+	{
+	    for( i = 0; i < dsk->kind.vrd.childs; ++i )
+		DisplayDisk(work, address, dsk->kind.vrd.child[i]);
+	}
+d488 1
+d494 1
+a494 1
+/*
+d540 1
+a540 1
+	DisplayDisk(work, NULL, (PDSKINFO)PVOIDFROMMP(mp1));
+a570 1
+		    PDSKINFO		dsk;
+d575 1
+a575 1
+		    dsk = ((PMYRECORD)(rec->pRecord))->dsk;
+d580 1
+a580 1
+		    else if( dsk->parent != NULL )
+d585 1
+a585 1
+		    else if( dsk->type == DSKTYPE_NONE )
+d590 1
+a590 1
+		    else if( !dsk->writable )
+d709 2
+a710 1
+			PDSKINFO dsk = new DSKINFO;
+d712 26
+a737 5
+			memset(dsk, 0, sizeof(*dsk));
+			dsk->acc = DSKACC_NONE;
+			dsk->type = info.type;
+			dsk->writable = 1;
+			dsk->kind.vrd.childs = info.cnt;
+d744 3
+a746 5
+			    dsk->kind.vrd.child[ul] = info.child[ul]->dsk;
+			    info.child[ul]->dsk->parent = dsk;
+
+			    if( 0 == info.child[ul]->dsk->writable )
+				dsk->writable = 0;
+d752 1
+a752 2
+				       MPFROM2SHORT(1,
+						    CMA_FREE|CMA_INVALIDATE));
+d754 1
+a754 1
+			WinPostMsg(work->hwndScanner, WUM_DEVTREE, dsk, NULL);
+d790 1
+a790 1
+		    PDSKINFO const dsk = work->pmrMenu->dsk;
+a806 4
+			if( !(dsk->type == DSKTYPE_NONE
+			     ||  dsk->type == DSKTYPE_PDEV) )
+			{
+			    USHORT	i;
+d808 2
+a809 2
+			    /* Add childs to container (recursive!)
+			     * and remove parent (about to be destroyed). */
+d811 5
+a815 6
+			    for( i = 0; i < dsk->kind.vrd.childs; ++i )
+				if( dsk->kind.vrd.child[i] != NULL )
+				{
+				    dsk->kind.vrd.child[i]->parent = NULL;
+				    DisplayDisk(work, NULL, dsk->kind.vrd.child[i]);
+				}
+d817 1
+a817 1
+			WinPostMsg(work->hwndScanner, WUM_DELDRV, dsk, NULL);
+d834 1
+a834 1
+		    PDSKINFO const dsk = work->pmrMenu->dsk;
+d851 1
+a851 1
+			WinPostMsg(work->hwndScanner, WUM_DELPDEV, dsk, NULL);
+d1070 1
+a1070 1
+/*
+@
+
+
+1.7
+log
+@- display "OS/2 Device x" at host drives
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1998/11/03 03:03:48 $
+d10 3
+d40 2
+a41 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+d43 1
+a43 1
+static char const vcid[]="$Id: drvsetup.c,v 1.6 1998/11/03 03:03:48 vitus Exp vitus $";
+d50 1
+d58 1
+d62 1
+d154 1
+a154 1
+/*#
+d158 3
+d162 3
+a164 1
+ * GLOBAL
+d166 2
+d233 1
+a233 1
+    return;
+d244 1
+a244 1
+ * GLOBAL
+d350 1
+a350 1
+		 &&  work->pmrMenu->dsk->avail == 0 )
+d365 1
+a365 1
+	    if( work->pmrMenu->dsk->avail == 0 )
+d396 2
+a397 1
+    return;
+d427 2
+a428 2
+    address = WinSendMsg(work->hwndCnr, CM_ALLOCRECORD,
+			 MPFROMLONG(extra), MPFROMLONG(1));
+d443 5
+a447 8
+	    if( (descr=malloc(80)) != NULL )
+	    {
+		sprintf(descr, "OS/2 Device %lu\n%lu MByte",
+			dsk->access.os2.os2idx, dsk->size / 2 / 1024u);
+	    }
+	    else
+		descr = "OS/2 Device";
+	    if( dsk->avail == 0 )
+d454 3
+a456 7
+	    if( (descr=malloc(80)) != NULL )
+	    {
+		sprintf(descr, "PHYSDEV (OS/2 Device %lu)\n%lu MByte",
+			dsk->access.os2.os2idx, dsk->size / 2 / 1024u);
+	    }
+	    else
+		descr = "PHYSDEV (OS/2 Device)";
+d462 5
+a466 8
+	if( (descr=malloc(80)) != NULL )
+	{
+	    sprintf(descr, "PHYSDEV (filter device handle %#x)\n%lu MByte partition",
+		    dsk->access.flt.hd, dsk->access.flt.partsize / 2 / 1024);
+	}
+	else
+	    descr = "PHYSDEV (filter device)";
+	if( dsk->avail )
+d473 3
+a475 1
+	if( (descr=malloc(120)) != NULL )
+d477 21
+a497 29
+	    switch( dsk->type )
+	    {
+	      case DSKTYPE_SINGLE:
+		strcpy(descr, "Single");
+		break;
+	      case DSKTYPE_CHAIN:
+		strcpy(descr, "Chaining");
+		break;
+	      case DSKTYPE_STRIPE:
+		strcpy(descr, "RAID 0 (Striping)");
+		break;
+	      case DSKTYPE_MIRROR:
+		strcpy(descr, "RAID 1 (Mirroring)");
+		break;
+	      case DSKTYPE_RAID4:
+		strcpy(descr, "RAID 4");
+		break;
+	      case DSKTYPE_RAID5:
+		strcpy(descr, "RAID 5");
+		break;
+	      default:
+		strcpy(descr, "RAID ?");
+		break;
+	    }
+	    if( dsk->access.none.valid )
+		sprintf(&descr[strlen(descr)], " (OS/2 Device %lu)",
+			dsk->access.none.os2idx);
+	    sprintf(&descr[strlen(descr)], "\n%lu MByte",
+		    dsk->size / 2 / 1024);
+d499 7
+a505 3
+	else
+	    descr = "RAID?";
+	if( dsk->avail )
+d530 2
+a531 2
+	    for( i = 0; i < dsk->kind.virtual.childs; ++i )
+		DisplayDisk(work, address, dsk->kind.virtual.child[i]);
+d557 1
+a557 1
+    WORK * const work = WinQueryWindowPtr(hwnd, 0);
+d573 1
+a573 1
+	    PTHR_DRVSCAN	dta = malloc(sizeof(THR_DRVSCAN));
+d585 1
+a585 1
+	DisplayDisk(work, NULL, PVOIDFROMMP(mp1));
+d615 1
+a615 1
+		    PNOTIFYRECORDENTER	rec = PVOIDFROMMP(mp2);
+d636 1
+a636 1
+		    else if( !dsk->avail )
+d755 1
+a755 1
+			PDSKINFO dsk = malloc(sizeof(DSKINFO));
+d760 2
+a761 2
+			dsk->avail = 1;
+			dsk->kind.virtual.childs = info.cnt;
+d768 1
+a768 1
+			    dsk->kind.virtual.child[ul] = info.child[ul]->dsk;
+d771 2
+a772 2
+			    if( 0 == info.child[ul]->dsk->avail )
+				dsk->avail = 0;
+d842 2
+a843 2
+			    for( i = 0; i < dsk->kind.virtual.childs; ++i )
+				if( dsk->kind.virtual.child[i] != NULL )
+d845 2
+a846 3
+				    dsk->kind.virtual.child[i]->parent = NULL;
+				    DisplayDisk(work, NULL,
+						dsk->kind.virtual.child[i]);
+a848 1
+
+d1119 1
+a1119 1
+    PTHR_DRVSETUP dta = dummy;
+d1131 1
+a1131 6
+	work = malloc(sizeof(WORK));
+	if( work == NULL )
+	{
+	    Verbose(0, "DrvSetup", "DrvSetupThread - memory problem");
+	    break;
+	}
+d1133 1
+a1133 1
+	work->self = dummy;
+d1234 1
+a1234 1
+	free(work);
+@
+
+
+1.6
+log
+@- new DEVICE structures get 'avail = 0' if any of their childs are
+  'avail = 0' otherwise they are created as 'avail = 1'
+- modified for DSKINFO change: 'avail' element changed position
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1998/09/27 01:52:03 $
+d7 1
+a7 1
+ * Select/define RAID devices.
+d10 5
+d40 1
+a40 1
+static char const id[]="$Id: drvsetup.c,v 1.5 1998/09/27 01:52:03 vitus Stab vitus $";
+d54 3
+a56 3
+#include "../../../tools/defines.h"
+#include "../../../tools/verbose.h"
+#include "../../../tools/profile.h"		/* profile handling */
+d59 3
+d63 1
+a63 1
+#include "drvbuild.h"
+d92 1
+d94 1
+a94 2
+ * Global data, used by any running test. Possible changed
+ * at startup, so they react like "pseudo constants".
+d96 1
+d389 1
+a389 1
+/*#
+d398 1
+a398 2
+ * GLOBAL
+ *	(none)
+d431 2
+a432 5
+		sprintf(descr, "OS/2 device %lu\n%lu MByte",
+			dsk->access.os2.idx, 
+			(((ULONG)dsk->access.os2.dp.cSectorsPerTrack
+			  * ((ULONG)dsk->access.os2.dp.cHeads)
+			  * (ULONG)dsk->access.os2.dp.cCylinders) / 2) / 1024);
+d435 1
+a435 1
+		descr = "OS/2 device";
+d445 2
+a446 3
+		sprintf(descr, "PHYSDEV (OS/2 device %lu)\n%lu MByte",
+			dsk->access.os2.idx,
+			dsk->size / 2 / 1024u);
+d449 1
+a449 1
+		descr = "PHYSDEV (OS/2 device)";
+d469 1
+a469 1
+	if( (descr=malloc(80)) != NULL )
+d495 3
+@
+
+
+1.5
+log
+@- added "disabled" icons for pdevs and arrays
+- different messages why double click isn't possible
+- recognizes  DSKACC_FLT
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1998/06/09 01:25:56 $
+d10 5
+d35 1
+a35 1
+static char const id[]="$Id: drvsetup.c,v 1.4 1998/06/09 01:25:56 vitus Exp vitus $";
+d328 1
+a328 1
+		 &&  work->pmrMenu->dsk->access.os2.avail == 0 )
+d343 1
+a343 1
+	    if( work->pmrMenu->dsk->access.none.avail == 0 )
+d431 1
+a431 1
+	    if( dsk->access.os2.avail == 0 )
+d458 1
+a458 1
+	if( dsk->access.flt.avail )
+d496 1
+a496 1
+	if( dsk->access.none.avail )
+d620 1
+a620 1
+				      " remove parent first",
+d625 1
+a625 1
+				      " create physdevice first",
+d627 1
+a627 3
+		    else if( (dsk->acc == DSKACC_OS2 && !dsk->access.os2.avail)
+			     || (dsk->acc == DSKACC_FLT && !dsk->access.flt.avail)
+			     || (dsk->acc == DSKACC_NONE && !dsk->access.none.avail))
+d629 3
+a631 2
+				      "This device is in use by OS/2,"
+				      " remove recognized filesystems first",
+d739 1
+a739 1
+		    if( ul == DID_OK )
+d751 1
+d762 3
+d915 1
+a915 1
+	    Verbose(2, "DrvSetup", "%lu drives are available",info.cnt);
+@
+
+
+1.4
+log
+@- seperate description for PHYSDEV devices to display logical
+  size (not partition size)
+- explanation of lower RAID levels
+- implemented context menue IDM_DELETE_PDEV
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/raid/setup/RCS/drvsetup.c,v $
+ * $Revision: 1.3 $
+ * $Date: 1998/05/27 01:58:23 $
+d10 6
+d30 1
+a30 1
+static char const id[]="$Id: drvsetup.c,v 1.3 1998/05/27 01:58:23 vitus Exp vitus $";
+d63 2
+a64 2
+    HPOINTER	hPdevIcon;			/* PHYSDEV */
+    HPOINTER	hRaidIcon;			/* HOSTDRIVE */
+d66 2
+d184 2
+a185 2
+    work->hPdevIcon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_PDEVDRIVE);
+    work->hRaidIcon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_RAIDDRIVE);
+d187 2
+d334 3
+a336 1
+	    /* Well, this is a drive array.  May be destroyed. */
+d338 12
+a349 3
+	    WinEnableMenuItem(popup, IDM_CREATE_PDEV, FALSE);
+	    WinEnableMenuItem(popup, IDM_DELETE_PDEV, FALSE);
+	    WinEnableMenuItem(popup, IDM_DESTROY_DRV, TRUE);
+d379 3
+d383 1
+d385 1
+d441 1
+a441 1
+	    address->record.hptrIcon = work->hPdevIcon;
+d444 14
+d491 4
+a494 1
+	address->record.hptrIcon = work->hRaidIcon;
+d608 17
+a624 5
+		    if( dsk == NULL
+			||  dsk->parent != NULL
+			||  dsk->type == DSKTYPE_NONE
+			||  (dsk->acc == DSKACC_OS2 && dsk->access.os2.avail == 0) )
+		    {
+d626 3
+a628 5
+				      "This device can't be used that way",
+				      NULL,
+				      -1,
+				      MB_CANCEL|MB_ERROR|MB_MOVEABLE);
+		    }
+@
+
+
+1.3
+log
+@- another icon: missing device
+- implemented IDM_CREATE_PDEV
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1998/05/18 23:03:00 $
+d10 4
+d24 1
+a24 1
+static char const id[]="$Id: drvsetup.c,v 1.2 1998/05/18 23:03:00 vitus Exp vitus $";
+d388 1
+a388 1
+	if( (descr=malloc(80)) != NULL )
+d390 14
+a403 6
+	    sprintf(descr, "OS/2 device %lu\n%lu MByte",
+		    dsk->access.os2.idx, 
+		    (((ULONG)dsk->access.os2.dp.cSectorsPerTrack
+		      * SECTOR_SIZE
+		      * ((ULONG)dsk->access.os2.dp.cHeads)
+		      * (ULONG)dsk->access.os2.dp.cCylinders) / 1024) / 1024);
+d405 10
+a414 7
+	else
+	    descr = "OS/2 device";
+	if( dsk->access.os2.avail == 0 )
+	    address->record.hptrIcon = work->hLockedIcon;
+	else if( dsk->type == DSKTYPE_NONE )
+	    address->record.hptrIcon = work->hFreeIcon;
+	else if( dsk->type == DSKTYPE_PDEV )
+d416 1
+a416 2
+	else
+	    address->record.hptrIcon = work->hRaidIcon;
+d428 1
+a428 1
+		strcpy(descr, "Chain");
+d431 1
+a431 1
+		strcpy(descr, "RAID 0");
+d434 1
+a434 1
+		strcpy(descr, "RAID 1");
+d447 1
+a447 1
+		    dsk->size * SECTOR_SIZE / 1024 / 1024);
+d780 2
+a781 1
+			WinPostMsg(work->hwndScanner, WUM_CLOSEDEV, dsk, NULL);
+d786 34
+@
+
+
+1.2
+log
+@- seperate thread to scan/build devices/-tree
+- displays devices with 3 diff. icons
+- popup menu plus actions (not complete)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1998/05/06 22:06:37 $
+d10 5
+d20 1
+a20 1
+static char const id[]="$Id: drvsetup.c,v 1.1 1998/05/06 22:06:37 vitus Exp vitus $";
+d22 1
+a36 1
+#include "../dsklayout.h"
+d39 1
+a40 1
+#include "drvsetup.h"
+d49 1
+a49 1
+    HAB		hab;			/* to retrieve errors */
+d51 5
+a55 1
+    HPOINTER	hIcon, hBadIcon, hPdevIcon, hRaidIcon;
+d170 2
+a171 8
+    work->hBadIcon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_BADDRIVE);
+    if( work->hBadIcon == NULLHANDLE )
+	Verbose(1, "DrvSetup", "WinLoadPointer failed (last error %#x)",
+		WinGetLastError(work->hab));
+    work->hIcon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_DRIVE);
+    if( work->hIcon == NULLHANDLE )
+	Verbose(1, "DrvSetup", "WinLoadPointer failed (last error %#x)",
+		WinGetLastError(work->hab));
+a172 3
+    if( work->hPdevIcon == NULLHANDLE )
+	Verbose(1, "DrvSetup", "WinLoadPointer failed (last error %#x)",
+		WinGetLastError(work->hab));
+d174 2
+a175 3
+    if( work->hBadIcon == NULLHANDLE )
+	Verbose(1, "DrvSetup", "WinLoadPointer failed (last error %#x)",
+		WinGetLastError(work->hab));
+d260 1
+d264 1
+d291 9
+a299 1
+	if( work->pmrMenu->dsk->parent != 0 )
+d302 1
+a302 1
+	     * can't be done. */
+d312 1
+a312 1
+	     * a filesystem exists).  Nothing can't be done, too. */
+d337 1
+a337 1
+	    /* A PHYSDEV (but not part of an array. */
+d357 2
+d375 8
+a382 1
+    if( dsk->acc == DSKACC_OS2 )
+d396 1
+a396 1
+	    address->record.hptrIcon = work->hBadIcon;
+d398 1
+a398 1
+	    address->record.hptrIcon = work->hIcon;
+d410 3
+d414 1
+a414 1
+		strcpy(descr, "CHAIN");
+d449 2
+a450 1
+    i = (ULONG)WinSendMsg(work->hwndCnr,CM_INSERTRECORD,MPFROMP(address),MPFROMP(&ins));
+d457 1
+a457 1
+	if( dsk->acc == DSKACC_NONE )		/* may have childs */
+d545 4
+a548 1
+		    PDSKINFO		dsk = ((PMYRECORD)(rec->pRecord))->dsk;
+d550 5
+a554 3
+		    if( dsk->parent != NULL  ||  dsk->type == DSKTYPE_NONE
+			||  (dsk->acc == DSKACC_OS2
+			     &&  dsk->access.os2.avail == 0) )
+d632 17
+d666 1
+a666 1
+		    ul = WinDlgBox(hwnd, hwnd, DrvtypeDlgProc,
+d706 2
+a707 1
+		break;
+d715 2
+a716 1
+		break;
+d759 6
+a764 4
+			    {
+				dsk->kind.virtual.child[i]->parent = NULL;
+				DisplayDisk(work, NULL, dsk->kind.virtual.child[i]);
+			    }
+d766 1
+d769 2
+a770 1
+	        break;
+d826 1
+a826 1
+	WinDestroyPointer(work->hIcon);
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 3
+a11 1
+ * $Log$
+d15 1
+a15 1
+static char const id[]="$Id$";
+d34 1
+a34 1
+#include "physdsk.h"
+d38 1
+a38 1
+#define WC_DRVSETUP		"DrvsetupWindow"
+a40 12
+typedef struct _DSKINFO {
+    UCHAR	type;
+    union {
+	struct {
+	    ULONG			hd;
+	    DEVICEPARAMETERBLOCK	dp;
+	    DEVID			physid;
+	    ULONG			partstart;
+	    ULONG			partsize;
+	} os2;
+    } u;
+} DSKINFO, * PDSKINFO;
+d42 11
+a53 6
+typedef struct {
+    PTHR_DRVSETUP self;
+    HAB		hab;				/* to retrieve errors */
+    HWND	hwndContainer;
+    HBITMAP	hDriveBmp;
+    HPOINTER	hIcon;
+a54 2
+    ULONG	os2dskcnt;
+    PDSKINFO	os2dskinfo;
+a55 1
+} WORK, * PWORK;
+d58 1
+a58 1
+/*
+d61 1
+a61 1
+ */
+a64 1
+PRIVATE PWORK	work = NULL;
+d71 1
+a71 1
+ * **** Private Routines ************************************************
+d76 1
+d81 5
+d88 2
+a89 2
+PRIVATE void
+AllocDrvTable(PWORK work)
+d91 3
+a93 2
+    APIRET	rc;
+    ULONG	i;
+d95 7
+a101 3
+    /* Build drive informations.
+     * 1st: ask OS/2
+     * 2nd: ask VRAID (if installed) */
+d103 6
+a108 11
+    Verbose(3, "DrvSetup", "AllocDrvTable");
+    do
+    {
+	rc = PDskEnum(&work->os2dskcnt);
+	if( rc )
+	{
+	    Verbose(1, "DrvSetup", "PDskEnum - rc %lu", rc);
+	    work->os2dskcnt = 0;
+	    work->os2dskinfo = NULL;
+	    break;
+	}
+a109 7
+	work->os2dskinfo = malloc(work->os2dskcnt * sizeof(struct _DSKINFO));
+	if( work->os2dskinfo == NULL )
+	{
+	    Verbose(0, "DrvSetup", "DrvSetupThread - memory problem");
+	    work->os2dskcnt = 0;
+	    break;
+	}
+a110 11
+	memset(work->os2dskinfo, 0, work->os2dskcnt * sizeof(struct _DSKINFO));
+	for( i = 0; i < work->os2dskcnt; ++i )
+	{
+	    rc = PDskOpen(i, &work->os2dskinfo[i].u.os2.hd);
+	    if( rc != 0 )
+	    {
+		Verbose(0, "DrvSetup", "PDskOpen(%lu) - rc %lu", i, rc);
+		continue;
+	    }
+	    Verbose(2, "DrvSetup", "======== Disk %lu, handle %lu ========",
+		    i, work->os2dskinfo[i].u.os2.hd);
+a111 1
+	    /* Some informations may be nice. */
+d113 14
+a126 9
+	    rc = PDskQueryParam(work->os2dskinfo[i].u.os2.hd,
+				&work->os2dskinfo[i].u.os2.dp);
+	    if( rc != 0 )
+	    {
+		Verbose(0, "DrvSetup", "PDskQueryParam - rc %lu", rc);
+		rc = PDskClose(work->os2dskinfo[i].u.os2.hd);
+		work->os2dskinfo[i].u.os2.hd = 0;
+		continue;
+	    }
+d128 22
+a149 11
+	    Verbose(3, "DrvSetup", "physical drive parameters:");
+	    Verbose(3, "DrvSetup", "Cylinders: %d, Heads: %d, Sectors/Track: %d",
+		    work->os2dskinfo[i].u.os2.dp.cCylinders,
+		    work->os2dskinfo[i].u.os2.dp.cHeads,
+		    work->os2dskinfo[i].u.os2.dp.cSectorsPerTrack);
+	    Verbose(3, "DrvSetup", "drive capacity: %lu MBytes",
+		    (ULONG)(((ULONG)work->os2dskinfo[i].u.os2.dp.cSectorsPerTrack
+			     * SECTOR_SIZE
+			     * ((ULONG)work->os2dskinfo[i].u.os2.dp.cHeads)
+			     * (ULONG)work->os2dskinfo[i].u.os2.dp.cCylinders)
+			    / 1024) / 1024);
+d151 39
+a189 1
+	    /* And please, don't disturb us. */
+d191 1
+a191 11
+	    rc = PDskLock(work->os2dskinfo[i].u.os2.hd);
+	    if( rc != 0 )
+	    {
+		Verbose(0, "DrvSetup", "PDskLock - rc %lu", rc);
+		rc = PDskClose(work->os2dskinfo[i].u.os2.hd);
+		work->os2dskinfo[i].u.os2.hd = 0;
+		continue;
+	    }
+	} /* end[for(every device)] */
+    }
+    while(0);					/* end[OS/2 devices] */
+d201 1
+d206 13
+d220 4
+d225 2
+a226 2
+PRIVATE void
+FreeDrvTable(PWORK work)
+d228 23
+a250 2
+    APIRET	rc;
+    ULONG	i;
+d252 1
+a252 2
+    Verbose(3, "DrvSetup", "FreeDrvTable");
+    for( i = 0; i < work->os2dskcnt; ++i )
+d254 3
+a256 2
+	if( work->os2dskinfo[i].u.os2.hd == 0 )
+	    continue;
+d258 9
+a266 2
+	rc = PDskUnlock(work->os2dskinfo[i].u.os2.hd);
+	if( rc != 0 )
+d268 3
+a270 1
+	    Verbose(0, "DrvSetup", "PDskUnlock - rc %lu", rc);
+a271 2
+	rc = PDskClose(work->os2dskinfo[i].u.os2.hd);
+	work->os2dskinfo[i].u.os2.hd = 0;
+d273 31
+a303 5
+    free(work->os2dskinfo);
+    work->os2dskinfo = NULL;
+    work->os2dskcnt = 0;
+    return;
+}
+d305 7
+d313 8
+d322 15
+a339 3
+/* **********************************************************************
+ * **** Window related Routines *****************************************
+ * ******************************************************************* */
+d343 1
+d350 2
+a351 2
+PRIVATE void
+DisplayDrvTable(PWORK work)
+d354 1
+a354 2
+    PRECORDCORE		address;
+    ULONG		i, cnt;
+d356 2
+d359 3
+a361 1
+    /* Build structures inside container. */
+d363 24
+a386 1
+    for( i = 0; i < work->os2dskcnt; ++i )
+d388 31
+a418 30
+	if( work->os2dskinfo[i].u.os2.hd == 0 )
+	    continue;
+	if( (descr=malloc(80)) == NULL )
+	    continue;
+
+	address = WinSendMsg(work->hwndContainer, CM_ALLOCRECORD, 0, MPFROMLONG(1));
+
+	Verbose(1, "DrvSetup", "CM_ALLOCRECORD: %#x",address);
+
+	address->hbmBitmap = work->hDriveBmp;
+	address->hptrIcon = work->hIcon;
+	sprintf(descr, "OS/2 device\nhd %#x", work->os2dskinfo[i].u.os2.hd);
+	address->pszIcon = descr;
+	address->pszName = "Name";
+	address->pszText = "Text";
+
+	memset(&ins, 0, sizeof(ins));
+	ins.cb = sizeof(ins);
+	ins.pRecordOrder = (PRECORDCORE)CMA_END;
+	ins.pRecordParent = NULL;		/* none */
+	ins.zOrder = CMA_TOP;
+	ins.fInvalidateRecord = TRUE;		/* invalidate record now/later */
+	ins.cRecordsInsert = 1;
+
+	cnt = WinSendMsg(work->hwndContainer, CM_INSERTRECORD,
+			 MPFROMP(address), MPFROMP(&ins));
+	if( cnt == 0 )
+	    Verbose(1, "DrvSetup",
+		    "WinSendMsg(CM_INSERTRECORD failed - last error %#x",
+		    cnt,WinGetLastError(work->hab));
+d420 20
+a440 2
+
+    return;
+d457 1
+d469 92
+a560 2
+	/* WM_CREATE	-	window created
+	 *	Window created but not yet visible
+d562 4
+a565 2
+      case WM_CREATE:
+	Verbose(3, "DrvSetup", "WM_CREATE");
+a566 4
+	/* If RGB value of background/foreground isn't set, retrieve
+	 * system standard values first.
+	 * Second: read profile settings, won't change anything if
+	 * settings aren't defined. */
+d568 13
+a580 1
+	if( rgbBackground == RGB_ERROR )
+d582 3
+a584 1
+	    unsigned	cb;
+d586 3
+a588 3
+	    rgbBackground = WinQuerySysColor(HWND_DESKTOP, SYSCLR_WINDOW, 0);
+	    cb = sizeof(rgbBackground);
+	    ProfileRead(WC_DRVSETUP, "Background", &cb, &rgbBackground);
+d590 9
+a598 1
+	if( rgbForeground == RGB_ERROR )
+d600 121
+a720 1
+	    unsigned	cb;
+d722 4
+a725 3
+	    rgbForeground = WinQuerySysColor(HWND_DESKTOP, SYSCLR_OUTPUTTEXT, 0);
+	    cb = sizeof(rgbForeground);
+	    ProfileRead(WC_DRVSETUP, "Foreground", &cb, &rgbForeground );
+d727 10
+d739 3
+a741 1
+	/* WM_CLOSE	-	this window closed
+d746 17
+d765 3
+a767 2
+#if 0
+	/* WM_DESTROY	-	this window destroyed
+d774 5
+a779 1
+#endif
+a780 9
+	/* WUM_START:
+	 *	window configuration ended, application enters
+	 *	message loop. All further messages are caused
+	 *	by the user.
+	 */
+      case WUM_START:
+	Verbose(2, "DrvSetup", "WUM_START");
+	regular = TRUE;
+	return 0;
+d782 2
+a783 8
+	/* WM_CONTROL	-	Information from container
+	 *
+	 */
+      case WM_CONTROL:
+	Verbose(2, "DrvSetup", "WM_CONTROL");
+	break;
+
+	/* WM_SIZE	-	client area resized
+d785 2
+a786 1
+	 *	resized, too. 
+d789 1
+a789 1
+	Verbose(2, "DrvSetup", "WM_SIZE");
+a790 1
+	    PWORK const	work = WinQueryWindowPtr(hwnd, 0);
+d793 8
+a800 13
+	    if( work != NULL )
+	    {
+		if( regular == TRUE
+		    &&  WinQueryWindowPos(WinQueryWindow(hwnd, QW_PARENT),
+					  &size) == TRUE )
+		    ProfileWrite(WC_DRVSETUP, "Size", sizeof(size), &size);
+
+		if( WinQueryWindowPos(hwnd, &size) == TRUE )
+		    WinSetWindowPos(work->hwndContainer, HWND_TOP,
+				    size.x, size.y,
+				    size.cx, size.cy,
+				    SWP_SIZE|SWP_MOVE);
+	    }
+d804 3
+a806 1
+	/* MW_MOVE:
+d810 1
+a810 1
+	Verbose(2, "DrvSetup", "WM_MOVE");
+d814 1
+a814 4
+	    if( regular == TRUE
+		&&  WinQueryWindowPos(WinQueryWindow(hwnd, QW_PARENT),
+				      &swp) == TRUE )
+	    {
+a815 1
+	    }
+a818 6
+	/* WM_COMMAND	-	command issued
+	 *	Currently only virtual keys
+	 */
+      case WM_COMMAND:
+	{
+	    USHORT const cmd = SHORT1FROMMP(mp1);
+d820 2
+a821 10
+	    Verbose(3, "DrvSetup", "WM_COMMAND %u", cmd);
+	    switch( cmd )
+	    {
+	      default:
+		break;				/* ignore */
+	    }
+	}
+      break;					/* continue with default */
+
+	/* WM_QUERYTRACKINFO	-	restrict size of window
+d832 3
+a834 1
+	/* WM_PRESPARAMCHANGED:
+d910 5
+d918 1
+d952 1
+d959 1
+d988 1
+a988 1
+			      0, sizeof(PVOID)) )
+d1012 4
+a1015 3
+	/* Configure element of window or add more elements to window.
+	 *
+	 * First: create container in client area */
+d1017 4
+a1020 37
+	    SWP		size;
+	    CNRINFO	cnrinfo;
+
+	    WinQueryWindowPos(hwndClient, &size);
+	    Verbose(2, "DrvSetup", "client window %u,%u %u,%u",
+		    size.x, size.y, size.cx, size.cy);
+
+	    memset(&cnrinfo, 0, sizeof(cnrinfo));
+	    cnrinfo.cb = sizeof(cnrinfo);
+	    cnrinfo.flWindowAttr = CV_TREE|CV_ICON |CA_DRAWBITMAP|CA_TREELINE;
+	    work->hwndContainer = WinCreateWindow(hwndClient, WC_CONTAINER,
+						  NULL,
+						  WS_VISIBLE
+						  |CCS_AUTOPOSITION
+#if 1
+						  |CCS_VERIFYPOINTERS
+#endif
+						  |CCS_EXTENDSEL|CCS_READONLY,
+						  0, 0, size.cx, size.cy,
+						  hwndClient, HWND_TOP,
+						  IDW_DRVCN, &cnrinfo, NULL);
+	    if( work->hwndContainer == NULLHANDLE )
+	    {
+		MyMessageBox(0, HWND_DESKTOP,
+			     "WinCreateWindow(...,WC_CONTAINER,...) - error %#x",
+			     WinGetLastError(work->hab));
+		break;
+	    }
+
+	    bool = WinSetWindowPtr(hwndClient, 0, work);
+	    if( bool == FALSE )
+	    {
+		MyMessageBox(0, HWND_DESKTOP,
+			     "WinSetWindowPtr failed - error %#",
+			     WinGetLastError(work->hab));
+		break;
+	    }
+d1023 1
+a1023 14
+	work->hDriveBmp = WinGetSysBitmap(HWND_DESKTOP, SBMP_DRIVE);
+	if( work->hDriveBmp == NULLHANDLE )
+	    Verbose(1, "DrvSetup", "WinGetSysBitmap failed (last error %#x)",
+		    WinGetLastError(work->hab));
+	Verbose(2, "DrvSetup", "DRIVE bitmap handle %#x", work->hDriveBmp);
+	work->hIcon = WinQuerySysPointer(HWND_DESKTOP, SPTR_WAIT, FALSE);
+	if( work->hIcon == NULLHANDLE )
+	    Verbose(1, "DrvSetup", "WinQuerySysPointer failed (last error %#x)",
+		    WinGetLastError(work->hab));
+	Verbose(2, "DrvSetup", "'any icon' handle %#x", work->hIcon);
+
+	AllocDrvTable(work);			/* scan drives */
+	DisplayDrvTable(work);			/* insert in container */
+
+d1028 3
+a1030 2
+	    SWP	 swp;
+	    BOOL bool;
+d1033 1
+a1033 1
+	     * to recommanded values. */
+d1036 18
+a1053 2
+	    Verbose(3, "DrvSetup", "Recommended: %ld x %ld at %ld/%ld",
+		    swp.cx, swp.cy, swp.x, swp.y);
+d1061 2
+a1062 1
+	bool = WinPostMsg(hwndClient, WUM_START, 0, 0);
+a1065 3
+
+
+	FreeDrvTable(work);
+@

@@ -1,0 +1,89 @@
+head	1.2;
+access;
+symbols
+	VSETUPv0_84:1.2
+	VSETUP_82:1.2
+	VSETUPv0_80:1.2
+	VSETUPv0_71:1.2
+	VSETUPv0_70:1.2
+	VSETUPv0_60:1.2
+	VSETUPv0_52:1.2
+	VSETUPv0_51:1.2
+	VSETUPv0_50:1.2
+	VSETUPv0_20:1.2;
+locks; strict;
+comment	@ * @;
+
+
+1.2
+date	98.06.27.00.52.25;	author vitus;	state Stab;
+branches;
+next	1.1;
+
+1.1
+date	98.03.14.14.08.27;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Function prototyping for support routines
+@
+
+
+1.2
+log
+@- removed PDsk* Routines, moved to /source/tools
+@
+text
+@/*
+ * $Source: d:/source/driver/raid/setup/RCS/proto.h,v $
+ * $Revision: 1.1 $
+ * $Date: 1998/03/14 14:08:27 $
+ * $Author: vitus $
+ *
+ * Function prototyping for support routines.
+ *
+ * $Log: proto.h,v $
+ * Revision 1.1  1998/03/14 14:08:27  vitus
+ * Initial revision
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+ */
+
+extern APIRET	QueryHostId(PUSHORT const id);
+
+extern void	CrcInit(USHORT polynom);
+extern USHORT	Crc16(PVOID buffer,USHORT cb);
+
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Author$
+d9 3
+a11 1
+ * $Log$
+a20 12
+
+extern APIRET	PDskEnum(PULONG count);
+extern APIRET	PDskOpen(ULONG idx,PULONG handle);
+extern APIRET	PDskClose(ULONG handle);
+
+extern APIRET	PDskQueryParam(ULONG handle,PDEVICEPARAMETERBLOCK dp);
+extern APIRET	PDskLock(ULONG handle);
+extern APIRET	PDskLock(ULONG handle);
+extern APIRET	PDskReadTrack(ULONG handle,USHORT cyl,USHORT hd,USHORT sec,
+			      USHORT seccnt,PVOID data);
+extern APIRET	PDskWriteTrack(ULONG handle,USHORT cyl,USHORT head,USHORT sec,
+			       USHORT seccnt,PVOID data);
+@

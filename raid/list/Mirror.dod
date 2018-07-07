@@ -1,0 +1,3449 @@
+;	Static Name Aliases
+;
+;	$S170_id	EQU	id
+;	$S1389_szMissingChild	EQU	szMissingChild
+;	$S1390_szCreationDelayed	EQU	szCreationDelayed
+;	$S1391_dszMirrorNotify	EQU	dszMirrorNotify
+;	$S1392_dszMNotifyReStop	EQU	dszMNotifyReStop
+;	$S1393_dszMNotifyValid	EQU	dszMNotifyValid
+;	$S1394_dszMNotifyUStart	EQU	dszMNotifyUStart
+;	$S1395_dszMNotifyUDefer	EQU	dszMNotifyUDefer
+;	$S1396_dszMirrorWorker	EQU	dszMirrorWorker
+;	$S1397_dszMWorkerRelease	EQU	dszMWorkerRelease
+;	$S1398_dszMWorkerBusy	EQU	dszMWorkerBusy
+;	$S1399_dszMirrorCreate	EQU	dszMirrorCreate
+;	$S1400_dszMCreateAdminData	EQU	dszMCreateAdminData
+;	$S1401_dszStr	EQU	dszStr
+;	$S1402_dszMCreateNoBuild	EQU	dszMCreateNoBuild
+;	$S1403_dszMCreateBuild	EQU	dszMCreateBuild
+;	$S1404_dszMCreateRebuild	EQU	dszMCreateRebuild
+;	$S1405_dszMUpdateRebuild	EQU	dszMUpdateRebuild
+	TITLE   mirror.c
+	.286p
+	.287
+_TEXT	SEGMENT  WORD PUBLIC 'CODE'
+_TEXT	ENDS
+_DATA	SEGMENT  WORD PUBLIC 'DATA'
+_DATA	ENDS
+CONST	SEGMENT  WORD PUBLIC 'CONST'
+CONST	ENDS
+_BSS	SEGMENT  WORD PUBLIC 'BSS'
+_BSS	ENDS
+$$SYMBOLS	SEGMENT  BYTE PUBLIC 'DEBSYM'
+$$SYMBOLS	ENDS
+$$TYPES	SEGMENT  BYTE PUBLIC 'DEBTYP'
+$$TYPES	ENDS
+INITDATA	SEGMENT  WORD PUBLIC 'FAR_DATA'
+INITDATA	ENDS
+DGROUP	GROUP	CONST, _BSS, _DATA
+	ASSUME DS: DGROUP
+	ASSUME  SS: NOTHING
+EXTRN	_dprintf:NEAR
+EXTRN	_ProcessUserIO:NEAR
+EXTRN	_SaveMessage:NEAR
+EXTRN	_BuildCreate:NEAR
+EXTRN	_AllocateVrio:NEAR
+EXTRN	_FreeVrio:NEAR
+EXTRN	_UpdateCfg:NEAR
+EXTRN	DEVHELP_VIRTTOPHYS:FAR
+EXTRN	_CompleteVrio:NEAR
+EXTRN	_QueueVrio:NEAR
+EXTRN	_Crc16:NEAR
+EXTRN	_ValidateVSec2:NEAR
+EXTRN	_sprintk:NEAR
+EXTRN	_uDebugLevel:WORD
+EXTRN	_pGlobalInfoSeg:DWORD
+EXTRN	_cBeeps:WORD
+EXTRN	_fDriverFlags:WORD
+EXTRN	_szMsgBuffer:BYTE
+_DATA      SEGMENT
+	ORG	$+53
+$SG1439	DB	'io->bcnt != 0',  00H
+$SG1440	DB	'Assertion failed: %s',  00H
+$SG1442	DB	'io->link == NULL',  00H
+$SG1443	DB	'Assertion failed: %s',  00H
+$SG1445	DB	'myio->link == NULL',  00H
+$SG1446	DB	'Assertion failed: %s',  00H
+$SG1448	DB	'myio->bcnt != 0',  00H
+$SG1449	DB	'Assertion failed: %s',  00H
+$SG1451	DB	'myio->vrd->size != 0',  00H
+$SG1452	DB	'Assertion failed: %s',  00H
+$SG1454	DB	'myio->vrd->notify == MirrorNotify',  00H
+$SG1455	DB	'Assertion failed: %s',  00H
+$SG1457	DB	'myio->vrd->worker == MirrorWorker',  00H
+$SG1458	DB	'Assertion failed: %s',  00H
+$SG1460	DB	'myio->vrd->update == MirrorUpdate',  00H
+$SG1461	DB	'Assertion failed: %s',  00H
+$SG1463	DB	'myio->vrd->ioctl == MirrorCtrl',  00H
+$SG1464	DB	'Assertion failed: %s',  00H
+$SG1499	DB	'found == 1',  00H
+$SG1500	DB	'Assertion failed: %s',  00H
+$SG1519	DB	'myio->vrd == self',  00H
+$SG1520	DB	'Assertion failed: %s',  00H
+$SG1522	DB	'myio->link == NULL',  00H
+$SG1523	DB	'Assertion failed: %s',  00H
+$SG1525	DB	'myio->bcnt != 0',  00H
+$SG1526	DB	'Assertion failed: %s',  00H
+$SG1528	DB	'mirror->header.size != 0',  00H
+$SG1529	DB	'Assertion failed: %s',  00H
+$SG1531	DB	'mirror->header.notify == MirrorNotify',  00H
+$SG1532	DB	'Assertion failed: %s',  00H
+$SG1534	DB	'mirror->header.worker == MirrorWorker',  00H
+$SG1535	DB	'Assertion failed: %s',  00H
+$SG1537	DB	'mirror->header.update == MirrorUpdate',  00H
+$SG1538	DB	'Assertion failed: %s',  00H
+$SG1540	DB	'mirror->header.ioctl == MirrorCtrl',  00H
+$SG1541	DB	'Assertion failed: %s',  00H
+$SG1562	DB	'mirror->readchild != (USHORT)-1',  00H
+$SG1563	DB	'Assertion failed: %s',  00H
+$SG1581	DB	'mirror->readchild != (USHORT)-1',  00H
+$SG1582	DB	'Assertion failed: %s',  00H
+$SG1604	DB	'mirror->header.size != 0',  00H
+$SG1605	DB	'Assertion failed: %s',  00H
+$SG1607	DB	'mirror->header.notify == MirrorNotify',  00H
+$SG1608	DB	'Assertion failed: %s',  00H
+$SG1610	DB	'mirror->header.worker == MirrorWorker',  00H
+$SG1611	DB	'Assertion failed: %s',  00H
+$SG1613	DB	'mirror->header.update == MirrorUpdate',  00H
+$SG1614	DB	'Assertion failed: %s',  00H
+$SG1616	DB	'mirror->header.ioctl == MirrorCtrl',  00H
+$SG1617	DB	'Assertion failed: %s',  00H
+$SG1629	DB	'cfg->rebuild < mirror->header.size',  00H
+$SG1630	DB	'Assertion failed: %s',  00H
+$SG1646	DB	'mirror->header.size != 0',  00H
+$SG1647	DB	'Assertion failed: %s',  00H
+$SG1649	DB	'mirror->header.notify == MirrorNotify',  00H
+$SG1650	DB	'Assertion failed: %s',  00H
+$SG1652	DB	'mirror->header.worker == MirrorWorker',  00H
+$SG1653	DB	'Assertion failed: %s',  00H
+$SG1655	DB	'mirror->header.update == MirrorUpdate',  00H
+$SG1656	DB	'Assertion failed: %s',  00H
+$SG1658	DB	'mirror->header.ioctl == MirrorCtrl',  00H
+$SG1659	DB	'Assertion failed: %s',  00H
+$SG1665	DB	0dH,  0aH, 'VRDIOCTL_QUERY_CHILDREN',  00H
+$SG1667	DB	0dH,  0aH, 'VRDIOCTL_INFO',  00H
+$SG1670	DB	0dH,  0aH, 'VRDIOCTL_START_REBUILD',  00H
+$SG1679	DB	0dH,  0aH, 'VRDIOCTL_CHILD_STATE',  00H
+$SG1695	DB	0dH,  0aH, 'VRDIOCTL_VERIFY',  00H
+$SG1701	DB	0dH,  0aH, 'Data: %p, 1st Dev Contents: %p',  00H
+$SG1702	DB	0dH,  0aH, 'Per device size: %w',  00H
+$SG1705	DB	0dH,  0aH, 'VirtToPhys failed on %p',  00H
+$SG1709	DB	0dH,  0aH, '%w. Dev Contents: %p',  00H
+$SG1718	DB	0dH,  0aH, '%w. child data: %p',  00H
+$SG1719	DB	0dH,  0aH, '%w. child data: %p',  00H
+$SG1721	DB	0dH,  0aH, 'Compared %w and %w: OK',  00H
+$SG1723	DB	0dH,  0aH, 'Comparing %p and %p: failed',  00H
+$SG1728	DB	0dH,  0aH, '%w. child data: %p',  00H
+$SG1731	DB	0dH,  0aH, '%w. child failed (%w goods)',  00H
+	ORG	$-1969
+$S170_id	DB	'$Id: mirror.c,v 3.10 2001/07/25 01:56:52 vitus Exp $',  00H
+_DATA      ENDS
+INITDATA      SEGMENT
+$S1389_szMissingChild	DB	'MIRROR, fail state: %u child(s) missing',  00H
+$S1390_szCreationDelayed	DB	'MIRROR creation delayed',  00H
+INITDATA      ENDS
+CONST      SEGMENT
+$S1391_dszMirrorNotify	DB	0dH,  0aH, '[MirrorNotify] io %p, myio %p, err %w',  00H
+$S1392_dszMNotifyReStop	DB	0dH,  0aH, '[MirrorNotify] rebuild now complete',  00H
+$S1393_dszMNotifyValid	DB	0dH,  0aH, '[MirrorNotify] child %w now valid',  00H
+$S1394_dszMNotifyUStart	DB	0dH,  0aH, '[MirrorNotify] starting UpdateCfg()',  00H
+$S1395_dszMNotifyUDefer	DB	0dH,  0aH, '[MirrorNotify] deferring UpdateCfg()',  00H
+	ORG	$+1
+$S1396_dszMirrorWorker	DB	0dH,  0aH, '[MirrorWorker] %p',  00H
+$S1397_dszMWorkerRelease	DB	0dH,  0aH, '[MirrorWorker] releasing VRIOs',  00H
+	ORG	$+1
+$S1398_dszMWorkerBusy	DB	0dH,  0aH, '[MirrorWorker] child busy, queuing VRIO',  00H
+$S1399_dszMirrorCreate	DB	0dH,  0aH, '[MirrorCreate] at %p',  0dH,  0aH, '            '
+	DB	'   ID %z',  0dH,  0aH, '               Size 0x%lx',  00H
+$S1400_dszMCreateAdminData	DB	0dH,  0aH, '[MirrorCreate] admin data',  0dH,  0aH, '%z',  00H
+$S1401_dszStr	DB	0dH,  0aH, '%s',  00H
+	ORG	$+1
+$S1402_dszMCreateNoBuild	DB	0dH,  0aH, '[MirrorCreate] sector says [RE]BUILD, all childr'
+	DB	'en valid -> clear [RE]BUILD',  00H
+$S1403_dszMCreateBuild	DB	0dH,  0aH, '[MirrorCreate] BUILD, a child is invalid',  00H
+	ORG	$+1
+$S1404_dszMCreateRebuild	DB	0dH,  0aH, '[MirrorCreate] flags say REBUILD, at 0x%lx',  00H
+	ORG	$+1
+$S1405_dszMUpdateRebuild	DB	0dH,  0aH, '[MirrorUpdate] storing REBUILD flag, at 0x%lx',  00H
+CONST      ENDS
+_TEXT      SEGMENT
+	ASSUME	CS: _TEXT
+	PUBLIC	_Vrd2Child
+_Vrd2Child	PROC NEAR
+; Line 217
+	*** 000000	c8 02 00 00 		enter	2,0
+	*** 000004	56 			push	si
+;	i = -2
+;	child = 8
+;	mirror = 4
+; Line 220
+	*** 000005	c7 46 fe 00 00 		mov	WORD PTR [bp-2],0	;i
+	*** 00000a	eb 03 			jmp	SHORT $F1413
+; Line 224
+					$FC1414:
+	*** 00000c	ff 46 fe 		inc	WORD PTR [bp-2]	;i
+					$F1413:
+	*** 00000f	8b 46 fe 		mov	ax,WORD PTR [bp-2]	;i
+	*** 000012	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;mirror
+	*** 000015	26 39 47 1f 		cmp	WORD PTR es:[bx+31],ax
+	*** 000019	76 1f 			jbe	$FB1415
+; Line 221
+; Line 222
+	*** 00001b	8b f0 			mov	si,ax
+	*** 00001d	8b c8 			mov	cx,ax
+	*** 00001f	c1 e6 02 		shl	si,2
+	*** 000022	03 f1 			add	si,cx
+	*** 000024	d1 e6 			shl	si,1
+	*** 000026	8b 4e 08 		mov	cx,WORD PTR [bp+8]	;child
+	*** 000029	8b 56 0a 		mov	dx,WORD PTR [bp+10]
+	*** 00002c	26 39 48 21 		cmp	WORD PTR es:[bx+33][si],cx
+	*** 000030	75 da 			jne	$FC1414
+	*** 000032	26 39 50 23 		cmp	WORD PTR es:[bx+35][si],dx
+	*** 000036	75 d4 			jne	$FC1414
+; Line 223
+	*** 000038	eb 03 			jmp	SHORT $EX1411
+					$FB1415:
+; Line 225
+	*** 00003a	b8 ff ff 		mov	ax,-1	;ffffH
+; Line 226
+					$EX1411:
+	*** 00003d	5e 			pop	si
+	*** 00003e	c9 			leave	
+	*** 00003f	c3 			ret	
+
+_Vrd2Child	ENDP
+	PUBLIC	_NextValidChild
+_NextValidChild	PROC NEAR
+; Line 248
+	*** 000040	c8 08 00 00 		enter	8,0
+;	next = -2
+;	tries = -4
+;	found = -6
+;	previous = 8
+;	mirror = 4
+; Line 249
+	*** 000044	8b 46 08 		mov	ax,WORD PTR [bp+8]	;previous
+	*** 000047	89 46 fe 		mov	WORD PTR [bp-2],ax	;next
+; Line 250
+	*** 00004a	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;mirror
+	*** 00004d	26 8b 47 1f 		mov	ax,WORD PTR es:[bx+31]
+	*** 000051	89 46 fc 		mov	WORD PTR [bp-4],ax	;tries
+; Line 251
+	*** 000054	c7 46 fa 00 00 		mov	WORD PTR [bp-6],0	;found
+; Line 253
+					$D1426:
+; Line 254
+; Line 255
+	*** 000059	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;mirror
+	*** 00005c	26 8b 47 1f 		mov	ax,WORD PTR es:[bx+31]
+	*** 000060	2b 46 fe 		sub	ax,WORD PTR [bp-2]	;next
+	*** 000063	48 			dec	ax
+	*** 000064	75 08 			jne	$L1784
+	*** 000066	c7 46 fe 00 00 		mov	WORD PTR [bp-2],0	;next
+	*** 00006b	eb 04 			jmp	SHORT $L1785
+	*** 00006d	90 			nop	
+					$L1784:
+	*** 00006e	ff 46 fe 		inc	WORD PTR [bp-2]	;next
+					$L1785:
+; Line 258
+	*** 000071	8b 5e fe 		mov	bx,WORD PTR [bp-2]	;next
+	*** 000074	8b c3 			mov	ax,bx
+	*** 000076	c1 e3 02 		shl	bx,2
+	*** 000079	03 d8 			add	bx,ax
+	*** 00007b	d1 e3 			shl	bx,1
+	*** 00007d	03 5e 04 		add	bx,WORD PTR [bp+4]	;mirror
+	*** 000080	26 8b 47 23 		mov	ax,WORD PTR es:[bx+35]
+	*** 000084	26 0b 47 21 		or	ax,WORD PTR es:[bx+33]
+	*** 000088	74 1c 			je	$I1429
+	*** 00008a	26 f6 47 29 01 		test	BYTE PTR es:[bx+41],1
+	*** 00008f	75 15 			jne	$I1429
+	*** 000091	26 83 7f 25 ff 		cmp	WORD PTR es:[bx+37],-1	;ffffH
+	*** 000096	75 0e 			jne	$I1429
+	*** 000098	26 83 7f 27 ff 		cmp	WORD PTR es:[bx+39],-1	;ffffH
+	*** 00009d	75 07 			jne	$I1429
+; Line 259
+; Line 260
+	*** 00009f	c7 46 fa 01 00 		mov	WORD PTR [bp-6],1	;found
+; Line 261
+	*** 0000a4	eb 0a 			jmp	SHORT $DB1428
+; Line 262
+; Line 263
+					$I1429:
+; Line 264
+	*** 0000a6	8b 46 fc 		mov	ax,WORD PTR [bp-4]	;tries
+	*** 0000a9	ff 4e fc 		dec	WORD PTR [bp-4]	;tries
+	*** 0000ac	0b c0 			or	ax,ax
+	*** 0000ae	75 a9 			jne	$D1426
+					$DB1428:
+; Line 265
+	*** 0000b0	83 7e fa 00 		cmp	WORD PTR [bp-6],0	;found
+	*** 0000b4	75 18 			jne	$I1430
+; Line 266
+; Line 267
+	*** 0000b6	8b 5e 04 		mov	bx,WORD PTR [bp+4]	;mirror
+	*** 0000b9	26 80 67 06 f0 		and	BYTE PTR es:[bx+6],240	;00f0H
+; Line 268
+	*** 0000be	26 80 4f 06 02 		or	BYTE PTR es:[bx+6],2
+; Line 269
+	*** 0000c3	26 c7 47 19 01 00 	mov	WORD PTR es:[bx+25],1
+; Line 270
+	*** 0000c9	b8 ff ff 		mov	ax,-1	;ffffH
+	*** 0000cc	eb 03 			jmp	SHORT $EX1422
+; Line 271
+; Line 272
+					$I1430:
+	*** 0000ce	8b 46 fe 		mov	ax,WORD PTR [bp-2]	;next
+; Line 273
+					$EX1422:
+	*** 0000d1	c9 			leave	
+	*** 0000d2	c3 			ret	
+	*** 0000d3	90 			nop	
+
+_NextValidChild	ENDP
+	PUBLIC	_MirrorNotify
+_MirrorNotify	PROC NEAR
+; Line 297
+	*** 0000d4	c8 18 00 00 		enter	24,0
+	*** 0000d8	57 			push	di
+	*** 0000d9	56 			push	si
+;	myio = -4
+;	mirror = -8
+;	childidx = -10
+;	io = 4
+; Line 299
+	*** 0000da	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 0000dd	26 c4 77 0c 		les	si,DWORD PTR es:[bx+12]
+	*** 0000e1	89 76 fc 		mov	WORD PTR [bp-4],si	;myio
+	*** 0000e4	8c 46 fe 		mov	WORD PTR [bp-2],es
+	*** 0000e7	26 8b 04 		mov	ax,WORD PTR es:[si]
+	*** 0000ea	26 8b 54 02 		mov	dx,WORD PTR es:[si+2]
+	*** 0000ee	89 46 f8 		mov	WORD PTR [bp-8],ax	;mirror
+	*** 0000f1	89 56 fa 		mov	WORD PTR [bp-6],dx
+; Line 300
+	*** 0000f4	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0000f7	26 ff 77 02 		push	WORD PTR es:[bx+2]
+	*** 0000fb	26 ff 37 		push	WORD PTR es:[bx]
+	*** 0000fe	52 			push	dx
+	*** 0000ff	50 			push	ax
+	*** 000100	e8 fd fe 		call	_Vrd2Child
+	*** 000103	83 c4 08 		add	sp,8
+	*** 000106	89 46 f6 		mov	WORD PTR [bp-10],ax	;childidx
+; Line 303
+	*** 000109	f6 06 01 00 04 		test	BYTE PTR _uDebugLevel+1,4
+	*** 00010e	74 19 			je	$L1786
+	*** 000110	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 000113	26 ff 77 12 		push	WORD PTR es:[bx+18]
+	*** 000117	ff 76 fe 		push	WORD PTR [bp-2]
+	*** 00011a	ff 76 fc 		push	WORD PTR [bp-4]	;myio
+	*** 00011d	06 			push	es
+	*** 00011e	53 			push	bx
+	*** 00011f	1e 			push	ds
+	*** 000120	68 00 00 		push	OFFSET DGROUP:$S1391_dszMirrorNotify
+	*** 000123	e8 00 00 		call	_dprintf
+	*** 000126	83 c4 0e 		add	sp,14	;000eH
+					$L1786:
+; Line 305
+	*** 000129	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 00012c	26 83 7f 22 00 		cmp	WORD PTR es:[bx+34],0
+	*** 000131	75 0f 			jne	$I1438
+	*** 000133	1e 			push	ds
+	*** 000134	68 35 00 		push	OFFSET DGROUP:$SG1439
+	*** 000137	1e 			push	ds
+	*** 000138	68 43 00 		push	OFFSET DGROUP:$SG1440
+	*** 00013b	e8 00 00 		call	_dprintf
+	*** 00013e	83 c4 08 		add	sp,8
+	*** 000141	cc 			int	3
+					$I1438:
+; Line 306
+	*** 000142	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 000145	26 8b 47 06 		mov	ax,WORD PTR es:[bx+6]
+	*** 000149	26 0b 47 04 		or	ax,WORD PTR es:[bx+4]
+	*** 00014d	74 0f 			je	$I1441
+	*** 00014f	1e 			push	ds
+	*** 000150	68 58 00 		push	OFFSET DGROUP:$SG1442
+	*** 000153	1e 			push	ds
+	*** 000154	68 69 00 		push	OFFSET DGROUP:$SG1443
+	*** 000157	e8 00 00 		call	_dprintf
+	*** 00015a	83 c4 08 		add	sp,8
+	*** 00015d	cc 			int	3
+					$I1441:
+; Line 307
+	*** 00015e	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;myio
+	*** 000161	26 8b 47 06 		mov	ax,WORD PTR es:[bx+6]
+	*** 000165	26 0b 47 04 		or	ax,WORD PTR es:[bx+4]
+	*** 000169	74 0f 			je	$I1444
+	*** 00016b	1e 			push	ds
+	*** 00016c	68 7e 00 		push	OFFSET DGROUP:$SG1445
+	*** 00016f	1e 			push	ds
+	*** 000170	68 91 00 		push	OFFSET DGROUP:$SG1446
+	*** 000173	e8 00 00 		call	_dprintf
+	*** 000176	83 c4 08 		add	sp,8
+	*** 000179	cc 			int	3
+					$I1444:
+; Line 308
+	*** 00017a	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;myio
+	*** 00017d	26 83 7f 22 00 		cmp	WORD PTR es:[bx+34],0
+	*** 000182	75 0f 			jne	$I1447
+	*** 000184	1e 			push	ds
+	*** 000185	68 a6 00 		push	OFFSET DGROUP:$SG1448
+	*** 000188	1e 			push	ds
+	*** 000189	68 b6 00 		push	OFFSET DGROUP:$SG1449
+	*** 00018c	e8 00 00 		call	_dprintf
+	*** 00018f	83 c4 08 		add	sp,8
+	*** 000192	cc 			int	3
+					$I1447:
+; Line 309
+	*** 000193	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;myio
+	*** 000196	26 c4 1f 		les	bx,DWORD PTR es:[bx]
+	*** 000199	26 8b 47 0d 		mov	ax,WORD PTR es:[bx+13]
+	*** 00019d	26 0b 47 0b 		or	ax,WORD PTR es:[bx+11]
+	*** 0001a1	75 0f 			jne	$I1450
+	*** 0001a3	1e 			push	ds
+	*** 0001a4	68 cb 00 		push	OFFSET DGROUP:$SG1451
+	*** 0001a7	1e 			push	ds
+	*** 0001a8	68 e0 00 		push	OFFSET DGROUP:$SG1452
+	*** 0001ab	e8 00 00 		call	_dprintf
+	*** 0001ae	83 c4 08 		add	sp,8
+	*** 0001b1	cc 			int	3
+					$I1450:
+; Line 310
+	*** 0001b2	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;myio
+	*** 0001b5	26 c4 1f 		les	bx,DWORD PTR es:[bx]
+	*** 0001b8	26 81 7f 0f 00 00 	cmp	WORD PTR es:[bx+15],OFFSET _MirrorNotify
+	*** 0001be	74 0f 			je	$I1453
+	*** 0001c0	1e 			push	ds
+	*** 0001c1	68 f5 00 		push	OFFSET DGROUP:$SG1454
+	*** 0001c4	1e 			push	ds
+	*** 0001c5	68 17 01 		push	OFFSET DGROUP:$SG1455
+	*** 0001c8	e8 00 00 		call	_dprintf
+	*** 0001cb	83 c4 08 		add	sp,8
+	*** 0001ce	cc 			int	3
+					$I1453:
+; Line 311
+	*** 0001cf	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;myio
+	*** 0001d2	26 c4 1f 		les	bx,DWORD PTR es:[bx]
+	*** 0001d5	26 81 7f 11 00 00 	cmp	WORD PTR es:[bx+17],OFFSET _MirrorWorker
+	*** 0001db	74 0f 			je	$I1456
+	*** 0001dd	1e 			push	ds
+	*** 0001de	68 2c 01 		push	OFFSET DGROUP:$SG1457
+	*** 0001e1	1e 			push	ds
+	*** 0001e2	68 4e 01 		push	OFFSET DGROUP:$SG1458
+	*** 0001e5	e8 00 00 		call	_dprintf
+	*** 0001e8	83 c4 08 		add	sp,8
+	*** 0001eb	cc 			int	3
+					$I1456:
+; Line 312
+	*** 0001ec	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;myio
+	*** 0001ef	26 c4 1f 		les	bx,DWORD PTR es:[bx]
+	*** 0001f2	26 81 7f 13 00 00 	cmp	WORD PTR es:[bx+19],OFFSET _MirrorUpdate
+	*** 0001f8	74 0f 			je	$I1459
+	*** 0001fa	1e 			push	ds
+	*** 0001fb	68 63 01 		push	OFFSET DGROUP:$SG1460
+	*** 0001fe	1e 			push	ds
+	*** 0001ff	68 85 01 		push	OFFSET DGROUP:$SG1461
+	*** 000202	e8 00 00 		call	_dprintf
+	*** 000205	83 c4 08 		add	sp,8
+	*** 000208	cc 			int	3
+					$I1459:
+; Line 313
+	*** 000209	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;myio
+	*** 00020c	26 c4 1f 		les	bx,DWORD PTR es:[bx]
+	*** 00020f	26 81 7f 15 00 00 	cmp	WORD PTR es:[bx+21],OFFSET _MirrorCtrl
+	*** 000215	74 0f 			je	$I1462
+	*** 000217	1e 			push	ds
+	*** 000218	68 9a 01 		push	OFFSET DGROUP:$SG1463
+	*** 00021b	1e 			push	ds
+	*** 00021c	68 b9 01 		push	OFFSET DGROUP:$SG1464
+	*** 00021f	e8 00 00 		call	_dprintf
+	*** 000222	83 c4 08 		add	sp,8
+	*** 000225	cc 			int	3
+					$I1462:
+; Line 315
+	*** 000226	9c 			pushf	
+; Line 316
+	*** 000227	fa 			cli	
+; Line 323
+	*** 000228	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 00022b	26 83 7f 12 00 		cmp	WORD PTR es:[bx+18],0
+	*** 000230	74 52 			je	$I1467
+; Line 324
+; Line 325
+	*** 000232	8b 5e f6 		mov	bx,WORD PTR [bp-10]	;childidx
+	*** 000235	8b c3 			mov	ax,bx
+	*** 000237	c1 e3 02 		shl	bx,2
+	*** 00023a	03 d8 			add	bx,ax
+	*** 00023c	d1 e3 			shl	bx,1
+	*** 00023e	8e 46 fa 		mov	es,WORD PTR [bp-6]
+	*** 000241	03 5e f8 		add	bx,WORD PTR [bp-8]	;mirror
+	*** 000244	26 8b 47 27 		mov	ax,WORD PTR es:[bx+39]
+	*** 000248	26 0b 47 25 		or	ax,WORD PTR es:[bx+37]
+	*** 00024c	74 18 			je	$I1466
+; Line 326
+; Line 327
+	*** 00024e	2b c0 			sub	ax,ax
+	*** 000250	26 89 47 27 		mov	WORD PTR es:[bx+39],ax
+	*** 000254	26 89 47 25 		mov	WORD PTR es:[bx+37],ax
+; Line 328
+	*** 000258	26 80 4f 29 01 		or	BYTE PTR es:[bx+41],1
+; Line 329
+	*** 00025d	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;mirror
+	*** 000260	26 c7 47 19 01 00 	mov	WORD PTR es:[bx+25],1
+; Line 330
+; Line 331
+					$I1466:
+; Line 332
+	*** 000266	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;mirror
+	*** 000269	26 f6 47 06 06 		test	BYTE PTR es:[bx+6],6
+	*** 00026e	75 14 			jne	$I1467
+; Line 333
+; Line 334
+	*** 000270	26 80 67 06 f0 		and	BYTE PTR es:[bx+6],240	;00f0H
+; Line 335
+	*** 000275	26 80 4f 06 04 		or	BYTE PTR es:[bx+6],4
+; Line 336
+	*** 00027a	ff 06 00 00 		inc	WORD PTR _cBeeps
+; Line 337
+	*** 00027e	26 c7 47 19 01 00 	mov	WORD PTR es:[bx+25],1
+; Line 338
+; Line 339
+					$I1467:
+; Line 340
+	*** 000284	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;myio
+	*** 000287	26 83 7f 12 ff 		cmp	WORD PTR es:[bx+18],-1	;ffffH
+	*** 00028c	74 07 			je	$L1882
+	*** 00028e	26 83 7f 12 00 		cmp	WORD PTR es:[bx+18],0
+	*** 000293	74 0e 			je	$I1470
+; Line 343
+					$L1882:
+	*** 000295	c4 76 04 		les	si,DWORD PTR [bp+4]	;io
+	*** 000298	26 8b 44 12 		mov	ax,WORD PTR es:[si+18]
+	*** 00029c	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 00029f	26 89 47 12 		mov	WORD PTR es:[bx+18],ax
+; Line 346
+					$I1470:
+	*** 0002a3	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 0002a6	26 8b 47 14 		mov	ax,WORD PTR es:[bx+20]
+	*** 0002aa	3d 12 00 		cmp	ax,18	;0012H
+	*** 0002ad	75 03 			jne	$JCC685
+	*** 0002af	e9 ac 01 		jmp	$SC1484
+					$JCC685:
+	*** 0002b2	76 03 			jbe	$JCC690
+	*** 0002b4	e9 53 01 		jmp	$I1483
+					$JCC690:
+	*** 0002b7	fe c8 			dec	al
+	*** 0002b9	75 03 			jne	$JCC697
+	*** 0002bb	e9 aa 01 		jmp	$SC1485
+					$JCC697:
+	*** 0002be	fe c8 			dec	al
+	*** 0002c0	74 0a 			je	$SC1475
+	*** 0002c2	2c 0f 			sub	al,15	;000fH
+	*** 0002c4	75 03 			jne	$JCC708
+	*** 0002c6	e9 9f 01 		jmp	$SC1485
+					$JCC708:
+	*** 0002c9	e9 3e 01 		jmp	$I1483
+; Line 347
+; Line 349
+					$SC1475:
+; Line 350
+	*** 0002cc	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;myio
+	*** 0002cf	26 ff 4f 10 		dec	WORD PTR es:[bx+16]
+; Line 351
+	*** 0002d3	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 0002d6	26 83 7f 12 00 		cmp	WORD PTR es:[bx+18],0
+	*** 0002db	74 03 			je	$JCC731
+	*** 0002dd	e9 2a 01 		jmp	$I1483
+					$JCC731:
+; Line 352
+; Line 354
+	*** 0002e0	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;mirror
+	*** 0002e3	26 f6 47 06 01 		test	BYTE PTR es:[bx+6],1
+	*** 0002e8	75 0a 			jne	$I1478
+	*** 0002ea	26 f6 47 06 08 		test	BYTE PTR es:[bx+6],8
+	*** 0002ef	75 03 			jne	$JCC751
+	*** 0002f1	e9 16 01 		jmp	$I1483
+					$JCC751:
+					$I1478:
+; Line 355
+; Line 360
+	*** 0002f4	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 0002f7	26 8b 47 24 		mov	ax,WORD PTR es:[bx+36]
+	*** 0002fb	26 8b 57 26 		mov	dx,WORD PTR es:[bx+38]
+	*** 0002ff	8b 76 f6 		mov	si,WORD PTR [bp-10]	;childidx
+	*** 000302	8b ce 			mov	cx,si
+	*** 000304	c1 e6 02 		shl	si,2
+	*** 000307	03 f1 			add	si,cx
+	*** 000309	d1 e6 			shl	si,1
+	*** 00030b	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;mirror
+	*** 00030e	26 39 50 27 		cmp	WORD PTR es:[bx+39][si],dx
+	*** 000312	72 74 			jb	$I1480
+	*** 000314	77 06 			ja	$L1791
+	*** 000316	26 39 40 25 		cmp	WORD PTR es:[bx+37][si],ax
+	*** 00031a	72 6c 			jb	$I1480
+					$L1791:
+	*** 00031c	c4 7e 04 		les	di,DWORD PTR [bp+4]	;io
+	*** 00031f	26 03 45 22 		add	ax,WORD PTR es:[di+34]
+	*** 000323	83 d2 00 		adc	dx,0
+	*** 000326	8e 46 fa 		mov	es,WORD PTR [bp-6]
+	*** 000329	26 3b 50 27 		cmp	dx,WORD PTR es:[bx+39][si]
+	*** 00032d	72 59 			jb	$I1480
+	*** 00032f	77 06 			ja	$L1793
+	*** 000331	26 3b 40 25 		cmp	ax,WORD PTR es:[bx+37][si]
+	*** 000335	76 51 			jbe	$I1480
+					$L1793:
+; Line 361
+; Line 362
+	*** 000337	26 89 40 25 		mov	WORD PTR es:[bx+37][si],ax
+	*** 00033b	26 89 50 27 		mov	WORD PTR es:[bx+39][si],dx
+; Line 363
+	*** 00033f	26 8b 47 0b 		mov	ax,WORD PTR es:[bx+11]
+	*** 000343	26 8b 57 0d 		mov	dx,WORD PTR es:[bx+13]
+	*** 000347	26 39 40 25 		cmp	WORD PTR es:[bx+37][si],ax
+	*** 00034b	75 3b 			jne	$I1480
+	*** 00034d	26 39 50 27 		cmp	WORD PTR es:[bx+39][si],dx
+	*** 000351	75 35 			jne	$I1480
+; Line 364
+; Line 369
+	*** 000353	83 3e 00 00 00 		cmp	WORD PTR _uDebugLevel,0
+	*** 000358	74 0d 			je	$L1788
+	*** 00035a	ff 76 f6 		push	WORD PTR [bp-10]	;childidx
+	*** 00035d	1e 			push	ds
+	*** 00035e	68 4e 00 		push	OFFSET DGROUP:$S1393_dszMNotifyValid
+	*** 000361	e8 00 00 		call	_dprintf
+	*** 000364	83 c4 06 		add	sp,6
+					$L1788:
+; Line 370
+	*** 000367	8b 76 f6 		mov	si,WORD PTR [bp-10]	;childidx
+	*** 00036a	8b c6 			mov	ax,si
+	*** 00036c	c1 e6 02 		shl	si,2
+	*** 00036f	03 f0 			add	si,ax
+	*** 000371	d1 e6 			shl	si,1
+	*** 000373	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;mirror
+	*** 000376	26 c7 40 25 ff ff 	mov	WORD PTR es:[bx+37][si],-1	;ffffH
+	*** 00037c	26 c7 40 27 ff ff 	mov	WORD PTR es:[bx+39][si],-1	;ffffH
+; Line 371
+	*** 000382	26 c7 47 19 01 00 	mov	WORD PTR es:[bx+25],1
+; Line 372
+; Line 373
+					$I1480:
+; Line 374
+	*** 000388	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;mirror
+	*** 00038b	26 f6 47 06 08 		test	BYTE PTR es:[bx+6],8
+	*** 000390	74 78 			je	$I1483
+; Line 375
+; Line 377
+	*** 000392	c4 76 04 		les	si,DWORD PTR [bp+4]	;io
+	*** 000395	26 8b 44 24 		mov	ax,WORD PTR es:[si+36]
+	*** 000399	26 8b 54 26 		mov	dx,WORD PTR es:[si+38]
+	*** 00039d	8e 46 fa 		mov	es,WORD PTR [bp-6]
+	*** 0003a0	26 39 57 1d 		cmp	WORD PTR es:[bx+29],dx
+	*** 0003a4	72 64 			jb	$I1483
+	*** 0003a6	77 06 			ja	$L1798
+	*** 0003a8	26 39 47 1b 		cmp	WORD PTR es:[bx+27],ax
+	*** 0003ac	72 5c 			jb	$I1483
+					$L1798:
+	*** 0003ae	8e 46 06 		mov	es,WORD PTR [bp+6]
+	*** 0003b1	26 03 44 22 		add	ax,WORD PTR es:[si+34]
+	*** 0003b5	83 d2 00 		adc	dx,0
+	*** 0003b8	8e 46 fa 		mov	es,WORD PTR [bp-6]
+	*** 0003bb	26 3b 57 1d 		cmp	dx,WORD PTR es:[bx+29]
+	*** 0003bf	72 49 			jb	$I1483
+	*** 0003c1	77 06 			ja	$L1800
+	*** 0003c3	26 3b 47 1b 		cmp	ax,WORD PTR es:[bx+27]
+	*** 0003c7	76 41 			jbe	$I1483
+					$L1800:
+; Line 378
+; Line 379
+	*** 0003c9	26 89 47 1b 		mov	WORD PTR es:[bx+27],ax
+	*** 0003cd	26 89 57 1d 		mov	WORD PTR es:[bx+29],dx
+; Line 380
+	*** 0003d1	26 8b 47 1b 		mov	ax,WORD PTR es:[bx+27]
+	*** 0003d5	26 39 47 0b 		cmp	WORD PTR es:[bx+11],ax
+	*** 0003d9	75 2f 			jne	$I1483
+	*** 0003db	26 39 57 0d 		cmp	WORD PTR es:[bx+13],dx
+	*** 0003df	75 29 			jne	$I1483
+; Line 381
+; Line 382
+	*** 0003e1	83 3e 00 00 00 		cmp	WORD PTR _uDebugLevel,0
+	*** 0003e6	74 0a 			je	$L1794
+	*** 0003e8	1e 			push	ds
+	*** 0003e9	68 28 00 		push	OFFSET DGROUP:$S1392_dszMNotifyReStop
+	*** 0003ec	e8 00 00 		call	_dprintf
+	*** 0003ef	83 c4 04 		add	sp,4
+					$L1794:
+; Line 383
+	*** 0003f2	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;mirror
+	*** 0003f5	26 c7 47 19 01 00 	mov	WORD PTR es:[bx+25],1
+; Line 384
+	*** 0003fb	26 80 67 06 f7 		and	BYTE PTR es:[bx+6],247	;00f7H
+; Line 385
+	*** 000400	2b c0 			sub	ax,ax
+	*** 000402	26 89 47 1d 		mov	WORD PTR es:[bx+29],ax
+	*** 000406	26 89 47 1b 		mov	WORD PTR es:[bx+27],ax
+; Line 386
+; Line 387
+					$I1483:
+; Line 388
+; Line 389
+; Line 390
+; Line 461
+	*** 00040a	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;myio
+	*** 00040d	26 83 7f 10 00 		cmp	WORD PTR es:[bx+16],0
+	*** 000412	74 03 			je	$JCC1042
+	*** 000414	e9 db 01 		jmp	$I1504
+					$JCC1042:
+; Line 462
+; Line 466
+	*** 000417	06 			push	es
+	*** 000418	53 			push	bx
+	*** 000419	e8 00 00 		call	_CompleteVrio
+	*** 00041c	83 c4 04 		add	sp,4
+; Line 472
+	*** 00041f	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;mirror
+	*** 000422	26 83 7f 19 01 		cmp	WORD PTR es:[bx+25],1
+	*** 000427	74 03 			je	$JCC1063
+	*** 000429	e9 e1 01 		jmp	$L1805
+					$JCC1063:
+; Line 473
+; Line 474
+	*** 00042c	83 3e 00 00 00 		cmp	WORD PTR _uDebugLevel,0
+	*** 000431	74 0a 			je	$L1803
+	*** 000433	1e 			push	ds
+	*** 000434	68 72 00 		push	OFFSET DGROUP:$S1394_dszMNotifyUStart
+	*** 000437	e8 00 00 		call	_dprintf
+	*** 00043a	83 c4 04 		add	sp,4
+					$L1803:
+; Line 475
+	*** 00043d	6a 00 			push	0
+	*** 00043f	ff 76 fa 		push	WORD PTR [bp-6]
+	*** 000442	ff 76 f8 		push	WORD PTR [bp-8]	;mirror
+	*** 000445	e8 00 00 		call	_UpdateCfg
+	*** 000448	83 c4 06 		add	sp,6
+	*** 00044b	48 			dec	ax
+	*** 00044c	74 03 			je	$JCC1100
+	*** 00044e	e9 bc 01 		jmp	$L1805
+					$JCC1100:
+; Line 476
+	*** 000451	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;mirror
+	*** 000454	26 c7 47 19 00 00 	mov	WORD PTR es:[bx+25],0
+; Line 477
+; Line 478
+; Line 479
+	*** 00045a	e9 b0 01 		jmp	$L1805
+	*** 00045d	90 			nop	
+; Line 393
+					$SC1484:
+; Line 397
+	*** 00045e	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;myio
+	*** 000461	26 ff 4f 10 		dec	WORD PTR es:[bx+16]
+; Line 398
+	*** 000465	eb a3 			jmp	SHORT $I1483
+	*** 000467	90 			nop	
+; Line 400
+					$SC1485:
+; Line 406
+	*** 000468	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 00046b	26 83 7f 12 00 		cmp	WORD PTR es:[bx+18],0
+	*** 000470	75 03 			jne	$JCC1136
+	*** 000472	e9 b4 00 		jmp	$L1883
+					$JCC1136:
+; Line 411
+;	child = -14
+; Line 412
+	*** 000475	26 8b 07 		mov	ax,WORD PTR es:[bx]
+	*** 000478	26 8b 57 02 		mov	dx,WORD PTR es:[bx+2]
+	*** 00047c	89 46 f2 		mov	WORD PTR [bp-14],ax	;child
+	*** 00047f	89 56 f4 		mov	WORD PTR [bp-12],dx
+; Line 415
+	*** 000482	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;myio
+	*** 000485	26 ff 4f 10 		dec	WORD PTR es:[bx+16]
+	*** 000489	75 03 			jne	$JCC1161
+	*** 00048b	e9 7c ff 		jmp	$I1483
+					$JCC1161:
+; Line 416
+;	newio = -18
+;	rc = -20
+;	i = -22
+;	found = -24
+; Line 423
+	*** 00048e	33 c0 			xor	ax,ax
+	*** 000490	89 46 e8 		mov	WORD PTR [bp-24],ax	;found
+	*** 000493	89 46 ea 		mov	WORD PTR [bp-22],ax	;i
+	*** 000496	eb 27 			jmp	SHORT $F1494
+					$L1801:
+	*** 000498	ff 46 ea 		inc	WORD PTR [bp-22]	;i
+					$L1802:
+; Line 427
+	*** 00049b	8b 76 ea 		mov	si,WORD PTR [bp-22]	;i
+	*** 00049e	8b c6 			mov	ax,si
+	*** 0004a0	c1 e6 02 		shl	si,2
+	*** 0004a3	03 f0 			add	si,ax
+	*** 0004a5	d1 e6 			shl	si,1
+	*** 0004a7	26 8b 40 21 		mov	ax,WORD PTR es:[bx+33][si]
+	*** 0004ab	26 8b 50 23 		mov	dx,WORD PTR es:[bx+35][si]
+	*** 0004af	89 46 f2 		mov	WORD PTR [bp-14],ax	;child
+	*** 0004b2	89 56 f4 		mov	WORD PTR [bp-12],dx
+; Line 428
+	*** 0004b5	c7 46 e8 01 00 		mov	WORD PTR [bp-24],1	;found
+; Line 429
+	*** 0004ba	eb 3c 			jmp	SHORT $FB1496
+; Line 430
+; Line 431
+					$FC1495:
+	*** 0004bc	ff 46 ea 		inc	WORD PTR [bp-22]	;i
+					$F1494:
+	*** 0004bf	8b 46 ea 		mov	ax,WORD PTR [bp-22]	;i
+	*** 0004c2	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;mirror
+	*** 0004c5	26 39 47 1f 		cmp	WORD PTR es:[bx+31],ax
+	*** 0004c9	76 2d 			jbe	$FB1496
+; Line 424
+	*** 0004cb	8b f0 			mov	si,ax
+	*** 0004cd	8b c8 			mov	cx,ax
+	*** 0004cf	c1 e6 02 		shl	si,2
+	*** 0004d2	03 f1 			add	si,cx
+	*** 0004d4	d1 e6 			shl	si,1
+	*** 0004d6	8b 4e f2 		mov	cx,WORD PTR [bp-14]	;child
+	*** 0004d9	8b 56 f4 		mov	dx,WORD PTR [bp-12]
+	*** 0004dc	26 39 48 21 		cmp	WORD PTR es:[bx+33][si],cx
+	*** 0004e0	75 da 			jne	$FC1495
+	*** 0004e2	26 39 50 23 		cmp	WORD PTR es:[bx+35][si],dx
+	*** 0004e6	75 d4 			jne	$FC1495
+; Line 425
+; Line 426
+	*** 0004e8	26 2b 47 1f 		sub	ax,WORD PTR es:[bx+31]
+	*** 0004ec	f7 d8 			neg	ax
+	*** 0004ee	48 			dec	ax
+	*** 0004ef	75 a7 			jne	$L1801
+	*** 0004f1	c7 46 ea 00 00 		mov	WORD PTR [bp-22],0	;i
+	*** 0004f6	eb a3 			jmp	SHORT $L1802
+					$FB1496:
+	*** 0004f8	83 7e e8 01 		cmp	WORD PTR [bp-24],1	;found
+	*** 0004fc	74 0f 			je	$I1498
+	*** 0004fe	1e 			push	ds
+	*** 0004ff	68 ce 01 		push	OFFSET DGROUP:$SG1499
+	*** 000502	1e 			push	ds
+	*** 000503	68 d9 01 		push	OFFSET DGROUP:$SG1500
+	*** 000506	e8 00 00 		call	_dprintf
+	*** 000509	83 c4 08 		add	sp,8
+	*** 00050c	cc 			int	3
+					$I1498:
+; Line 438
+	*** 00050d	ff 76 fe 		push	WORD PTR [bp-2]
+	*** 000510	ff 76 fc 		push	WORD PTR [bp-4]	;myio
+	*** 000513	ff 76 f4 		push	WORD PTR [bp-12]
+	*** 000516	ff 76 f2 		push	WORD PTR [bp-14]	;child
+	*** 000519	e8 00 00 		call	_AllocateVrio
+	*** 00051c	83 c4 08 		add	sp,8
+	*** 00051f	89 46 ee 		mov	WORD PTR [bp-18],ax	;newio
+	*** 000522	89 56 f0 		mov	WORD PTR [bp-16],dx
+	*** 000525	0b d0 			or	dx,ax
+	*** 000527	75 0d 			jne	$I1501
+; Line 439
+					$L1883:
+	*** 000529	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;myio
+	*** 00052c	26 c7 47 10 00 00 	mov	WORD PTR es:[bx+16],0
+; Line 440
+	*** 000532	e9 d5 fe 		jmp	$I1483
+	*** 000535	90 			nop	
+					$I1501:
+; Line 441
+; Line 442
+	*** 000536	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 000539	26 8b 47 08 		mov	ax,WORD PTR es:[bx+8]
+	*** 00053d	26 8b 57 0a 		mov	dx,WORD PTR es:[bx+10]
+	*** 000541	c4 76 ee 		les	si,DWORD PTR [bp-18]	;newio
+	*** 000544	26 89 44 08 		mov	WORD PTR es:[si+8],ax
+	*** 000548	26 89 54 0a 		mov	WORD PTR es:[si+10],dx
+; Line 443
+	*** 00054c	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 00054f	26 8b 47 14 		mov	ax,WORD PTR es:[bx+20]
+	*** 000553	c4 76 ee 		les	si,DWORD PTR [bp-18]	;newio
+	*** 000556	26 89 44 14 		mov	WORD PTR es:[si+20],ax
+; Line 444
+	*** 00055a	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 00055d	26 8b 47 16 		mov	ax,WORD PTR es:[bx+22]
+	*** 000561	c4 76 ee 		les	si,DWORD PTR [bp-18]	;newio
+	*** 000564	26 89 44 16 		mov	WORD PTR es:[si+22],ax
+; Line 445
+	*** 000568	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 00056b	26 8b 47 18 		mov	ax,WORD PTR es:[bx+24]
+	*** 00056f	26 8b 57 1a 		mov	dx,WORD PTR es:[bx+26]
+	*** 000573	c4 76 ee 		les	si,DWORD PTR [bp-18]	;newio
+	*** 000576	26 89 44 18 		mov	WORD PTR es:[si+24],ax
+	*** 00057a	26 89 54 1a 		mov	WORD PTR es:[si+26],dx
+; Line 446
+	*** 00057e	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 000581	26 8b 47 1c 		mov	ax,WORD PTR es:[bx+28]
+	*** 000585	26 8b 57 1e 		mov	dx,WORD PTR es:[bx+30]
+	*** 000589	c4 76 ee 		les	si,DWORD PTR [bp-18]	;newio
+	*** 00058c	26 89 44 1c 		mov	WORD PTR es:[si+28],ax
+	*** 000590	26 89 54 1e 		mov	WORD PTR es:[si+30],dx
+; Line 447
+	*** 000594	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 000597	26 8b 47 20 		mov	ax,WORD PTR es:[bx+32]
+	*** 00059b	c4 76 ee 		les	si,DWORD PTR [bp-18]	;newio
+	*** 00059e	26 89 44 20 		mov	WORD PTR es:[si+32],ax
+; Line 448
+	*** 0005a2	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 0005a5	26 8b 47 22 		mov	ax,WORD PTR es:[bx+34]
+	*** 0005a9	c4 76 ee 		les	si,DWORD PTR [bp-18]	;newio
+	*** 0005ac	26 89 44 22 		mov	WORD PTR es:[si+34],ax
+; Line 449
+	*** 0005b0	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;io
+	*** 0005b3	26 8b 47 24 		mov	ax,WORD PTR es:[bx+36]
+	*** 0005b7	26 8b 57 26 		mov	dx,WORD PTR es:[bx+38]
+	*** 0005bb	c4 5e ee 		les	bx,DWORD PTR [bp-18]	;newio
+	*** 0005be	26 89 47 24 		mov	WORD PTR es:[bx+36],ax
+	*** 0005c2	26 89 57 26 		mov	WORD PTR es:[bx+38],dx
+; Line 452
+	*** 0005c6	06 			push	es
+	*** 0005c7	53 			push	bx
+	*** 0005c8	26 ff 77 02 		push	WORD PTR es:[bx+2]
+	*** 0005cc	26 ff 37 		push	WORD PTR es:[bx]
+	*** 0005cf	26 c4 37 		les	si,DWORD PTR es:[bx]
+	*** 0005d2	26 ff 54 11 		call	WORD PTR es:[si+17]
+	*** 0005d6	83 c4 08 		add	sp,8
+	*** 0005d9	89 46 ec 		mov	WORD PTR [bp-20],ax	;rc
+	*** 0005dc	0b c0 			or	ax,ax
+	*** 0005de	75 03 			jne	$JCC1502
+	*** 0005e0	e9 27 fe 		jmp	$I1483
+					$JCC1502:
+; Line 453
+	*** 0005e3	ff 76 f0 		push	WORD PTR [bp-16]
+	*** 0005e6	ff 76 ee 		push	WORD PTR [bp-18]	;newio
+	*** 0005e9	e8 00 00 		call	_QueueVrio
+	*** 0005ec	83 c4 04 		add	sp,4
+; Line 454
+; Line 455
+; Line 456
+; Line 457
+	*** 0005ef	e9 18 fe 		jmp	$I1483
+					$I1504:
+	*** 0005f2	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;mirror
+	*** 0005f5	26 83 7f 19 01 		cmp	WORD PTR es:[bx+25],1
+	*** 0005fa	75 11 			jne	$L1805
+; Line 480
+; Line 481
+	*** 0005fc	83 3e 00 00 00 		cmp	WORD PTR _uDebugLevel,0
+	*** 000601	74 0a 			je	$L1805
+	*** 000603	1e 			push	ds
+	*** 000604	68 98 00 		push	OFFSET DGROUP:$S1395_dszMNotifyUDefer
+	*** 000607	e8 00 00 		call	_dprintf
+	*** 00060a	83 c4 04 		add	sp,4
+					$L1805:
+; Line 482
+; Line 484
+	*** 00060d	9d 			popf	
+; Line 486
+	*** 00060e	5e 			pop	si
+	*** 00060f	5f 			pop	di
+	*** 000610	c9 			leave	
+	*** 000611	c3 			ret	
+
+_MirrorNotify	ENDP
+	PUBLIC	_MirrorWorker
+_MirrorWorker	PROC NEAR
+; Line 510
+	*** 000612	c8 12 00 00 		enter	18,0
+	*** 000616	56 			push	si
+;	mirror = -4
+;	io = -8
+;	newio = -12
+;	firstio = -16
+;	myio = 8
+;	self = 4
+; Line 511
+	*** 000617	8b 46 04 		mov	ax,WORD PTR [bp+4]	;self
+	*** 00061a	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 00061d	89 46 fc 		mov	WORD PTR [bp-4],ax	;mirror
+	*** 000620	89 56 fe 		mov	WORD PTR [bp-2],dx
+; Line 514
+	*** 000623	2b c0 			sub	ax,ax
+	*** 000625	89 46 f2 		mov	WORD PTR [bp-14],ax
+	*** 000628	89 46 f0 		mov	WORD PTR [bp-16],ax	;firstio
+; Line 516
+	*** 00062b	f6 06 01 00 04 		test	BYTE PTR _uDebugLevel+1,4
+	*** 000630	74 10 			je	$L1807
+	*** 000632	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 000635	ff 76 08 		push	WORD PTR [bp+8]	;myio
+	*** 000638	1e 			push	ds
+	*** 000639	68 c0 00 		push	OFFSET DGROUP:$S1396_dszMirrorWorker
+	*** 00063c	e8 00 00 		call	_dprintf
+	*** 00063f	83 c4 08 		add	sp,8
+					$L1807:
+; Line 518
+	*** 000642	8b 46 04 		mov	ax,WORD PTR [bp+4]	;self
+	*** 000645	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 000648	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;myio
+	*** 00064b	26 39 07 		cmp	WORD PTR es:[bx],ax
+	*** 00064e	75 06 			jne	$L1809
+	*** 000650	26 39 57 02 		cmp	WORD PTR es:[bx+2],dx
+	*** 000654	74 0f 			je	$I1518
+					$L1809:
+	*** 000656	1e 			push	ds
+	*** 000657	68 ee 01 		push	OFFSET DGROUP:$SG1519
+	*** 00065a	1e 			push	ds
+	*** 00065b	68 00 02 		push	OFFSET DGROUP:$SG1520
+	*** 00065e	e8 00 00 		call	_dprintf
+	*** 000661	83 c4 08 		add	sp,8
+	*** 000664	cc 			int	3
+					$I1518:
+; Line 519
+	*** 000665	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;myio
+	*** 000668	26 8b 47 06 		mov	ax,WORD PTR es:[bx+6]
+	*** 00066c	26 0b 47 04 		or	ax,WORD PTR es:[bx+4]
+	*** 000670	74 0f 			je	$I1521
+	*** 000672	1e 			push	ds
+	*** 000673	68 15 02 		push	OFFSET DGROUP:$SG1522
+	*** 000676	1e 			push	ds
+	*** 000677	68 28 02 		push	OFFSET DGROUP:$SG1523
+	*** 00067a	e8 00 00 		call	_dprintf
+	*** 00067d	83 c4 08 		add	sp,8
+	*** 000680	cc 			int	3
+					$I1521:
+; Line 520
+	*** 000681	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;myio
+	*** 000684	26 83 7f 22 00 		cmp	WORD PTR es:[bx+34],0
+	*** 000689	75 0f 			jne	$I1524
+	*** 00068b	1e 			push	ds
+	*** 00068c	68 3d 02 		push	OFFSET DGROUP:$SG1525
+	*** 00068f	1e 			push	ds
+	*** 000690	68 4d 02 		push	OFFSET DGROUP:$SG1526
+	*** 000693	e8 00 00 		call	_dprintf
+	*** 000696	83 c4 08 		add	sp,8
+	*** 000699	cc 			int	3
+					$I1524:
+; Line 521
+	*** 00069a	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 00069d	26 8b 47 0d 		mov	ax,WORD PTR es:[bx+13]
+	*** 0006a1	26 0b 47 0b 		or	ax,WORD PTR es:[bx+11]
+	*** 0006a5	75 0f 			jne	$I1527
+	*** 0006a7	1e 			push	ds
+	*** 0006a8	68 62 02 		push	OFFSET DGROUP:$SG1528
+	*** 0006ab	1e 			push	ds
+	*** 0006ac	68 7b 02 		push	OFFSET DGROUP:$SG1529
+	*** 0006af	e8 00 00 		call	_dprintf
+	*** 0006b2	83 c4 08 		add	sp,8
+	*** 0006b5	cc 			int	3
+					$I1527:
+; Line 522
+	*** 0006b6	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 0006b9	26 81 7f 0f 00 00 	cmp	WORD PTR es:[bx+15],OFFSET _MirrorNotify
+	*** 0006bf	74 0f 			je	$I1530
+	*** 0006c1	1e 			push	ds
+	*** 0006c2	68 90 02 		push	OFFSET DGROUP:$SG1531
+	*** 0006c5	1e 			push	ds
+	*** 0006c6	68 b6 02 		push	OFFSET DGROUP:$SG1532
+	*** 0006c9	e8 00 00 		call	_dprintf
+	*** 0006cc	83 c4 08 		add	sp,8
+	*** 0006cf	cc 			int	3
+					$I1530:
+; Line 523
+	*** 0006d0	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 0006d3	26 81 7f 11 00 00 	cmp	WORD PTR es:[bx+17],OFFSET _MirrorWorker
+	*** 0006d9	74 0f 			je	$I1533
+	*** 0006db	1e 			push	ds
+	*** 0006dc	68 cb 02 		push	OFFSET DGROUP:$SG1534
+	*** 0006df	1e 			push	ds
+	*** 0006e0	68 f1 02 		push	OFFSET DGROUP:$SG1535
+	*** 0006e3	e8 00 00 		call	_dprintf
+	*** 0006e6	83 c4 08 		add	sp,8
+	*** 0006e9	cc 			int	3
+					$I1533:
+; Line 524
+	*** 0006ea	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 0006ed	26 81 7f 13 00 00 	cmp	WORD PTR es:[bx+19],OFFSET _MirrorUpdate
+	*** 0006f3	74 0f 			je	$I1536
+	*** 0006f5	1e 			push	ds
+	*** 0006f6	68 06 03 		push	OFFSET DGROUP:$SG1537
+	*** 0006f9	1e 			push	ds
+	*** 0006fa	68 2c 03 		push	OFFSET DGROUP:$SG1538
+	*** 0006fd	e8 00 00 		call	_dprintf
+	*** 000700	83 c4 08 		add	sp,8
+	*** 000703	cc 			int	3
+					$I1536:
+; Line 525
+	*** 000704	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000707	26 81 7f 15 00 00 	cmp	WORD PTR es:[bx+21],OFFSET _MirrorCtrl
+	*** 00070d	74 0f 			je	$I1539
+	*** 00070f	1e 			push	ds
+	*** 000710	68 41 03 		push	OFFSET DGROUP:$SG1540
+	*** 000713	1e 			push	ds
+	*** 000714	68 64 03 		push	OFFSET DGROUP:$SG1541
+	*** 000717	e8 00 00 		call	_dprintf
+	*** 00071a	83 c4 08 		add	sp,8
+	*** 00071d	cc 			int	3
+					$I1539:
+; Line 528
+	*** 00071e	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000721	26 f6 47 06 02 		test	BYTE PTR es:[bx+6],2
+	*** 000726	74 16 			je	$I1542
+; Line 529
+; Line 530
+	*** 000728	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;myio
+	*** 00072b	26 c7 47 12 03 06 	mov	WORD PTR es:[bx+18],1539	;0603H
+; Line 531
+	*** 000731	06 			push	es
+	*** 000732	53 			push	bx
+	*** 000733	e8 00 00 		call	_CompleteVrio
+	*** 000736	83 c4 04 		add	sp,4
+; Line 532
+					$L1884:
+	*** 000739	33 c0 			xor	ax,ax
+	*** 00073b	e9 00 06 		jmp	$EX1513
+; Line 533
+; Line 536
+					$I1542:
+	*** 00073e	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;self
+	*** 000741	26 ff 47 07 		inc	WORD PTR es:[bx+7]
+; Line 537
+	*** 000745	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;myio
+	*** 000748	26 8b 47 14 		mov	ax,WORD PTR es:[bx+20]
+	*** 00074c	3d 12 00 		cmp	ax,18	;0012H
+	*** 00074f	75 03 			jne	$JCC1871
+	*** 000751	e9 ca 02 		jmp	$SC1567
+					$JCC1871:
+	*** 000754	76 03 			jbe	$JCC1876
+	*** 000756	e9 a0 02 		jmp	$DB1560
+					$JCC1876:
+	*** 000759	fe c8 			dec	al
+	*** 00075b	75 03 			jne	$JCC1883
+	*** 00075d	e9 58 01 		jmp	$SC1557
+					$JCC1883:
+	*** 000760	fe c8 			dec	al
+	*** 000762	74 0a 			je	$SC1548
+	*** 000764	2c 0f 			sub	al,15	;000fH
+	*** 000766	75 03 			jne	$JCC1894
+	*** 000768	e9 03 04 		jmp	$SC1576
+					$JCC1894:
+	*** 00076b	e9 8b 02 		jmp	$DB1560
+; Line 538
+;	i = -18
+; Line 542
+					$SC1548:
+; Line 547
+	*** 00076e	33 c0 			xor	ax,ax
+	*** 000770	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;myio
+	*** 000773	26 89 47 10 		mov	WORD PTR es:[bx+16],ax
+	*** 000777	89 46 ee 		mov	WORD PTR [bp-18],ax	;i
+	*** 00077a	e9 d8 00 		jmp	$F1549
+	*** 00077d	90 			nop	
+; Line 561
+					$I1554:
+	*** 00077e	8b 46 f2 		mov	ax,WORD PTR [bp-14]
+	*** 000781	0b 46 f0 		or	ax,WORD PTR [bp-16]	;firstio
+	*** 000784	75 0e 			jne	$I1555
+; Line 562
+	*** 000786	8b 46 f4 		mov	ax,WORD PTR [bp-12]	;newio
+	*** 000789	8b 56 f6 		mov	dx,WORD PTR [bp-10]
+	*** 00078c	89 46 f0 		mov	WORD PTR [bp-16],ax	;firstio
+	*** 00078f	89 56 f2 		mov	WORD PTR [bp-14],dx
+; Line 563
+	*** 000792	eb 11 			jmp	SHORT $I1556
+					$I1555:
+; Line 564
+	*** 000794	8b 46 f4 		mov	ax,WORD PTR [bp-12]	;newio
+	*** 000797	8b 56 f6 		mov	dx,WORD PTR [bp-10]
+	*** 00079a	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;io
+	*** 00079d	26 89 47 04 		mov	WORD PTR es:[bx+4],ax
+	*** 0007a1	26 89 57 06 		mov	WORD PTR es:[bx+6],dx
+					$I1556:
+; Line 566
+	*** 0007a5	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 0007a8	89 5e f8 		mov	WORD PTR [bp-8],bx	;io
+	*** 0007ab	8c 46 fa 		mov	WORD PTR [bp-6],es
+	*** 0007ae	2b c0 			sub	ax,ax
+	*** 0007b0	26 89 47 06 		mov	WORD PTR es:[bx+6],ax
+	*** 0007b4	26 89 47 04 		mov	WORD PTR es:[bx+4],ax
+; Line 567
+	*** 0007b8	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 0007bb	26 ff 44 10 		inc	WORD PTR es:[si+16]
+; Line 572
+	*** 0007bf	26 8b 44 08 		mov	ax,WORD PTR es:[si+8]
+	*** 0007c3	26 8b 54 0a 		mov	dx,WORD PTR es:[si+10]
+	*** 0007c7	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 0007ca	26 89 47 08 		mov	WORD PTR es:[bx+8],ax
+	*** 0007ce	26 89 57 0a 		mov	WORD PTR es:[bx+10],dx
+; Line 573
+	*** 0007d2	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 0007d5	26 8b 44 14 		mov	ax,WORD PTR es:[si+20]
+	*** 0007d9	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 0007dc	26 89 47 14 		mov	WORD PTR es:[bx+20],ax
+; Line 574
+	*** 0007e0	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 0007e3	26 8b 44 16 		mov	ax,WORD PTR es:[si+22]
+	*** 0007e7	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 0007ea	26 89 47 16 		mov	WORD PTR es:[bx+22],ax
+; Line 575
+	*** 0007ee	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 0007f1	26 8b 44 18 		mov	ax,WORD PTR es:[si+24]
+	*** 0007f5	26 8b 54 1a 		mov	dx,WORD PTR es:[si+26]
+	*** 0007f9	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 0007fc	26 89 47 18 		mov	WORD PTR es:[bx+24],ax
+	*** 000800	26 89 57 1a 		mov	WORD PTR es:[bx+26],dx
+; Line 576
+	*** 000804	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000807	26 8b 44 1c 		mov	ax,WORD PTR es:[si+28]
+	*** 00080b	26 8b 54 1e 		mov	dx,WORD PTR es:[si+30]
+	*** 00080f	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000812	26 89 47 1c 		mov	WORD PTR es:[bx+28],ax
+	*** 000816	26 89 57 1e 		mov	WORD PTR es:[bx+30],dx
+; Line 578
+	*** 00081a	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 00081d	26 8b 44 20 		mov	ax,WORD PTR es:[si+32]
+	*** 000821	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000824	26 89 47 20 		mov	WORD PTR es:[bx+32],ax
+; Line 579
+	*** 000828	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 00082b	26 8b 44 24 		mov	ax,WORD PTR es:[si+36]
+	*** 00082f	26 8b 54 26 		mov	dx,WORD PTR es:[si+38]
+	*** 000833	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000836	26 89 47 24 		mov	WORD PTR es:[bx+36],ax
+	*** 00083a	26 89 57 26 		mov	WORD PTR es:[bx+38],dx
+; Line 580
+	*** 00083e	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000841	26 8b 44 22 		mov	ax,WORD PTR es:[si+34]
+	*** 000845	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000848	26 89 47 22 		mov	WORD PTR es:[bx+34],ax
+; Line 581
+	*** 00084c	26 c7 47 12 ff ff 	mov	WORD PTR es:[bx+18],-1	;ffffH
+; Line 582
+					$FC1550:
+	*** 000852	ff 46 ee 		inc	WORD PTR [bp-18]	;i
+					$F1549:
+	*** 000855	8b 46 ee 		mov	ax,WORD PTR [bp-18]	;i
+	*** 000858	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 00085b	26 39 47 1f 		cmp	WORD PTR es:[bx+31],ax
+	*** 00085f	77 03 			ja	$JCC2143
+	*** 000861	e9 95 01 		jmp	$DB1560
+					$JCC2143:
+; Line 548
+; Line 549
+	*** 000864	8b f0 			mov	si,ax
+	*** 000866	8b c8 			mov	cx,ax
+	*** 000868	c1 e6 02 		shl	si,2
+	*** 00086b	03 f1 			add	si,cx
+	*** 00086d	d1 e6 			shl	si,1
+	*** 00086f	26 8b 40 23 		mov	ax,WORD PTR es:[bx+35][si]
+	*** 000873	26 0b 40 21 		or	ax,WORD PTR es:[bx+33][si]
+	*** 000877	74 d9 			je	$FC1550
+; Line 551
+	*** 000879	8b f1 			mov	si,cx
+	*** 00087b	8b c1 			mov	ax,cx
+	*** 00087d	c1 e6 02 		shl	si,2
+	*** 000880	03 f0 			add	si,ax
+	*** 000882	d1 e6 			shl	si,1
+	*** 000884	26 f6 40 29 01 		test	BYTE PTR es:[bx+41][si],1
+	*** 000889	75 c7 			jne	$FC1550
+; Line 558
+	*** 00088b	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 00088e	ff 76 08 		push	WORD PTR [bp+8]	;myio
+	*** 000891	8b f1 			mov	si,cx
+	*** 000893	c1 e6 02 		shl	si,2
+	*** 000896	03 f0 			add	si,ax
+	*** 000898	d1 e6 			shl	si,1
+	*** 00089a	26 ff 70 23 		push	WORD PTR es:[bx+35][si]
+	*** 00089e	26 ff 70 21 		push	WORD PTR es:[bx+33][si]
+	*** 0008a2	e8 00 00 		call	_AllocateVrio
+	*** 0008a5	83 c4 08 		add	sp,8
+	*** 0008a8	89 46 f4 		mov	WORD PTR [bp-12],ax	;newio
+	*** 0008ab	89 56 f6 		mov	WORD PTR [bp-10],dx
+	*** 0008ae	0b d0 			or	dx,ax
+	*** 0008b0	74 03 			je	$JCC2224
+	*** 0008b2	e9 c9 fe 		jmp	$I1554
+					$JCC2224:
+; Line 583
+	*** 0008b5	e9 41 01 		jmp	$DB1560
+; Line 586
+					$SC1557:
+; Line 591
+	*** 0008b8	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 0008bb	26 8b 47 1f 		mov	ax,WORD PTR es:[bx+31]
+	*** 0008bf	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;myio
+	*** 0008c2	26 89 47 10 		mov	WORD PTR es:[bx+16],ax
+; Line 596
+; Line 597
+	*** 0008c6	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 0008c9	26 83 7f 17 ff 		cmp	WORD PTR es:[bx+23],-1	;ffffH
+	*** 0008ce	75 0f 			jne	$I1561
+	*** 0008d0	1e 			push	ds
+	*** 0008d1	68 79 03 		push	OFFSET DGROUP:$SG1562
+	*** 0008d4	1e 			push	ds
+	*** 0008d5	68 99 03 		push	OFFSET DGROUP:$SG1563
+	*** 0008d8	e8 00 00 		call	_dprintf
+	*** 0008db	83 c4 08 		add	sp,8
+	*** 0008de	cc 			int	3
+					$I1561:
+; Line 599
+	*** 0008df	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 0008e2	ff 76 08 		push	WORD PTR [bp+8]	;myio
+	*** 0008e5	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 0008e8	26 8b 77 17 		mov	si,WORD PTR es:[bx+23]
+	*** 0008ec	8b c6 			mov	ax,si
+	*** 0008ee	c1 e6 02 		shl	si,2
+	*** 0008f1	03 f0 			add	si,ax
+	*** 0008f3	d1 e6 			shl	si,1
+	*** 0008f5	26 ff 70 23 		push	WORD PTR es:[bx+35][si]
+	*** 0008f9	26 ff 70 21 		push	WORD PTR es:[bx+33][si]
+	*** 0008fd	e8 00 00 		call	_AllocateVrio
+	*** 000900	83 c4 08 		add	sp,8
+	*** 000903	89 46 f4 		mov	WORD PTR [bp-12],ax	;newio
+	*** 000906	89 56 f6 		mov	WORD PTR [bp-10],dx
+	*** 000909	0b d0 			or	dx,ax
+	*** 00090b	75 03 			jne	$JCC2315
+	*** 00090d	e9 e9 00 		jmp	$DB1560
+					$JCC2315:
+; Line 602
+	*** 000910	8b 46 f2 		mov	ax,WORD PTR [bp-14]
+	*** 000913	0b 46 f0 		or	ax,WORD PTR [bp-16]	;firstio
+	*** 000916	75 0e 			jne	$I1565
+; Line 603
+	*** 000918	8b 46 f4 		mov	ax,WORD PTR [bp-12]	;newio
+	*** 00091b	8b 56 f6 		mov	dx,WORD PTR [bp-10]
+	*** 00091e	89 46 f0 		mov	WORD PTR [bp-16],ax	;firstio
+	*** 000921	89 56 f2 		mov	WORD PTR [bp-14],dx
+; Line 604
+	*** 000924	eb 11 			jmp	SHORT $I1566
+					$I1565:
+; Line 605
+	*** 000926	8b 46 f4 		mov	ax,WORD PTR [bp-12]	;newio
+	*** 000929	8b 56 f6 		mov	dx,WORD PTR [bp-10]
+	*** 00092c	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;io
+	*** 00092f	26 89 47 04 		mov	WORD PTR es:[bx+4],ax
+	*** 000933	26 89 57 06 		mov	WORD PTR es:[bx+6],dx
+					$I1566:
+; Line 607
+	*** 000937	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 00093a	89 5e f8 		mov	WORD PTR [bp-8],bx	;io
+	*** 00093d	8c 46 fa 		mov	WORD PTR [bp-6],es
+	*** 000940	2b c0 			sub	ax,ax
+	*** 000942	26 89 47 06 		mov	WORD PTR es:[bx+6],ax
+	*** 000946	26 89 47 04 		mov	WORD PTR es:[bx+4],ax
+; Line 612
+	*** 00094a	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 00094d	26 8b 44 08 		mov	ax,WORD PTR es:[si+8]
+	*** 000951	26 8b 54 0a 		mov	dx,WORD PTR es:[si+10]
+	*** 000955	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000958	26 89 47 08 		mov	WORD PTR es:[bx+8],ax
+	*** 00095c	26 89 57 0a 		mov	WORD PTR es:[bx+10],dx
+; Line 613
+	*** 000960	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000963	26 8b 44 14 		mov	ax,WORD PTR es:[si+20]
+	*** 000967	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 00096a	26 89 47 14 		mov	WORD PTR es:[bx+20],ax
+; Line 614
+	*** 00096e	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000971	26 8b 44 16 		mov	ax,WORD PTR es:[si+22]
+	*** 000975	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000978	26 89 47 16 		mov	WORD PTR es:[bx+22],ax
+; Line 615
+	*** 00097c	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 00097f	26 8b 44 18 		mov	ax,WORD PTR es:[si+24]
+	*** 000983	26 8b 54 1a 		mov	dx,WORD PTR es:[si+26]
+	*** 000987	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 00098a	26 89 47 18 		mov	WORD PTR es:[bx+24],ax
+	*** 00098e	26 89 57 1a 		mov	WORD PTR es:[bx+26],dx
+; Line 616
+	*** 000992	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000995	26 8b 44 1c 		mov	ax,WORD PTR es:[si+28]
+	*** 000999	26 8b 54 1e 		mov	dx,WORD PTR es:[si+30]
+	*** 00099d	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 0009a0	26 89 47 1c 		mov	WORD PTR es:[bx+28],ax
+	*** 0009a4	26 89 57 1e 		mov	WORD PTR es:[bx+30],dx
+; Line 618
+	*** 0009a8	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 0009ab	26 8b 44 20 		mov	ax,WORD PTR es:[si+32]
+	*** 0009af	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 0009b2	26 89 47 20 		mov	WORD PTR es:[bx+32],ax
+; Line 619
+	*** 0009b6	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 0009b9	26 8b 44 24 		mov	ax,WORD PTR es:[si+36]
+	*** 0009bd	26 8b 54 26 		mov	dx,WORD PTR es:[si+38]
+					$L1887:
+	*** 0009c1	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 0009c4	26 89 47 24 		mov	WORD PTR es:[bx+36],ax
+	*** 0009c8	26 89 57 26 		mov	WORD PTR es:[bx+38],dx
+; Line 620
+	*** 0009cc	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 0009cf	26 8b 44 22 		mov	ax,WORD PTR es:[si+34]
+	*** 0009d3	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 0009d6	26 89 47 22 		mov	WORD PTR es:[bx+34],ax
+; Line 621
+	*** 0009da	26 c7 47 12 ff ff 	mov	WORD PTR es:[bx+18],-1	;ffffH
+; Line 623
+	*** 0009e0	9c 			pushf	
+; Line 624
+	*** 0009e1	fa 			cli	
+; Line 625
+	*** 0009e2	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 0009e5	26 ff 77 17 		push	WORD PTR es:[bx+23]
+	*** 0009e9	06 			push	es
+	*** 0009ea	53 			push	bx
+	*** 0009eb	e8 52 f6 		call	_NextValidChild
+	*** 0009ee	83 c4 06 		add	sp,6
+	*** 0009f1	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 0009f4	26 89 47 17 		mov	WORD PTR es:[bx+23],ax
+; Line 626
+	*** 0009f8	9d 			popf	
+; Line 627
+; Line 628
+					$DB1560:
+; Line 725
+	*** 0009f9	8b 46 f6 		mov	ax,WORD PTR [bp-10]
+	*** 0009fc	0b 46 f4 		or	ax,WORD PTR [bp-12]	;newio
+	*** 0009ff	74 03 			je	$JCC2559
+	*** 000a01	e9 c8 02 		jmp	$I1586
+					$JCC2559:
+; Line 726
+; Line 730
+	*** 000a04	83 3e 00 00 00 		cmp	WORD PTR _uDebugLevel,0
+	*** 000a09	74 0a 			je	$L1810
+	*** 000a0b	1e 			push	ds
+	*** 000a0c	68 d4 00 		push	OFFSET DGROUP:$S1397_dszMWorkerRelease
+	*** 000a0f	e8 00 00 		call	_dprintf
+	*** 000a12	83 c4 04 		add	sp,4
+					$L1810:
+; Line 731
+	*** 000a15	8b 46 f0 		mov	ax,WORD PTR [bp-16]	;firstio
+	*** 000a18	8b 56 f2 		mov	dx,WORD PTR [bp-14]
+	*** 000a1b	e9 68 02 		jmp	$L1885
+; Line 632
+					$SC1567:
+; Line 638
+	*** 000a1e	33 c0 			xor	ax,ax
+	*** 000a20	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;myio
+	*** 000a23	26 89 47 10 		mov	WORD PTR es:[bx+16],ax
+	*** 000a27	89 46 ee 		mov	WORD PTR [bp-18],ax	;i
+	*** 000a2a	e9 de 00 		jmp	$F1568
+	*** 000a2d	90 			nop	
+; Line 652
+					$I1573:
+	*** 000a2e	8b 46 f2 		mov	ax,WORD PTR [bp-14]
+	*** 000a31	0b 46 f0 		or	ax,WORD PTR [bp-16]	;firstio
+	*** 000a34	75 0e 			jne	$I1574
+; Line 653
+	*** 000a36	8b 46 f4 		mov	ax,WORD PTR [bp-12]	;newio
+	*** 000a39	8b 56 f6 		mov	dx,WORD PTR [bp-10]
+	*** 000a3c	89 46 f0 		mov	WORD PTR [bp-16],ax	;firstio
+	*** 000a3f	89 56 f2 		mov	WORD PTR [bp-14],dx
+; Line 654
+	*** 000a42	eb 11 			jmp	SHORT $I1575
+					$I1574:
+; Line 655
+	*** 000a44	8b 46 f4 		mov	ax,WORD PTR [bp-12]	;newio
+	*** 000a47	8b 56 f6 		mov	dx,WORD PTR [bp-10]
+	*** 000a4a	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;io
+	*** 000a4d	26 89 47 04 		mov	WORD PTR es:[bx+4],ax
+	*** 000a51	26 89 57 06 		mov	WORD PTR es:[bx+6],dx
+					$I1575:
+; Line 657
+	*** 000a55	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000a58	89 5e f8 		mov	WORD PTR [bp-8],bx	;io
+	*** 000a5b	8c 46 fa 		mov	WORD PTR [bp-6],es
+	*** 000a5e	2b c0 			sub	ax,ax
+	*** 000a60	26 89 47 06 		mov	WORD PTR es:[bx+6],ax
+	*** 000a64	26 89 47 04 		mov	WORD PTR es:[bx+4],ax
+; Line 658
+	*** 000a68	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000a6b	26 ff 44 10 		inc	WORD PTR es:[si+16]
+; Line 664
+	*** 000a6f	26 8b 44 08 		mov	ax,WORD PTR es:[si+8]
+	*** 000a73	26 8b 54 0a 		mov	dx,WORD PTR es:[si+10]
+	*** 000a77	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000a7a	26 89 47 08 		mov	WORD PTR es:[bx+8],ax
+	*** 000a7e	26 89 57 0a 		mov	WORD PTR es:[bx+10],dx
+; Line 665
+	*** 000a82	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000a85	26 8b 44 14 		mov	ax,WORD PTR es:[si+20]
+	*** 000a89	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000a8c	26 89 47 14 		mov	WORD PTR es:[bx+20],ax
+; Line 666
+	*** 000a90	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000a93	26 8b 44 16 		mov	ax,WORD PTR es:[si+22]
+	*** 000a97	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000a9a	26 89 47 16 		mov	WORD PTR es:[bx+22],ax
+; Line 667
+	*** 000a9e	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000aa1	26 8b 44 18 		mov	ax,WORD PTR es:[si+24]
+	*** 000aa5	26 8b 54 1a 		mov	dx,WORD PTR es:[si+26]
+	*** 000aa9	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000aac	26 89 47 18 		mov	WORD PTR es:[bx+24],ax
+	*** 000ab0	26 89 57 1a 		mov	WORD PTR es:[bx+26],dx
+; Line 668
+	*** 000ab4	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000ab7	26 8b 44 1c 		mov	ax,WORD PTR es:[si+28]
+	*** 000abb	26 8b 54 1e 		mov	dx,WORD PTR es:[si+30]
+	*** 000abf	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000ac2	26 89 47 1c 		mov	WORD PTR es:[bx+28],ax
+	*** 000ac6	26 89 57 1e 		mov	WORD PTR es:[bx+30],dx
+; Line 670
+	*** 000aca	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000acd	26 8b 44 20 		mov	ax,WORD PTR es:[si+32]
+	*** 000ad1	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000ad4	26 89 47 20 		mov	WORD PTR es:[bx+32],ax
+; Line 671
+	*** 000ad8	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000adb	26 8b 44 24 		mov	ax,WORD PTR es:[si+36]
+	*** 000adf	26 8b 54 26 		mov	dx,WORD PTR es:[si+38]
+	*** 000ae3	05 01 00 		add	ax,1
+	*** 000ae6	83 d2 00 		adc	dx,0
+	*** 000ae9	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000aec	26 89 47 24 		mov	WORD PTR es:[bx+36],ax
+	*** 000af0	26 89 57 26 		mov	WORD PTR es:[bx+38],dx
+; Line 672
+	*** 000af4	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000af7	26 8b 44 22 		mov	ax,WORD PTR es:[si+34]
+	*** 000afb	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000afe	26 89 47 22 		mov	WORD PTR es:[bx+34],ax
+; Line 673
+	*** 000b02	26 c7 47 12 ff ff 	mov	WORD PTR es:[bx+18],-1	;ffffH
+; Line 674
+					$FC1569:
+	*** 000b08	ff 46 ee 		inc	WORD PTR [bp-18]	;i
+					$F1568:
+	*** 000b0b	8b 46 ee 		mov	ax,WORD PTR [bp-18]	;i
+	*** 000b0e	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000b11	26 39 47 1f 		cmp	WORD PTR es:[bx+31],ax
+	*** 000b15	77 03 			ja	$JCC2837
+	*** 000b17	e9 df fe 		jmp	$DB1560
+					$JCC2837:
+; Line 639
+; Line 640
+	*** 000b1a	8b f0 			mov	si,ax
+	*** 000b1c	8b c8 			mov	cx,ax
+	*** 000b1e	c1 e6 02 		shl	si,2
+	*** 000b21	03 f1 			add	si,cx
+	*** 000b23	d1 e6 			shl	si,1
+	*** 000b25	26 8b 40 23 		mov	ax,WORD PTR es:[bx+35][si]
+	*** 000b29	26 0b 40 21 		or	ax,WORD PTR es:[bx+33][si]
+	*** 000b2d	74 d9 			je	$FC1569
+; Line 642
+	*** 000b2f	8b f1 			mov	si,cx
+	*** 000b31	8b c1 			mov	ax,cx
+	*** 000b33	c1 e6 02 		shl	si,2
+	*** 000b36	03 f0 			add	si,ax
+	*** 000b38	d1 e6 			shl	si,1
+	*** 000b3a	26 f6 40 29 01 		test	BYTE PTR es:[bx+41][si],1
+	*** 000b3f	75 c7 			jne	$FC1569
+; Line 649
+	*** 000b41	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 000b44	ff 76 08 		push	WORD PTR [bp+8]	;myio
+	*** 000b47	8b f1 			mov	si,cx
+	*** 000b49	c1 e6 02 		shl	si,2
+	*** 000b4c	03 f0 			add	si,ax
+	*** 000b4e	d1 e6 			shl	si,1
+	*** 000b50	26 ff 70 23 		push	WORD PTR es:[bx+35][si]
+	*** 000b54	26 ff 70 21 		push	WORD PTR es:[bx+33][si]
+	*** 000b58	e8 00 00 		call	_AllocateVrio
+	*** 000b5b	83 c4 08 		add	sp,8
+	*** 000b5e	89 46 f4 		mov	WORD PTR [bp-12],ax	;newio
+	*** 000b61	89 56 f6 		mov	WORD PTR [bp-10],dx
+	*** 000b64	0b d0 			or	dx,ax
+	*** 000b66	74 03 			je	$JCC2918
+	*** 000b68	e9 c3 fe 		jmp	$I1573
+					$JCC2918:
+; Line 675
+	*** 000b6b	e9 8b fe 		jmp	$DB1560
+; Line 678
+					$SC1576:
+; Line 683
+	*** 000b6e	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000b71	26 8b 47 1f 		mov	ax,WORD PTR es:[bx+31]
+	*** 000b75	c4 5e 08 		les	bx,DWORD PTR [bp+8]	;myio
+	*** 000b78	26 89 47 10 		mov	WORD PTR es:[bx+16],ax
+; Line 688
+; Line 689
+	*** 000b7c	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000b7f	26 83 7f 17 ff 		cmp	WORD PTR es:[bx+23],-1	;ffffH
+	*** 000b84	75 0f 			jne	$I1580
+	*** 000b86	1e 			push	ds
+	*** 000b87	68 ae 03 		push	OFFSET DGROUP:$SG1581
+	*** 000b8a	1e 			push	ds
+	*** 000b8b	68 ce 03 		push	OFFSET DGROUP:$SG1582
+	*** 000b8e	e8 00 00 		call	_dprintf
+	*** 000b91	83 c4 08 		add	sp,8
+	*** 000b94	cc 			int	3
+					$I1580:
+; Line 691
+	*** 000b95	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 000b98	ff 76 08 		push	WORD PTR [bp+8]	;myio
+	*** 000b9b	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000b9e	26 8b 77 17 		mov	si,WORD PTR es:[bx+23]
+	*** 000ba2	8b c6 			mov	ax,si
+	*** 000ba4	c1 e6 02 		shl	si,2
+	*** 000ba7	03 f0 			add	si,ax
+	*** 000ba9	d1 e6 			shl	si,1
+	*** 000bab	26 ff 70 23 		push	WORD PTR es:[bx+35][si]
+	*** 000baf	26 ff 70 21 		push	WORD PTR es:[bx+33][si]
+	*** 000bb3	e8 00 00 		call	_AllocateVrio
+	*** 000bb6	83 c4 08 		add	sp,8
+	*** 000bb9	89 46 f4 		mov	WORD PTR [bp-12],ax	;newio
+	*** 000bbc	89 56 f6 		mov	WORD PTR [bp-10],dx
+	*** 000bbf	0b d0 			or	dx,ax
+	*** 000bc1	75 03 			jne	$JCC3009
+	*** 000bc3	e9 33 fe 		jmp	$DB1560
+					$JCC3009:
+; Line 694
+	*** 000bc6	8b 46 f2 		mov	ax,WORD PTR [bp-14]
+	*** 000bc9	0b 46 f0 		or	ax,WORD PTR [bp-16]	;firstio
+	*** 000bcc	75 0e 			jne	$I1584
+; Line 695
+	*** 000bce	8b 46 f4 		mov	ax,WORD PTR [bp-12]	;newio
+	*** 000bd1	8b 56 f6 		mov	dx,WORD PTR [bp-10]
+	*** 000bd4	89 46 f0 		mov	WORD PTR [bp-16],ax	;firstio
+	*** 000bd7	89 56 f2 		mov	WORD PTR [bp-14],dx
+; Line 696
+	*** 000bda	eb 11 			jmp	SHORT $I1585
+					$I1584:
+; Line 697
+	*** 000bdc	8b 46 f4 		mov	ax,WORD PTR [bp-12]	;newio
+	*** 000bdf	8b 56 f6 		mov	dx,WORD PTR [bp-10]
+	*** 000be2	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;io
+	*** 000be5	26 89 47 04 		mov	WORD PTR es:[bx+4],ax
+	*** 000be9	26 89 57 06 		mov	WORD PTR es:[bx+6],dx
+					$I1585:
+; Line 699
+	*** 000bed	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000bf0	89 5e f8 		mov	WORD PTR [bp-8],bx	;io
+	*** 000bf3	8c 46 fa 		mov	WORD PTR [bp-6],es
+	*** 000bf6	2b c0 			sub	ax,ax
+	*** 000bf8	26 89 47 06 		mov	WORD PTR es:[bx+6],ax
+	*** 000bfc	26 89 47 04 		mov	WORD PTR es:[bx+4],ax
+; Line 704
+	*** 000c00	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000c03	26 8b 44 08 		mov	ax,WORD PTR es:[si+8]
+	*** 000c07	26 8b 54 0a 		mov	dx,WORD PTR es:[si+10]
+	*** 000c0b	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000c0e	26 89 47 08 		mov	WORD PTR es:[bx+8],ax
+	*** 000c12	26 89 57 0a 		mov	WORD PTR es:[bx+10],dx
+; Line 705
+	*** 000c16	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000c19	26 8b 44 14 		mov	ax,WORD PTR es:[si+20]
+	*** 000c1d	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000c20	26 89 47 14 		mov	WORD PTR es:[bx+20],ax
+; Line 706
+	*** 000c24	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000c27	26 8b 44 16 		mov	ax,WORD PTR es:[si+22]
+	*** 000c2b	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000c2e	26 89 47 16 		mov	WORD PTR es:[bx+22],ax
+; Line 707
+	*** 000c32	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000c35	26 8b 44 18 		mov	ax,WORD PTR es:[si+24]
+	*** 000c39	26 8b 54 1a 		mov	dx,WORD PTR es:[si+26]
+	*** 000c3d	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000c40	26 89 47 18 		mov	WORD PTR es:[bx+24],ax
+	*** 000c44	26 89 57 1a 		mov	WORD PTR es:[bx+26],dx
+; Line 708
+	*** 000c48	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000c4b	26 8b 44 1c 		mov	ax,WORD PTR es:[si+28]
+	*** 000c4f	26 8b 54 1e 		mov	dx,WORD PTR es:[si+30]
+	*** 000c53	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000c56	26 89 47 1c 		mov	WORD PTR es:[bx+28],ax
+	*** 000c5a	26 89 57 1e 		mov	WORD PTR es:[bx+30],dx
+; Line 710
+	*** 000c5e	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000c61	26 8b 44 20 		mov	ax,WORD PTR es:[si+32]
+	*** 000c65	c4 5e f4 		les	bx,DWORD PTR [bp-12]	;newio
+	*** 000c68	26 89 47 20 		mov	WORD PTR es:[bx+32],ax
+; Line 711
+	*** 000c6c	c4 76 08 		les	si,DWORD PTR [bp+8]	;myio
+	*** 000c6f	26 8b 44 24 		mov	ax,WORD PTR es:[si+36]
+	*** 000c73	26 8b 54 26 		mov	dx,WORD PTR es:[si+38]
+	*** 000c77	05 01 00 		add	ax,1
+	*** 000c7a	83 d2 00 		adc	dx,0
+	*** 000c7d	e9 41 fd 		jmp	$L1887
+					$FC1588:
+	*** 000c80	8b 46 f4 		mov	ax,WORD PTR [bp-12]	;newio
+	*** 000c83	8b 56 f6 		mov	dx,WORD PTR [bp-10]
+					$L1885:
+	*** 000c86	89 46 f8 		mov	WORD PTR [bp-8],ax	;io
+	*** 000c89	89 56 fa 		mov	WORD PTR [bp-6],dx
+	*** 000c8c	8b c2 			mov	ax,dx
+	*** 000c8e	0b 46 f8 		or	ax,WORD PTR [bp-8]	;io
+	*** 000c91	74 2d 			je	$FB1589
+; Line 732
+; Line 733
+	*** 000c93	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;io
+	*** 000c96	26 8b 47 04 		mov	ax,WORD PTR es:[bx+4]
+	*** 000c9a	26 8b 57 06 		mov	dx,WORD PTR es:[bx+6]
+	*** 000c9e	89 46 f4 		mov	WORD PTR [bp-12],ax	;newio
+	*** 000ca1	89 56 f6 		mov	WORD PTR [bp-10],dx
+; Line 734
+	*** 000ca4	2b c0 			sub	ax,ax
+	*** 000ca6	26 89 47 06 		mov	WORD PTR es:[bx+6],ax
+	*** 000caa	26 89 47 04 		mov	WORD PTR es:[bx+4],ax
+; Line 735
+	*** 000cae	06 			push	es
+	*** 000caf	53 			push	bx
+	*** 000cb0	e8 00 00 		call	_FreeVrio
+	*** 000cb3	83 c4 04 		add	sp,4
+; Line 736
+	*** 000cb6	2b c0 			sub	ax,ax
+	*** 000cb8	89 46 fa 		mov	WORD PTR [bp-6],ax
+	*** 000cbb	89 46 f8 		mov	WORD PTR [bp-8],ax	;io
+; Line 737
+	*** 000cbe	eb c0 			jmp	SHORT $FC1588
+					$FB1589:
+; Line 739
+	*** 000cc0	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;self
+	*** 000cc3	26 ff 47 09 		inc	WORD PTR es:[bx+9]
+; Line 740
+	*** 000cc7	b8 01 00 		mov	ax,1
+	*** 000cca	eb 72 			jmp	SHORT $EX1513
+; Line 741
+; Line 746
+					$I1586:
+	*** 000ccc	8b 46 f0 		mov	ax,WORD PTR [bp-16]	;firstio
+	*** 000ccf	8b 56 f2 		mov	dx,WORD PTR [bp-14]
+	*** 000cd2	eb 12 			jmp	SHORT $L1886
+					$L1812:
+; Line 756
+	*** 000cd4	ff 76 fa 		push	WORD PTR [bp-6]
+	*** 000cd7	ff 76 f8 		push	WORD PTR [bp-8]	;io
+	*** 000cda	e8 00 00 		call	_QueueVrio
+	*** 000cdd	83 c4 04 		add	sp,4
+; Line 757
+; Line 758
+					$FC1591:
+	*** 000ce0	8b 46 f4 		mov	ax,WORD PTR [bp-12]	;newio
+	*** 000ce3	8b 56 f6 		mov	dx,WORD PTR [bp-10]
+					$L1886:
+	*** 000ce6	89 46 f8 		mov	WORD PTR [bp-8],ax	;io
+	*** 000ce9	89 56 fa 		mov	WORD PTR [bp-6],dx
+	*** 000cec	8b c2 			mov	ax,dx
+	*** 000cee	0b 46 f8 		or	ax,WORD PTR [bp-8]	;io
+	*** 000cf1	75 03 			jne	$JCC3313
+	*** 000cf3	e9 43 fa 		jmp	$L1884
+					$JCC3313:
+; Line 747
+;	rc = -18
+; Line 750
+	*** 000cf6	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;io
+	*** 000cf9	26 8b 47 04 		mov	ax,WORD PTR es:[bx+4]
+	*** 000cfd	26 8b 57 06 		mov	dx,WORD PTR es:[bx+6]
+	*** 000d01	89 46 f4 		mov	WORD PTR [bp-12],ax	;newio
+	*** 000d04	89 56 f6 		mov	WORD PTR [bp-10],dx
+; Line 751
+	*** 000d07	2b c0 			sub	ax,ax
+	*** 000d09	26 89 47 06 		mov	WORD PTR es:[bx+6],ax
+	*** 000d0d	26 89 47 04 		mov	WORD PTR es:[bx+4],ax
+; Line 753
+	*** 000d11	06 			push	es
+	*** 000d12	53 			push	bx
+	*** 000d13	26 ff 77 02 		push	WORD PTR es:[bx+2]
+	*** 000d17	26 ff 37 		push	WORD PTR es:[bx]
+	*** 000d1a	26 c4 1f 		les	bx,DWORD PTR es:[bx]
+	*** 000d1d	26 ff 57 11 		call	WORD PTR es:[bx+17]
+	*** 000d21	83 c4 08 		add	sp,8
+	*** 000d24	89 46 ee 		mov	WORD PTR [bp-18],ax	;i
+	*** 000d27	0b c0 			or	ax,ax
+	*** 000d29	74 b5 			je	$FC1591
+; Line 754
+; Line 755
+	*** 000d2b	83 3e 00 00 00 		cmp	WORD PTR _uDebugLevel,0
+	*** 000d30	74 a2 			je	$L1812
+	*** 000d32	1e 			push	ds
+	*** 000d33	68 f6 00 		push	OFFSET DGROUP:$S1398_dszMWorkerBusy
+	*** 000d36	e8 00 00 		call	_dprintf
+	*** 000d39	83 c4 04 		add	sp,4
+	*** 000d3c	eb 96 			jmp	SHORT $L1812
+					$EX1513:
+	*** 000d3e	5e 			pop	si
+	*** 000d3f	c9 			leave	
+	*** 000d40	c3 			ret	
+	*** 000d41	90 			nop	
+
+_MirrorWorker	ENDP
+	PUBLIC	_MirrorUpdate
+_MirrorUpdate	PROC NEAR
+; Line 784
+	*** 000d42	c8 0a 00 00 		enter	10,0
+	*** 000d46	57 			push	di
+	*** 000d47	56 			push	si
+;	mirror = -4
+;	cfg = -8
+;	i = -10
+;	sec = 8
+;	self = 4
+; Line 786
+	*** 000d48	8b 46 08 		mov	ax,WORD PTR [bp+8]	;sec
+	*** 000d4b	8b 56 0a 		mov	dx,WORD PTR [bp+10]
+	*** 000d4e	89 46 f8 		mov	WORD PTR [bp-8],ax	;cfg
+	*** 000d51	89 56 fa 		mov	WORD PTR [bp-6],dx
+; Line 790
+	*** 000d54	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;self
+	*** 000d57	89 5e fc 		mov	WORD PTR [bp-4],bx	;mirror
+	*** 000d5a	8c 46 fe 		mov	WORD PTR [bp-2],es
+	*** 000d5d	26 8b 47 0d 		mov	ax,WORD PTR es:[bx+13]
+	*** 000d61	26 0b 47 0b 		or	ax,WORD PTR es:[bx+11]
+	*** 000d65	75 0f 			jne	$I1603
+	*** 000d67	1e 			push	ds
+	*** 000d68	68 e3 03 		push	OFFSET DGROUP:$SG1604
+	*** 000d6b	1e 			push	ds
+	*** 000d6c	68 fc 03 		push	OFFSET DGROUP:$SG1605
+	*** 000d6f	e8 00 00 		call	_dprintf
+	*** 000d72	83 c4 08 		add	sp,8
+	*** 000d75	cc 			int	3
+					$I1603:
+; Line 791
+	*** 000d76	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000d79	26 81 7f 0f 00 00 	cmp	WORD PTR es:[bx+15],OFFSET _MirrorNotify
+	*** 000d7f	74 0f 			je	$I1606
+	*** 000d81	1e 			push	ds
+	*** 000d82	68 11 04 		push	OFFSET DGROUP:$SG1607
+	*** 000d85	1e 			push	ds
+	*** 000d86	68 37 04 		push	OFFSET DGROUP:$SG1608
+	*** 000d89	e8 00 00 		call	_dprintf
+	*** 000d8c	83 c4 08 		add	sp,8
+	*** 000d8f	cc 			int	3
+					$I1606:
+; Line 792
+	*** 000d90	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000d93	26 81 7f 11 00 00 	cmp	WORD PTR es:[bx+17],OFFSET _MirrorWorker
+	*** 000d99	74 0f 			je	$I1609
+	*** 000d9b	1e 			push	ds
+	*** 000d9c	68 4c 04 		push	OFFSET DGROUP:$SG1610
+	*** 000d9f	1e 			push	ds
+	*** 000da0	68 72 04 		push	OFFSET DGROUP:$SG1611
+	*** 000da3	e8 00 00 		call	_dprintf
+	*** 000da6	83 c4 08 		add	sp,8
+	*** 000da9	cc 			int	3
+					$I1609:
+; Line 793
+	*** 000daa	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000dad	26 81 7f 13 00 00 	cmp	WORD PTR es:[bx+19],OFFSET _MirrorUpdate
+	*** 000db3	74 0f 			je	$I1612
+	*** 000db5	1e 			push	ds
+	*** 000db6	68 87 04 		push	OFFSET DGROUP:$SG1613
+	*** 000db9	1e 			push	ds
+	*** 000dba	68 ad 04 		push	OFFSET DGROUP:$SG1614
+	*** 000dbd	e8 00 00 		call	_dprintf
+	*** 000dc0	83 c4 08 		add	sp,8
+	*** 000dc3	cc 			int	3
+					$I1612:
+; Line 794
+	*** 000dc4	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000dc7	26 81 7f 15 00 00 	cmp	WORD PTR es:[bx+21],OFFSET _MirrorCtrl
+	*** 000dcd	74 0f 			je	$I1615
+	*** 000dcf	1e 			push	ds
+	*** 000dd0	68 c2 04 		push	OFFSET DGROUP:$SG1616
+	*** 000dd3	1e 			push	ds
+	*** 000dd4	68 e5 04 		push	OFFSET DGROUP:$SG1617
+	*** 000dd7	e8 00 00 		call	_dprintf
+	*** 000dda	83 c4 08 		add	sp,8
+	*** 000ddd	cc 			int	3
+					$I1615:
+; Line 796
+	*** 000dde	c4 1e 00 00 		les	bx,DWORD PTR _pGlobalInfoSeg
+	*** 000de2	26 8b 07 		mov	ax,WORD PTR es:[bx]
+	*** 000de5	26 8b 57 02 		mov	dx,WORD PTR es:[bx+2]
+	*** 000de9	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;cfg
+	*** 000dec	26 89 47 10 		mov	WORD PTR es:[bx+16],ax
+	*** 000df0	26 89 57 12 		mov	WORD PTR es:[bx+18],dx
+; Line 798
+	*** 000df4	c7 46 f6 00 00 		mov	WORD PTR [bp-10],0	;i
+	*** 000df9	eb 71 			jmp	SHORT $F1618
+	*** 000dfb	90 			nop	
+					$I1621:
+	*** 000dfc	8b f0 			mov	si,ax
+	*** 000dfe	c1 e6 02 		shl	si,2
+	*** 000e01	03 f0 			add	si,ax
+	*** 000e03	d1 e6 			shl	si,1
+	*** 000e05	26 83 78 25 ff 		cmp	WORD PTR es:[bx+37][si],-1	;ffffH
+	*** 000e0a	75 26 			jne	$I1623
+	*** 000e0c	26 83 78 27 ff 		cmp	WORD PTR es:[bx+39][si],-1	;ffffH
+	*** 000e11	75 1f 			jne	$I1623
+; Line 806
+; Line 807
+	*** 000e13	8b d8 			mov	bx,ax
+	*** 000e15	c1 e3 04 		shl	bx,4
+	*** 000e18	8e 46 fa 		mov	es,WORD PTR [bp-6]
+	*** 000e1b	03 5e f8 		add	bx,WORD PTR [bp-8]	;cfg
+	*** 000e1e	26 80 4f 24 01 		or	BYTE PTR es:[bx+36],1
+; Line 808
+	*** 000e23	26 c7 47 26 ff ff 	mov	WORD PTR es:[bx+38],-1	;ffffH
+	*** 000e29	26 c7 47 28 ff ff 	mov	WORD PTR es:[bx+40],-1	;ffffH
+; Line 809
+; Line 810
+	*** 000e2f	eb 38 			jmp	SHORT $I1624
+	*** 000e31	90 			nop	
+					$I1623:
+; Line 811
+; Line 812
+	*** 000e32	8b d8 			mov	bx,ax
+	*** 000e34	c1 e3 04 		shl	bx,4
+	*** 000e37	8e 46 fa 		mov	es,WORD PTR [bp-6]
+	*** 000e3a	03 5e f8 		add	bx,WORD PTR [bp-8]	;cfg
+	*** 000e3d	26 80 67 24 fe 		and	BYTE PTR es:[bx+36],254	;00feH
+; Line 813
+	*** 000e42	8b 76 f6 		mov	si,WORD PTR [bp-10]	;i
+	*** 000e45	8b c6 			mov	ax,si
+	*** 000e47	c1 e6 02 		shl	si,2
+	*** 000e4a	03 f0 			add	si,ax
+	*** 000e4c	d1 e6 			shl	si,1
+	*** 000e4e	8b c3 			mov	ax,bx
+	*** 000e50	8c c1 			mov	cx,es
+	*** 000e52	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000e55	26 8b 50 25 		mov	dx,WORD PTR es:[bx+37][si]
+	*** 000e59	26 8b 78 27 		mov	di,WORD PTR es:[bx+39][si]
+	*** 000e5d	8e c1 			mov	es,cx
+	*** 000e5f	8b d8 			mov	bx,ax
+	*** 000e61	26 89 57 26 		mov	WORD PTR es:[bx+38],dx
+	*** 000e65	26 89 7f 28 		mov	WORD PTR es:[bx+40],di
+; Line 814
+					$I1624:
+; Line 815
+	*** 000e69	ff 46 f6 		inc	WORD PTR [bp-10]	;i
+					$F1618:
+	*** 000e6c	8b 46 f6 		mov	ax,WORD PTR [bp-10]	;i
+	*** 000e6f	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000e72	26 39 47 1f 		cmp	WORD PTR es:[bx+31],ax
+	*** 000e76	76 34 			jbe	$FB1620
+; Line 799
+; Line 800
+	*** 000e78	8b f0 			mov	si,ax
+	*** 000e7a	8b c8 			mov	cx,ax
+	*** 000e7c	c1 e6 02 		shl	si,2
+	*** 000e7f	03 f1 			add	si,cx
+	*** 000e81	d1 e6 			shl	si,1
+	*** 000e83	26 8b 48 23 		mov	cx,WORD PTR es:[bx+35][si]
+	*** 000e87	26 0b 48 21 		or	cx,WORD PTR es:[bx+33][si]
+	*** 000e8b	74 03 			je	$JCC3723
+	*** 000e8d	e9 6c ff 		jmp	$I1621
+					$JCC3723:
+; Line 801
+; Line 802
+	*** 000e90	8b d8 			mov	bx,ax
+	*** 000e92	c1 e3 04 		shl	bx,4
+	*** 000e95	8e 46 fa 		mov	es,WORD PTR [bp-6]
+	*** 000e98	03 5e f8 		add	bx,WORD PTR [bp-8]	;cfg
+	*** 000e9b	26 80 67 24 fe 		and	BYTE PTR es:[bx+36],254	;00feH
+; Line 803
+	*** 000ea0	2b c0 			sub	ax,ax
+	*** 000ea2	26 89 47 28 		mov	WORD PTR es:[bx+40],ax
+	*** 000ea6	26 89 47 26 		mov	WORD PTR es:[bx+38],ax
+; Line 804
+; Line 805
+	*** 000eaa	eb bd 			jmp	SHORT $I1624
+					$FB1620:
+; Line 818
+	*** 000eac	26 f6 47 06 01 		test	BYTE PTR es:[bx+6],1
+	*** 000eb1	74 0b 			je	$I1625
+; Line 819
+	*** 000eb3	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;cfg
+	*** 000eb6	26 80 4f 1b 01 		or	BYTE PTR es:[bx+27],1
+; Line 820
+	*** 000ebb	eb 09 			jmp	SHORT $I1626
+	*** 000ebd	90 			nop	
+					$I1625:
+; Line 821
+	*** 000ebe	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;cfg
+	*** 000ec1	26 80 67 1b fe 		and	BYTE PTR es:[bx+27],254	;00feH
+					$I1626:
+; Line 823
+	*** 000ec6	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000ec9	26 f6 47 06 08 		test	BYTE PTR es:[bx+6],8
+	*** 000ece	74 6e 			je	$I1627
+	*** 000ed0	c4 76 f8 		les	si,DWORD PTR [bp-8]	;cfg
+	*** 000ed3	26 f6 44 1b 01 		test	BYTE PTR es:[si+27],1
+	*** 000ed8	75 64 			jne	$I1627
+; Line 824
+; Line 825
+	*** 000eda	26 80 4c 1b 08 		or	BYTE PTR es:[si+27],8
+; Line 826
+	*** 000edf	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000ee2	26 8b 47 1b 		mov	ax,WORD PTR es:[bx+27]
+	*** 000ee6	26 8b 57 1d 		mov	dx,WORD PTR es:[bx+29]
+	*** 000eea	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;cfg
+	*** 000eed	26 89 87 fa 01 		mov	WORD PTR es:[bx+506],ax
+	*** 000ef2	26 89 97 fc 01 		mov	WORD PTR es:[bx+508],dx
+; Line 827
+	*** 000ef7	83 3e 00 00 00 		cmp	WORD PTR _uDebugLevel,0
+	*** 000efc	74 10 			je	$L1814
+	*** 000efe	8d 87 fa 01 		lea	ax,WORD PTR [bx+506]
+	*** 000f02	06 			push	es
+	*** 000f03	50 			push	ax
+	*** 000f04	1e 			push	ds
+	*** 000f05	68 36 02 		push	OFFSET DGROUP:$S1405_dszMUpdateRebuild
+	*** 000f08	e8 00 00 		call	_dprintf
+	*** 000f0b	83 c4 08 		add	sp,8
+					$L1814:
+; Line 828
+	*** 000f0e	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;cfg
+	*** 000f11	26 8b 87 fa 01 		mov	ax,WORD PTR es:[bx+506]
+	*** 000f16	26 8b 97 fc 01 		mov	dx,WORD PTR es:[bx+508]
+	*** 000f1b	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000f1e	26 39 57 0d 		cmp	WORD PTR es:[bx+13],dx
+	*** 000f22	77 22 			ja	$I1631
+	*** 000f24	72 06 			jb	$L1816
+	*** 000f26	26 39 47 0b 		cmp	WORD PTR es:[bx+11],ax
+	*** 000f2a	77 1a 			ja	$I1631
+					$L1816:
+	*** 000f2c	1e 			push	ds
+	*** 000f2d	68 fa 04 		push	OFFSET DGROUP:$SG1629
+	*** 000f30	1e 			push	ds
+	*** 000f31	68 1d 05 		push	OFFSET DGROUP:$SG1630
+	*** 000f34	e8 00 00 		call	_dprintf
+	*** 000f37	83 c4 08 		add	sp,8
+	*** 000f3a	cc 			int	3
+; Line 829
+; Line 830
+	*** 000f3b	eb 09 			jmp	SHORT $I1631
+	*** 000f3d	90 			nop	
+					$I1627:
+; Line 831
+	*** 000f3e	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;cfg
+	*** 000f41	26 80 67 1b f7 		and	BYTE PTR es:[bx+27],247	;00f7H
+					$I1631:
+; Line 833
+	*** 000f46	68 fe 01 		push	510	;01feH
+	*** 000f49	ff 76 0a 		push	WORD PTR [bp+10]
+	*** 000f4c	ff 76 08 		push	WORD PTR [bp+8]	;sec
+	*** 000f4f	e8 00 00 		call	_Crc16
+	*** 000f52	83 c4 06 		add	sp,6
+	*** 000f55	c4 5e f8 		les	bx,DWORD PTR [bp-8]	;cfg
+	*** 000f58	26 89 87 fe 01 		mov	WORD PTR es:[bx+510],ax
+; Line 834
+	*** 000f5d	b8 01 00 		mov	ax,1
+; Line 835
+	*** 000f60	5e 			pop	si
+	*** 000f61	5f 			pop	di
+	*** 000f62	c9 			leave	
+	*** 000f63	c3 			ret	
+
+_MirrorUpdate	ENDP
+	PUBLIC	_MirrorCtrl
+_MirrorCtrl	PROC NEAR
+; Line 860
+	*** 000f64	c8 2c 00 00 		enter	44,0
+	*** 000f68	57 			push	di
+	*** 000f69	56 			push	si
+;	mirror = -4
+;	result = -6
+;	i = -8
+;	j = -10
+;	data = 14
+;	param = 10
+;	cmd = 8
+;	self = 4
+; Line 862
+	*** 000f6a	c7 46 fa 03 81 		mov	WORD PTR [bp-6],-32509	;8103H	;result
+; Line 866
+	*** 000f6f	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;self
+	*** 000f72	89 5e fc 		mov	WORD PTR [bp-4],bx	;mirror
+	*** 000f75	8c 46 fe 		mov	WORD PTR [bp-2],es
+	*** 000f78	26 8b 47 0d 		mov	ax,WORD PTR es:[bx+13]
+	*** 000f7c	26 0b 47 0b 		or	ax,WORD PTR es:[bx+11]
+	*** 000f80	75 0f 			jne	$I1645
+	*** 000f82	1e 			push	ds
+	*** 000f83	68 32 05 		push	OFFSET DGROUP:$SG1646
+	*** 000f86	1e 			push	ds
+	*** 000f87	68 4b 05 		push	OFFSET DGROUP:$SG1647
+	*** 000f8a	e8 00 00 		call	_dprintf
+	*** 000f8d	83 c4 08 		add	sp,8
+	*** 000f90	cc 			int	3
+					$I1645:
+; Line 867
+	*** 000f91	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000f94	26 81 7f 0f 00 00 	cmp	WORD PTR es:[bx+15],OFFSET _MirrorNotify
+	*** 000f9a	74 0f 			je	$I1648
+	*** 000f9c	1e 			push	ds
+	*** 000f9d	68 60 05 		push	OFFSET DGROUP:$SG1649
+	*** 000fa0	1e 			push	ds
+	*** 000fa1	68 86 05 		push	OFFSET DGROUP:$SG1650
+	*** 000fa4	e8 00 00 		call	_dprintf
+	*** 000fa7	83 c4 08 		add	sp,8
+	*** 000faa	cc 			int	3
+					$I1648:
+; Line 868
+	*** 000fab	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000fae	26 81 7f 11 00 00 	cmp	WORD PTR es:[bx+17],OFFSET _MirrorWorker
+	*** 000fb4	74 0f 			je	$I1651
+	*** 000fb6	1e 			push	ds
+	*** 000fb7	68 9b 05 		push	OFFSET DGROUP:$SG1652
+	*** 000fba	1e 			push	ds
+	*** 000fbb	68 c1 05 		push	OFFSET DGROUP:$SG1653
+	*** 000fbe	e8 00 00 		call	_dprintf
+	*** 000fc1	83 c4 08 		add	sp,8
+	*** 000fc4	cc 			int	3
+					$I1651:
+; Line 869
+	*** 000fc5	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000fc8	26 81 7f 13 00 00 	cmp	WORD PTR es:[bx+19],OFFSET _MirrorUpdate
+	*** 000fce	74 0f 			je	$I1654
+	*** 000fd0	1e 			push	ds
+	*** 000fd1	68 d6 05 		push	OFFSET DGROUP:$SG1655
+	*** 000fd4	1e 			push	ds
+	*** 000fd5	68 fc 05 		push	OFFSET DGROUP:$SG1656
+	*** 000fd8	e8 00 00 		call	_dprintf
+	*** 000fdb	83 c4 08 		add	sp,8
+	*** 000fde	cc 			int	3
+					$I1654:
+; Line 870
+	*** 000fdf	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 000fe2	26 81 7f 15 00 00 	cmp	WORD PTR es:[bx+21],OFFSET _MirrorCtrl
+	*** 000fe8	74 0f 			je	$I1657
+	*** 000fea	1e 			push	ds
+	*** 000feb	68 11 06 		push	OFFSET DGROUP:$SG1658
+	*** 000fee	1e 			push	ds
+	*** 000fef	68 34 06 		push	OFFSET DGROUP:$SG1659
+	*** 000ff2	e8 00 00 		call	_dprintf
+	*** 000ff5	83 c4 08 		add	sp,8
+	*** 000ff8	cc 			int	3
+					$I1657:
+; Line 872
+	*** 000ff9	8b 46 08 		mov	ax,WORD PTR [bp+8]	;cmd
+	*** 000ffc	3d 0c 00 		cmp	ax,12	;000cH
+	*** 000fff	75 03 			jne	$JCC4095
+	*** 001001	e9 7c 01 		jmp	$SC1678
+					$JCC4095:
+	*** 001004	76 03 			jbe	$JCC4100
+	*** 001006	e9 25 06 		jmp	$SD1732
+					$JCC4100:
+	*** 001009	0a c0 			or	al,al
+	*** 00100b	74 15 			je	$SC1664
+	*** 00100d	fe c8 			dec	al
+	*** 00100f	74 37 			je	$SC1666
+	*** 001011	2c 09 			sub	al,9
+	*** 001013	75 03 			jne	$JCC4115
+	*** 001015	e9 ce 02 		jmp	$SC1694
+					$JCC4115:
+	*** 001018	fe c8 			dec	al
+	*** 00101a	75 03 			jne	$JCC4122
+	*** 00101c	e9 ad 00 		jmp	$SC1669
+					$JCC4122:
+	*** 00101f	e9 0c 06 		jmp	$SD1732
+; Line 873
+; Line 874
+					$SC1664:
+; Line 875
+	*** 001022	f6 06 01 00 04 		test	BYTE PTR _uDebugLevel+1,4
+	*** 001027	74 0a 			je	$L1817
+	*** 001029	1e 			push	ds
+	*** 00102a	68 49 06 		push	OFFSET DGROUP:$SG1665
+	*** 00102d	e8 00 00 		call	_dprintf
+	*** 001030	83 c4 04 		add	sp,4
+					$L1817:
+; Line 876
+	*** 001033	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 001036	26 8b 47 1f 		mov	ax,WORD PTR es:[bx+31]
+	*** 00103a	c4 5e 0e 		les	bx,DWORD PTR [bp+14]	;data
+	*** 00103d	26 89 07 		mov	WORD PTR es:[bx],ax
+; Line 877
+	*** 001040	c7 46 fa 00 00 		mov	WORD PTR [bp-6],0	;result
+; Line 878
+	*** 001045	e9 e6 05 		jmp	$SD1732
+; Line 881
+					$SC1666:
+; Line 882
+	*** 001048	f6 06 01 00 04 		test	BYTE PTR _uDebugLevel+1,4
+	*** 00104d	74 0a 			je	$L1819
+	*** 00104f	1e 			push	ds
+	*** 001050	68 63 06 		push	OFFSET DGROUP:$SG1667
+	*** 001053	e8 00 00 		call	_dprintf
+	*** 001056	83 c4 04 		add	sp,4
+					$L1819:
+; Line 883
+	*** 001059	c7 46 fa 00 00 		mov	WORD PTR [bp-6],0	;result
+; Line 884
+;	d = -14
+; Line 885
+	*** 00105e	8b 46 0e 		mov	ax,WORD PTR [bp+14]	;data
+	*** 001061	8b 56 10 		mov	dx,WORD PTR [bp+16]
+	*** 001064	89 46 f2 		mov	WORD PTR [bp-14],ax	;d
+	*** 001067	89 56 f4 		mov	WORD PTR [bp-12],dx
+; Line 887
+	*** 00106a	8e c2 			mov	es,dx
+	*** 00106c	8b d8 			mov	bx,ax
+	*** 00106e	8b 76 fc 		mov	si,WORD PTR [bp-4]	;mirror
+	*** 001071	8b 7e fe 		mov	di,WORD PTR [bp-2]
+	*** 001074	56 			push	si
+	*** 001075	57 			push	di
+	*** 001076	06 			push	es
+	*** 001077	1e 			push	ds
+	*** 001078	57 			push	di
+	*** 001079	8d 7f 02 		lea	di,WORD PTR [bx+2]
+	*** 00107c	1f 			pop	ds
+	ASSUME DS: DGROUP
+	*** 00107d	a5 			movsw
+	*** 00107e	a5 			movsw
+	*** 00107f	a5 			movsw
+	*** 001080	1f 			pop	ds
+	ASSUME DS: DGROUP
+	*** 001081	07 			pop	es
+	*** 001082	5f 			pop	di
+	*** 001083	5e 			pop	si
+; Line 888
+	*** 001084	8e c7 			mov	es,di
+	*** 001086	26 8b 4c 07 		mov	cx,WORD PTR es:[si+7]
+	*** 00108a	8e c2 			mov	es,dx
+	*** 00108c	8b d8 			mov	bx,ax
+	*** 00108e	26 89 4f 08 		mov	WORD PTR es:[bx+8],cx
+; Line 889
+	*** 001092	8e c7 			mov	es,di
+	*** 001094	26 8b 4c 0b 		mov	cx,WORD PTR es:[si+11]
+	*** 001098	26 8b 5c 0d 		mov	bx,WORD PTR es:[si+13]
+	*** 00109c	8e c2 			mov	es,dx
+	*** 00109e	8b f0 			mov	si,ax
+	*** 0010a0	26 89 4c 0a 		mov	WORD PTR es:[si+10],cx
+	*** 0010a4	26 89 5c 0c 		mov	WORD PTR es:[si+12],bx
+; Line 891
+	*** 0010a8	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 0010ab	26 8b 4f 1f 		mov	cx,WORD PTR es:[bx+31]
+	*** 0010af	8e c2 			mov	es,dx
+	*** 0010b1	8b de 			mov	bx,si
+	*** 0010b3	26 89 4f 0e 		mov	WORD PTR es:[bx+14],cx
+; Line 892
+	*** 0010b7	c4 76 fc 		les	si,DWORD PTR [bp-4]	;mirror
+	*** 0010ba	26 8a 4c 06 		mov	cl,BYTE PTR es:[si+6]
+	*** 0010be	8e c2 			mov	es,dx
+	*** 0010c0	26 88 4f 10 		mov	BYTE PTR es:[bx+16],cl
+; Line 893
+	*** 0010c4	26 c6 47 11 00 		mov	BYTE PTR es:[bx+17],0
+; Line 894
+; Line 895
+	*** 0010c9	e9 62 05 		jmp	$SD1732
+; Line 898
+					$SC1669:
+; Line 899
+	*** 0010cc	f6 06 01 00 04 		test	BYTE PTR _uDebugLevel+1,4
+	*** 0010d1	74 0a 			je	$L1821
+	*** 0010d3	1e 			push	ds
+	*** 0010d4	68 73 06 		push	OFFSET DGROUP:$SG1670
+	*** 0010d7	e8 00 00 		call	_dprintf
+	*** 0010da	83 c4 04 		add	sp,4
+					$L1821:
+; Line 900
+	*** 0010dd	c7 46 fa 00 00 		mov	WORD PTR [bp-6],0	;result
+; Line 902
+;	p = -14
+; Line 905
+	*** 0010e2	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 0010e5	26 8b 47 0b 		mov	ax,WORD PTR es:[bx+11]
+	*** 0010e9	26 8b 57 0d 		mov	dx,WORD PTR es:[bx+13]
+	*** 0010ed	c4 5e 0a 		les	bx,DWORD PTR [bp+10]	;param
+	*** 0010f0	89 5e f2 		mov	WORD PTR [bp-14],bx	;d
+	*** 0010f3	8c 46 f4 		mov	WORD PTR [bp-12],es
+	*** 0010f6	26 39 57 04 		cmp	WORD PTR es:[bx+4],dx
+	*** 0010fa	72 10 			jb	$I1675
+	*** 0010fc	77 06 			ja	$L1823
+	*** 0010fe	26 39 47 02 		cmp	WORD PTR es:[bx+2],ax
+	*** 001102	72 08 			jb	$I1675
+					$L1823:
+; Line 906
+; Line 907
+	*** 001104	c7 46 fa 08 81 		mov	WORD PTR [bp-6],-32504	;8108H	;result
+; Line 908
+	*** 001109	eb 5a 			jmp	SHORT $I1677
+; Line 909
+	*** 00110b	90 			nop	
+; Line 910
+					$I1675:
+	*** 00110c	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 00110f	26 80 7f 06 00 		cmp	BYTE PTR es:[bx+6],0
+	*** 001114	74 08 			je	$I1676
+; Line 911
+; Line 912
+	*** 001116	c7 46 fa 14 81 		mov	WORD PTR [bp-6],-32492	;8114H	;result
+; Line 913
+	*** 00111b	eb 48 			jmp	SHORT $I1677
+; Line 914
+	*** 00111d	90 			nop	
+; Line 916
+					$I1676:
+	*** 00111e	26 80 4f 06 08 		or	BYTE PTR es:[bx+6],8
+; Line 917
+	*** 001123	c4 76 0a 		les	si,DWORD PTR [bp+10]	;param
+	*** 001126	26 8b 44 02 		mov	ax,WORD PTR es:[si+2]
+	*** 00112a	26 8b 54 04 		mov	dx,WORD PTR es:[si+4]
+	*** 00112e	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 001131	26 89 47 1b 		mov	WORD PTR es:[bx+27],ax
+	*** 001135	26 89 57 1d 		mov	WORD PTR es:[bx+29],dx
+; Line 919
+	*** 001139	6a 01 			push	1
+	*** 00113b	06 			push	es
+	*** 00113c	53 			push	bx
+	*** 00113d	e8 00 00 		call	_UpdateCfg
+	*** 001140	83 c4 06 		add	sp,6
+; Line 920
+	*** 001143	6a 01 			push	1
+	*** 001145	c4 5e f2 		les	bx,DWORD PTR [bp-14]	;d
+	*** 001148	26 ff 77 04 		push	WORD PTR es:[bx+4]
+	*** 00114c	26 ff 77 02 		push	WORD PTR es:[bx+2]
+	*** 001150	ff 76 fe 		push	WORD PTR [bp-2]
+	*** 001153	ff 76 fc 		push	WORD PTR [bp-4]	;mirror
+	*** 001156	e8 00 00 		call	_BuildCreate
+	*** 001159	83 c4 0a 		add	sp,10	;000aH
+	*** 00115c	0b c0 			or	ax,ax
+	*** 00115e	74 05 			je	$I1677
+; Line 921
+	*** 001160	c7 46 fa 09 81 		mov	WORD PTR [bp-6],-32503	;8109H	;result
+; Line 922
+					$I1677:
+; Line 924
+	*** 001165	ff 76 10 		push	WORD PTR [bp+16]
+	*** 001168	ff 76 0e 		push	WORD PTR [bp+14]	;data
+	*** 00116b	6a 00 			push	0
+	*** 00116d	6a 00 			push	0
+	*** 00116f	6a 01 			push	1
+	*** 001171	c4 5e 04 		les	bx,DWORD PTR [bp+4]	;self
+	*** 001174	06 			push	es
+	*** 001175	53 			push	bx
+	*** 001176	26 ff 57 15 		call	WORD PTR es:[bx+21]
+	*** 00117a	83 c4 0e 		add	sp,14	;000eH
+; Line 925
+	*** 00117d	e9 ae 04 		jmp	$SD1732
+; Line 928
+					$SC1678:
+; Line 929
+	*** 001180	f6 06 01 00 04 		test	BYTE PTR _uDebugLevel+1,4
+	*** 001185	74 0a 			je	$L1824
+	*** 001187	1e 			push	ds
+	*** 001188	68 8c 06 		push	OFFSET DGROUP:$SG1679
+	*** 00118b	e8 00 00 		call	_dprintf
+	*** 00118e	83 c4 04 		add	sp,4
+					$L1824:
+; Line 930
+	*** 001191	c7 46 fa 00 00 		mov	WORD PTR [bp-6],0	;result
+; Line 932
+;	p = -14
+; Line 935
+	*** 001196	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 001199	26 8b 47 0b 		mov	ax,WORD PTR es:[bx+11]
+	*** 00119d	26 8b 57 0d 		mov	dx,WORD PTR es:[bx+13]
+	*** 0011a1	c4 5e 0a 		les	bx,DWORD PTR [bp+10]	;param
+	*** 0011a4	89 5e f2 		mov	WORD PTR [bp-14],bx	;d
+	*** 0011a7	8c 46 f4 		mov	WORD PTR [bp-12],es
+	*** 0011aa	26 39 57 0b 		cmp	WORD PTR es:[bx+11],dx
+	*** 0011ae	72 10 			jb	$I1684
+	*** 0011b0	77 06 			ja	$L1826
+	*** 0011b2	26 39 47 09 		cmp	WORD PTR es:[bx+9],ax
+	*** 0011b6	72 08 			jb	$I1684
+					$L1826:
+; Line 936
+; Line 937
+	*** 0011b8	c7 46 fa 08 81 		mov	WORD PTR [bp-6],-32504	;8108H	;result
+; Line 938
+	*** 0011bd	e9 6e 04 		jmp	$SD1732
+; Line 939
+; Line 941
+					$I1684:
+	*** 0011c0	c7 46 fa 13 81 		mov	WORD PTR [bp-6],-32493	;8113H	;result
+; Line 942
+	*** 0011c5	c7 46 f8 00 00 		mov	WORD PTR [bp-8],0	;i
+	*** 0011ca	e9 bc 00 		jmp	$F1685
+; Line 956
+	*** 0011cd	90 			nop	
+; Line 957
+					$I1689:
+; Line 958
+	*** 0011ce	8b 76 f8 		mov	si,WORD PTR [bp-8]	;i
+	*** 0011d1	8b c6 			mov	ax,si
+	*** 0011d3	c1 e6 02 		shl	si,2
+	*** 0011d6	03 f0 			add	si,ax
+	*** 0011d8	d1 e6 			shl	si,1
+	*** 0011da	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 0011dd	26 83 78 25 ff 		cmp	WORD PTR es:[bx+37][si],-1	;ffffH
+	*** 0011e2	75 07 			jne	$L1828
+	*** 0011e4	26 83 78 27 ff 		cmp	WORD PTR es:[bx+39][si],-1	;ffffH
+	*** 0011e9	74 22 			je	$L1830
+					$L1828:
+	*** 0011eb	c4 7e f2 		les	di,DWORD PTR [bp-14]	;d
+	*** 0011ee	26 8b 45 09 		mov	ax,WORD PTR es:[di+9]
+	*** 0011f2	26 8b 55 0b 		mov	dx,WORD PTR es:[di+11]
+	*** 0011f6	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 0011f9	26 39 50 27 		cmp	WORD PTR es:[bx+39][si],dx
+	*** 0011fd	73 03 			jae	$JCC4605
+	*** 0011ff	e9 2c 04 		jmp	$SD1732
+					$JCC4605:
+	*** 001202	77 09 			ja	$L1830
+	*** 001204	26 39 40 25 		cmp	WORD PTR es:[bx+37][si],ax
+	*** 001208	77 03 			ja	$JCC4616
+	*** 00120a	e9 21 04 		jmp	$SD1732
+					$JCC4616:
+					$L1830:
+; Line 959
+; Line 960
+	*** 00120d	c4 5e f2 		les	bx,DWORD PTR [bp-14]	;d
+	*** 001210	26 8b 47 09 		mov	ax,WORD PTR es:[bx+9]
+	*** 001214	26 8b 57 0b 		mov	dx,WORD PTR es:[bx+11]
+	*** 001218	8b 76 f8 		mov	si,WORD PTR [bp-8]	;i
+	*** 00121b	8b ce 			mov	cx,si
+	*** 00121d	c1 e6 02 		shl	si,2
+	*** 001220	03 f1 			add	si,cx
+	*** 001222	d1 e6 			shl	si,1
+	*** 001224	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 001227	26 89 40 25 		mov	WORD PTR es:[bx+37][si],ax
+	*** 00122b	26 89 50 27 		mov	WORD PTR es:[bx+39][si],dx
+; Line 961
+	*** 00122f	26 80 7f 06 00 		cmp	BYTE PTR es:[bx+6],0
+	*** 001234	74 03 			je	$JCC4660
+	*** 001236	e9 f5 03 		jmp	$SD1732
+					$JCC4660:
+; Line 962
+; Line 963
+	*** 001239	26 80 4f 06 08 		or	BYTE PTR es:[bx+6],8
+; Line 964
+	*** 00123e	c4 76 f2 		les	si,DWORD PTR [bp-14]	;d
+	*** 001241	26 8b 44 09 		mov	ax,WORD PTR es:[si+9]
+	*** 001245	26 8b 54 0b 		mov	dx,WORD PTR es:[si+11]
+	*** 001249	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 00124c	26 89 47 1b 		mov	WORD PTR es:[bx+27],ax
+	*** 001250	26 89 57 1d 		mov	WORD PTR es:[bx+29],dx
+; Line 966
+	*** 001254	6a 01 			push	1
+	*** 001256	06 			push	es
+	*** 001257	53 			push	bx
+	*** 001258	e8 00 00 		call	_UpdateCfg
+	*** 00125b	83 c4 06 		add	sp,6
+; Line 967
+	*** 00125e	6a 00 			push	0
+	*** 001260	c4 5e f2 		les	bx,DWORD PTR [bp-14]	;d
+	*** 001263	26 ff 77 0b 		push	WORD PTR es:[bx+11]
+	*** 001267	26 ff 77 09 		push	WORD PTR es:[bx+9]
+	*** 00126b	ff 76 fe 		push	WORD PTR [bp-2]
+	*** 00126e	ff 76 fc 		push	WORD PTR [bp-4]	;mirror
+	*** 001271	e8 00 00 		call	_BuildCreate
+	*** 001274	83 c4 0a 		add	sp,10	;000aH
+	*** 001277	0b c0 			or	ax,ax
+	*** 001279	75 03 			jne	$JCC4729
+	*** 00127b	e9 b0 03 		jmp	$SD1732
+					$JCC4729:
+; Line 968
+	*** 00127e	c7 46 fa 09 81 		mov	WORD PTR [bp-6],-32503	;8109H	;result
+; Line 969
+; Line 970
+; Line 971
+	*** 001283	e9 a8 03 		jmp	$SD1732
+; Line 972
+; Line 973
+					$FC1686:
+	*** 001286	ff 46 f8 		inc	WORD PTR [bp-8]	;i
+					$F1685:
+	*** 001289	8b 46 f8 		mov	ax,WORD PTR [bp-8]	;i
+	*** 00128c	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 00128f	26 39 47 1f 		cmp	WORD PTR es:[bx+31],ax
+	*** 001293	77 03 			ja	$JCC4755
+	*** 001295	e9 96 03 		jmp	$SD1732
+					$JCC4755:
+; Line 943
+; Line 944
+	*** 001298	8b f0 			mov	si,ax
+	*** 00129a	8b c8 			mov	cx,ax
+	*** 00129c	c1 e6 02 		shl	si,2
+	*** 00129f	03 f1 			add	si,cx
+	*** 0012a1	d1 e6 			shl	si,1
+	*** 0012a3	26 8b 40 21 		mov	ax,WORD PTR es:[bx+33][si]
+	*** 0012a7	26 8b 50 23 		mov	dx,WORD PTR es:[bx+35][si]
+	*** 0012ab	c4 5e f2 		les	bx,DWORD PTR [bp-14]	;d
+	*** 0012ae	b9 06 00 		mov	cx,6
+	*** 0012b1	06 			push	es
+	*** 0012b2	1e 			push	ds
+	*** 0012b3	8b f8 			mov	di,ax
+	*** 0012b5	8d 77 02 		lea	si,WORD PTR [bx+2]
+	*** 0012b8	06 			push	es
+	*** 0012b9	1f 			pop	ds
+	ASSUME DS: DGROUP
+	*** 0012ba	8e c2 			mov	es,dx
+	*** 0012bc	d1 e9 			shr	cx,1
+	*** 0012be	1b c0 			sbb	ax,ax
+	*** 0012c0	3b c9 			cmp	cx,cx
+	*** 0012c2	f3 			repz
+	*** 0012c3	a7 			cmpsw
+	*** 0012c4	75 04 			jne	$L1827
+	*** 0012c6	2b c8 			sub	cx,ax
+	*** 0012c8	f3 			repz
+	*** 0012c9	a6 			cmpsb
+					$L1827:
+	*** 0012ca	1f 			pop	ds
+	ASSUME DS: DGROUP
+	*** 0012cb	07 			pop	es
+	*** 0012cc	75 b8 			jne	$FC1686
+; Line 945
+; Line 946
+	*** 0012ce	c7 46 fa 00 00 		mov	WORD PTR [bp-6],0	;result
+; Line 952
+	*** 0012d3	26 f6 47 08 01 		test	BYTE PTR es:[bx+8],1
+	*** 0012d8	75 03 			jne	$JCC4824
+	*** 0012da	e9 f1 fe 		jmp	$I1689
+					$JCC4824:
+; Line 953
+; Line 954
+	*** 0012dd	c7 46 fa 10 81 		mov	WORD PTR [bp-6],-32496	;8110H	;result
+; Line 974
+; Line 976
+	*** 0012e2	e9 49 03 		jmp	$SD1732
+	*** 0012e5	90 			nop	
+; Line 979
+					$SC1694:
+; Line 980
+	*** 0012e6	f6 06 01 00 04 		test	BYTE PTR _uDebugLevel+1,4
+	*** 0012eb	74 0a 			je	$L1831
+	*** 0012ed	1e 			push	ds
+	*** 0012ee	68 a3 06 		push	OFFSET DGROUP:$SG1695
+	*** 0012f1	e8 00 00 		call	_dprintf
+	*** 0012f4	83 c4 04 		add	sp,4
+					$L1831:
+; Line 981
+	*** 0012f7	c7 46 fa 00 00 		mov	WORD PTR [bp-6],0	;result
+; Line 982
+;	pvp = -14
+;	vd_cb = -16
+;	vdata = -20
+;	pvd = -24
+;	phys = -28
+; Line 983
+	*** 0012fc	8b 46 0a 		mov	ax,WORD PTR [bp+10]	;param
+	*** 0012ff	8b 56 0c 		mov	dx,WORD PTR [bp+12]
+	*** 001302	89 46 f2 		mov	WORD PTR [bp-14],ax	;d
+	*** 001305	89 56 f4 		mov	WORD PTR [bp-12],dx
+; Line 985
+	*** 001308	8e c2 			mov	es,dx
+	*** 00130a	8b d8 			mov	bx,ax
+	*** 00130c	26 8b 47 06 		mov	ax,WORD PTR es:[bx+6]
+	*** 001310	c1 e0 09 		shl	ax,9
+	*** 001313	05 0e 00 		add	ax,14	;000eH
+	*** 001316	89 46 f0 		mov	WORD PTR [bp-16],ax	;vd_cb
+; Line 986
+	*** 001319	8b 46 0e 		mov	ax,WORD PTR [bp+14]	;data
+	*** 00131c	8b 56 10 		mov	dx,WORD PTR [bp+16]
+	*** 00131f	05 12 00 		add	ax,18	;0012H
+	*** 001322	89 46 ec 		mov	WORD PTR [bp-20],ax	;vdata
+	*** 001325	89 56 ee 		mov	WORD PTR [bp-18],dx
+; Line 991
+	*** 001328	f6 06 00 00 04 		test	BYTE PTR _uDebugLevel,4
+	*** 00132d	74 10 			je	$L1833
+	*** 00132f	52 			push	dx
+	*** 001330	50 			push	ax
+	*** 001331	52 			push	dx
+	*** 001332	ff 76 0e 		push	WORD PTR [bp+14]	;data
+	*** 001335	1e 			push	ds
+	*** 001336	68 b5 06 		push	OFFSET DGROUP:$SG1701
+	*** 001339	e8 00 00 		call	_dprintf
+	*** 00133c	83 c4 0c 		add	sp,12	;000cH
+					$L1833:
+; Line 992
+	*** 00133f	f6 06 00 00 04 		test	BYTE PTR _uDebugLevel,4
+	*** 001344	74 0d 			je	$L1835
+	*** 001346	ff 76 f0 		push	WORD PTR [bp-16]	;vd_cb
+	*** 001349	1e 			push	ds
+	*** 00134a	68 d6 06 		push	OFFSET DGROUP:$SG1702
+	*** 00134d	e8 00 00 		call	_dprintf
+	*** 001350	83 c4 06 		add	sp,6
+					$L1835:
+; Line 993
+	*** 001353	c4 5e f2 		les	bx,DWORD PTR [bp-14]	;d
+	*** 001356	26 8b 47 02 		mov	ax,WORD PTR es:[bx+2]
+	*** 00135a	26 8b 57 04 		mov	dx,WORD PTR es:[bx+4]
+	*** 00135e	26 03 47 06 		add	ax,WORD PTR es:[bx+6]
+	*** 001362	83 d2 00 		adc	dx,0
+	*** 001365	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 001368	26 3b 57 0d 		cmp	dx,WORD PTR es:[bx+13]
+	*** 00136c	72 0e 			jb	$I1703
+	*** 00136e	76 03 			jbe	$JCC4974
+	*** 001370	e9 45 fe 		jmp	$L1826
+					$JCC4974:
+	*** 001373	26 3b 47 0b 		cmp	ax,WORD PTR es:[bx+11]
+	*** 001377	76 03 			jbe	$JCC4983
+	*** 001379	e9 3c fe 		jmp	$L1826
+					$JCC4983:
+; Line 997
+; Line 998
+					$I1703:
+	*** 00137c	ff 76 10 		push	WORD PTR [bp+16]
+	*** 00137f	ff 76 0e 		push	WORD PTR [bp+14]	;data
+	*** 001382	8d 46 e4 		lea	ax,WORD PTR [bp-28]	;phys
+	*** 001385	16 			push	ss
+	*** 001386	50 			push	ax
+	*** 001387	9a 00 00 00 00 		call	FAR PTR DEVHELP_VIRTTOPHYS
+	*** 00138c	0b c0 			or	ax,ax
+	*** 00138e	74 20 			je	$I1704
+; Line 999
+; Line 1000
+	*** 001390	f6 06 00 00 01 		test	BYTE PTR _uDebugLevel,1
+	*** 001395	74 10 			je	$L1840
+	*** 001397	ff 76 10 		push	WORD PTR [bp+16]
+	*** 00139a	ff 76 0e 		push	WORD PTR [bp+14]	;data
+	*** 00139d	1e 			push	ds
+	*** 00139e	68 ec 06 		push	OFFSET DGROUP:$SG1705
+	*** 0013a1	e8 00 00 		call	_dprintf
+	*** 0013a4	83 c4 08 		add	sp,8
+					$L1840:
+; Line 1001
+	*** 0013a7	c7 46 fa 13 81 		mov	WORD PTR [bp-6],-32493	;8113H	;result
+; Line 1002
+	*** 0013ac	e9 7f 02 		jmp	$SD1732
+; Line 1003
+	*** 0013af	90 			nop	
+; Line 1005
+					$I1704:
+	*** 0013b0	83 46 e4 12 		add	WORD PTR [bp-28],18	;0012H	;phys
+	*** 0013b4	83 56 e6 00 		adc	WORD PTR [bp-26],0
+; Line 1006
+	*** 0013b8	c7 46 f8 00 00 		mov	WORD PTR [bp-8],0	;i
+	*** 0013bd	e9 bd 00 		jmp	$F1706
+					$L1842:
+; Line 1007
+; Line 1008
+	*** 0013c0	f7 66 f0 		mul	WORD PTR [bp-16]	;vd_cb
+	*** 0013c3	03 46 ec 		add	ax,WORD PTR [bp-20]	;vdata
+	*** 0013c6	8b 56 ee 		mov	dx,WORD PTR [bp-18]
+	*** 0013c9	89 46 e8 		mov	WORD PTR [bp-24],ax	;pvd
+	*** 0013cc	89 56 ea 		mov	WORD PTR [bp-22],dx
+; Line 1010
+	*** 0013cf	f6 06 00 00 04 		test	BYTE PTR _uDebugLevel,4
+	*** 0013d4	74 0f 			je	$L1890
+	*** 0013d6	52 			push	dx
+	*** 0013d7	50 			push	ax
+	*** 0013d8	ff 76 f8 		push	WORD PTR [bp-8]	;i
+	*** 0013db	1e 			push	ds
+	*** 0013dc	68 06 07 		push	OFFSET DGROUP:$SG1709
+	*** 0013df	e8 00 00 		call	_dprintf
+	*** 0013e2	83 c4 0a 		add	sp,10	;000aH
+					$L1890:
+	*** 0013e5	8b 5e f8 		mov	bx,WORD PTR [bp-8]	;i
+	*** 0013e8	8b c3 			mov	ax,bx
+	*** 0013ea	c1 e3 02 		shl	bx,2
+	*** 0013ed	03 d8 			add	bx,ax
+	*** 0013ef	d1 e3 			shl	bx,1
+	*** 0013f1	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 0013f4	03 5e fc 		add	bx,WORD PTR [bp-4]	;mirror
+	*** 0013f7	26 8b 47 21 		mov	ax,WORD PTR es:[bx+33]
+	*** 0013fb	26 8b 57 23 		mov	dx,WORD PTR es:[bx+35]
+	*** 0013ff	06 			push	es
+	*** 001400	1e 			push	ds
+	*** 001401	8b f0 			mov	si,ax
+	*** 001403	8e da 			mov	ds,dx
+	ASSUME DS: NOTHING
+	*** 001405	c4 7e e8 		les	di,DWORD PTR [bp-24]	;pvd
+	*** 001408	a5 			movsw
+	*** 001409	a5 			movsw
+	*** 00140a	a5 			movsw
+	*** 00140b	1f 			pop	ds
+	ASSUME DS: DGROUP
+	*** 00140c	07 			pop	es
+; Line 1012
+	*** 00140d	26 8b 47 25 		mov	ax,WORD PTR es:[bx+37]
+	*** 001411	26 8b 57 27 		mov	dx,WORD PTR es:[bx+39]
+	*** 001415	8c c1 			mov	cx,es
+	*** 001417	c4 76 e8 		les	si,DWORD PTR [bp-24]	;pvd
+	*** 00141a	26 89 44 0a 		mov	WORD PTR es:[si+10],ax
+	*** 00141e	26 89 54 0c 		mov	WORD PTR es:[si+12],dx
+; Line 1013
+	*** 001422	c4 7e f2 		les	di,DWORD PTR [bp-14]	;d
+	*** 001425	26 8b 45 06 		mov	ax,WORD PTR es:[di+6]
+	*** 001429	c1 e0 09 		shl	ax,9
+	*** 00142c	c4 76 e8 		les	si,DWORD PTR [bp-24]	;pvd
+	*** 00142f	26 89 44 06 		mov	WORD PTR es:[si+6],ax
+; Line 1015
+	*** 001433	32 c0 			xor	al,al
+	*** 001435	26 88 44 08 		mov	BYTE PTR es:[si+8],al
+	*** 001439	26 88 44 09 		mov	BYTE PTR es:[si+9],al
+; Line 1019
+	*** 00143d	8b 46 e4 		mov	ax,WORD PTR [bp-28]	;phys
+	*** 001440	8b 56 e6 		mov	dx,WORD PTR [bp-26]
+	*** 001443	05 0e 00 		add	ax,14	;000eH
+	*** 001446	83 d2 00 		adc	dx,0
+	*** 001449	52 			push	dx
+	*** 00144a	50 			push	ax
+	*** 00144b	c4 76 f2 		les	si,DWORD PTR [bp-14]	;d
+	*** 00144e	26 ff 74 06 		push	WORD PTR es:[si+6]
+	*** 001452	26 ff 74 04 		push	WORD PTR es:[si+4]
+	*** 001456	26 ff 74 02 		push	WORD PTR es:[si+2]
+	*** 00145a	6a 00 			push	0
+	*** 00145c	8e c1 			mov	es,cx
+	*** 00145e	26 ff 77 23 		push	WORD PTR es:[bx+35]
+	*** 001462	26 ff 77 21 		push	WORD PTR es:[bx+33]
+	*** 001466	e8 00 00 		call	_ProcessUserIO
+	*** 001469	83 c4 10 		add	sp,16	;0010H
+	*** 00146c	89 46 fa 		mov	WORD PTR [bp-6],ax	;result
+; Line 1022
+	*** 00146f	8b 46 f0 		mov	ax,WORD PTR [bp-16]	;vd_cb
+	*** 001472	2b d2 			sub	dx,dx
+	*** 001474	01 46 e4 		add	WORD PTR [bp-28],ax	;phys
+	*** 001477	11 56 e6 		adc	WORD PTR [bp-26],dx
+; Line 1023
+	*** 00147a	ff 46 f8 		inc	WORD PTR [bp-8]	;i
+					$F1706:
+	*** 00147d	8b 46 f8 		mov	ax,WORD PTR [bp-8]	;i
+	*** 001480	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 001483	26 39 47 1f 		cmp	WORD PTR es:[bx+31],ax
+	*** 001487	76 03 			jbe	$JCC5255
+	*** 001489	e9 34 ff 		jmp	$L1842
+					$JCC5255:
+; Line 1028
+	*** 00148c	c7 46 f8 00 00 		mov	WORD PTR [bp-8],0	;i
+	*** 001491	e9 0b 01 		jmp	$F1710
+					$I1720:
+; Line 1045
+; Line 1046
+	*** 001494	f6 06 00 00 01 		test	BYTE PTR _uDebugLevel,1
+	*** 001499	74 20 			je	$L1856
+	*** 00149b	8b 46 dc 		mov	ax,WORD PTR [bp-36]	;c2data
+	*** 00149e	8b 56 de 		mov	dx,WORD PTR [bp-34]
+	*** 0014a1	05 0e 00 		add	ax,14	;000eH
+	*** 0014a4	52 			push	dx
+	*** 0014a5	50 			push	ax
+	*** 0014a6	8b 46 e0 		mov	ax,WORD PTR [bp-32]	;c1data
+	*** 0014a9	8b 56 e2 		mov	dx,WORD PTR [bp-30]
+	*** 0014ac	05 0e 00 		add	ax,14	;000eH
+	*** 0014af	52 			push	dx
+	*** 0014b0	50 			push	ax
+	*** 0014b1	1e 			push	ds
+	*** 0014b2	68 60 07 		push	OFFSET DGROUP:$SG1723
+	*** 0014b5	e8 00 00 		call	_dprintf
+	*** 0014b8	83 c4 0c 		add	sp,12	;000cH
+					$L1856:
+; Line 1047
+	*** 0014bb	cc 			int	3
+; Line 1048
+; Line 1049
+					$FC1714:
+	*** 0014bc	ff 46 f6 		inc	WORD PTR [bp-10]	;j
+					$F1713:
+	*** 0014bf	8b 46 f6 		mov	ax,WORD PTR [bp-10]	;j
+	*** 0014c2	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 0014c5	26 39 47 1f 		cmp	WORD PTR es:[bx+31],ax
+	*** 0014c9	77 03 			ja	$JCC5321
+	*** 0014cb	e9 ce 00 		jmp	$FC1711
+					$JCC5321:
+; Line 1030
+;	c1data = -32
+;	c2data = -36
+; Line 1031
+	*** 0014ce	8b 46 f0 		mov	ax,WORD PTR [bp-16]	;vd_cb
+	*** 0014d1	f7 66 f8 		mul	WORD PTR [bp-8]	;i
+	*** 0014d4	03 46 ec 		add	ax,WORD PTR [bp-20]	;vdata
+	*** 0014d7	8b 56 ee 		mov	dx,WORD PTR [bp-18]
+	*** 0014da	89 46 e0 		mov	WORD PTR [bp-32],ax	;c1data
+	*** 0014dd	89 56 e2 		mov	WORD PTR [bp-30],dx
+; Line 1032
+	*** 0014e0	8b c8 			mov	cx,ax
+	*** 0014e2	8b 46 f0 		mov	ax,WORD PTR [bp-16]	;vd_cb
+	*** 0014e5	8b da 			mov	bx,dx
+	*** 0014e7	f7 66 f6 		mul	WORD PTR [bp-10]	;j
+	*** 0014ea	03 46 ec 		add	ax,WORD PTR [bp-20]	;vdata
+	*** 0014ed	8b d3 			mov	dx,bx
+	*** 0014ef	89 46 dc 		mov	WORD PTR [bp-36],ax	;c2data
+	*** 0014f2	89 56 de 		mov	WORD PTR [bp-34],dx
+; Line 1034
+	*** 0014f5	f6 06 00 00 02 		test	BYTE PTR _uDebugLevel,2
+	*** 0014fa	74 0f 			je	$L1844
+	*** 0014fc	53 			push	bx
+	*** 0014fd	51 			push	cx
+	*** 0014fe	ff 76 f8 		push	WORD PTR [bp-8]	;i
+	*** 001501	1e 			push	ds
+	*** 001502	68 1d 07 		push	OFFSET DGROUP:$SG1718
+	*** 001505	e8 00 00 		call	_dprintf
+	*** 001508	83 c4 0a 		add	sp,10	;000aH
+					$L1844:
+; Line 1035
+	*** 00150b	f6 06 00 00 02 		test	BYTE PTR _uDebugLevel,2
+	*** 001510	74 13 			je	$L1846
+	*** 001512	ff 76 de 		push	WORD PTR [bp-34]
+	*** 001515	ff 76 dc 		push	WORD PTR [bp-36]	;c2data
+	*** 001518	ff 76 f6 		push	WORD PTR [bp-10]	;j
+	*** 00151b	1e 			push	ds
+	*** 00151c	68 32 07 		push	OFFSET DGROUP:$SG1719
+	*** 00151f	e8 00 00 		call	_dprintf
+	*** 001522	83 c4 0a 		add	sp,10	;000aH
+					$L1846:
+; Line 1038
+	*** 001525	c4 5e f2 		les	bx,DWORD PTR [bp-14]	;d
+	*** 001528	26 8b 47 06 		mov	ax,WORD PTR es:[bx+6]
+	*** 00152c	c1 e0 09 		shl	ax,9
+	*** 00152f	89 46 da 		mov	WORD PTR [bp-38],ax
+	*** 001532	c4 5e dc 		les	bx,DWORD PTR [bp-36]	;c2data
+	*** 001535	c4 76 e0 		les	si,DWORD PTR [bp-32]	;c1data
+	*** 001538	8e 46 de 		mov	es,WORD PTR [bp-34]
+	*** 00153b	8c c0 			mov	ax,es
+	*** 00153d	8e 46 e2 		mov	es,WORD PTR [bp-30]
+	*** 001540	8c c1 			mov	cx,es
+	*** 001542	8e c0 			mov	es,ax
+	*** 001544	8d 47 0e 		lea	ax,WORD PTR [bx+14]
+	*** 001547	89 46 d4 		mov	WORD PTR [bp-44],ax	;cdata
+	*** 00154a	8c 46 d6 		mov	WORD PTR [bp-42],es
+	*** 00154d	8e c1 			mov	es,cx
+	*** 00154f	8b 4e da 		mov	cx,WORD PTR [bp-38]
+	*** 001552	8b 56 d6 		mov	dx,WORD PTR [bp-42]
+	*** 001555	1e 			push	ds
+	*** 001556	8b f8 			mov	di,ax
+	*** 001558	83 c6 0e 		add	si,14	;000eH
+	*** 00155b	06 			push	es
+	*** 00155c	1f 			pop	ds
+	ASSUME DS: DGROUP
+	*** 00155d	8e c2 			mov	es,dx
+	*** 00155f	d1 e9 			shr	cx,1
+	*** 001561	1b c0 			sbb	ax,ax
+	*** 001563	3b c9 			cmp	cx,cx
+	*** 001565	f3 			repz
+	*** 001566	a7 			cmpsw
+	*** 001567	75 04 			jne	$L1855
+	*** 001569	2b c8 			sub	cx,ax
+	*** 00156b	f3 			repz
+	*** 00156c	a6 			cmpsb
+					$L1855:
+	*** 00156d	1f 			pop	ds
+	ASSUME DS: DGROUP
+	*** 00156e	74 03 			je	$JCC5486
+	*** 001570	e9 21 ff 		jmp	$I1720
+					$JCC5486:
+; Line 1039
+; Line 1040
+	*** 001573	f6 06 00 00 02 		test	BYTE PTR _uDebugLevel,2
+	*** 001578	74 10 			je	$L1848
+	*** 00157a	ff 76 f6 		push	WORD PTR [bp-10]	;j
+	*** 00157d	ff 76 f8 		push	WORD PTR [bp-8]	;i
+	*** 001580	1e 			push	ds
+	*** 001581	68 47 07 		push	OFFSET DGROUP:$SG1721
+	*** 001584	e8 00 00 		call	_dprintf
+	*** 001587	83 c4 08 		add	sp,8
+					$L1848:
+; Line 1041
+	*** 00158a	c4 5e e0 		les	bx,DWORD PTR [bp-32]	;c1data
+	*** 00158d	26 fe 47 09 		inc	BYTE PTR es:[bx+9]
+; Line 1042
+	*** 001591	c4 5e dc 		les	bx,DWORD PTR [bp-36]	;c2data
+	*** 001594	26 fe 47 09 		inc	BYTE PTR es:[bx+9]
+; Line 1043
+; Line 1044
+	*** 001598	e9 21 ff 		jmp	$FC1714
+	*** 00159b	90 			nop	
+					$FC1711:
+	*** 00159c	ff 46 f8 		inc	WORD PTR [bp-8]	;i
+					$F1710:
+	*** 00159f	8b 46 f8 		mov	ax,WORD PTR [bp-8]	;i
+	*** 0015a2	26 39 47 1f 		cmp	WORD PTR es:[bx+31],ax
+	*** 0015a6	76 08 			jbe	$FB1712
+; Line 1029
+	*** 0015a8	40 			inc	ax
+	*** 0015a9	89 46 f6 		mov	WORD PTR [bp-10],ax	;j
+	*** 0015ac	e9 10 ff 		jmp	$F1713
+	*** 0015af	90 			nop	
+					$FB1712:
+; Line 1050
+	*** 0015b0	c7 46 f8 00 00 		mov	WORD PTR [bp-8],0	;i
+	*** 0015b5	eb 21 			jmp	SHORT $F1724
+	*** 0015b7	90 			nop	
+					$L1858:
+; Line 1055
+	*** 0015b8	c4 5e d4 		les	bx,DWORD PTR [bp-44]	;cdata
+	*** 0015bb	26 8a 47 09 		mov	al,BYTE PTR es:[bx+9]
+	*** 0015bf	2a e4 			sub	ah,ah
+	*** 0015c1	c4 76 fc 		les	si,DWORD PTR [bp-4]	;mirror
+	*** 0015c4	26 2b 44 1f 		sub	ax,WORD PTR es:[si+31]
+	*** 0015c8	f7 d8 			neg	ax
+	*** 0015ca	48 			dec	ax
+	*** 0015cb	75 41 			jne	$I1729
+; Line 1056
+; Line 1057
+	*** 0015cd	8e 46 d6 		mov	es,WORD PTR [bp-42]
+	*** 0015d0	26 80 4f 08 01 		or	BYTE PTR es:[bx+8],1
+; Line 1058
+; Line 1059
+					$L1860:
+; Line 1062
+; Line 1063
+	*** 0015d5	ff 46 f8 		inc	WORD PTR [bp-8]	;i
+					$F1724:
+	*** 0015d8	8b 46 f8 		mov	ax,WORD PTR [bp-8]	;i
+	*** 0015db	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 0015de	26 39 47 1f 		cmp	WORD PTR es:[bx+31],ax
+	*** 0015e2	77 03 			ja	$JCC5602
+	*** 0015e4	e9 7e fb 		jmp	$I1677
+					$JCC5602:
+; Line 1051
+;	cdata = -44
+; Line 1052
+	*** 0015e7	f7 66 f0 		mul	WORD PTR [bp-16]	;vd_cb
+	*** 0015ea	03 46 ec 		add	ax,WORD PTR [bp-20]	;vdata
+	*** 0015ed	8b 56 ee 		mov	dx,WORD PTR [bp-18]
+	*** 0015f0	89 46 d4 		mov	WORD PTR [bp-44],ax	;cdata
+	*** 0015f3	89 56 d6 		mov	WORD PTR [bp-42],dx
+; Line 1053
+	*** 0015f6	f6 06 00 00 02 		test	BYTE PTR _uDebugLevel,2
+	*** 0015fb	74 bb 			je	$L1858
+	*** 0015fd	52 			push	dx
+	*** 0015fe	50 			push	ax
+	*** 0015ff	ff 76 f8 		push	WORD PTR [bp-8]	;i
+	*** 001602	1e 			push	ds
+	*** 001603	68 7e 07 		push	OFFSET DGROUP:$SG1728
+	*** 001606	e8 00 00 		call	_dprintf
+	*** 001609	83 c4 0a 		add	sp,10	;000aH
+	*** 00160c	eb aa 			jmp	SHORT $L1858
+					$I1729:
+; Line 1060
+; Line 1061
+	*** 00160e	f6 06 00 00 01 		test	BYTE PTR _uDebugLevel,1
+	*** 001613	74 c0 			je	$L1860
+	*** 001615	8e 46 d6 		mov	es,WORD PTR [bp-42]
+	*** 001618	26 8a 47 09 		mov	al,BYTE PTR es:[bx+9]
+	*** 00161c	2a e4 			sub	ah,ah
+	*** 00161e	50 			push	ax
+	*** 00161f	ff 76 f8 		push	WORD PTR [bp-8]	;i
+	*** 001622	1e 			push	ds
+	*** 001623	68 93 07 		push	OFFSET DGROUP:$SG1731
+	*** 001626	e8 00 00 		call	_dprintf
+	*** 001629	83 c4 08 		add	sp,8
+	*** 00162c	eb a7 			jmp	SHORT $L1860
+					$SD1732:
+; Line 1070
+; Line 1073
+	*** 00162e	8b 46 fa 		mov	ax,WORD PTR [bp-6]	;result
+; Line 1074
+	*** 001631	5e 			pop	si
+	*** 001632	5f 			pop	di
+	*** 001633	c9 			leave	
+	*** 001634	c3 			ret	
+	*** 001635	90 			nop	
+
+_MirrorCtrl	ENDP
+	PUBLIC	_MirrorCreate
+_MirrorCreate	PROC NEAR
+; Line 1115
+	*** 001636	c8 14 00 00 		enter	20,0
+	*** 00163a	57 			push	di
+	*** 00163b	56 			push	si
+;	mirror = -4
+;	i = -6
+;	j = -8
+;	found = -10
+;	invalids = -12
+;	result = -14
+;	pSize = 16
+;	sec = 12
+;	tab = 8
+;	pVrh = 4
+; Line 1116
+	*** 00163c	8b 46 04 		mov	ax,WORD PTR [bp+4]	;pVrh
+	*** 00163f	8b 56 06 		mov	dx,WORD PTR [bp+6]
+	*** 001642	89 46 fc 		mov	WORD PTR [bp-4],ax	;mirror
+	*** 001645	89 56 fe 		mov	WORD PTR [bp-2],dx
+; Line 1118
+	*** 001648	c7 46 f4 00 00 		mov	WORD PTR [bp-12],0	;invalids
+; Line 1122
+	*** 00164d	f6 06 00 00 40 		test	BYTE PTR _uDebugLevel,64	;0040H
+	*** 001652	74 13 			je	$L1862
+	*** 001654	68 00 02 		push	512	;0200H
+	*** 001657	ff 76 0e 		push	WORD PTR [bp+14]
+	*** 00165a	ff 76 0c 		push	WORD PTR [bp+12]	;sec
+	*** 00165d	1e 			push	ds
+	*** 00165e	68 68 01 		push	OFFSET DGROUP:$S1400_dszMCreateAdminData
+	*** 001661	e8 00 00 		call	_dprintf
+	*** 001664	83 c4 0a 		add	sp,10	;000aH
+					$L1862:
+; Line 1123
+	*** 001667	33 c0 			xor	ax,ax
+	*** 001669	b9 21 00 		mov	cx,33	;0021H
+	*** 00166c	c4 7e fc 		les	di,DWORD PTR [bp-4]	;mirror
+	*** 00166f	f3 			rep
+	*** 001670	aa 			stosb
+; Line 1128
+	*** 001671	8b 5e fc 		mov	bx,WORD PTR [bp-4]	;mirror
+	*** 001674	26 c7 47 0f 00 00 	mov	WORD PTR es:[bx+15],OFFSET _MirrorNotify
+; Line 1129
+	*** 00167a	26 c7 47 11 00 00 	mov	WORD PTR es:[bx+17],OFFSET _MirrorWorker
+; Line 1130
+	*** 001680	26 c7 47 13 00 00 	mov	WORD PTR es:[bx+19],OFFSET _MirrorUpdate
+; Line 1131
+	*** 001686	26 c7 47 15 00 00 	mov	WORD PTR es:[bx+21],OFFSET _MirrorCtrl
+; Line 1132
+	*** 00168c	26 89 47 0d 		mov	WORD PTR es:[bx+13],ax
+	*** 001690	26 89 47 0b 		mov	WORD PTR es:[bx+11],ax
+; Line 1133
+	*** 001694	26 88 47 06 		mov	BYTE PTR es:[bx+6],al
+; Line 1134
+	*** 001698	8b 46 0c 		mov	ax,WORD PTR [bp+12]	;sec
+	*** 00169b	8b 56 0e 		mov	dx,WORD PTR [bp+14]
+	*** 00169e	05 14 00 		add	ax,20	;0014H
+	*** 0016a1	06 			push	es
+	*** 0016a2	1e 			push	ds
+	*** 0016a3	8b fb 			mov	di,bx
+	*** 0016a5	8b f0 			mov	si,ax
+	*** 0016a7	8e da 			mov	ds,dx
+	ASSUME DS: NOTHING
+	*** 0016a9	a5 			movsw
+	*** 0016aa	a5 			movsw
+	*** 0016ab	a5 			movsw
+	*** 0016ac	1f 			pop	ds
+	ASSUME DS: DGROUP
+	*** 0016ad	07 			pop	es
+; Line 1140
+	*** 0016ae	c4 76 0c 		les	si,DWORD PTR [bp+12]	;sec
+	*** 0016b1	26 8b 44 1c 		mov	ax,WORD PTR es:[si+28]
+	*** 0016b5	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 0016b8	26 89 47 1f 		mov	WORD PTR es:[bx+31],ax
+	*** 0016bc	8b c8 			mov	cx,ax
+	*** 0016be	c1 e0 02 		shl	ax,2
+	*** 0016c1	03 c1 			add	ax,cx
+	*** 0016c3	d1 e0 			shl	ax,1
+	*** 0016c5	89 46 f0 		mov	WORD PTR [bp-16],ax
+	*** 0016c8	8b c8 			mov	cx,ax
+	*** 0016ca	33 c0 			xor	ax,ax
+	*** 0016cc	8d 7f 21 		lea	di,WORD PTR [bx+33]
+	*** 0016cf	f3 			rep
+	*** 0016d0	aa 			stosb
+; Line 1142
+	*** 0016d1	89 46 f6 		mov	WORD PTR [bp-10],ax	;found
+	*** 0016d4	89 46 fa 		mov	WORD PTR [bp-6],ax	;i
+	*** 0016d7	e9 31 01 		jmp	$F1748
+					$I1756:
+	*** 0016da	0b c0 			or	ax,ax
+	*** 0016dc	75 03 			jne	$JCC5852
+	*** 0016de	e9 b3 00 		jmp	$I1759
+					$JCC5852:
+; Line 1163
+					$FC1752:
+	*** 0016e1	ff 46 f8 		inc	WORD PTR [bp-8]	;j
+					$F1751:
+	*** 0016e4	83 7e f8 18 		cmp	WORD PTR [bp-8],24	;0018H	;j
+	*** 0016e8	72 03 			jb	$JCC5864
+	*** 0016ea	e9 1b 01 		jmp	$FC1749
+					$JCC5864:
+; Line 1146
+; Line 1147
+	*** 0016ed	8b 5e f8 		mov	bx,WORD PTR [bp-8]	;j
+	*** 0016f0	c1 e3 02 		shl	bx,2
+	*** 0016f3	c4 76 08 		les	si,DWORD PTR [bp+8]	;tab
+	*** 0016f6	26 8b 40 02 		mov	ax,WORD PTR es:[bx+2][si]
+	*** 0016fa	26 0b 00 		or	ax,WORD PTR es:[bx][si]
+	*** 0016fd	74 e2 			je	$FC1752
+; Line 1150
+	*** 0016ff	8b 5e f8 		mov	bx,WORD PTR [bp-8]	;j
+	*** 001702	c1 e3 02 		shl	bx,2
+	*** 001705	26 8b 00 		mov	ax,WORD PTR es:[bx][si]
+	*** 001708	26 8b 50 02 		mov	dx,WORD PTR es:[bx+2][si]
+	*** 00170c	8b 7e fa 		mov	di,WORD PTR [bp-6]	;i
+	*** 00170f	c1 e7 04 		shl	di,4
+	*** 001712	8d 08 			lea	cx,WORD PTR [bx][si]
+	*** 001714	8c c6 			mov	si,es
+	*** 001716	c4 5e 0c 		les	bx,DWORD PTR [bp+12]	;sec
+	*** 001719	8b d9 			mov	bx,cx
+	*** 00171b	89 5e ec 		mov	WORD PTR [bp-20],bx	;bdone
+	*** 00171e	89 76 ee 		mov	WORD PTR [bp-18],si
+	*** 001721	8b 5e 0c 		mov	bx,WORD PTR [bp+12]	;sec
+	*** 001724	b9 06 00 		mov	cx,6
+	*** 001727	06 			push	es
+	*** 001728	1e 			push	ds
+	*** 001729	8d 79 1e 		lea	di,WORD PTR [bx+30][di]
+	*** 00172c	8b f0 			mov	si,ax
+	*** 00172e	8e da 			mov	ds,dx
+	ASSUME DS: NOTHING
+	*** 001730	d1 e9 			shr	cx,1
+	*** 001732	1b c0 			sbb	ax,ax
+	*** 001734	3b c9 			cmp	cx,cx
+	*** 001736	f3 			repz
+	*** 001737	a7 			cmpsw
+	*** 001738	75 04 			jne	$L1869
+	*** 00173a	2b c8 			sub	cx,ax
+	*** 00173c	f3 			repz
+	*** 00173d	a6 			cmpsb
+					$L1869:
+	*** 00173e	1f 			pop	ds
+	ASSUME DS: DGROUP
+	*** 00173f	07 			pop	es
+	*** 001740	75 9f 			jne	$FC1752
+; Line 1151
+; Line 1153
+	*** 001742	06 			push	es
+	*** 001743	53 			push	bx
+	*** 001744	c4 5e ec 		les	bx,DWORD PTR [bp-20]	;bdone
+	*** 001747	26 ff 77 02 		push	WORD PTR es:[bx+2]
+	*** 00174b	26 ff 37 		push	WORD PTR es:[bx]
+	*** 00174e	e8 00 00 		call	_ValidateVSec2
+	*** 001751	83 c4 08 		add	sp,8
+	*** 001754	89 46 f2 		mov	WORD PTR [bp-14],ax	;result
+	*** 001757	0b c0 			or	ax,ax
+	*** 001759	7c 03 			jl	$JCC5977
+	*** 00175b	e9 7c ff 		jmp	$I1756
+					$JCC5977:
+; Line 1154
+; Line 1155
+	*** 00175e	68 00 00 		push	INITDATA
+	*** 001761	68 28 00 		push	OFFSET $S1390_szCreationDelayed
+	*** 001764	1e 			push	ds
+	*** 001765	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 001768	e8 00 00 		call	_sprintk
+	*** 00176b	83 c4 08 		add	sp,8
+; Line 1156
+	*** 00176e	f6 06 00 00 10 		test	BYTE PTR _uDebugLevel,16	;0010H
+	*** 001773	74 0e 			je	$L1864
+	*** 001775	1e 			push	ds
+	*** 001776	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 001779	1e 			push	ds
+	*** 00177a	68 88 01 		push	OFFSET DGROUP:$S1401_dszStr
+	*** 00177d	e8 00 00 		call	_dprintf
+	*** 001780	83 c4 08 		add	sp,8
+					$L1864:
+; Line 1157
+	*** 001783	f6 06 00 00 01 		test	BYTE PTR _fDriverFlags,1
+	*** 001788	74 03 			je	$I1757
+; Line 1158
+	*** 00178a	e8 00 00 		call	_SaveMessage
+; Line 1160
+					$I1757:
+	*** 00178d	b8 01 00 		mov	ax,1
+	*** 001790	e9 f3 02 		jmp	$EX1741
+	*** 001793	90 			nop	
+; Line 1165
+					$I1759:
+	*** 001794	8b 5e f8 		mov	bx,WORD PTR [bp-8]	;j
+	*** 001797	c1 e3 02 		shl	bx,2
+	*** 00179a	c4 76 08 		les	si,DWORD PTR [bp+8]	;tab
+	*** 00179d	26 8b 00 		mov	ax,WORD PTR es:[bx][si]
+	*** 0017a0	26 8b 50 02 		mov	dx,WORD PTR es:[bx+2][si]
+	*** 0017a4	8b 5e fa 		mov	bx,WORD PTR [bp-6]	;i
+	*** 0017a7	8b cb 			mov	cx,bx
+	*** 0017a9	c1 e3 02 		shl	bx,2
+	*** 0017ac	03 d9 			add	bx,cx
+	*** 0017ae	d1 e3 			shl	bx,1
+	*** 0017b0	8e 46 fe 		mov	es,WORD PTR [bp-2]
+	*** 0017b3	03 5e fc 		add	bx,WORD PTR [bp-4]	;mirror
+	*** 0017b6	26 89 47 21 		mov	WORD PTR es:[bx+33],ax
+	*** 0017ba	26 89 57 23 		mov	WORD PTR es:[bx+35],dx
+; Line 1166
+	*** 0017be	8b 76 fa 		mov	si,WORD PTR [bp-6]	;i
+	*** 0017c1	c1 e6 04 		shl	si,4
+	*** 0017c4	8c c0 			mov	ax,es
+	*** 0017c6	8e 46 0e 		mov	es,WORD PTR [bp+14]
+	*** 0017c9	03 76 0c 		add	si,WORD PTR [bp+12]	;sec
+	*** 0017cc	26 f6 44 24 01 		test	BYTE PTR es:[si+36],1
+	*** 0017d1	75 17 			jne	$I1760
+; Line 1167
+; Line 1168
+	*** 0017d3	ff 46 f4 		inc	WORD PTR [bp-12]	;invalids
+; Line 1169
+	*** 0017d6	26 8b 4c 26 		mov	cx,WORD PTR es:[si+38]
+	*** 0017da	26 8b 54 28 		mov	dx,WORD PTR es:[si+40]
+	*** 0017de	8e c0 			mov	es,ax
+	*** 0017e0	26 89 4f 25 		mov	WORD PTR es:[bx+37],cx
+	*** 0017e4	26 89 57 27 		mov	WORD PTR es:[bx+39],dx
+; Line 1170
+; Line 1171
+	*** 0017e8	eb 1b 			jmp	SHORT $I1761
+					$I1760:
+; Line 1172
+; Line 1173
+	*** 0017ea	8b 76 fa 		mov	si,WORD PTR [bp-6]	;i
+	*** 0017ed	8b c6 			mov	ax,si
+	*** 0017ef	c1 e6 02 		shl	si,2
+	*** 0017f2	03 f0 			add	si,ax
+	*** 0017f4	d1 e6 			shl	si,1
+	*** 0017f6	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 0017f9	26 c7 40 25 ff ff 	mov	WORD PTR es:[bx+37][si],-1	;ffffH
+	*** 0017ff	26 c7 40 27 ff ff 	mov	WORD PTR es:[bx+39][si],-1	;ffffH
+; Line 1174
+					$I1761:
+; Line 1175
+	*** 001805	ff 46 f6 		inc	WORD PTR [bp-10]	;found
+; Line 1179
+					$FC1749:
+	*** 001808	ff 46 fa 		inc	WORD PTR [bp-6]	;i
+					$F1748:
+	*** 00180b	8b 46 fa 		mov	ax,WORD PTR [bp-6]	;i
+	*** 00180e	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 001811	26 39 47 1f 		cmp	WORD PTR es:[bx+31],ax
+	*** 001815	76 23 			jbe	$FB1750
+; Line 1143
+; Line 1144
+	*** 001817	8b f0 			mov	si,ax
+	*** 001819	c1 e6 04 		shl	si,4
+	*** 00181c	c4 5e 0c 		les	bx,DWORD PTR [bp+12]	;sec
+	*** 00181f	26 8b 40 2a 		mov	ax,WORD PTR es:[bx+42][si]
+	*** 001823	26 8b 50 2c 		mov	dx,WORD PTR es:[bx+44][si]
+	*** 001827	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 00182a	26 89 47 0b 		mov	WORD PTR es:[bx+11],ax
+	*** 00182e	26 89 57 0d 		mov	WORD PTR es:[bx+13],dx
+; Line 1145
+	*** 001832	c7 46 f8 00 00 		mov	WORD PTR [bp-8],0	;j
+	*** 001837	e9 aa fe 		jmp	$F1751
+					$FB1750:
+; Line 1185
+	*** 00183a	c7 46 fa 00 00 		mov	WORD PTR [bp-6],0	;i
+	*** 00183f	eb 49 			jmp	SHORT $F1762
+; Line 1194
+	*** 001841	90 			nop	
+; Line 1195
+					$FC1767:
+	*** 001842	ff 46 f8 		inc	WORD PTR [bp-8]	;j
+					$F1766:
+	*** 001845	83 7e f8 18 		cmp	WORD PTR [bp-8],24	;0018H	;j
+	*** 001849	73 3c 			jae	$FC1763
+; Line 1190
+	*** 00184b	8b 5e f8 		mov	bx,WORD PTR [bp-8]	;j
+	*** 00184e	c1 e3 02 		shl	bx,2
+	*** 001851	c4 76 08 		les	si,DWORD PTR [bp+8]	;tab
+	*** 001854	26 8b 00 		mov	ax,WORD PTR es:[bx][si]
+	*** 001857	26 8b 50 02 		mov	dx,WORD PTR es:[bx+2][si]
+	*** 00185b	8b 7e fa 		mov	di,WORD PTR [bp-6]	;i
+	*** 00185e	8b cf 			mov	cx,di
+	*** 001860	c1 e7 02 		shl	di,2
+	*** 001863	03 f9 			add	di,cx
+	*** 001865	d1 e7 			shl	di,1
+	*** 001867	8d 08 			lea	cx,WORD PTR [bx][si]
+	*** 001869	8c c6 			mov	si,es
+	*** 00186b	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 00186e	26 39 41 21 		cmp	WORD PTR es:[bx+33][di],ax
+	*** 001872	75 ce 			jne	$FC1767
+	*** 001874	26 39 51 23 		cmp	WORD PTR es:[bx+35][di],dx
+	*** 001878	75 c8 			jne	$FC1767
+; Line 1191
+; Line 1192
+	*** 00187a	8e c6 			mov	es,si
+	*** 00187c	8b d9 			mov	bx,cx
+	*** 00187e	2b c0 			sub	ax,ax
+	*** 001880	26 89 47 02 		mov	WORD PTR es:[bx+2],ax
+	*** 001884	26 89 07 		mov	WORD PTR es:[bx],ax
+; Line 1193
+; Line 1196
+					$FC1763:
+	*** 001887	ff 46 fa 		inc	WORD PTR [bp-6]	;i
+					$F1762:
+	*** 00188a	8b 46 fa 		mov	ax,WORD PTR [bp-6]	;i
+	*** 00188d	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 001890	26 39 47 1f 		cmp	WORD PTR es:[bx+31],ax
+	*** 001894	76 1c 			jbe	$FB1764
+; Line 1186
+; Line 1187
+	*** 001896	8b f0 			mov	si,ax
+	*** 001898	8b c8 			mov	cx,ax
+	*** 00189a	c1 e6 02 		shl	si,2
+	*** 00189d	03 f1 			add	si,cx
+	*** 00189f	d1 e6 			shl	si,1
+	*** 0018a1	26 8b 40 23 		mov	ax,WORD PTR es:[bx+35][si]
+	*** 0018a5	26 0b 40 21 		or	ax,WORD PTR es:[bx+33][si]
+	*** 0018a9	74 dc 			je	$FC1763
+; Line 1188
+; Line 1189
+	*** 0018ab	c7 46 f8 00 00 		mov	WORD PTR [bp-8],0	;j
+	*** 0018b0	eb 93 			jmp	SHORT $F1766
+					$FB1764:
+; Line 1201
+	*** 0018b2	8b 46 f6 		mov	ax,WORD PTR [bp-10]	;found
+	*** 0018b5	26 39 47 1f 		cmp	WORD PTR es:[bx+31],ax
+	*** 0018b9	74 4b 			je	$I1770
+; Line 1202
+; Line 1207
+	*** 0018bb	26 2b 47 1f 		sub	ax,WORD PTR es:[bx+31]
+	*** 0018bf	f7 d8 			neg	ax
+	*** 0018c1	50 			push	ax
+	*** 0018c2	68 00 00 		push	INITDATA
+	*** 0018c5	68 00 00 		push	OFFSET $S1389_szMissingChild
+	*** 0018c8	1e 			push	ds
+	*** 0018c9	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 0018cc	e8 00 00 		call	_sprintk
+	*** 0018cf	83 c4 0a 		add	sp,10	;000aH
+; Line 1208
+	*** 0018d2	f6 06 00 00 10 		test	BYTE PTR _uDebugLevel,16	;0010H
+	*** 0018d7	74 0e 			je	$L1870
+	*** 0018d9	1e 			push	ds
+	*** 0018da	68 00 00 		push	OFFSET _szMsgBuffer
+	*** 0018dd	1e 			push	ds
+	*** 0018de	68 88 01 		push	OFFSET DGROUP:$S1401_dszStr
+	*** 0018e1	e8 00 00 		call	_dprintf
+	*** 0018e4	83 c4 08 		add	sp,8
+					$L1870:
+; Line 1209
+	*** 0018e7	f6 06 00 00 01 		test	BYTE PTR _fDriverFlags,1
+	*** 0018ec	74 03 			je	$I1771
+; Line 1210
+	*** 0018ee	e8 00 00 		call	_SaveMessage
+; Line 1212
+					$I1771:
+	*** 0018f1	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 0018f4	26 80 4f 06 04 		or	BYTE PTR es:[bx+6],4
+; Line 1213
+	*** 0018f9	ff 06 00 00 		inc	WORD PTR _cBeeps
+; Line 1214
+	*** 0018fd	26 c7 47 19 01 00 	mov	WORD PTR es:[bx+25],1
+; Line 1215
+; Line 1216
+	*** 001903	e9 23 01 		jmp	$I1781
+					$I1770:
+; Line 1218
+	*** 001906	c4 5e 0c 		les	bx,DWORD PTR [bp+12]	;sec
+	*** 001909	26 f6 47 1b 09 		test	BYTE PTR es:[bx+27],9
+	*** 00190e	75 09 			jne	$I1774
+	*** 001910	83 7e f4 00 		cmp	WORD PTR [bp-12],0	;invalids
+	*** 001914	75 03 			jne	$JCC6420
+	*** 001916	e9 10 01 		jmp	$I1781
+					$JCC6420:
+					$I1774:
+; Line 1219
+;	bdone = -20
+; Line 1220
+	*** 001919	c7 46 ec ff ff 		mov	WORD PTR [bp-20],-1	;ffffH	;bdone
+	*** 00191e	c7 46 ee ff ff 		mov	WORD PTR [bp-18],-1	;ffffH
+; Line 1226
+	*** 001923	26 f6 47 1b 08 		test	BYTE PTR es:[bx+27],8
+	*** 001928	74 30 			je	$I1776
+; Line 1227
+; Line 1228
+	*** 00192a	26 8b 87 fa 01 		mov	ax,WORD PTR es:[bx+506]
+	*** 00192f	26 8b 97 fc 01 		mov	dx,WORD PTR es:[bx+508]
+	*** 001934	89 46 ec 		mov	WORD PTR [bp-20],ax	;bdone
+	*** 001937	89 56 ee 		mov	WORD PTR [bp-18],dx
+; Line 1229
+	*** 00193a	c4 76 fc 		les	si,DWORD PTR [bp-4]	;mirror
+	*** 00193d	26 80 4c 06 08 		or	BYTE PTR es:[si+6],8
+; Line 1230
+	*** 001942	c4 5e 0c 		les	bx,DWORD PTR [bp+12]	;sec
+	*** 001945	26 8b 87 fa 01 		mov	ax,WORD PTR es:[bx+506]
+	*** 00194a	26 8b 97 fc 01 		mov	dx,WORD PTR es:[bx+508]
+	*** 00194f	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 001952	26 89 47 1b 		mov	WORD PTR es:[bx+27],ax
+	*** 001956	26 89 57 1d 		mov	WORD PTR es:[bx+29],dx
+; Line 1231
+; Line 1232
+					$I1776:
+	*** 00195a	c7 46 fa 00 00 		mov	WORD PTR [bp-6],0	;i
+	*** 00195f	eb 2f 			jmp	SHORT $F1777
+	*** 001961	90 			nop	
+					$FC1778:
+; Line 1233
+	*** 001962	8b f0 			mov	si,ax
+	*** 001964	8b c8 			mov	cx,ax
+	*** 001966	c1 e6 02 		shl	si,2
+	*** 001969	03 f1 			add	si,cx
+	*** 00196b	d1 e6 			shl	si,1
+	*** 00196d	26 8b 40 25 		mov	ax,WORD PTR es:[bx+37][si]
+	*** 001971	26 8b 50 27 		mov	dx,WORD PTR es:[bx+39][si]
+	*** 001975	3b 56 ee 		cmp	dx,WORD PTR [bp-18]
+	*** 001978	72 0d 			jb	$L1872
+	*** 00197a	77 05 			ja	$L1873
+	*** 00197c	3b 46 ec 		cmp	ax,WORD PTR [bp-20]	;bdone
+	*** 00197f	76 06 			jbe	$L1872
+					$L1873:
+	*** 001981	8b 56 ee 		mov	dx,WORD PTR [bp-18]
+	*** 001984	8b 46 ec 		mov	ax,WORD PTR [bp-20]	;bdone
+					$L1872:
+	*** 001987	89 46 ec 		mov	WORD PTR [bp-20],ax	;bdone
+	*** 00198a	89 56 ee 		mov	WORD PTR [bp-18],dx
+	*** 00198d	ff 46 fa 		inc	WORD PTR [bp-6]	;i
+					$F1777:
+	*** 001990	8b 46 fa 		mov	ax,WORD PTR [bp-6]	;i
+	*** 001993	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 001996	26 39 47 1f 		cmp	WORD PTR es:[bx+31],ax
+	*** 00199a	77 c6 			ja	$FC1778
+; Line 1234
+	*** 00199c	83 7e ec ff 		cmp	WORD PTR [bp-20],-1	;ffffH	;bdone
+	*** 0019a0	75 20 			jne	$I1780
+	*** 0019a2	83 7e ee ff 		cmp	WORD PTR [bp-18],-1	;ffffH
+	*** 0019a6	75 1a 			jne	$I1780
+; Line 1235
+; Line 1240
+	*** 0019a8	26 c7 47 19 01 00 	mov	WORD PTR es:[bx+25],1
+; Line 1241
+	*** 0019ae	f6 06 00 00 10 		test	BYTE PTR _uDebugLevel,16	;0010H
+	*** 0019b3	74 74 			je	$I1781
+	*** 0019b5	1e 			push	ds
+	*** 0019b6	68 8e 01 		push	OFFSET DGROUP:$S1402_dszMCreateNoBuild
+	*** 0019b9	e8 00 00 		call	_dprintf
+	*** 0019bc	83 c4 04 		add	sp,4
+	*** 0019bf	eb 68 			jmp	SHORT $I1781
+	*** 0019c1	90 			nop	
+					$I1780:
+; Line 1244
+; Line 1245
+	*** 0019c2	c4 5e 0c 		les	bx,DWORD PTR [bp+12]	;sec
+	*** 0019c5	26 f6 47 1b 08 		test	BYTE PTR es:[bx+27],8
+	*** 0019ca	74 30 			je	$I1782
+; Line 1246
+; Line 1249
+	*** 0019cc	f6 06 00 00 10 		test	BYTE PTR _uDebugLevel,16	;0010H
+	*** 0019d1	74 0f 			je	$L1876
+	*** 0019d3	8d 46 ec 		lea	ax,WORD PTR [bp-20]	;bdone
+	*** 0019d6	16 			push	ss
+	*** 0019d7	50 			push	ax
+	*** 0019d8	1e 			push	ds
+	*** 0019d9	68 08 02 		push	OFFSET DGROUP:$S1404_dszMCreateRebuild
+	*** 0019dc	e8 00 00 		call	_dprintf
+	*** 0019df	83 c4 08 		add	sp,8
+					$L1876:
+; Line 1251
+	*** 0019e2	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 0019e5	26 80 4f 06 08 		or	BYTE PTR es:[bx+6],8
+; Line 1252
+	*** 0019ea	8b 46 ec 		mov	ax,WORD PTR [bp-20]	;bdone
+	*** 0019ed	8b 56 ee 		mov	dx,WORD PTR [bp-18]
+	*** 0019f0	26 89 47 1b 		mov	WORD PTR es:[bx+27],ax
+	*** 0019f4	26 89 57 1d 		mov	WORD PTR es:[bx+29],dx
+; Line 1253
+	*** 0019f8	6a 01 			push	1
+	*** 0019fa	eb 1b 			jmp	SHORT $L1892
+					$I1782:
+; Line 1256
+; Line 1257
+	*** 0019fc	f6 06 00 00 10 		test	BYTE PTR _uDebugLevel,16	;0010H
+	*** 001a01	74 0a 			je	$L1878
+	*** 001a03	1e 			push	ds
+	*** 001a04	68 dc 01 		push	OFFSET DGROUP:$S1403_dszMCreateBuild
+	*** 001a07	e8 00 00 		call	_dprintf
+	*** 001a0a	83 c4 04 		add	sp,4
+					$L1878:
+; Line 1258
+	*** 001a0d	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 001a10	26 80 4f 06 01 		or	BYTE PTR es:[bx+6],1
+; Line 1259
+	*** 001a15	6a 00 			push	0
+					$L1892:
+	*** 001a17	ff 76 ee 		push	WORD PTR [bp-18]
+	*** 001a1a	ff 76 ec 		push	WORD PTR [bp-20]	;bdone
+	*** 001a1d	ff 76 06 		push	WORD PTR [bp+6]
+	*** 001a20	ff 76 04 		push	WORD PTR [bp+4]	;pVrh
+	*** 001a23	e8 00 00 		call	_BuildCreate
+	*** 001a26	83 c4 0a 		add	sp,10	;000aH
+; Line 1260
+; Line 1261
+					$I1781:
+; Line 1262
+; Line 1265
+	*** 001a29	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 001a2c	26 ff 77 17 		push	WORD PTR es:[bx+23]
+	*** 001a30	06 			push	es
+	*** 001a31	53 			push	bx
+	*** 001a32	e8 0b e6 		call	_NextValidChild
+	*** 001a35	83 c4 06 		add	sp,6
+	*** 001a38	c4 5e fc 		les	bx,DWORD PTR [bp-4]	;mirror
+	*** 001a3b	26 89 47 17 		mov	WORD PTR es:[bx+23],ax
+; Line 1270
+	*** 001a3f	26 8b 47 1f 		mov	ax,WORD PTR es:[bx+31]
+	*** 001a43	8b c8 			mov	cx,ax
+	*** 001a45	c1 e0 02 		shl	ax,2
+	*** 001a48	03 c1 			add	ax,cx
+	*** 001a4a	d1 e0 			shl	ax,1
+	*** 001a4c	05 21 00 		add	ax,33	;0021H
+	*** 001a4f	c4 76 10 		les	si,DWORD PTR [bp+16]	;pSize
+	*** 001a52	26 89 04 		mov	WORD PTR es:[si],ax
+; Line 1272
+	*** 001a55	f6 06 00 00 10 		test	BYTE PTR _uDebugLevel,16	;0010H
+	*** 001a5a	74 28 			je	$L1880
+	*** 001a5c	8b 46 fc 		mov	ax,WORD PTR [bp-4]	;mirror
+	*** 001a5f	8b 56 fe 		mov	dx,WORD PTR [bp-2]
+	*** 001a62	05 0b 00 		add	ax,11	;000bH
+	*** 001a65	52 			push	dx
+	*** 001a66	50 			push	ax
+	*** 001a67	6a 06 			push	6
+	*** 001a69	8b 46 0c 		mov	ax,WORD PTR [bp+12]	;sec
+	*** 001a6c	8b 56 0e 		mov	dx,WORD PTR [bp+14]
+	*** 001a6f	05 14 00 		add	ax,20	;0014H
+	*** 001a72	52 			push	dx
+	*** 001a73	50 			push	ax
+	*** 001a74	ff 76 06 		push	WORD PTR [bp+6]
+	*** 001a77	ff 76 04 		push	WORD PTR [bp+4]	;pVrh
+	*** 001a7a	1e 			push	ds
+	*** 001a7b	68 20 01 		push	OFFSET DGROUP:$S1399_dszMirrorCreate
+	*** 001a7e	e8 00 00 		call	_dprintf
+	*** 001a81	83 c4 12 		add	sp,18	;0012H
+					$L1880:
+; Line 1273
+	*** 001a84	33 c0 			xor	ax,ax
+; Line 1274
+					$EX1741:
+	*** 001a86	5e 			pop	si
+	*** 001a87	5f 			pop	di
+	*** 001a88	c9 			leave	
+	*** 001a89	c3 			ret	
+
+_MirrorCreate	ENDP
+_TEXT	ENDS
+END

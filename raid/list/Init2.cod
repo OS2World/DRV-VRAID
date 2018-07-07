@@ -1,0 +1,63 @@
+;	Static Name Aliases
+;
+;	$S170_id	EQU	id
+	TITLE   init2.c
+	.286p
+	.287
+_TEXT	SEGMENT  WORD PUBLIC 'CODE'
+_TEXT	ENDS
+_DATA	SEGMENT  WORD PUBLIC 'DATA'
+_DATA	ENDS
+CONST	SEGMENT  WORD PUBLIC 'CONST'
+CONST	ENDS
+_BSS	SEGMENT  WORD PUBLIC 'BSS'
+_BSS	ENDS
+INITDATA	SEGMENT  WORD PUBLIC 'FAR_DATA'
+INITDATA	ENDS
+DGROUP	GROUP	CONST, _BSS, _DATA
+	ASSUME DS: DGROUP
+	ASSUME  SS: NOTHING
+EXTRN	_NotifyIorb:NEAR
+EXTRN	_fDriverFlags:WORD
+_DATA      SEGMENT
+$S170_id	DB	'$Id: init2.c,v 1.7 2000/07/03 01:53:15 vitus Exp $',  00H
+_DATA      ENDS
+_TEXT      SEGMENT
+	ASSUME	CS: _TEXT
+
+InitLevel2	PROC NEAR
+; Line 83
+; Line 85
+	*** 000000	f6 06 01 00 01 		test	BYTE PTR _fDriverFlags+1,1
+	*** 000005	74 0c 			je	$EX2111
+; Line 91
+	*** 000007	f6 06 01 00 02 		test	BYTE PTR _fDriverFlags+1,2
+	*** 00000c	75 05 			jne	$EX2111
+; Line 96
+	*** 00000e	80 0e 01 00 02 		or	BYTE PTR _fDriverFlags+1,2
+; Line 104
+					$EX2111:
+	*** 000013	c3 			ret	
+
+InitLevel2	ENDP
+	PUBLIC	_CompleteInit
+_CompleteInit	PROC NEAR
+; Line 125
+	*** 000014	55 			push	bp
+	*** 000015	8b ec 			mov	bp,sp
+;	pIorb = 4
+; Line 128
+	*** 000017	e8 e6 ff 		call	InitLevel2
+; Line 132
+	*** 00001a	6a 00 			push	0
+	*** 00001c	ff 76 06 		push	WORD PTR [bp+6]
+	*** 00001f	ff 76 04 		push	WORD PTR [bp+4]	;pIorb
+	*** 000022	e8 00 00 		call	_NotifyIorb
+; Line 134
+	*** 000025	c9 			leave	
+	*** 000026	c3 			ret	
+	*** 000027	90 			nop	
+
+_CompleteInit	ENDP
+_TEXT	ENDS
+END

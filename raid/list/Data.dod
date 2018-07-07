@@ -1,0 +1,167 @@
+;	Static Name Aliases
+;
+;	$S170_vcid	EQU	vcid
+	TITLE   data.c
+	.286p
+	.287
+_TEXT	SEGMENT  WORD PUBLIC 'CODE'
+_TEXT	ENDS
+_DATA	SEGMENT  WORD PUBLIC 'DATA'
+_DATA	ENDS
+CONST	SEGMENT  WORD PUBLIC 'CONST'
+CONST	ENDS
+_BSS	SEGMENT  WORD PUBLIC 'BSS'
+_BSS	ENDS
+$$SYMBOLS	SEGMENT  BYTE PUBLIC 'DEBSYM'
+$$SYMBOLS	ENDS
+$$TYPES	SEGMENT  BYTE PUBLIC 'DEBTYP'
+$$TYPES	ENDS
+INITDATA	SEGMENT  WORD PUBLIC 'FAR_DATA'
+INITDATA	ENDS
+DGROUP	GROUP	CONST, _BSS, _DATA
+	ASSUME DS: DGROUP
+	ASSUME  SS: NOTHING
+PUBLIC  _uRegLevel
+PUBLIC  _fADDFlags
+PUBLIC  _uADDMaxSGList
+PUBLIC  _ulADDMaxTransfer
+PUBLIC  _uMaxQueueCount
+PUBLIC  _cIorbInQueue
+PUBLIC  _cVrioInQueue
+PUBLIC  _cIorbAllocated
+PUBLIC  _cVrioAllocated
+PUBLIC  _npInitData
+PUBLIC  _DeviceTable
+PUBLIC  _szMsgBuffer
+PUBLIC  _msgBuffer
+PUBLIC  _szMallocFailed
+PUBLIC  _szReadError
+PUBLIC  _MemPool
+PUBLIC  _uDebugLevel
+PUBLIC  _ppDiskDDHeader
+PUBLIC  _ppWorkMem
+PUBLIC  _Device_Help
+PUBLIC  _pGlobalInfoSeg
+PUBLIC  _hdMemHook
+PUBLIC  _hdBuildHook
+PUBLIC  _hdThisDriver
+PUBLIC  _apBDisk
+PUBLIC  _cBDisk
+PUBLIC  _apPDev
+PUBLIC  _cPDev
+PUBLIC  _apHDrv
+PUBLIC  _cHDrv
+PUBLIC  _aBuildProcess
+PUBLIC  _cBuildProcess
+PUBLIC  _BuildParent
+PUBLIC  _vrioBuild
+PUBLIC  _UpdateParent
+PUBLIC  _vrioUpdate
+PUBLIC  _ulTimer
+PUBLIC  _cBeeps
+PUBLIC  _fDriverFlags
+EXTRN	_BuildNotify:NEAR
+EXTRN	_UpdateNotify:NEAR
+_DATA      SEGMENT
+$S170_vcid	DB	'$Id: data.c,v 2.4 2001/07/22 00:30:10 vitus Exp $',  00H
+_uDebugLevel	DW	08031H
+_ppDiskDDHeader	DD	00H
+_ppWorkMem	DD	00H
+_Device_Help	DD	00H
+_pGlobalInfoSeg	DD	00H
+_fDriverFlags	DW	00H
+_uRegLevel	DW	00H
+_hdThisDriver	DW	00H
+_hdMemHook	DD	00H
+_hdBuildHook	DD	00H
+_apBDisk	DD	00H
+ 	DB	92 DUP(0)
+
+_cBDisk	DW	00H
+_apPDev	DD	00H
+ 	DB	92 DUP(0)
+
+_cPDev	DW	00H
+_apHDrv	DD	00H
+ 	DB	60 DUP(0)
+
+_cHDrv	DW	00H
+_aBuildProcess	DD	00H
+ 	DB	152 DUP(0)
+
+_cBuildProcess	DW	00H
+_BuildParent	DB	00H
+	DB	00H
+	DB	00H
+	DB	00H
+	DB	00H
+	DB	00H
+	DB	00H
+	DW	00H
+	DW	00H
+	DD	00H
+	DW	_BuildNotify
+	DW	00H
+ 	DB	4 DUP(0)
+
+	ORG	$+1
+_vrioBuild	DD	DGROUP:_BuildParent
+	DD	00H
+	DD	00H
+	DD	00H
+	DW	00H
+	DW	00H
+ 	DB	20 DUP(0)
+
+_UpdateParent	DB	00H
+	DB	00H
+	DB	00H
+	DB	00H
+	DB	00H
+	DB	00H
+	DB	00H
+	DW	00H
+	DW	00H
+	DD	00H
+	DW	_UpdateNotify
+	DW	00H
+ 	DB	4 DUP(0)
+
+	ORG	$+1
+_vrioUpdate	DD	DGROUP:_UpdateParent
+	DD	00H
+	DD	00H
+	DD	00H
+	DW	00H
+	DW	00H
+ 	DB	20 DUP(0)
+
+_cBeeps	DW	00H
+_uADDMaxSGList	DW	010H
+_ulADDMaxTransfer	DD	04000H
+_uMaxQueueCount	DW	08H
+_fADDFlags	DW	00H
+_ulTimer	DD	00H
+_cIorbInQueue	DW	00H
+_cVrioInQueue	DW	00H
+_cIorbAllocated	DW	00H
+_cVrioAllocated	DW	00H
+_szMsgBuffer	DB	00H
+ 	DB	1023 DUP(0)
+
+_msgBuffer	DW	049aH
+	DW	01H
+	DD	DGROUP:_szMsgBuffer
+_MemPool	DB	00H
+ 	DB	30719 DUP(0)
+
+_npInitData	DW	DGROUP:_MemPool
+_DeviceTable	DB	00H
+ 	DB	1023 DUP(0)
+
+_DATA      ENDS
+INITDATA      SEGMENT
+_szMallocFailed	DB	'%s: internal memory allocation failed',  00H
+_szReadError	DB	'%s: error %04x reading configuration data',  00H
+INITDATA	ENDS
+END

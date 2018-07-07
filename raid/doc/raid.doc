@@ -1,0 +1,130 @@
+-*- Mode: indented-text -*-
+--- $Id: raid.doc,v 1.2 1998/10/07 23:17:42 vitus Stab $
+
+WHAT IS RAID?
+
+    RAID (redundant array of inexpensive  disks)  is the name of  some
+    standards  to increase the security  of the disk subsystem.  Those
+    standards were first  published  by Gibson, Katz and  Patterson in
+    1987.  The idea  of RAID is to use  several disks to build a fast,
+    errorprone  subsystem.  Usuallay this is  done  by a special  SCSI
+    controller but the possibility of software RAID exists, too.
+
+    Currently the following RAID levels are commonly available:
+
+    RAID  Description	Checksum	data disks  +  chksum disks
+    ------------------------------------------------------------------
+     -	  Chaining	none		2+
+     0    Striping	none		2+		-
+     1    Mirroring	none		1+		1
+     2    Stripe Set    Hamming Code	2+		1
+     3    Stripe Set	XOR		2+		1
+     4    Striping	XOR		2+		1
+     5    Striping, distributed XOR	2+		1
+
+
+    Besides these 'official'  RAID levels 0-5 may vendor-unique levels
+    exist, for example Mylex RAID 6 (combination of RAID  0 and 1) und
+    7, Siemens RAID 7  and many more.   Every vendor has his standards
+    and most  standards  are different from   standards  used by other
+    vendors.
+
+
+RAID 0 - Striping
+
+    Using two of more disks data  is written alternating to all disks.
+    Transfer rate is  usually  much higher  as a single  disk.  Access
+    time remains  the  same.  RAID  0 is  no  real RAID as  it doesn't
+    provide redundancy.  Danger of data loss  is greater than a single
+    disk  as with a  loss  of a single   disk  the whole  subsystem is
+    worthless.  You don't need a  controller to implement RAID 0, this
+    can by   done  by a  piece   of   software.  This isn't    a  real
+    professional   solution but     may  nevertheless  increase   data
+    throughput.
+
+
+RAID 1 - Mirroring
+
+    A simple way to increase  data security: write all  data to two or
+    more  disks.  So all disks     contains  exactly the same    data.
+    Disadvantage of this very simple solution: 50 or more percent more
+    room for your data and --- in case  of two disks  --- in case both
+    disks report different data (write error): which disk is correct?
+
+    Some vendors name disk mirroring as disk  duplexing of two or more
+    controller are involved.  Even in case a controller fails there is
+    redundancy.   To increase data security RAID   1 is often combined
+    with some other RAID level.
+
+
+RAID 2 - Stripe Set
+
+    Similar to RAID 0 all  data is distributed to  two or more  disks.
+    But an additional disk is used to write a hamming code.  A hamming
+    code detects  errors and  may  repair smaller errors.    Because a
+    seperate disk  is used to store the  hamming code RAID 2  is slow.
+    And  because modern disks  use a kind  of error correction code by
+    themself RAID 2 is now obsolete.
+
+
+RAID 3 - Stripe Set
+
+    A performance-optimized aternative  to  RAID2.  It's working  on a
+    stripe set and write errorcorrecting to a seperate disk, too.  The
+    difference is that a XOR-operations is used as the errorcorrecting
+    code.  When a disk fails it's contents may  be calculated from the
+    data of all other disks.  There is no dataloss.  RAID3 is fast but
+    it's speed is reduced by transfering small, non-continuous blocks.
+    Good for large transfer sizes.
+
+
+RAID 4 - Sector Striping
+
+    RAID 4 does striping on basis of sector instead of bytes as RAID 3
+    does.  There  is also a  seperate disk with checksum calculated by
+    XOR-operations.  Because this seperate disk  is a bottle-neck RAID
+    4 isn't as fast as expected, at least when writing or in case of a
+    disk failure (you don't need the XOR-values when reading).
+
+
+RAID 5 - Sector Stripng, Distributed Checksums
+
+    This RAID level combines features  from RAID 0,  3 and 4.  Data is
+    striped in sector-sized units  on several (at least  three) disks.
+    Error   correction  is achieved  by    using XOR-operations.   The
+    calculated checksum isn't saved on a seperate disk but distributed
+    along with  the data sectors.   Therefore there is  no single disk
+    acting as  a bottle-neck.  RAID 5  combines high security and good
+    performance  and   is  used   for  this   reasons.   Because   the
+    XOR-operation  over large amounts of  data  is still something  to
+    take it's time RAID 5 is often implemented as hardware RAID with a
+    special controller using a seperate unit to calculate it.
+
+
+
+
+    Besides  allowing   to continue working with   a  failed disk RAID
+    features  some  additional  techniques  to  restructure redundancy
+    after a failure:
+
+Hot Swapping
+
+    Change a disk while keeping  the machine  up  to replace a  failed
+    device.   The failed device  is stopped, changed and a replacement
+    is automatically setup and filled to  contain the data once stored
+    on the failed  device.  There  is no  need to shutdown  a  running
+    server.  Be aware that   hot swaaping need special  connectors  to
+    avoid electrical damage.
+
+Hot Standby
+
+    Add an additional disk to  the system which is  used to replace  a
+    failed device  without sysop interaction.   Until it is needed the
+    disk is stopped.
+
+
+Reference
+
+    Translated  from german HDDFAQ  (copright:  PC POWER  GmbH, Holger
+    Ehlers@2:241/1050 aka 2:241/1020.20), available from 2:2474/424 as
+    hddfaq.zip).

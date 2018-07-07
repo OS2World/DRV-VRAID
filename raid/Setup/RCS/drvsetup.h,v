@@ -1,0 +1,85 @@
+head	1.2;
+access;
+symbols
+	VSETUPv0_84:1.2
+	VSETUP_82:1.2
+	VSETUPv0_80:1.2
+	VSETUPv0_71:1.2
+	VSETUPv0_70:1.2
+	VSETUPv0_60:1.1
+	VSETUPv0_52:1.1
+	VSETUPv0_51:1.1
+	VSETUPv0_50:1.1
+	VSETUPv0_20:1.1;
+locks; strict;
+comment	@ * @;
+
+
+1.2
+date	99.02.09.02.55.10;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.05.08.00.54.42;	author vitus;	state Stab;
+branches;
+next	;
+
+
+desc
+@Interface to DrvSetup.c
+@
+
+
+1.2
+log
+@- switched to C++
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/drvsetup.h,v $
+ * $Revision: 1.1 $
+ * $Date: 1998/05/08 00:54:42 $
+ * $Author: vitus $
+ *
+ *	Interface to DrvSetup.c
+ *
+ * $Log: drvsetup.h,v $
+ * Revision 1.1  1998/05/08 00:54:42  vitus
+ * Initial revision
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+ */
+
+
+typedef struct {
+    HWND	parent;
+} THR_DRVSETUP, * PTHR_DRVSETUP;
+
+
+
+extern void _Optlink	DrvsetupThread(void *dummy);
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Author$
+d7 1
+a7 1
+ * Interface to DrvSetup.c
+d9 5
+a13 1
+ * $Log$
+d23 1
+a23 1
+extern void	DrvsetupThread(void *dummy);
+@

@@ -1,0 +1,158 @@
+
+
+                                                     6/3/92
+
+
+
+                   Instructions for LOCKDRIVE Filter
+                   ---------------------------------
+
+         Purpose
+         -------
+
+         LOCKDRV.FLT converts Removable DASD and R/W Optical
+         drives to fixed disks which are managed by the
+         OS/2 DASD Manager (OS2DASD.DMD).
+
+         Disks supported by the OS/2 DASD Manager may be
+         paritioned and formatted with either FAT or HPFS
+         file systems.
+
+         The LOCKDRIVE filter also issues commands to
+         prevent media removal while OS/2 is running.
+
+
+         ADD/DM Toolkit Installation of LOCKDRV Source
+         ---------------------------------------------
+
+         LOCKDRIVE source is contained in the directory
+
+         \DK_ADDDM\SRC\DEV\DASD.IX\LOCKDRV
+
+         This directory will be added to the ADD/DM Toolkit
+         by unzipping the LOCKDRV source:
+
+               PKUNZIP -d LOCKDRV.ZIP
+
+         The filter can be rebuilt be doing an NMAKE in the
+         LOCKDRV directory.
+
+
+         LOCKDRV Filter ADD Installation
+         -------------------------------
+
+         1.) Copy the LOCKDRIVE filter ADD - LOCKDRV.FLT to
+             \OS2 directory of the boot drive.
+
+         2.) Add the following statement to CONFIG.SYS on
+             the boot drive.
+
+             BASEDEV=LOCKDRV.FLT /UNIT:0,1.....n
+
+             Where:
+
+             /UNIT: - Specifies devices to be locked.
+
+             Devices are numbered starting with the
+             first Removable DASD or R/W Optical Device
+             (SCSI Types: 0 or 7).
+
+             Notes: 1.) CDROM and Diskette (A:, B:) devices
+                        are not included in this count.
+
+                    2.) The BASEDEV= stmt for LOCKDRV.FLT may
+                        be put in any where in CONFIG.SYS.
+
+                        However, if other Filter ADDs are installed,
+                        then the LOCKDRV stmt must appear in the
+                        proper order with regard to other Filter ADD
+                        statements.
+
+         3.) Ready the devices to be locked. A cartridge
+             must be present in the device during the
+             OS/2 boot process.
+
+         4.) Reboot the system.
+
+         5.) Use OS/2 FDISKPM, FORMAT utilities to parition
+             and format the media.
+
+             Note: FDISKPM may show incorrect partition sizes for
+                   media which was previously non-paritioned.
+
+                   This condition may be corrected by selecting
+                   and deleting the incorrect parition entries.
+
+                   When all the entries have been deleted, FDISK
+                   should show the correct size for the media
+                   in its FREESPACE entry.
+
+         6.) Media in the drive will be unlocked after a SHUTDOWN
+             or Ctrl-Alt-Del reboot of OS/2.
+
+         If the LOCKDRV filter cannot lock the devices specified
+         on its command line in CONFIG.SYS the following message
+         will be issued:
+
+            LockDrive Filter: Some devices requested could not be locked.
+
+         If the syntax of the command line in CONFIG.SYS is incorrect,
+         the LOCKDRIVE filter will uninstall with a SYS1201 error.
+
+
+
+         Installing OS/2 on Removable Media
+         ----------------------------------
+
+         OS/2 may be booted from a locked cartridge device provided,
+         the DASD adapter provides INT 13 support for removable
+         devices.
+
+         The LOCKDRIVE Filter must be manually installed at the
+         completion of OS/2 installation and prior to rebooting the
+         system following the procedures above.
+
+         The installation diskettes can be booted to access HPFS
+         partitions or DOS may be booted to access FAT partitions.
+
+         It is STRONGLY RECOMMENDED that OS/2 be installed on a
+         Primary Partition rather than an Extended Parition
+         (Logical Drive).
+
+         If you install in  an Extended Partition, and your
+         ADD recognizes addtional drives (beyond what the adapter's
+         BIOS recognizes) or additional drives are later added to the
+         configuration, then the drive letter of the bootable partition
+         will change and you will probably not be able to reboot
+         the system!
+
+
+         Restrictions and Known Problems
+         -------------------------------
+
+
+         1.) Locked drives may unexpectedly become unlocked if an ADD
+             issues a SCSI Device Reset or SCSI Bus Reset to clear
+             an abnormal SCSI bus condition.
+
+             This will be addessed by having the LOCKDRV filter
+             reestablish the lock condition when it detects a
+             UNIT ATTENTION (Device Reset) from the device.
+
+         2.) Certain devices (especially large optical devices) may
+             timeout during a FAT format, which issues large
+             a Read Verify operations. This will be addressed by
+             the DASD Manager by setting a non-default IORB timeout
+             for these operations.
+
+         3.) Devices with other that 512 byte default sector
+             sizes are not supported.
+
+             The LOCKDRV Filter does not currently set block
+             sizes to 512 (via a SCSI Mode Select).
+
+         4.) There is currently no low-level formatting support in
+             OS/2 2.0.
+
+             Support of low-level formatting is being investigated.
+

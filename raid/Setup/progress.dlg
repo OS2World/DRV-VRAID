@@ -1,0 +1,19 @@
+#ifndef OS2_INCLUDED
+   #include <os2.h>
+#endif
+DLGINCLUDE 2 "resources.h"
+
+DLGTEMPLATE IDW_PROGRESS LOADONCALL MOVEABLE DISCARDABLE
+BEGIN
+    DIALOG  "Array Verification", IDW_PROGRESS, 68, 75, 207, 79, WS_VISIBLE, 
+            FCF_SYSMENU | FCF_TITLEBAR
+    BEGIN
+        SLIDER          SL_PROGPERCENT, 9, 34, 187, 24, SLS_LEFT | 
+                        SLS_READONLY | SLS_RIBBONSTRIP | WS_GROUP | NOT 
+                        WS_TABSTOP
+                        CTLDATA 12, 0, 6, 0, 0, 0
+        PUSHBUTTON      "~Pause", PB_PAUSERESUME, 18, 8, 40, 14
+        PUSHBUTTON      "~Abort", DID_CANCEL, 64, 8, 40, 14
+        LTEXT           "Percentage done", -1, 60, 61, 84, 8
+    END
+END

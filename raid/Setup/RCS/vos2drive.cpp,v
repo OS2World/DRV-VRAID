@@ -1,0 +1,1307 @@
+head	1.5;
+access;
+symbols
+	VSETUPv0_84:1.5
+	VSETUP_82:1.5
+	VSETUPv0_80:1.4
+	VSETUPv0_71:1.4
+	VSETUPv0_70:1.4;
+locks; strict;
+comment	@// @;
+
+
+1.5
+date	2000.04.10.00.57.54;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	99.03.24.23.48.39;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	99.03.08.05.04.47;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	99.03.01.01.00.12;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.02.24.00.18.34;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Implements classes VRDrive and higher
+@
+
+
+1.5
+log
+@- include VSetup.h instead of proto.h
+- converted C++ to C comments
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/setup/RCS/vos2drive.cpp,v $
+ * $Revision: 1.4 $
+ * $Date: 1999/03/24 23:48:39 $
+ * $Locker: vitus $
+ *
+ *	Implements classes VRDrive and higher.
+ *
+ * $Log: vos2drive.cpp,v $
+ * Revision 1.4  1999/03/24 23:48:39  vitus
+ * - added assert()'s
+ *
+ * Revision 1.3  1999/03/08 05:04:47  vitus
+ * - implemented queryIcon()
+ * - destructor deletes theDisk if ioDeleteYourself() hasn't been called
+ *
+ * Revision 1.2  1999/03/01 01:00:12  vitus
+ * - removed all class implementation except VOS2Drive's
+ * - renamed to VOS2Drive.cpp
+ *
+ * Revision 1.1  1999/02/24 00:18:34  vitus
+ * Initial revision
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1999-2000
+ */
+static char const vcid[]="$Id: vos2drive.cpp,v 1.4 1999/03/24 23:48:39 vitus Exp vitus $";
+
+#include <assert.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <limits.h>
+
+#define __IBMC__	0
+#define INCL_WINPOINTERS
+#define INCL_DOS
+#define INCL_DOSDEVIOCTL
+#define INCL_ERRORS
+#include <os2.h>
+
+extern "C" {
+#include "../../../Lib/defines.h"
+#include "../../../Lib/verbose.h"
+}
+#include "VSetup.h"
+#include "drvif.h"
+#include "resources.h"
+
+#include "dskinfo.hpp"
+
+
+
+
+
+
+/* **********************************************************************
+ * **** VOS2Drive::* ****************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ * PARAMETER
+ * RETURNS
+ * DESCRIPTION
+ *	Create VOS2Drive (an OS/2 accessable disk without any VRAID
+ *	partition from VOS2Disk object).
+ *
+ * REMARKS
+ */
+VOS2Drive::VOS2Drive(VOS2Disk * disk)
+{
+    assert( disk != NULL );
+    assert( disk->querySize() != 0 );
+
+    delete_disk = True;
+    theDisk = disk;
+    parent = NULL;
+    writable = theDisk->isWritable();
+    memset(&id, 0, sizeof(DEVID));
+
+    rw_icon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_FREEDRIVE);
+    ro_icon = WinLoadPointer(HWND_DESKTOP, NULLHANDLE, ICO_LOCKEDDRIVE);
+
+}
+
+
+
+
+VOS2Drive::~VOS2Drive()
+{
+    if( delete_disk == True )
+        delete theDisk;				/* no need for that disk object */
+
+    WinDestroyPointer(rw_icon);
+    WinDestroyPointer(ro_icon);
+}
+
+
+
+
+char *
+VOS2Drive::allocateDescription()
+{
+    char * descr = new char[80];
+    sprintf(descr, "OS/2 Device %lu\n%lu MByte",
+	    theDisk->queryIndex(), querySize() / 2 / 1024u);
+    return descr;
+}
+
+
+
+
+HPOINTER
+VOS2Drive::queryIcon()
+{
+    if( writable == True )
+	return rw_icon;
+    else
+	return ro_icon;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *      VOS2Drive::ioDeleteYourself()
+ * PARAMETER
+ *      ((none)
+ * RETURNS
+ *      0               OK
+ * DESCRIPTION
+ *      As OS/2 Drives aren't deletable from this application I have
+ *      "reused" this method to modify the operation of the destructor:
+ *      normally it would would delete 'theDisk' but when this method
+ *      has been called it will only delete itself.  Used when we
+ *      switch from VOS2Drive to VORDev by crating a VRAID partition.
+ *
+ * REMARKS
+ */
+int
+VOS2Drive::ioDeleteYourself()
+{
+    delete_disk = False;
+    return 0;
+}
+
+
+
+
+int
+VOS2Drive::ioRemoveParent()
+{
+    assert( 0 );				/* we have no parent */
+    return 1;					/* "1" error :-/ */
+}
+
+
+
+
+int
+VOS2Drive::ioChangeID(DEVID)
+{
+    assert( 0 );				/* gibt's nich */
+    return 1;					/* "1" error :-/ */
+}
+
+
+
+
+int
+VOS2Drive::ioSync()
+{
+    assert( 0 );				/* nothing changable, create other! */
+    return 1;
+}
+
+
+
+
+ULONG
+VOS2Drive::querySize()
+{
+    return theDisk->querySize();
+}
+
+
+
+
+APIRET
+VOS2Drive::read(ULONG block,ULONG count,PVOID buffer)
+{
+    return theDisk->read(block,count,buffer);
+}
+
+
+
+
+APIRET
+VOS2Drive::write(ULONG block,ULONG count,PVOID buffer)
+{
+    return theDisk->write(block,count,buffer);
+}
+@
+
+
+1.4
+log
+@- added assert()'s
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1999/03/08 05:04:47 $
+d10 3
+d23 2
+a24 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1999
+d26 1
+a26 1
+static char const vcid[]="$Id: vos2drive.cpp,v 1.3 1999/03/08 05:04:47 vitus Exp vitus $";
+d46 1
+a47 1
+#include "proto.h"
+d93 1
+a93 1
+        delete theDisk;				// no need for that disk object
+d155 2
+a156 2
+    assert( 0 );				// we have no parent
+    return 1;					// "1" error :-/
+d165 2
+a166 2
+    assert( 0 );				// gibt's nich
+    return 1;					// "1" error :-/
+d175 1
+a175 1
+    assert( 0 );				// nothing changable, create other!
+@
+
+
+1.3
+log
+@- implemented queryIcon()
+- destructor deletes theDisk if ioDeleteYourself() hasn't been called
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.2 $
+ * $Date: 1999/03/01 01:00:12 $
+d10 4
+d23 1
+a23 1
+static char const vcid[]="$Id: vos2drive.cpp,v 1.2 1999/03/01 01:00:12 vitus Exp vitus $";
+d70 3
+a73 1
+    parent = 0;
+d75 1
+@
+
+
+1.2
+log
+@- removed all class implementation except VOS2Drive's
+- renamed to VOS2Drive.cpp
+@
+text
+@d2 3
+a4 3
+ * $Source: r:/source/driver/raid/setup/RCS/vrdrive.cpp,v $
+ * $Revision: 1.1 $
+ * $Date: 1999/02/24 00:18:34 $
+d9 5
+a13 1
+ * $Log: vrdrive.cpp,v $
+d19 1
+a19 1
+static char const vcid[]="$Id: vrdrive.cpp,v 1.1 1999/02/24 00:18:34 vitus Exp vitus $";
+d29 1
+d41 1
+d66 1
+d68 2
+a69 1
+    writable = disk->isWritable();
+d71 4
+a74 1
+    theDisk = disk;
+d77 3
+d82 5
+d90 2
+d102 30
+d135 2
+a136 2
+    assert( 0 );				// can't delete...
+    return 1;
+d139 3
+d149 3
+d159 3
+d170 2
+d178 3
+d186 3
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d9 3
+a11 1
+ * $Log$
+d15 1
+a15 1
+static char const vcid[]="$Id$";
+d19 2
+d22 1
+d35 2
+d60 3
+d70 3
+a72 2
+ULONG
+VOS2Drive::querySize()
+d74 4
+a77 1
+    return theDisk->querySize();
+a79 5
+APIRET
+VOS2Drive::read(ULONG block,ULONG count,PVOID buffer)
+{
+    return theDisk->read(block,count,buffer);
+}
+d81 2
+a82 2
+APIRET
+VOS2Drive::write(ULONG block,ULONG count,PVOID buffer)
+d84 2
+a85 1
+    return theDisk->write(block,count,buffer);
+d91 1
+a91 1
+    assert( 0 );				// gibt's nicht
+a101 204
+
+
+
+
+
+/* **********************************************************************
+ * **** VRDrive::* ******************************************************
+ * ******************************************************************* */
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	ioDeleteYourself()
+ * PARAMETER
+ *	this		VRDrive to be removed
+ *
+ * RETURNS
+ *	count of errors
+ *
+ * DESCRIPTION
+ *	Remove any traces of ourself from physical storage.
+ *	This is done by telling all childs that we are about
+ *	to be killed (they might set the "HOSTDRIVE" in their
+ *	configuration sectors) and clearing our own sector.
+ *
+ * REMARKS
+ */
+int
+VRDrive::ioDeleteYourself()
+{
+    int		i;
+    int		errors = 0;
+
+    /* 1st: update all childs (parent removed -> marked in sector) */
+
+    for( i = 0; i < childs; ++i )
+    {
+	if( child[i] != NULL )
+	{
+	    errors += child[i]->ioRemoveParent();
+	    child[i] = NULL;
+	}
+    }
+
+
+    /* 2nd: clear administrative sector of current level. */
+
+    PUCHAR	buffer = new UCHAR[SECTOR_SIZE];
+    memset(buffer, 0, SECTOR_SIZE);
+    if( write(0, 1, buffer) != 0 )
+	++errors;
+    delete[] buffer;
+
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	setHostdrive(os2idx)
+ * PARAMETER
+ *	os2idx		accessable through this PDsk*() index
+ *			or -1 if VRDrive isn't accessable.
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Marks this VRAID drives as a host drive with or w/o
+ *	OS/2 access.
+ *
+ * REMARKS
+ */
+void
+VRDrive::setHostdrive(ULONG os2idx)
+{
+    os2access = os2idx;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** VSingle::* ******************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VSingle::VSingle(drive_id,nchd)
+ * PARAMETER
+ *	drive_id	ID of this single
+ *	nchd		child count
+ *
+ * RETURNS
+ *	(nothing, C++)
+ *
+ * DESCRIPTION
+ *	Creates a new VRAID object in memory.
+ *
+ * REMARKS
+ */
+VSingle::VSingle(DEVID drive_id,int nchd)
+{
+    parent = NULL;
+    childs = 0;
+    size = 0;
+    os2access = -1;				// assume none
+    memcpy(id, drive_id, sizeof(DEVID));
+    child = new VRDev *[nchd];
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VSingle::~VSingle()
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	(nothing, C++)
+ * DESCRIPTION
+ *	Destroys VRAID memory object.
+ *
+ * REMARKS
+ */
+VSingle::~VSingle()
+{
+    delete[] child;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VSingle::ioRemoveParent()
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	count of errors
+ *
+ * DESCRIPTION
+ *	Removes any traces of parent from configuration sectors.  Means
+ *	this array becomes hostdrive!
+ *
+ * REMARKS
+ */
+int
+VSingle::ioRemoveParent()
+{
+    PSEC_VRDEV	sec = new SEC_VRDEV;
+    int		errors = 0;
+
+    do
+    {
+	APIRET	rc;
+
+	rc = read(0, 1, sec);			// remember: 0 defines ourself
+	if( rc != 0 )
+	{
+	    Verbose(1, "VSingle", "can't read own SEC_VRDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	sec->u.s.flags |= RDFLAG_HOSTDRIVE;	// no parent means hostdrive
+	sec->timestamp = time(NULL);		// UTC of change
+	rc = write(0, 1, sec);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VSingle", "can't write own SEC_VRDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	parent = NULL;				// none
+    }
+    while(0);
+
+    delete sec;
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VSingle::ioChangeID(newid)
+ * PARAMETER
+ *	newid		new ID
+ * RETURNS
+ *	count of errors
+ *
+ * DESCRIPTION
+ *	Changes our own DEVID.
+ *
+ * REMARKS
+ */
+d103 1
+a103 58
+VSingle::ioChangeID(DEVID newid)
+{
+    PSEC_VRDEV	sec = new SEC_VRDEV;
+    int		errors = 0;
+
+    memcpy(id, newid, sizeof(DEVID));		// update object
+
+    do
+    {
+	APIRET	rc;
+
+	rc = read(0, 1, sec);			// remember: 0 defines ourself
+	if( rc != 0 )
+	{
+	    Verbose(1, "VSingle", "can't read own SEC_VRDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	memcpy(sec->u.s.id, newid, sizeof(DEVID));
+	sec->timestamp = time(NULL);		// UTC of change
+
+	rc = write(0, 1, sec);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VSingle", "can't write own SEC_VRDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+    }
+    while(0);
+
+    delete sec;
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VSingle::addChild(newchild,valid)
+ * PARAMETER
+ *	newchild	pointer to child to add
+ *	valid		whether this child is valid (uptodate)
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Adds a new child to our VRAID object.
+ *	OBS: as this is a SINGLE there is only a single child!  And
+ *	it's always valid.
+ *
+ * REMARKS
+ */
+void
+VSingle::addChild(VRDev * newchild,Boolean valid)
+d105 2
+a106 13
+    assert( childs == 0 );			// how do I do exceptions?
+    assert( valid == True );
+
+    /* Set double link between child and parent. */
+
+    child[childs] = newchild;
+    newchild->setParent(this);
+
+    size += newchild->querySize();
+    if( newchild->isWritable() == False )
+	writable = False;			/* oups, it isn't 'changable' */
+
+    ++childs;
+a109 15
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VSingle::querySize()
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	size of array
+ *
+ * DESCRIPTION
+ *	Guess!
+ *
+ * REMARKS
+ */
+d111 1
+a111 1
+VSingle::querySize()
+d113 1
+a113 1
+    return size;
+a115 21
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VSingle::read(offset,count,buffer)
+ * PARAMETER
+ *	offset		offset in configuratoin space
+ *	count		sector count
+ *	buffer		sector data
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		APIRET
+ *
+ * DESCRIPTION
+ *	Reads data from configuration sectors of this VRAID drive.  No
+ *	redundancy as this is a single.
+ *
+ * REMARKS
+ */
+d117 1
+a117 1
+VSingle::read(ULONG offset,ULONG count,PVOID buffer)
+d119 1
+a119 1
+    return child[0]->read(offset+1, count, buffer);
+a121 20
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VSingle::write(offset,count,buffer)
+ * PARAMETER
+ *	offset		offset in configuratoin space
+ *	count		sector count
+ *	buffer		sector data
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		APIRET
+ *
+ * DESCRIPTION
+ *	Writes data to configuration sectors of this VRAID drive.
+ *
+ * REMARKS
+ */
+d123 1
+a123 1
+VSingle::write(ULONG offset,ULONG count,PVOID buffer)
+d125 1
+a125 488
+    return child[0]->write(offset+1, count, buffer);
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** VChain::* *******************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VChain::VChain(drive_id,nchd)
+ * PARAMETER
+ *	drive_id	ID of this chain
+ *	nchd		child count
+ *
+ * RETURNS
+ *	(nothing, C++)
+ *
+ * DESCRIPTION
+ *	Creates a new VRAID object in memory.
+ *
+ * REMARKS
+ */
+VChain::VChain(DEVID drive_id,int nchd)
+{
+    parent = NULL;
+    childs = 0;
+    size = 0;
+    os2access = -1;				// assume none
+    memcpy(id, drive_id, sizeof(DEVID));
+    child = new VRDev *[nchd];
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VChain::~VChain()
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	(nothing, C++)
+ * DESCRIPTION
+ *	Destroys VRAID memory object.
+ *
+ * REMARKS
+ */
+VChain::~VChain()
+{
+    delete[] child;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VChain::ioRemoveParent()
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	0		OK
+ *
+ * DESCRIPTION
+ *	Removes any traces of parent from configuration sectors.  Means
+ *	this array becomes hostdrive!
+ *
+ * REMARKS
+ */
+int
+VChain::ioRemoveParent()
+{
+    PSEC_VRDEV	sec = new SEC_VRDEV;
+    int		errors = 0;
+
+    do
+    {
+	APIRET	rc;
+
+	rc = read(0, 1, sec);			// remember: 0 defines ourself
+	if( rc != 0 )
+	{
+	    Verbose(1, "VChain", "can't read own SEC_VRDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	sec->u.s.flags |= RDFLAG_HOSTDRIVE;	// no parent means hostdrive
+	sec->timestamp = time(NULL);		// UTC of change
+	rc = write(0, 1, sec);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VChain", "can't write own SEC_VRDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	parent = NULL;				// none
+    }
+    while(0);
+
+    delete sec;
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VChain::ioChangeID(newid)
+ * PARAMETER
+ *	newid		new ID
+ * RETURNS
+ *	count of errors
+ *
+ * DESCRIPTION
+ *	Changes it's own DEVID.
+ *
+ * REMARKS
+ */
+int
+VChain::ioChangeID(DEVID newid)
+{
+    PSEC_VRDEV	sec = new SEC_VRDEV;
+    int		errors = 0;
+
+    memcpy(id, newid, sizeof(DEVID));		// update object
+
+    do
+    {
+	APIRET	rc;
+
+	rc = read(0, 1, sec);			// remember: 0 defines ourself
+	if( rc != 0 )
+	{
+	    Verbose(1, "VChain", "can't read own SEC_VRDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	memcpy(sec->u.s.id, newid, sizeof(DEVID));
+	sec->timestamp = time(NULL);		// UTC of change
+	rc = write(0, 1, sec);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VChain", "can't write own SEC_VRDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+    }
+    while(0);
+
+    delete sec;
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VChain::addChild(newchild,valid)
+ * PARAMETER
+ *	newchild	pointer to child to add
+ *	valid		whether this child is valid (uptodate)
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Adds a new child to our VRAID object.
+ *
+ * REMARKS
+ */
+void
+VChain::addChild(VRDev * newchild,Boolean valid)
+{
+    /* Set double link between child and parent. */
+
+    child[childs] = newchild;
+    newchild->setParent(this);
+
+    size += newchild->querySize();
+    if( newchild->isWritable() == False )
+	writable = False;			/* oups, it isn't 'changable' */
+
+    ++childs;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VChain::querySize()
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	size of array
+ *
+ * DESCRIPTION
+ *	Guess!
+ *
+ * REMARKS
+ */
+ULONG
+VChain::querySize()
+{
+    return size;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VChain::read(offset,count,buffer)
+ * PARAMETER
+ *	offset		offset in configuratoin space
+ *	count		sector count
+ *	buffer		sector data
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		APIRET
+ *
+ * DESCRIPTION
+ *	Reads data from configuration sectors of this VRAID drive.
+ *
+ * REMARKS
+ *	Should read all childs and compare. xxx
+ *	Should test 'valid'. xxx
+ */
+APIRET
+VChain::read(ULONG offset,ULONG count,PVOID buffer)
+{
+    return child[0]->read(offset+1, count, buffer);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VChain::write(offset,count,buffer)
+ * PARAMETER
+ *	offset		offset in configuratoin space
+ *	count		sector count
+ *	buffer		sector data
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		APIRET
+ *
+ * DESCRIPTION
+ *	Writes data to configuration sectors of this VRAID drive.
+ *
+ * REMARKS
+ *	Should test 'valid'. xxx
+ */
+APIRET
+VChain::write(ULONG offset,ULONG count,PVOID buffer)
+{
+    APIRET	rc = 0;
+
+    for( int i = 0; i < childs; ++i )
+	rc |= child[i]->write(offset+1, count, buffer);
+    return rc;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** VStripe::* ******************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VStripe::VStripe(drive_id,nchd)
+ * PARAMETER
+ *	drive_id	ID of this chain
+ *	nchd		child count
+ *
+ * RETURNS
+ *	(nothing, C++)
+ *
+ * DESCRIPTION
+ *	Creates a new VRAID object in memory.
+ *
+ * REMARKS
+ */
+VStripe::VStripe(DEVID drive_id,int nchd)
+{
+    parent = NULL;
+    childs = 0;
+    size = 0;
+    os2access = -1;				// assume none
+    memcpy(id, drive_id, sizeof(DEVID));
+    child = new VRDev *[nchd];
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VStripe::~VStripe()
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	(nothing, C++)
+ * DESCRIPTION
+ *	Destroys VRAID memory object.
+ *
+ * REMARKS
+ */
+VStripe::~VStripe()
+{
+    delete[] child;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VStripe::ioRemoveParent()
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	0		OK
+ *
+ * DESCRIPTION
+ *	Removes any traces of parent from configuration sectors.  Means
+ *	this array becomes hostdrive!
+ *
+ * REMARKS
+ */
+int
+VStripe::ioRemoveParent()
+{
+    PSEC_VRDEV	sec = new SEC_VRDEV;
+    int		errors = 0;
+
+    do
+    {
+	APIRET	rc;
+
+	rc = read(0, 1, sec);			// remember: 0 defines ourself
+	if( rc != 0 )
+	{
+	    Verbose(1, "VStripe", "can't read own SEC_VRDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	sec->u.s.flags |= RDFLAG_HOSTDRIVE;	// no parent means hostdrive
+	sec->timestamp = time(NULL);		// UTC of change
+	rc = write(0, 1, sec);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VStripe", "can't write own SEC_VRDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	parent = NULL;				// none
+    }
+    while(0);
+
+    delete sec;
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VStripe::ioChangeID(newid)
+ * PARAMETER
+ *	newid		new ID
+ * RETURNS
+ *	count of errors
+ *
+ * DESCRIPTION
+ *	Changes it's own DEVID.
+ *
+ * REMARKS
+ */
+int
+VStripe::ioChangeID(DEVID newid)
+{
+    PSEC_VRDEV	sec = new SEC_VRDEV;
+    int		errors = 0;
+
+    memcpy(id, newid, sizeof(DEVID));		// update object
+
+    do
+    {
+	APIRET	rc;
+
+	rc = read(0, 1, sec);			// remember: 0 defines ourself
+	if( rc != 0 )
+	{
+	    Verbose(1, "VStripe", "can't read own SEC_VRDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+
+	memcpy(sec->u.s.id, newid, sizeof(DEVID));
+	sec->timestamp = time(NULL);		// UTC of change
+	rc = write(0, 1, sec);
+	if( rc != 0 )
+	{
+	    Verbose(1, "VStripe", "can't write own SEC_VRDEV - rc %lu", rc);
+	    ++errors;
+	    break;
+	}
+    }
+    while(0);
+
+    delete sec;
+    return errors;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VStripe::addChild(newchild,valid)
+ * PARAMETER
+ *	newchild	pointer to child to add
+ *	valid		whether this child is valid (uptodate)
+ *
+ * RETURNS
+ *	(nothing)
+ *
+ * DESCRIPTION
+ *	Adds a new child to our VRAID object.
+ *
+ * REMARKS
+ */
+void
+VStripe::addChild(VRDev * newchild,Boolean valid)
+{
+    /* Set double link between child and parent. */
+
+    child[childs] = newchild;
+    newchild->setParent(this);
+
+    size += newchild->querySize();
+    if( newchild->isWritable() == False )
+	writable = False;			/* oups, it isn't 'changable' */
+
+    ++childs;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VStripe::querySize()
+ * PARAMETER
+ *	(none, C++)
+ * RETURNS
+ *	size of array
+ *
+ * DESCRIPTION
+ *	Guess!
+ *
+ * REMARKS
+ */
+ULONG
+VStripe::querySize()
+{
+    return size;
+a126 60
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VStripe::read(offset,count,buffer)
+ * PARAMETER
+ *	offset		offset in configuratoin space
+ *	count		sector count
+ *	buffer		sector data
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		APIRET
+ *
+ * DESCRIPTION
+ *	Reads data from configuration sectors of this VRAID drive.
+ *
+ * REMARKS
+ *	Should read all childs and compare. xxx
+ *	Should test 'valid'. xxx
+ */
+APIRET
+VStripe::read(ULONG offset,ULONG count,PVOID buffer)
+{
+    return child[0]->read(offset+1, count, buffer);
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	VStripe::write(offset,count,buffer)
+ * PARAMETER
+ *	offset		offset in configuratoin space
+ *	count		sector count
+ *	buffer		sector data
+ *
+ * RETURNS
+ *	0		OK
+ *	/0		APIRET
+ *
+ * DESCRIPTION
+ *	Writes data to configuration sectors of this VRAID drive.
+ *
+ * REMARKS
+ *	Should test 'valid'. xxx
+ */
+APIRET
+VStripe::write(ULONG offset,ULONG count,PVOID buffer)
+{
+    APIRET	rc = 0;
+
+    for( int i = 0; i < childs; ++i )
+	rc |= child[i]->write(offset+1, count, buffer);
+    return rc;
+}
+
+@

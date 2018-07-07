@@ -1,0 +1,19 @@
+Moin xxx!
+
+Vielen Dank fr Ihre Registrierung von DSKSleep.  Ihre Registrierung besteht aus einem Key, der abh„ngig von Ihrem vollen Namen berechnet wurde und ber regme.exe in DSKSleep.flt eingetragen wird.  Beim n„chsten Start und Parameter '/V' wird Ihr Name dann im Startlogo erscheinen. 
+
+Fr die Registrierung wurden folgende Daten verwendet.
+
+Name:	"xxxx yyyy"
+Key:	nnnnnnnnnnnnn
+
+Diese Daten mssen als Parameter fr regme.exe verwendet werden (inkl. ").  D.h.:
+
+regme "Vorname Nachname" nnnnnnnnnnnnnn
+
+Groá/klein-Schreibung beim Namen ist wichtig.
+
+Wenn es Probleme mit dem Key gibt, schreiben Sie mir bitte sofort.
+
+Tschá
+	Vitus Jensen

@@ -1,0 +1,3013 @@
+head	3.1;
+access;
+symbols
+	vrflt031113:2.4
+	vrflt010903:2.3
+	PREV010803:2.3
+	VRAIDv0_85:2.1
+	VRAIDv0_84:2.1
+	VRAIDv0_82:2.1
+	VRAIDv0_70:1.10
+	VRAIDv0_60:1.6
+	VRAIDv0_51:1.5
+	VRAIDv0_50:1.5
+	VRAIDv0_40:1.5
+	VRAIDv0_30:1.4
+	ALPHA1:1.3;
+locks; strict;
+comment	@ * @;
+
+
+3.1
+date	2005.06.17.05.57.45;	author vitus;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.11.14.00.58.24;	author vitus;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.07.31.23.57.32;	author vitus;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.07.22.00.29.19;	author vitus;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	99.09.23.23.13.28;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.06.20.17.35.14;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.06.02.02.22.09;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.05.12.01.45.32;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.04.17.00.16.56;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	98.12.13.22.29.09;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	98.09.20.14.28.35;	author vitus;	state Stab;
+branches;
+next	1.4;
+
+1.4
+date	98.06.26.22.39.33;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	98.05.29.01.45.43;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.04.08.01.11.08;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.02.18.00.00.53;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Request Time processing	- Timer processing
+@
+
+
+3.1
+log
+@- GetDeviceGeometry: instead of providing no head/sector mapping for large
+  arrays tell OS/2 to use 255/63.  When there is no mapping supplied
+  OS2DASD.DMD uses 64/32 :-(
+- added New BSD license statement
+- removed tabs
+@
+text
+@/*
+ * $Source: r:/source/driver/raid/RCS/iorb.c,v $
+ * $Revision: 2.4 $
+ * $Date: 2003/11/14 00:58:24 $
+ * $Locker: vitus $
+ *
+ *      Request Time processing - Timer processing
+ *
+ *      DDK says we have to saved SI,DI,DS,ES but all code I've seen
+ *      only uses 'loadds' restoring only SI,DI,DS (and remember: CorelSCSI
+ *      even changed DS!).  Nevertheless I will do a '_saveregs' now and
+ *      save/restore all registers when calling other drivers...
+ *
+ * History:
+ * $Log: iorb.c,v $
+ * Revision 2.4  2003/11/14 00:58:24  vitus
+ * - GetDeviceGeometry: when cylinder count passes 0xFFFF no hd/sec mapping
+ *   is supplied.  OS/2 can't use more than 16bit cylinder numbers.
+ *
+ * Revision 2.3  2001/07/31 23:57:32  vitus
+ * - Timer: start build process after 45 seconds (there seems to be a critical
+ *   period during boot where build I/Os may fail)
+ *
+ * Revision 2.2  2001/07/22 00:29:19  vitus
+ * - Timer: instead of calling UpdateBuilds() directly arm a context
+ *   hook to call it.  May be done more seldom as ther BuildNotify()
+ *   does it, too.
+ *
+ * Revision 2.1  1999/09/23 23:13:28  vitus
+ * - defined all DBGMSG() strings as located in CONST segment
+ * - changed IorbEntry() to ArrayHandler()
+ * - readded IorbEntry() to be a router between ArrayHandler() and FilterHandler().
+ *   All IORB processing routines now get a pointer to the device they are working
+ *   for.  IorbEntry() translates IORB.UnitHandle to this pointer.
+ * - GetDeviceTable() now returns host drives *and* BASEDISKs (those which
+ *   are processed by FilterHandler() in filter.c)
+ *
+ * Revision 1.10  1999/06/20 17:35:14  vitus
+ * - beeping may now be disabled via fDriverFlags bit
+ *
+ * Revision 1.9  1999/06/02 02:22:09  vitus
+ * - Timer: beautified beeper frequency and duration
+ *
+ * Revision 1.8  1999/05/12 01:45:32  vitus
+ * - Timer: runs more often and calls routines at two different intervals
+ *
+ * Revision 1.7  1999/04/17 00:16:56  vitus
+ * - Timer: calls UpdateBuilds()
+ * - Timer: call DevHelp_Beep() if cBeep != 0
+ *
+ * Revision 1.6  1998/12/13 22:29:09  vitus
+ * - updates HOSTDRIVE element 'ReqCnt'
+ * - changes for removed elements from HOSTDRIVE (flags, vrd, size)
+ *
+ * Revision 1.5  1998/09/20 14:28:35  vitus
+ * - returns minimum of all MaxCDBTransferLength
+ * - seperate code for IOCM_GET_LOCK_STATUS (returns error)
+ * - Timer: InsertVrio(vrio) instead of QueueVrio(vrio)
+ *
+ * Revision 1.4  1998/06/26 22:39:33  vitus
+ * - switched to DDK macros (cli, sti, pushf)
+ * - uses CallADD()
+ *
+ * Revision 1.3  1998/05/29 01:45:43  vitus
+ * - fine tuning of DEBMSG macro calls
+ *
+ * Revision 1.2  1998/04/08 01:11:08  vitus
+ * - added PUBLIC HostdriveNotify()
+ *
+ * Revision 1.1  1998/02/18 00:00:53  vitus
+ * Initial revision
+ * --------------------------------------------------
+ *      Copyright (c) 1998-2001,2005, Vitus Jensen
+ *      All rights reserved.
+ *
+ *      Redistribution and use in source and binary forms, with or without
+ *      modification, are permitted provided that the following conditions are
+ *      met:
+ *
+ *          * Redistributions of source code must retain the above copyright
+ *            notice, this list of conditions and the following disclaimer.
+ *          * Redistributions in binary form must reproduce the above copyright
+ *            notice, this list of conditions and the following disclaimer in
+ *            the documentation and/or other materials provided with the
+ *            distribution.
+ *          * Neither the name of Vitus Jensen nor the names of its
+ *            contributors may be used to endorse or promote products derived
+ *            from this software without specific prior written permission.
+ *
+ *      THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *      "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *      LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *      A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *      OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *      SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *      LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *      DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *      THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *      (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *      OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+#if defined(__WATCOMC__)
+# pragma off (unreferenced)
+#endif
+static char const id[]="$Id: iorb.c,v 2.4 2003/11/14 00:58:24 vitus Exp vitus $";
+#if defined(__WATCOMC__)
+# pragma on (unreferenced)
+#endif
+
+#include <string.h>
+
+#define INCL_NOBASEAPI
+#define INCL_NOPMAPI
+#define INCL_INITRP_ONLY
+#include "os2intf.h"
+
+#include "vraid.h"
+#include "proto.h"
+#include "extern.h"
+
+
+
+
+#if defined(DEBUG)
+CONSTMSG dszArrayHandler[]=     "\r\n[ArrayHandler] drive %p, iorb %p";
+CONSTMSG dszHostNotify[]=       "\r\n[HostdriveNotify] io %p, iorb %p, error %w";
+CONSTMSG dszQueueIorb[]=        "\r\n[QueueIorbChain] entry";
+CONSTMSG dszQueueIo[]=          "\r\n[QueueDeviceIO] entry";
+CONSTMSG dszQueueIoAlloc[]=     "\r\n[QueueDeviceIO] HD not allocated";
+CONSTMSG dszSetAdapter[]=       "\r\n[SetAdapterInfo] entry";
+CONSTMSG dszSetUnit[]=          "\r\n[SetUnitInfo] entry";
+CONSTMSG dszSetUnitCopy[]=      "\r\n[SetUnitInfo] copying supplied new UnitInfo";
+CONSTMSG dszSetUnitColl[]=      "\r\n[SetUnitInfo] collecting default UnitInfo";
+CONSTMSG dszSetUnitDef[]=       "\r\n[SetUnitInfo] setting defect flag";
+CONSTMSG dszGetDevTab[]=        "\r\n[GetDeviceTable] entry";
+CONSTMSG dszAllocUnit[]=        "\r\n[AllocateUnit] entry";
+CONSTMSG dszAllocUnitAlloc[]=   "\r\n[AllocateUnit] HD already allocated";
+CONSTMSG dszDeallocUnit[]=      "\r\n[DeAllocateUnit] entry";
+CONSTMSG dszDeallocUnitAlloc[]= "\r\n[DeAllocateUnit] HD not allocated";
+CONSTMSG dszChangeUnit[]=       "\r\n[ChangeUnitInfo] entry";
+CONSTMSG dszGetDevGeo[]=        "\r\n[GetDeviceGeometry] entry";
+CONSTMSG dszGetDevGeoSmall[]=   "\r\n[GetDeviceGeometry] structure too small";
+CONSTMSG dszGetDevGeoAlloc[]=   "\r\n[GetDeviceGeometry] HD not allocated";
+CONSTMSG dszGetDevGeoSize[]=    "\r\n[GetDeviceGeometry] size = %lx sectors";
+CONSTMSG dszUnitStatus[]=       "\r\n[GetUnitStatus] entry";
+CONSTMSG dszNotify[]=           "\r\n[NotifyIorb] entry (%p, %w)";
+CONSTMSG dszNotifyError[]=      "\r\nVUJRAID$ returns %w to OS/2";
+CONSTMSG dszIorbUnknown[]=      "\r\nCommand %w, Modifier %w not supported";
+CONSTMSG dszIorbNoGetLock[]=    "\r\nIOCM_GET_LOCK_STATUS not supported";
+CONSTMSG dszIorbUnknCmd[]=      "\r\nReceived unknown command code %w";
+CONSTMSG dszBE_ACH[]=           "\r\n[Timer] ArmCtxHook - rc %w";
+#endif
+
+
+
+
+
+/* **********************************************************************
+ * **** Callback Routine ************************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * HostdriveNotify(io)
+ *
+ * PARAMETER
+ *      io              I/O just completed
+ *
+ * RETURNS
+ *      (nothing)
+ *
+ * DESCRIPTION
+ *      The VRIO 'io' to first layer below hostdrive has just completed.
+ *      Figure out which hostdrive and IORB is affected and complete the
+ *      IORB, too.
+ *
+ * REMARKS
+ */
+PUBLIC void NEAR _Cdecl
+HostdriveNotify(PVRIO io)
+{
+    PIORB_EXECUTEIO const       iorb = io->iorb;
+
+    DEBMSG3(DBG_PATH,dszHostNotify,(PVOID)io,(PVOID)iorb,io->oserr);
+    ASSERT( io != NULL );
+    ASSERT( iorb != NULL );
+
+    NotifyIorb(&iorb->iorbh, io->oserr);
+    return;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Private Routines ************************************************
+ * ******************************************************************* */
+
+
+/*# ----------------------------------------------------------------------
+ * QueueIorbChain(pDrive,pIorb)
+ *
+ * PARAMETER
+ *      pDrive          host drive
+ *      pIorb           OS/2 request
+ * RETURNS
+ *      (nothing)
+ *
+ * DESCRIPTION
+ *      Adds a chain of IORBs to pDrive's IORB queue.
+ *
+ * REMARKS
+ */
+PRIVATE void NEAR
+QueueIorbChain(PHOSTDRIVE const pDrive,PIORBH const pIorb)
+{
+    PIORBH      pLastIorb   = pIorb;
+    USHORT      ChainLength = 0;
+
+    DEBMSG(DBG_LEVEL4,dszQueueIorb);
+
+    /* Find Last IORB if chained set of IORBs were received
+     * from device manager.
+     * By doing so we can also initialize the ADDWorkSpace. */
+
+    for(;;)
+    {
+        /*_fmemset(pLastIorb->ADDWorkSpace, 0, ADD_WORKSPACE_SIZE);*/
+        ++ChainLength;
+
+        if( !(pLastIorb->RequestControl & IORB_CHAIN) )
+            break;
+        else
+            pLastIorb   = pLastIorb->pNxtIORB;
+    }
+    pLastIorb->pNxtIORB = 0;
+
+    LOCK(pDrive->hlQueue);
+    ++pDrive->ReqCnt;
+    if( pDrive->pQueueHead == NULL )            /* empty queue? */
+        pDrive->pQueueHead = pIorb;             /* set as first */
+    else
+        pDrive->pQueueFoot->pNxtIORB = pIorb;   /* set behind last */
+    pDrive->pQueueFoot = pLastIorb;             /* new last IORB */
+    cIorbInQueue += ChainLength;                /* global count */
+    UNLOCK(pDrive->hlQueue);                    /* somebody may interrupt */
+
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * QueueDeviceIO(pDrive,pIorb)
+ *
+ * PARAMETER
+ *      pDrive
+ *      pIorb           IORB chain (EXECUTEIO)
+ *
+ * RETURNS
+ *      (nothing)
+ *
+ * DESCRIPTION
+ *      Adds an IORB chain to our internal queues and call
+ *      'StartMayIorb' to get as many I/Os started as possible.
+ *
+ * REMARKS
+ */
+PRIVATE void NEAR
+QueueDeviceIO(PHOSTDRIVE const pDrive,PIORB const pIorb)
+{
+    DEBMSG(DBG_LEVEL4,dszQueueIo);
+    if ( !(pDrive->OsFlags & OF_ALLOCATED) )    /* only I/O if allocated */
+    {
+        DEBMSG(DBG_ALL,dszQueueIoAlloc);
+        NotifyIorb(pIorb, IOERR_UNIT_NOT_ALLOCATED);
+        return;
+    }
+
+    /* Append this IORB chain to already received IORB. */
+
+    QueueIorbChain(pDrive, pIorb);
+
+    /* Start as many IORBs as possible. */
+
+    StartManyIorb(pDrive);
+
+    /* Ok, notification will complete IORBs. */
+
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * SetAdapterInfo(pAdapterInfo)
+ *
+ * PARAMETER
+ *      pAdapterInfo
+ *
+ * RETURNS
+ *      (nothing)
+ *
+ * DESCRIPTION
+ *      This routines inserts a wonnabe adapter description
+ *      into the device table.
+ *
+ * REMARKS
+ */
+PRIVATE void NEAR
+SetAdapterInfo(PADAPTERINFO const pAdapterInfo)
+{
+    DEBMSG(DBG_LEVEL2,dszSetAdapter);
+
+    pAdapterInfo->AdapterUnits          = 0;
+    pAdapterInfo->AdapterIOAccess       = AI_IOACCESS_OTHER;
+    pAdapterInfo->AdapterFlags          = 0;
+
+    _fstrncpy(pAdapterInfo->AdapterName, "Virtual RAID Adp", 17);
+
+    /* Just set any reasonable value. */
+
+    pAdapterInfo->AdapterHostBus = AI_HOSTBUS_UNKNOWN;
+    pAdapterInfo->AdapterDevBus = AI_DEVBUS_OTHER;
+    pAdapterInfo->AdapterSCSITargetID = 0;      /* non-SCSI */
+    pAdapterInfo->AdapterSCSILUN = 0;
+
+    /* Without buffering, the worst physical device determines
+     * our restrictions. */
+
+    if( (fADDFlags & AF_NOT16M) == 0 )
+        pAdapterInfo->AdapterFlags |= AF_16M;   /* hurray! */
+
+    if( (fADDFlags & AF_HWSCATGAT) )
+        pAdapterInfo->AdapterFlags |= AF_HW_SCATGAT;
+
+    pAdapterInfo->MaxHWSGList = uADDMaxSGList;
+    pAdapterInfo->MaxCDBTransferLength = ulADDMaxTransfer;
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * SetUnitInfo(pUnitInfo,devp)
+ *
+ * PARAMETER
+ *      pUnitInfo       from OS/2
+ *      devp            device structure
+ *
+ * RETURNS
+ *      (nothing)
+ *      *pUnitInfo filled
+ *
+ * DESCRIPTION
+ *      Fills unitinfo for an array.
+ *
+ * REMARKS
+ */
+PRIVATE void NEAR
+SetUnitInfo(PUNITINFO const pUnitInfo,PHOSTDRIVE const devp)
+{
+    DEBMSG(DBG_LEVEL2,dszSetUnit);
+    if( devp->modinfo )
+    {
+        DEBMSG(DBG_LEVEL1,dszSetUnitCopy);
+        _fmemcpy(pUnitInfo, devp->modinfo, sizeof(UNITINFO));
+    }
+    else
+    {
+        DEBMSG(DBG_LEVEL3,dszSetUnitColl);
+        pUnitInfo->QueuingCount = uMaxQueueCount;
+
+        pUnitInfo->UnitFlags = 0;
+        pUnitInfo->Reserved = 0;
+        pUnitInfo->FilterADDHandle = 0;
+
+        if( (devp->child->flags & RDFLAG_ERROR) )
+        {
+            pUnitInfo->UnitFlags |= UF_DEFECTIVE;
+            DEBMSG(DBG_LEVEL1,dszSetUnitDef);
+        }
+
+        pUnitInfo->UnitType = UIB_TYPE_DISK;
+        pUnitInfo->UnitSCSITargetID = 0;        /* non-SCSI */
+        pUnitInfo->UnitSCSILUN  = 0;
+    }
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * GetDeviceTable(pIorb)
+ *
+ * PARAMETER
+ *      pIorb                   PIORB_CONFIGURATION
+ *
+ * RETURNS
+ *      (nothing)
+ *      pIorb                   notified
+ *          pIorb->pDeviceTable filled
+ *
+ * DESCRIPTION
+ *      Returns a device table containing a two adapters and
+ *      many devices.
+ *      adapter 0               all BASEDISK devices
+ *      adapter 1               all HOSTDRIVEs (arrays)
+ *
+ * REMARKS
+ *      It could be performance relative to combine units with certain
+ *      restrictions (part of RAID is located on adapter w/o >16MB
+ *      support, etc.).  But this is the [possible] future.
+ */
+PRIVATE void NEAR
+GetDeviceTable(PIORB_CONFIGURATION const pIorb)
+{
+    PDEVICETABLE    pDeviceTable;               /* pointers to tell OS/2 */
+    PADAPTERINFO    pAdapterInfo;
+    PUNITINFO       pUnitInfo;
+
+    USHORT      idxUnit;                        /* counts units per adapter */
+    USHORT      i;
+
+
+    DEBMSG(DBG_LEVEL2,dszGetDevTab);
+    pDeviceTable = pIorb->pDeviceTable;         /* passed by caller */
+
+    /* General information */
+
+    pDeviceTable->ADDLevelMajor = ADD_LEVEL_MAJOR; /* defined by DDK-level */
+    pDeviceTable->ADDLevelMinor = ADD_LEVEL_MINOR;
+    pDeviceTable->ADDHandle = hdThisDriver;     /* told by RegisterDriver() */
+    pDeviceTable->TotalAdapters = 2;            /* total count found */
+
+
+    /* Set information of adapter 0 (containing BASEDISKs). */
+
+    pAdapterInfo =  (PADAPTERINFO)(pDeviceTable->pAdapter);
+    (PBYTE)pAdapterInfo += 2 * sizeof(NPADAPTERINFO);
+
+    pDeviceTable->pAdapter[0] = (NPADAPTERINFO)FP_OFF(pAdapterInfo);
+    SetAdapterInfo(pAdapterInfo);
+    pUnitInfo = pAdapterInfo->UnitInfo;         /* Room for UNIT INFO */
+
+
+    /* Build entries for all BASEDISKs (for every disk allocated
+     * by our driver but reachable by OS/2).
+     * We pass most of the original UNIT INFO to caller:
+     * - Indices are ours */
+
+    for( idxUnit = i = 0; i < MAX_PDEV; ++i )
+    {
+        if( apBDisk[i] == NULL )
+            continue;
+
+        _fmemcpy(pUnitInfo, &apBDisk[i]->info, sizeof(*pUnitInfo));
+
+        pUnitInfo->AdapterIndex = 0;            /* index of first adapter */
+        pUnitInfo->UnitIndex    = idxUnit;      /* index of unit on this adapter */
+
+        ++pUnitInfo;
+        ++pAdapterInfo->AdapterUnits;
+        ++idxUnit;
+    } /*end[for(i)]*/
+
+
+    /* Set information of adapter 0 (containing BASEDISKs). */
+
+    pAdapterInfo = (PADAPTERINFO)pUnitInfo;
+    pDeviceTable->pAdapter[1] = (NPADAPTERINFO)FP_OFF(pAdapterInfo);
+    SetAdapterInfo(pAdapterInfo);
+    pUnitInfo = pAdapterInfo->UnitInfo;         /* room for UNIT INFO */
+
+
+    /* For each device in 'apHDrv' (a host drive) build an entry
+     * in supplied device table.  */
+
+    for( idxUnit = i = 0; i < MAX_HDRV ; ++i )
+    {
+        if( apHDrv[i] == NULL )
+            continue;
+
+        pUnitInfo->AdapterIndex = 1;            /* index of second adapter */
+        pUnitInfo->UnitIndex    = idxUnit;      /* index of unit on this adapter */
+        pUnitInfo->UnitHandle   = (USHORT)&apHDrv[i];
+        SetUnitInfo(pUnitInfo, apHDrv[i]);
+
+        ++pUnitInfo;
+        ++pAdapterInfo->AdapterUnits;
+        ++idxUnit;
+    } /*end[for(i)]*/
+
+    NotifyIorb(&pIorb->iorbh, 0);
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * AllocateUnit(pDrive,pIorb)
+ *
+ * PARAMETER
+ *      pDrive
+ *      pIorb        pointer to requested unit
+ *
+ * RETURNS
+ *      (nothing)
+ *      IORB completed
+ *
+ * DESCRIPTION
+ *      Called by DMD to garanty exclusive access of an unit.  Sets
+ *      'allocated' flag in device structure.
+ *
+ * REMARKS
+ */
+PRIVATE void NEAR
+AllocateUnit(PHOSTDRIVE const pDrive,PIORB_UNIT_CONTROL const pIorb)
+{
+    DEBMSG(DBG_LEVEL2,dszAllocUnit);
+    if( (pDrive->OsFlags & OF_ALLOCATED) )
+    {
+        DEBMSG(DBG_ALL,dszAllocUnitAlloc);
+        NotifyIorb(&pIorb->iorbh, IOERR_UNIT_ALLOCATED);
+        return;
+    }
+
+    pDrive->OsFlags |= OF_ALLOCATED;
+    ++pDrive->ReqCnt;                           /* no locking needed */
+    NotifyIorb(&pIorb->iorbh, 0);
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * DeAllocateUnit(pDrive,pIorb)
+ *
+ * PARAMETER
+ *      pDrive
+ *      pIorb           I/O request buffer
+ *
+ * RETURNS
+ *      (nothing)
+ *      IORB completed
+ *
+ * DESCRIPTION
+ *      Updates 'allocated' flag in device structure.
+ *
+ * REMARKS
+ *      Could do a SYNCHRONIZE CACHE on affected physical devices?
+ */
+PRIVATE void NEAR
+DeAllocateUnit(PHOSTDRIVE const pDrive,PIORB_UNIT_CONTROL const pIorb)
+{
+    DEBMSG(DBG_LEVEL2,dszDeallocUnit);
+    if( !(pDrive->OsFlags & OF_ALLOCATED) )
+    {
+        DEBMSG(DBG_ALL,dszDeallocUnitAlloc);
+        NotifyIorb(&pIorb->iorbh, IOERR_UNIT_NOT_ALLOCATED);
+        return;
+    }
+
+    pDrive->OsFlags &= ~OF_ALLOCATED;
+    ++pDrive->ReqCnt;                           /* no locking needed */
+    NotifyIorb(&pIorb->iorbh, 0);
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * ChangeUnitInfo(pDrive,pIorb)
+ *
+ * PARAMETER
+ *      pDrive
+ *      pIorb           I/O request buffer
+ *
+ * RETURNS
+ *      (nothing)
+ *      IORB completed
+ *
+ * DESCRIPTION
+ *      Save pointer to new unit info in device structure.  Will be
+ *      returned on next GET_DEVICE_TABLE.
+ *
+ * REMARKS
+ */
+PRIVATE void NEAR
+ChangeUnitInfo(PHOSTDRIVE const pDrive,PIORB_UNIT_CONTROL const pIorb)
+{
+    DEBMSG(DBG_LEVEL2,dszChangeUnit);
+    pDrive->modinfo = pIorb->pUnitInfo;
+    ++pDrive->ReqCnt;                           /* no locking needed */
+    NotifyIorb(&pIorb->iorbh, 0);
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * GetDeviceGeometry(pDrive,pIorb)
+ *
+ * PARAMETER
+ *      pDrive
+ *      pIorb           I/O request buffer
+ *
+ * RETURNS
+ *      (nothing)
+ *      IORB completed
+ *
+ * DESCRIPTION
+ *      Return previously calculated parameter
+ *
+ * REMARKS
+ */
+PRIVATE void NEAR
+GetDeviceGeometry(PHOSTDRIVE const pDrive,PIORB_GEOMETRY const pIorb)
+{
+    DEBMSG(DBG_LEVEL2,dszGetDevGeo);
+    if ( pIorb->GeometryLen < sizeof(GEOMETRY) )
+    {
+        DEBMSG(DBG_ALL,dszGetDevGeoSmall);
+        NotifyIorb(&pIorb->iorbh, IOERR_CMD_SYNTAX);
+        return;
+    }
+    if( !(pDrive->OsFlags & OF_ALLOCATED) )
+    {
+        DEBMSG(DBG_ALL,dszGetDevGeoAlloc);
+        NotifyIorb(&pIorb->iorbh, IOERR_UNIT_NOT_ALLOCATED);
+        return;
+    }
+
+    pIorb->pGeometry->TotalSectors      = pDrive->child->size;
+    pIorb->pGeometry->BytesPerSector    = 512;
+    pIorb->pGeometry->Reserved          = 0;
+    pIorb->pGeometry->NumHeads          = 64;
+    pIorb->pGeometry->SectorsPerTrack   = 32;
+    pIorb->pGeometry->TotalCylinders    = pDrive->child->size / 64 / 32;
+    if( pIorb->pGeometry->TotalCylinders > 0xFFFF )
+    {
+        /* The OS/2 only passes a 16bit value to LVM, FDISK and other
+         * disk management tools, the API uses an USHORT.
+         * To make those big arrays usable all geometry data has to
+         * be zero (which should have been used from the beginning,
+         * now we keep 64 / 32 for compatibility reasons). */
+
+        pIorb->pGeometry->NumHeads = 255;
+        pIorb->pGeometry->SectorsPerTrack = 63;
+        pIorb->pGeometry->TotalCylinders = pDrive->child->size / 255 / 63;
+    }
+
+    DEBMSG1(DBG_LEVEL2,dszGetDevGeoSize,(PVOID)&pDrive->child->size);
+    ++pDrive->ReqCnt;                           /* no locking needed */
+    NotifyIorb(&pIorb->iorbh, 0);
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * GetUnitStatus(pDrive,pIorb)
+ *
+ * PARAMETER
+ *      pDrive
+ *      pIorb                   PIORB_UNIT_STATUS
+ *
+ * RETURNS
+ *      (nothing)
+ *      IORB completed
+ *          pIorb->UnitStatus
+ *
+ * DESCRIPTION
+ *      This functions sets bits in ->UnitFlags to reflect the state
+ *      of the requested unit.
+ *
+ * REMARKS
+ */
+PRIVATE void NEAR
+GetUnitStatus(PHOSTDRIVE const pDrive,PIORB_UNIT_STATUS const pIorb)
+{
+    DEBMSG(DBG_LEVEL2,dszUnitStatus);
+    if( (pDrive->child->flags & RDFLAG_ERROR) )
+        pIorb->UnitStatus |= US_DEFECTIVE;
+    else
+        pIorb->UnitStatus |= US_READY | US_POWER;
+
+    ++pDrive->ReqCnt;                           /* no locking needed */
+    NotifyIorb(&pIorb->iorbh, 0);               /* translation: always OK */
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * ArrayHandler(pDrive,pIorb)
+ *
+ * PARAMETER
+ *      pDrive
+ *      pIorb                   I/O request buffer
+ *
+ * RETURNS
+ *      (nothing)
+ *
+ * DESCRIPTION
+ *      IORB processing for hostdrives and the driver itself.
+ *
+ * REMARKS
+ */
+PRIVATE void
+ArrayHandler(PHOSTDRIVE const pDrive,PIORB const pIorb)
+{
+    USHORT const CommandCode     = pIorb->CommandCode;
+    USHORT const CommandModifier = pIorb->CommandModifier;
+
+
+    DEBMSG2(DBG_PATH,dszArrayHandler,(PVOID)pDrive,(PVOID)pIorb);
+
+    /* Test for allowed combinations of flags, opcodes, etc. */
+
+    if( (pIorb->RequestControl & IORB_CHAIN) && CommandCode != IOCC_EXECUTE_IO )
+    {
+        NotifyIorb(pIorb, IOERR_CMD_SYNTAX);
+        return;
+    }
+
+
+    /* IORB may be valid, more checking in
+     * tillbeh”rig rutin */
+
+    switch( CommandCode )
+    {
+      case IOCC_CONFIGURATION:                  /* affects driver operation */
+        switch( CommandModifier )
+        {
+            /* **************************************************** 
+             **** IOCM_GET_DEVICE_TABLE:                           
+             **** Generates a table of all found devices           
+             **** along with device manager information.           
+             **************************************************** */
+          case IOCM_GET_DEVICE_TABLE:
+            GetDeviceTable((PIORB_CONFIGURATION)pIorb);
+            break;
+
+            /* ****************************************************
+             **** IOCM_COMPLETE_INIT:                      
+             **** Notifies the driver that BIOS-operation
+             **** has stopped and only this driver will be
+             **** used to do I/O.                          
+             **************************************************** */
+          case IOCM_COMPLETE_INIT:
+            CompleteInit((PIORB_CONFIGURATION)pIorb);
+            break;
+
+          default:
+            DEBMSG2(DBG_ALL,dszIorbUnknown,CommandCode,CommandModifier);
+            DBSTOP();
+            NotifyIorb(pIorb, IOERR_CMD_NOT_SUPPORTED);
+            break;
+        }
+        break;
+
+      case IOCC_UNIT_CONTROL:                   /* all mandatory */
+        switch( CommandModifier )
+        {
+            /* ****************************************************
+             **** IOCM_ALLOCATE_UNIT:                      
+             **** Used by device manager to get control of   
+             **** a single unit; I/O may be done only to        
+             **** allocated units and units can only be    
+             **** allocated once.                          
+             **************************************************** */
+          case IOCM_ALLOCATE_UNIT:
+            AllocateUnit(pDrive, (PIORB_UNIT_CONTROL)pIorb);
+            break;
+
+            /* **************************************************** 
+             **** IOCM_DEALLOCATE_UNIT:                   
+             **** Used by device manager to release control  
+             **** of an unit, so other manager can use it.   
+             **** Currently only OS2ASPI.DMD uses this call. 
+             **************************************************** */
+          case IOCM_DEALLOCATE_UNIT:
+            DeAllocateUnit(pDrive, (PIORB_UNIT_CONTROL)pIorb);
+            break;
+
+            /* ****************************************************
+             **** IOCM_CHANGE_UNITINFO:                    
+             **** Used by: ????                            
+             **** Usage: ????                              
+             **** May by used to set a different unit info   
+             **** (FilterADDHandle, ...)                       
+             **************************************************** */
+          case IOCM_CHANGE_UNITINFO:
+            ChangeUnitInfo(pDrive, (PIORB_UNIT_CONTROL)pIorb);
+            break;
+
+          default:
+            DEBMSG2(DBG_ALL,dszIorbUnknown,CommandCode,CommandModifier);
+            DBSTOP();
+            NotifyIorb( pIorb, IOERR_CMD_NOT_SUPPORTED );
+            break;
+        }
+        break;
+
+      case IOCC_GEOMETRY:
+        switch( CommandModifier )
+        {
+            /* *****************************************************
+             * **** IOCM_GET_MEDIA_GEOMETRY:
+             * **** IOCM_GET_DEVICE_GEOMETRY:
+             * **** Informs the caller about the format of
+             * **** this device. DEVICE and MEDIA formats are
+             * **** the same on RAID devices.
+             * ************************************************** */
+          case IOCM_GET_MEDIA_GEOMETRY:
+          case IOCM_GET_DEVICE_GEOMETRY:
+            GetDeviceGeometry(pDrive, (PIORB_GEOMETRY)pIorb);
+            break;
+
+          default:
+            DEBMSG2(DBG_ALL,dszIorbUnknown,CommandCode,CommandModifier);
+            DBSTOP();
+            NotifyIorb(pIorb, IOERR_CMD_NOT_SUPPORTED);
+            break;
+        }
+        break;
+
+      case IOCC_EXECUTE_IO:                     /* read/write I/Os */
+        switch( CommandModifier )
+        {
+            /* ****************************************************
+             **** IOCM_READ:                               
+             **** IOCM_WRITE:                              
+             **** IOCM_WRITE_VERIFY:                       
+             **** WRITE_VERIFY is the same as simple WRITE!  
+             **************************************************** */
+          case IOCM_READ:
+          case IOCM_WRITE:
+          case IOCM_WRITE_VERIFY:
+            QueueDeviceIO(pDrive, pIorb);
+            break;
+
+            /* ****************************************************
+             **** IOCM_READ_VERIFY:                        
+             **** Verifies whether blocks are readable on a 
+             **** devices.                                 
+             **** Because this Modifier may send a         
+             **** list of blocks to verify, 'QueueDeviceIO()'
+             **** is used (instead of simply returning OK)!  
+             **************************************************** */
+          case IOCM_READ_VERIFY:
+            QueueDeviceIO(pDrive, pIorb);
+            break;
+
+            /* **************************************************** 
+             **** IOCM_READ_PREFETCH:                      
+             **** Low priority read w/o actually reading data
+             **** into host menory.
+             **** Because this Modifier may send a         
+             **** list of blocks to prefetch,'QueueDeviceIO()'
+             **** is used (instead of simply returning OK)!  
+             **************************************************** */
+          case IOCM_READ_PREFETCH:
+            QueueDeviceIO(pDrive, pIorb);
+            break;
+
+            /* **************************************************** 
+             **** default:                                 
+             **** Handles all other Command Modifier of 
+             **** Command Code 'IOCC_EXECUTE_IO'.
+             **************************************************** */
+          default:
+            DEBMSG2(DBG_ALL,dszIorbUnknown,CommandCode,CommandModifier);
+            DBSTOP();
+            NotifyIorb(pIorb, IOERR_CMD_NOT_SUPPORTED);
+            break;
+        }
+        break;
+
+      case IOCC_ADAPTER_PASSTHRU:               /* SCSI commands */
+        switch( CommandModifier )
+        {
+          case IOCM_EXECUTE_CDB:                /* non-SCSI */
+          default:
+            DEBMSG2(DBG_ALL,dszIorbUnknown,CommandCode,CommandModifier);
+            DBSTOP();
+            NotifyIorb(pIorb, IOERR_CMD_NOT_SUPPORTED);
+            break;
+        }
+        break;
+
+      case IOCC_UNIT_STATUS:                    /* set/get state of unit */
+        switch( CommandModifier )
+        {
+            /* **************************************************** 
+             * **** IOCM_GET_UNIT_STATUS:                          
+             * **** Request the state of some unit flags           
+             * **** (UF_READY, UF_DEFECTIVE, etc.)                 
+             * **************************************************** */
+          case IOCM_GET_UNIT_STATUS:
+            GetUnitStatus(pDrive, (PIORB_UNIT_STATUS)pIorb);
+            break;
+
+          case IOCM_GET_LOCK_STATUS:            /* never removable! */
+            DEBMSG(DBG_ALL,dszIorbNoGetLock);
+            NotifyIorb(pIorb, IOERR_CMD_NOT_SUPPORTED);
+            break;
+
+          case IOCM_GET_MEDIA_SENSE:            /* optional */
+          case IOCM_GET_CHANGELINE_STATE:       /* optional */
+          default:
+            DEBMSG2(DBG_ALL,dszIorbUnknown,CommandCode,CommandModifier);
+            DBSTOP();
+            NotifyIorb(pIorb, IOERR_CMD_NOT_SUPPORTED);
+            break;
+        }
+        break;
+
+      case IOCC_DEVICE_CONTROL:                 /* SCSI commands */
+        switch( CommandModifier )
+        {
+          case IOCM_EJECT_MEDIA:                /* optional: not removable */
+          case IOCM_LOCK_MEDIA:                 /* optional */
+          case IOCM_UNLOCK_MEDIA:               /* optional */
+          case IOCM_ABORT:                      /* optional */
+          case IOCM_RESET:                      /* optional */
+          default:
+            DEBMSG2(DBG_ALL,dszIorbUnknown,CommandCode,CommandModifier);
+            DBSTOP();
+            NotifyIorb(pIorb, IOERR_CMD_NOT_SUPPORTED);
+            break;
+        }
+        break;
+
+      default:                                  /* CommandCode unknown */
+        DEBMSG1(DBG_ALL,dszIorbUnknCmd,CommandCode);
+        DBSTOP();
+        NotifyIorb(pIorb, IOERR_CMD_NOT_SUPPORTED);
+        break;
+    }
+
+    return;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Task Time Processing (filter) ***********************************
+ * ******************************************************************* */
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *      NotifyIorb(pIorbh,ErrorCode)
+ * PARAMETER
+ *      pIorbh                  I/O request buffer
+ *      ErrorCode               see DDK
+ * RETURNS
+ *      (nothing)
+ *
+ * DESCRIPTION
+ *      Return IORB to OS, setting errorcode and flags. 'pIorbh' may
+ *      be head of linked list or single request.
+ *
+ * REMARKS
+ */
+PUBLIC VOID NEAR _Cdecl
+NotifyIorb(PIORBH const pIorbh,USHORT ErrorCode)
+{
+    DEBMSG2(DBG_LEVEL2|DBG_PATH,dszNotify,(PVOID)pIorbh,ErrorCode);
+    if( ErrorCode )
+    {
+        DEBMSG1(DBG_ALL,dszNotifyError,ErrorCode);
+    }
+
+    /* Set IORB_ERROR in pIorb->Status if there is a non-zero
+     * error code AND the RECOVERED ERROR bit is not set in
+     * the IORB status field. */
+
+    pIorbh->ErrorCode = ErrorCode;
+    pIorbh->Status |= (IORB_DONE
+                       | ((ErrorCode && !(pIorbh->Status & IORB_RECOV_ERROR))
+                          ? IORB_ERROR : 0));
+
+    if( (pIorbh->RequestControl & IORB_ASYNC_POST) )
+        CallADD((PVOID)(pIorbh->NotifyAddress), pIorbh);
+
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * IorbEntry(pIorb)
+ *
+ * PARAMETER
+ *      pIorb                   I/O request buffer
+ *
+ * RETURNS
+ *      (nothing)
+ *
+ * DESCRIPTION
+ *      Entry for IORB type of I/O.
+ *      Calls FilterHandler() for any IORB to a basedisk and
+ *      selects subroutines for all hostdrives.
+ *      IOCC_CONFIGURATION is special, as it is for the complete driver.
+ *
+ * REMARKS
+ */
+PUBLIC void FAR _loadds _Cdecl
+IorbEntry(PIORB const pIorb)
+{
+    PVOID const dpp = UH2PPTR(pIorb->UnitHandle);
+
+    if( pIorb->CommandCode == IOCC_CONFIGURATION )
+    {
+        ArrayHandler(NULL, pIorb);
+    }
+    else if( dpp >= (PVOID)&apBDisk[0]  &&  dpp < (PVOID)&apBDisk[MAX_PDEV] )
+    {
+        FilterHandler((PVOID)*(PULONG)dpp, pIorb);
+    }
+    else if( dpp >= (PVOID)&apHDrv[0]  &&  dpp < (PVOID)&apHDrv[MAX_HDRV] )
+    {
+        ArrayHandler((PVOID)*(PULONG)dpp, pIorb);
+    }
+    else
+    {
+        /* He, what do you mean?  There is no such device! */
+
+        NotifyIorb(pIorb, IOERR_CMD_OS_SOFTWARE_FAILURE);
+    }
+    return;
+}
+
+
+
+
+
+
+/* **********************************************************************
+ * **** Timer Context Processing ****************************************
+ * ******************************************************************* */
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *      Timer(void)
+ * PARAMETER
+ *      (none)
+ *      ulTimer
+ *      anpUnit
+ *
+ * RETURNS
+ *      (nothing)
+ *
+ * DESPRIPTION
+ *      Increments 'counter' in all unit structures
+ *      and sends stop if 'counter' reached limit.
+ *
+ * REMARKS
+ *      Called by assembler stub which saves/restores registers
+ *      but doesn't (!) enable interrupts.
+ */
+#if defined(_MSC_VER)
+# pragma optimize("lge",off)
+#endif
+PUBLIC void NEAR _Cdecl
+Timer(void)
+{
+    static USHORT frac = 10;
+    static USHORT beepfrac = 10;
+    USHORT      i;
+
+
+    /* Try to yank all queued VRIOs to their device. */
+
+    for( i = 0; i < VRIO_PER_TIMER; ++i )
+    {
+        PVRIO const vrio = DequeueVrio();
+
+        if( vrio == NULL )
+            break;                              /* no more work */
+        if( vrio->vrd->worker(vrio->vrd, vrio) )
+        {
+            InsertVrio(vrio);                   /* back to *start* of queue */
+            break;
+        }
+    }
+
+
+    if( --frac == 0 )
+    {
+        ++ulTimer;                              /* free running counter */
+        frac = 10;                              /* restart */
+
+        /* Continue BUILD process on every VRDEVICE requiring it.  Only
+         * do it after loading has completed but before shutdown has
+         * been initiated. */
+
+        if( (fDriverFlags & DF_INIT2DONE) != 0
+            &&  (fDriverFlags & DF_SHUTDOWN1) == 0
+            &&  (fDriverFlags & DF_SETUPACTIVE) == 0
+            &&  cBuildProcess != 0
+            &&  ulTimer > 45 )
+        {
+            i = DevHelp_ArmCtxHook(0, hdBuildHook);
+            if( i != 0 )
+            {
+                DEBMSG1(DBG_LEVEL1,dszBE_ACH,i);
+            }
+        }
+
+
+        if( --beepfrac == 0 )
+        {
+            /* Check state of all drives and call DevHelp_Beep() if any
+             * drive is in state 'ERROR' or 'FAIL'. */
+
+            if( cBeeps != 0  &&  (fDriverFlags & DF_BEEPDISABLED) == 0 )
+                DevHelp_Beep(880, 200);
+            beepfrac = 10;
+        }
+
+        /* Now start some IORBs for every host drive. */
+
+        for( i = 0; i < cHDrv; ++i )
+            StartManyIorb(apHDrv[i]);
+    }
+
+    return;
+}
+#if defined(_MSC_VER)
+# pragma optimize("",on)
+#endif
+@
+
+
+2.4
+log
+@- GetDeviceGeometry: when cylinder count passes 0xFFFF no hd/sec mapping
+  is supplied.  OS/2 can't use more than 16bit cylinder numbers.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.3 $
+ * $Date: 2001/07/31 23:57:32 $
+d7 1
+a7 1
+ *	Request Time processing	- Timer processing
+d9 4
+a12 4
+ *	DDK says we have to saved SI,DI,DS,ES but all code I've seen
+ *	only uses 'loadds' restoring only SI,DI,DS (and remember: CorelSCSI
+ *	even changed DS!).  Nevertheless I will do a '_saveregs' now and
+ *	save/restore all registers when calling other drivers...
+d16 4
+d73 28
+a100 1
+ * This code is Copyright Vitus Jensen 1998-2001,2003
+d105 1
+a105 1
+static char const id[]="$Id: iorb.c,v 2.3 2001/07/31 23:57:32 vitus Exp vitus $";
+d125 27
+a151 27
+CONSTMSG dszArrayHandler[]=	"\r\n[ArrayHandler] drive %p, iorb %p";
+CONSTMSG dszHostNotify[]=	"\r\n[HostdriveNotify] io %p, iorb %p, error %w";
+CONSTMSG dszQueueIorb[]=	"\r\n[QueueIorbChain] entry";
+CONSTMSG dszQueueIo[]=		"\r\n[QueueDeviceIO] entry";
+CONSTMSG dszQueueIoAlloc[]=	"\r\n[QueueDeviceIO] HD not allocated";
+CONSTMSG dszSetAdapter[]=	"\r\n[SetAdapterInfo] entry";
+CONSTMSG dszSetUnit[]=		"\r\n[SetUnitInfo] entry";
+CONSTMSG dszSetUnitCopy[]=	"\r\n[SetUnitInfo] copying supplied new UnitInfo";
+CONSTMSG dszSetUnitColl[]=	"\r\n[SetUnitInfo] collecting default UnitInfo";
+CONSTMSG dszSetUnitDef[]=	"\r\n[SetUnitInfo] setting defect flag";
+CONSTMSG dszGetDevTab[]=	"\r\n[GetDeviceTable] entry";
+CONSTMSG dszAllocUnit[]=	"\r\n[AllocateUnit] entry";
+CONSTMSG dszAllocUnitAlloc[]=	"\r\n[AllocateUnit] HD already allocated";
+CONSTMSG dszDeallocUnit[]=	"\r\n[DeAllocateUnit] entry";
+CONSTMSG dszDeallocUnitAlloc[]=	"\r\n[DeAllocateUnit] HD not allocated";
+CONSTMSG dszChangeUnit[]=	"\r\n[ChangeUnitInfo] entry";
+CONSTMSG dszGetDevGeo[]=	"\r\n[GetDeviceGeometry] entry";
+CONSTMSG dszGetDevGeoSmall[]=	"\r\n[GetDeviceGeometry] structure too small";
+CONSTMSG dszGetDevGeoAlloc[]=	"\r\n[GetDeviceGeometry] HD not allocated";
+CONSTMSG dszGetDevGeoSize[]=	"\r\n[GetDeviceGeometry] size = %lx sectors";
+CONSTMSG dszUnitStatus[]=	"\r\n[GetUnitStatus] entry";
+CONSTMSG dszNotify[]=		"\r\n[NotifyIorb] entry (%p, %w)";
+CONSTMSG dszNotifyError[]=	"\r\nVUJRAID$ returns %w to OS/2";
+CONSTMSG dszIorbUnknown[]=	"\r\nCommand %w, Modifier %w not supported";
+CONSTMSG dszIorbNoGetLock[]=	"\r\nIOCM_GET_LOCK_STATUS not supported";
+CONSTMSG dszIorbUnknCmd[]=	"\r\nReceived unknown command code %w";
+CONSTMSG dszBE_ACH[]=		"\r\n[Timer] ArmCtxHook - rc %w";
+a157 1
+
+d166 1
+a166 1
+ *	io		I/O just completed
+d169 1
+a169 1
+ *	(nothing)
+d172 3
+a174 3
+ *	The VRIO 'io' to first layer below hostdrive has just completed.
+ *	Figure out which hostdrive and IORB is affected and complete the
+ *	IORB, too.
+d181 1
+a181 1
+    PIORB_EXECUTEIO const	iorb = io->iorb;
+d205 2
+a206 2
+ *	pDrive		host drive
+ *	pIorb		OS/2 request
+d208 1
+a208 1
+ *	(nothing)
+d211 1
+a211 1
+ *	Adds a chain of IORBs to pDrive's IORB queue.
+d218 2
+a219 2
+    PIORBH	pLastIorb   = pIorb;
+    USHORT	ChainLength = 0;
+d229 2
+a230 2
+	/*_fmemset(pLastIorb->ADDWorkSpace, 0, ADD_WORKSPACE_SIZE);*/
+	++ChainLength;
+d232 4
+a235 4
+	if( !(pLastIorb->RequestControl & IORB_CHAIN) )
+	    break;
+	else
+	    pLastIorb	= pLastIorb->pNxtIORB;
+d241 2
+a242 2
+    if( pDrive->pQueueHead == NULL )		/* empty queue? */
+	pDrive->pQueueHead = pIorb;		/* set as first */
+d244 4
+a247 4
+	pDrive->pQueueFoot->pNxtIORB = pIorb;	/* set behind last */
+    pDrive->pQueueFoot = pLastIorb;		/* new last IORB */
+    cIorbInQueue += ChainLength;		/* global count */
+    UNLOCK(pDrive->hlQueue);			/* somebody may interrupt */
+d259 2
+a260 2
+ *	pDrive
+ *	pIorb		IORB chain (EXECUTEIO)
+d263 1
+a263 1
+ *	(nothing)
+d266 2
+a267 2
+ *	Adds an IORB chain to our internal queues and call
+ *	'StartMayIorb' to get as many I/Os started as possible.
+d275 1
+a275 1
+    if ( !(pDrive->OsFlags & OF_ALLOCATED) )	/* only I/O if allocated */
+d277 3
+a279 3
+	DEBMSG(DBG_ALL,dszQueueIoAlloc);
+	NotifyIorb(pIorb, IOERR_UNIT_NOT_ALLOCATED);
+	return;
+d302 1
+a302 1
+ *	pAdapterInfo
+d305 1
+a305 1
+ *	(nothing)
+d308 2
+a309 2
+ *	This routines inserts a wonnabe adapter description
+ *	into the device table.
+d318 3
+a320 3
+    pAdapterInfo->AdapterUnits		= 0;
+    pAdapterInfo->AdapterIOAccess	= AI_IOACCESS_OTHER;
+    pAdapterInfo->AdapterFlags		= 0;
+d328 1
+a328 1
+    pAdapterInfo->AdapterSCSITargetID = 0;	/* non-SCSI */
+d335 1
+a335 1
+	pAdapterInfo->AdapterFlags |= AF_16M;	/* hurray! */
+d338 1
+a338 1
+	pAdapterInfo->AdapterFlags |= AF_HW_SCATGAT;
+d352 2
+a353 2
+ *	pUnitInfo	from OS/2
+ *	devp		device structure
+d356 2
+a357 2
+ *	(nothing)
+ *	*pUnitInfo filled
+d360 1
+a360 1
+ *	Fills unitinfo for an array.
+d370 2
+a371 2
+	DEBMSG(DBG_LEVEL1,dszSetUnitCopy);
+	_fmemcpy(pUnitInfo, devp->modinfo, sizeof(UNITINFO));
+d375 2
+a376 2
+	DEBMSG(DBG_LEVEL3,dszSetUnitColl);
+	pUnitInfo->QueuingCount = uMaxQueueCount;
+d378 13
+a390 13
+	pUnitInfo->UnitFlags = 0;
+	pUnitInfo->Reserved = 0;
+	pUnitInfo->FilterADDHandle = 0;
+
+	if( (devp->child->flags & RDFLAG_ERROR) )
+	{
+	    pUnitInfo->UnitFlags |= UF_DEFECTIVE;
+	    DEBMSG(DBG_LEVEL1,dszSetUnitDef);
+	}
+
+	pUnitInfo->UnitType = UIB_TYPE_DISK;
+	pUnitInfo->UnitSCSITargetID = 0;	/* non-SCSI */
+	pUnitInfo->UnitSCSILUN	= 0;
+d402 1
+a402 1
+ *	pIorb			PIORB_CONFIGURATION
+d405 3
+a407 3
+ *	(nothing)
+ *	pIorb			notified
+ *	    pIorb->pDeviceTable	filled
+d410 4
+a413 4
+ *	Returns a device table containing a two adapters and
+ *	many devices.
+ *	adapter 0		all BASEDISK devices
+ *	adapter 1		all HOSTDRIVEs (arrays)
+d416 3
+a418 3
+ *	It could be performance relative to combine units with certain
+ *	restrictions (part of RAID is located on adapter w/o >16MB
+ *	support, etc.).  But this is the [possible] future.
+d423 1
+a423 1
+    PDEVICETABLE    pDeviceTable;		/* pointers to tell OS/2 */
+d425 1
+a425 1
+    PUNITINFO	    pUnitInfo;
+d427 2
+a428 2
+    USHORT	idxUnit;			/* counts units per adapter */
+    USHORT	i;
+d432 1
+a432 1
+    pDeviceTable = pIorb->pDeviceTable;		/* passed by caller */
+d438 2
+a439 2
+    pDeviceTable->ADDHandle = hdThisDriver;	/* told by RegisterDriver() */
+    pDeviceTable->TotalAdapters = 2;		/* total count found */
+d449 1
+a449 1
+    pUnitInfo = pAdapterInfo->UnitInfo; 	/* Room for UNIT INFO */
+d459 2
+a460 2
+	if( apBDisk[i] == NULL )
+	    continue;
+d462 1
+a462 1
+	_fmemcpy(pUnitInfo, &apBDisk[i]->info, sizeof(*pUnitInfo));
+d464 2
+a465 2
+	pUnitInfo->AdapterIndex	= 0;		/* index of first adapter */
+	pUnitInfo->UnitIndex	= idxUnit;	/* index of unit on this adapter */
+d467 3
+a469 3
+	++pUnitInfo;
+	++pAdapterInfo->AdapterUnits;
+	++idxUnit;
+d478 1
+a478 1
+    pUnitInfo = pAdapterInfo->UnitInfo; 	/* room for UNIT INFO */
+d486 2
+a487 2
+	if( apHDrv[i] == NULL )
+	    continue;
+d489 8
+a496 8
+	pUnitInfo->AdapterIndex	= 1;		/* index of second adapter */
+	pUnitInfo->UnitIndex	= idxUnit;	/* index of unit on this adapter */
+	pUnitInfo->UnitHandle	= (USHORT)&apHDrv[i];
+	SetUnitInfo(pUnitInfo, apHDrv[i]);
+
+	++pUnitInfo;
+	++pAdapterInfo->AdapterUnits;
+	++idxUnit;
+d510 2
+a511 2
+ *	pDrive
+ *	pIorb	     pointer to requested unit
+d514 2
+a515 2
+ *	(nothing)
+ *	IORB completed
+d518 2
+a519 2
+ *	Called by DMD to garanty exclusive access of an unit.  Sets
+ *	'allocated' flag in device structure.
+d529 3
+a531 3
+	DEBMSG(DBG_ALL,dszAllocUnitAlloc);
+	NotifyIorb(&pIorb->iorbh, IOERR_UNIT_ALLOCATED);
+	return;
+d535 1
+a535 1
+    ++pDrive->ReqCnt;				/* no locking needed */
+d547 2
+a548 2
+ *	pDrive
+ *	pIorb		I/O request buffer
+d551 2
+a552 2
+ *	(nothing)
+ *	IORB completed
+d555 1
+a555 1
+ *	Updates 'allocated' flag in device structure.
+d558 1
+a558 1
+ *	Could do a SYNCHRONIZE CACHE on affected physical devices?
+d566 3
+a568 3
+	DEBMSG(DBG_ALL,dszDeallocUnitAlloc);
+	NotifyIorb(&pIorb->iorbh, IOERR_UNIT_NOT_ALLOCATED);
+	return;
+d572 1
+a572 1
+    ++pDrive->ReqCnt;				/* no locking needed */
+d584 2
+a585 2
+ *	pDrive
+ *	pIorb		I/O request buffer
+d588 2
+a589 2
+ *	(nothing)
+ *	IORB completed
+d592 2
+a593 2
+ *	Save pointer to new unit info in device structure.  Will be
+ *	returned on next GET_DEVICE_TABLE.
+d602 1
+a602 1
+    ++pDrive->ReqCnt;				/* no locking needed */
+d614 2
+a615 2
+ *	pDrive
+ *	pIorb		I/O request buffer
+d618 2
+a619 2
+ *	(nothing)
+ *	IORB completed
+d622 1
+a622 1
+ *	Return previously calculated parameter
+d632 3
+a634 3
+	DEBMSG(DBG_ALL,dszGetDevGeoSmall);
+	NotifyIorb(&pIorb->iorbh, IOERR_CMD_SYNTAX);
+	return;
+d638 3
+a640 3
+	DEBMSG(DBG_ALL,dszGetDevGeoAlloc);
+	NotifyIorb(&pIorb->iorbh, IOERR_UNIT_NOT_ALLOCATED);
+	return;
+d643 4
+a646 4
+    pIorb->pGeometry->TotalSectors	= pDrive->child->size;
+    pIorb->pGeometry->BytesPerSector	= 512;
+    pIorb->pGeometry->Reserved		= 0;
+    pIorb->pGeometry->NumHeads		= 64;
+d651 9
+a659 9
+	/* The OS/2 only passes a 16bit value to LVM, FDISK and other
+	 * disk management tools, the API uses an USHORT.
+	 * To make those big arrays usable all geometry data has to
+	 * be zero (which should have been used from the beginning,
+	 * now we keep 64 / 32 for compatibility reasons). */
+
+	pIorb->pGeometry->TotalCylinders
+	    = pIorb->pGeometry->NumHeads
+	    = pIorb->pGeometry->SectorsPerTrack = 0;
+d663 1
+a663 1
+    ++pDrive->ReqCnt;				/* no locking needed */
+d675 2
+a676 2
+ *	pDrive
+ *	pIorb			PIORB_UNIT_STATUS
+d679 3
+a681 3
+ *	(nothing)
+ *	IORB completed
+ *	    pIorb->UnitStatus
+d684 2
+a685 2
+ *	This functions sets bits in ->UnitFlags to reflect the state
+ *	of the requested unit.
+d694 1
+a694 1
+	pIorb->UnitStatus |= US_DEFECTIVE;
+d696 1
+a696 1
+	pIorb->UnitStatus |= US_READY | US_POWER;
+d698 2
+a699 2
+    ++pDrive->ReqCnt;				/* no locking needed */
+    NotifyIorb(&pIorb->iorbh, 0);		/* translation: always OK */
+d710 2
+a711 2
+ *	pDrive
+ *	pIorb			I/O request buffer
+d714 1
+a714 1
+ *	(nothing)
+d717 1
+a717 1
+ *	IORB processing for hostdrives and the driver itself.
+d724 1
+a724 1
+    USHORT const CommandCode	 = pIorb->CommandCode;
+d734 2
+a735 2
+	NotifyIorb(pIorb, IOERR_CMD_SYNTAX);
+	return;
+d744 72
+a815 72
+      case IOCC_CONFIGURATION:			/* affects driver operation */
+	switch( CommandModifier )
+	{
+	    /* **************************************************** 
+	     **** IOCM_GET_DEVICE_TABLE:			   
+	     **** Generates a table of all found devices	   
+	     **** along with device manager information.	   
+	     **************************************************** */
+	  case IOCM_GET_DEVICE_TABLE:
+	    GetDeviceTable((PIORB_CONFIGURATION)pIorb);
+	    break;
+
+	    /* ****************************************************
+	     **** IOCM_COMPLETE_INIT:			   
+	     **** Notifies the driver that BIOS-operation
+	     **** has stopped and only this driver will be
+	     **** used to do I/O. 			   
+	     **************************************************** */
+	  case IOCM_COMPLETE_INIT:
+	    CompleteInit((PIORB_CONFIGURATION)pIorb);
+	    break;
+
+	  default:
+	    DEBMSG2(DBG_ALL,dszIorbUnknown,CommandCode,CommandModifier);
+	    DBSTOP();
+	    NotifyIorb(pIorb, IOERR_CMD_NOT_SUPPORTED);
+	    break;
+	}
+	break;
+
+      case IOCC_UNIT_CONTROL:			/* all mandatory */
+	switch( CommandModifier )
+	{
+	    /* ****************************************************
+	     **** IOCM_ALLOCATE_UNIT:			   
+	     **** Used by device manager to get control of   
+	     **** a single unit; I/O may be done only to	
+	     **** allocated units and units can only be	   
+	     **** allocated once. 			   
+	     **************************************************** */
+	  case IOCM_ALLOCATE_UNIT:
+	    AllocateUnit(pDrive, (PIORB_UNIT_CONTROL)pIorb);
+	    break;
+
+	    /* **************************************************** 
+	     **** IOCM_DEALLOCATE_UNIT:			  
+	     **** Used by device manager to release control  
+	     **** of an unit, so other manager can use it.   
+	     **** Currently only OS2ASPI.DMD uses this call. 
+	     **************************************************** */
+	  case IOCM_DEALLOCATE_UNIT:
+	    DeAllocateUnit(pDrive, (PIORB_UNIT_CONTROL)pIorb);
+	    break;
+
+	    /* ****************************************************
+	     **** IOCM_CHANGE_UNITINFO:			   
+	     **** Used by: ????				   
+	     **** Usage: ????				   
+	     **** May by used to set a different unit info   
+	     **** (FilterADDHandle, ...)		       
+	     **************************************************** */
+	  case IOCM_CHANGE_UNITINFO:
+	    ChangeUnitInfo(pDrive, (PIORB_UNIT_CONTROL)pIorb);
+	    break;
+
+	  default:
+	    DEBMSG2(DBG_ALL,dszIorbUnknown,CommandCode,CommandModifier);
+	    DBSTOP();
+	    NotifyIorb( pIorb, IOERR_CMD_NOT_SUPPORTED );
+	    break;
+	}
+	break;
+d818 134
+a951 134
+	switch( CommandModifier )
+	{
+	    /* *****************************************************
+	     * **** IOCM_GET_MEDIA_GEOMETRY:
+	     * **** IOCM_GET_DEVICE_GEOMETRY:
+	     * **** Informs the caller about the format of
+	     * **** this device. DEVICE and MEDIA formats are
+	     * **** the same on RAID devices.
+	     * ************************************************** */
+	  case IOCM_GET_MEDIA_GEOMETRY:
+	  case IOCM_GET_DEVICE_GEOMETRY:
+	    GetDeviceGeometry(pDrive, (PIORB_GEOMETRY)pIorb);
+	    break;
+
+	  default:
+	    DEBMSG2(DBG_ALL,dszIorbUnknown,CommandCode,CommandModifier);
+	    DBSTOP();
+	    NotifyIorb(pIorb, IOERR_CMD_NOT_SUPPORTED);
+	    break;
+	}
+	break;
+
+      case IOCC_EXECUTE_IO:			/* read/write I/Os */
+	switch( CommandModifier )
+	{
+	    /* ****************************************************
+	     **** IOCM_READ:				   
+	     **** IOCM_WRITE:				   
+	     **** IOCM_WRITE_VERIFY:			   
+	     **** WRITE_VERIFY is the same as simple WRITE!  
+	     **************************************************** */
+	  case IOCM_READ:
+	  case IOCM_WRITE:
+	  case IOCM_WRITE_VERIFY:
+	    QueueDeviceIO(pDrive, pIorb);
+	    break;
+
+	    /* ****************************************************
+	     **** IOCM_READ_VERIFY:			   
+	     **** Verifies whether blocks are readable on a 
+	     **** devices.				   
+	     **** Because this Modifier may send a	   
+	     **** list of blocks to verify, 'QueueDeviceIO()'
+	     **** is used (instead of simply returning OK)!  
+	     **************************************************** */
+	  case IOCM_READ_VERIFY:
+	    QueueDeviceIO(pDrive, pIorb);
+	    break;
+
+	    /* **************************************************** 
+	     **** IOCM_READ_PREFETCH:			   
+	     **** Low priority read w/o actually reading data
+	     **** into host menory.
+	     **** Because this Modifier may send a	   
+	     **** list of blocks to prefetch,'QueueDeviceIO()'
+	     **** is used (instead of simply returning OK)!  
+	     **************************************************** */
+	  case IOCM_READ_PREFETCH:
+	    QueueDeviceIO(pDrive, pIorb);
+	    break;
+
+	    /* **************************************************** 
+	     **** default:				   
+	     **** Handles all other Command Modifier of	
+	     **** Command Code 'IOCC_EXECUTE_IO'.
+	     **************************************************** */
+	  default:
+	    DEBMSG2(DBG_ALL,dszIorbUnknown,CommandCode,CommandModifier);
+	    DBSTOP();
+	    NotifyIorb(pIorb, IOERR_CMD_NOT_SUPPORTED);
+	    break;
+	}
+	break;
+
+      case IOCC_ADAPTER_PASSTHRU:		/* SCSI commands */
+	switch( CommandModifier )
+	{
+	  case IOCM_EXECUTE_CDB:		/* non-SCSI */
+	  default:
+	    DEBMSG2(DBG_ALL,dszIorbUnknown,CommandCode,CommandModifier);
+	    DBSTOP();
+	    NotifyIorb(pIorb, IOERR_CMD_NOT_SUPPORTED);
+	    break;
+	}
+	break;
+
+      case IOCC_UNIT_STATUS:			/* set/get state of unit */
+	switch( CommandModifier )
+	{
+	    /* **************************************************** 
+	     * **** IOCM_GET_UNIT_STATUS:			   
+	     * **** Request the state of some unit flags	   
+	     * **** (UF_READY, UF_DEFECTIVE, etc.)		   
+	     * **************************************************** */
+	  case IOCM_GET_UNIT_STATUS:
+	    GetUnitStatus(pDrive, (PIORB_UNIT_STATUS)pIorb);
+	    break;
+
+	  case IOCM_GET_LOCK_STATUS:		/* never removable! */
+	    DEBMSG(DBG_ALL,dszIorbNoGetLock);
+	    NotifyIorb(pIorb, IOERR_CMD_NOT_SUPPORTED);
+	    break;
+
+	  case IOCM_GET_MEDIA_SENSE:		/* optional */
+	  case IOCM_GET_CHANGELINE_STATE:	/* optional */
+	  default:
+	    DEBMSG2(DBG_ALL,dszIorbUnknown,CommandCode,CommandModifier);
+	    DBSTOP();
+	    NotifyIorb(pIorb, IOERR_CMD_NOT_SUPPORTED);
+	    break;
+	}
+	break;
+
+      case IOCC_DEVICE_CONTROL:			/* SCSI commands */
+	switch( CommandModifier )
+	{
+	  case IOCM_EJECT_MEDIA:		/* optional: not removable */
+	  case IOCM_LOCK_MEDIA:			/* optional */
+	  case IOCM_UNLOCK_MEDIA:		/* optional */
+	  case IOCM_ABORT:			/* optional */
+	  case IOCM_RESET:			/* optional */
+	  default:
+	    DEBMSG2(DBG_ALL,dszIorbUnknown,CommandCode,CommandModifier);
+	    DBSTOP();
+	    NotifyIorb(pIorb, IOERR_CMD_NOT_SUPPORTED);
+	    break;
+	}
+	break;
+
+      default:					/* CommandCode unknown */
+	DEBMSG1(DBG_ALL,dszIorbUnknCmd,CommandCode);
+	DBSTOP();
+	NotifyIorb(pIorb, IOERR_CMD_NOT_SUPPORTED);
+	break;
+d969 1
+a969 1
+ *	NotifyIorb(pIorbh,ErrorCode)
+d971 2
+a972 2
+ *	pIorbh			I/O request buffer
+ *	ErrorCode		see DDK
+d974 1
+a974 1
+ *	(nothing)
+d977 2
+a978 2
+ *	Return IORB to OS, setting errorcode and flags. 'pIorbh' may
+ *	be head of linked list or single request.
+d988 1
+a988 1
+	DEBMSG1(DBG_ALL,dszNotifyError,ErrorCode);
+d997 2
+a998 2
+		       | ((ErrorCode && !(pIorbh->Status & IORB_RECOV_ERROR))
+			  ? IORB_ERROR : 0));
+d1001 1
+a1001 1
+	CallADD((PVOID)(pIorbh->NotifyAddress), pIorbh);
+d1013 1
+a1013 1
+ *	pIorb			I/O request buffer
+d1016 1
+a1016 1
+ *	(nothing)
+d1019 4
+a1022 4
+ *	Entry for IORB type of I/O.
+ *	Calls FilterHandler() for any IORB to a basedisk and
+ *	selects subroutines for all hostdrives.
+ *	IOCC_CONFIGURATION is special, as it is for the complete driver.
+d1029 1
+a1029 1
+    PVOID const	dpp = UH2PPTR(pIorb->UnitHandle);
+d1033 1
+a1033 1
+	ArrayHandler(NULL, pIorb);
+d1037 1
+a1037 1
+	FilterHandler((PVOID)*(PULONG)dpp, pIorb);
+d1041 1
+a1041 1
+	ArrayHandler((PVOID)*(PULONG)dpp, pIorb);
+d1045 1
+a1045 1
+	/* He, what do you mean?  There is no such device! */
+d1047 1
+a1047 1
+	NotifyIorb(pIorb, IOERR_CMD_OS_SOFTWARE_FAILURE);
+d1063 1
+a1063 1
+ *	Timer(void)
+d1065 3
+a1067 3
+ *	(none)
+ *	ulTimer
+ *	anpUnit
+d1070 1
+a1070 1
+ *	(nothing)
+d1073 2
+a1074 2
+ *	Increments 'counter' in all unit structures
+ *	and sends stop if 'counter' reached limit.
+d1077 2
+a1078 2
+ *	Called by assembler stub which saves/restores registers
+ *	but doesn't (!) enable interrupts.
+d1088 1
+a1088 1
+    USHORT	i;
+d1095 1
+a1095 1
+	PVRIO const vrio = DequeueVrio();
+d1097 7
+a1103 7
+	if( vrio == NULL )
+	    break;				/* no more work */
+	if( vrio->vrd->worker(vrio->vrd, vrio) )
+	{
+	    InsertVrio(vrio);			/* back to *start* of queue */
+	    break;
+	}
+d1109 2
+a1110 2
+	++ulTimer;				/* free running counter */
+	frac = 10;				/* restart */
+d1112 27
+a1138 27
+	/* Continue BUILD process on every VRDEVICE requiring it.  Only
+	 * do it after loading has completed but before shutdown has
+	 * been initiated. */
+
+	if( (fDriverFlags & DF_INIT2DONE) != 0
+	    &&  (fDriverFlags & DF_SHUTDOWN1) == 0
+	    &&  (fDriverFlags & DF_SETUPACTIVE) == 0
+	    &&  cBuildProcess != 0
+	    &&  ulTimer > 45 )
+	{
+	    i = DevHelp_ArmCtxHook(0, hdBuildHook);
+	    if( i != 0 )
+	    {
+		DEBMSG1(DBG_LEVEL1,dszBE_ACH,i);
+	    }
+	}
+
+
+	if( --beepfrac == 0 )
+	{
+	    /* Check state of all drives and call DevHelp_Beep() if any
+	     * drive is in state 'ERROR' or 'FAIL'. */
+
+	    if( cBeeps != 0  &&  (fDriverFlags & DF_BEEPDISABLED) == 0 )
+		DevHelp_Beep(880, 200);
+	    beepfrac = 10;
+	}
+d1140 1
+a1140 1
+	/* Now start some IORBs for every host drive. */
+d1142 2
+a1143 2
+	for( i = 0; i < cHDrv; ++i )
+	    StartManyIorb(apHDrv[i]);
+@
+
+
+2.3
+log
+@- Timer: start build process after 45 seconds (there seems to be a critical
+  period during boot where build I/Os may fail)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.2 $
+ * $Date: 2001/07/22 00:29:19 $
+d16 4
+d68 2
+a69 2
+ * ---------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-2001
+d74 1
+a74 1
+static char const id[]="$Id: iorb.c,v 2.2 2001/07/22 00:29:19 vitus Exp vitus $";
+d330 1
+a330 1
+ *	Fills unitinfo for cacheservice and scsiservice devices.
+d619 12
+d654 2
+a655 3
+ *	This functions sets bits in ->UnitFlags to reflect the state of
+ *	the requested unit. Flags are driver handled for CACHE-devices,
+ *	'ScsiTestDevice()' sets flags for SCSIRAW-devices.
+a816 1
+	     **** Supports both CACHE- and SCSIRAW-devices   
+d839 2
+a840 2
+	     **** Reads blocks into cache controllers cache. 
+	     **** Doesn't do DMA!                            
+d852 1
+a852 2
+	     **** Command Code 'IOCC_EXECUTE_IO':            
+	     **** IOCM_READ_PREFETCH			   
+@
+
+
+2.2
+log
+@- Timer: instead of calling UpdateBuilds() directly arm a context
+  hook to call it.  May be done more seldom as ther BuildNotify()
+  does it, too.
+@
+text
+@d3 2
+a4 2
+ * $Revision: 2.1 $
+ * $Date: 1999/09/23 23:13:28 $
+d16 5
+d70 1
+a70 1
+static char const id[]="$Id: iorb.c,v 2.1 1999/09/23 23:13:28 vitus Exp vitus $";
+a1068 1
+
+d1076 2
+a1077 1
+	    &&  cBuildProcess != 0 )
+@
+
+
+2.1
+log
+@- defined all DBGMSG() strings as located in CONST segment
+- changed IorbEntry() to ArrayHandler()
+- readded IorbEntry() to be a router between ArrayHandler() and FilterHandler().
+  All IORB processing routines now get a pointer to the device they are working
+  for.  IorbEntry() translates IORB.UnitHandle to this pointer.
+- GetDeviceTable() now returns host drives *and* BASEDISKs (those which
+  are processed by FilterHandler() in filter.c)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.10 $
+ * $Date: 1999/06/20 17:35:14 $
+d16 9
+d59 2
+a60 2
+ * -------------------------------------------
+ * This code is Copyright Vitus Jensen 1998-99
+d65 1
+a65 1
+static char const id[]="$Id: iorb.c,v 1.10 1999/06/20 17:35:14 vitus Exp vitus $";
+d111 1
+a1042 13
+    /* Continue BUILD process on every VRDEVICE requiring it.  Only
+     * do it after loading has completed but before shutdown has
+     * been initiated. */
+
+    if( (fDriverFlags & DF_INIT2DONE) != 0
+	&&  (fDriverFlags & DF_SHUTDOWN1) == 0
+	&&  (fDriverFlags & DF_SETUPACTIVE) == 0
+	&&  cBuildProcess != 0 )
+    {
+	UpdateBuilds();
+    }
+
+
+d1063 17
+@
+
+
+1.10
+log
+@- beeping may now be disabled via fDriverFlags bit
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.9 $
+ * $Date: 1999/06/02 02:22:09 $
+d16 3
+d56 1
+a56 1
+static char const id[]="$Id: iorb.c,v 1.9 1999/06/02 02:22:09 vitus Exp vitus $";
+d75 34
+d114 1
+a114 2
+ * CALL
+ *	HostdriveNotify(io)
+d129 1
+a129 1
+PUBLIC VOID NEAR _Cdecl
+d132 1
+a132 1
+    PIORB_EXECUTEIO	iorb = io->iorb;
+d134 1
+a134 1
+    DEBMSG3(DBG_PATH,"\r\n[HostdriveNotify] io %p, iorb %p, error %w",(PVOID)io,(PVOID)iorb,io->oserr);
+d153 2
+a154 2
+ * CALL
+ *	QueueIorbChain(devp,pIorb)
+d156 1
+a156 1
+ *	devp		host drive
+d162 1
+d167 1
+a167 1
+QueueIorbChain(PHOSTDRIVE const devp,PIORBH const pIorb)
+d172 1
+a172 1
+    DEBMSG(DBG_LEVEL4,"\r\n[QueueIorbChain] entry");
+d190 4
+a193 4
+    LOCK(devp->hlQueue);
+    ++devp->ReqCnt;
+    if( devp->pQueueHead == NULL )		/* empty queue? */
+	devp->pQueueHead = pIorb;		/* set as first */
+d195 2
+a196 2
+	devp->pQueueFoot->pNxtIORB = pIorb;	/* set behind last */
+    devp->pQueueFoot = pLastIorb;		/* new last IORB */
+d198 1
+a198 1
+    UNLOCK(devp->hlQueue);			/* somebody may interrupt */
+d207 2
+a208 2
+ * CALL
+ *	QueueDeviceIO(pIorb)
+d210 2
+a211 2
+ *	IORB chain (EXECUTEIO)
+ *	apHDrv[]
+d223 1
+a223 1
+QueueDeviceIO(PIORB const pIorb)
+d225 2
+a226 4
+    PHOSTDRIVE const devp = apHDrv[pIorb->UnitHandle];
+
+    DEBMSG(DBG_LEVEL4,"\r\n[QueueDeviceIO] entry");
+    if ( !(devp->OsFlags & OF_ALLOCATED) )	/* only i/o, if allocated */
+d228 1
+a228 1
+	DEBMSG(DBG_ALL,"\r\n[QueueDeviceIO] HD not allocated");
+d235 1
+a235 1
+    QueueIorbChain(devp, pIorb);
+d239 1
+a239 1
+    StartManyIorb(devp);
+d250 2
+a251 2
+ * CALL
+ *	SetAdapterInfo(pAdapterInfo)
+d254 1
+d267 1
+a267 1
+    DEBMSG(DBG_LEVEL2,"\r\n[SetAdapterInfo] entry");
+d300 2
+a301 2
+ * CALL
+ *	SetUnitInfo(pUnitInfo,devp)
+d305 1
+d318 1
+a318 1
+    DEBMSG(DBG_LEVEL2,"\r\n[SetUnitInfo] entry");
+d321 1
+a321 1
+	DEBMSG(DBG_LEVEL1,"\r\n[SetUnitInfo] copying supplied new UnitInfo");
+d326 1
+a326 1
+	DEBMSG(DBG_LEVEL3,"\r\n[SetUnitInfo] collecting default UnitInfo");
+d336 1
+a336 1
+	    DEBMSG(DBG_LEVEL1,"\r\n[SetUnitInfo] setting defect flag");
+d350 2
+a351 2
+ * CALL
+ *	GetDeviceTable(pIorb)
+d354 1
+d361 5
+d367 1
+a367 1
+ *	It could be performance relatice to combine units with certain
+d378 1
+a378 1
+    USHORT	idxUnit;
+d381 2
+a382 1
+    DEBMSG(DBG_LEVEL2,"\r\n[GetDeviceTable] entry");
+d390 4
+a393 1
+    pDeviceTable->TotalAdapters = 1;		/* total count found */
+d396 1
+a396 1
+    (PBYTE)pAdapterInfo += sizeof(NPADAPTERINFO);
+d400 25
+d426 4
+a429 1
+    pUnitInfo = pAdapterInfo->UnitInfo; 	/* Room for UNIT INFO */
+d432 1
+a432 1
+    /* For each device in 'apHDrv' build an entry  
+d435 1
+a435 1
+    for( idxUnit=i=0; i < MAX_HDRV ; ++i )
+d440 3
+a442 4
+	pUnitInfo->AdapterIndex	= 0;		/* Index of only adapter */
+	pUnitInfo->UnitIndex	= idxUnit;	/* Index of unit on
+						   this adapter */
+	pUnitInfo->UnitHandle	= i;
+d458 2
+a459 2
+ * CALL
+ *	AllocateUnit(pIorb)
+d461 1
+d463 1
+d475 1
+a475 1
+AllocateUnit(PIORB_UNIT_CONTROL const pIorb)
+d477 2
+a478 4
+    PHOSTDRIVE const  devp = apHDrv[pIorb->iorbh.UnitHandle];
+
+    DEBMSG(DBG_LEVEL2,"\r\n[AllocateUnit] entry");
+    if( (devp->OsFlags & OF_ALLOCATED) )
+d480 1
+a480 1
+	DEBMSG(DBG_ALL,"\r\n[AllocateUnit] HD already allocated");
+d485 2
+a486 2
+    devp->OsFlags |= OF_ALLOCATED;
+    ++devp->ReqCnt;				/* no locking needed */
+d495 2
+a496 2
+ * CALL
+ *	DeAllocateUnit(pIorb)
+d498 1
+d500 1
+d512 1
+a512 1
+DeAllocateUnit(PIORB_UNIT_CONTROL const pIorb)
+d514 2
+a515 4
+    PHOSTDRIVE const  devp = apHDrv[pIorb->iorbh.UnitHandle];
+
+    DEBMSG(DBG_LEVEL2,"\r\n[DeAllocateUnit] entry");
+    if( !(devp->OsFlags & OF_ALLOCATED) )
+d517 1
+a517 1
+	DEBMSG(DBG_ALL,"\r\n[DeAllocateUnit] HD not allocated");
+d522 2
+a523 1
+    ++devp->ReqCnt;				/* no locking needed */
+d532 2
+a533 2
+ * CALL
+ *	ChangeUnitInfo(pIorb)
+d535 1
+d537 1
+d549 1
+a549 1
+ChangeUnitInfo(PIORB_UNIT_CONTROL const pIorb)
+d551 3
+a553 5
+    PHOSTDRIVE const devp = apHDrv[pIorb->iorbh.UnitHandle];
+
+    DEBMSG(DBG_LEVEL2,"\r\n[ChangeUnitInfo] entry");
+    devp->modinfo = pIorb->pUnitInfo;
+    ++devp->ReqCnt;				/* no locking needed */
+d562 2
+a563 2
+ * CALL
+ *	GetDeviceGeometry(pIorb)
+d565 1
+d567 1
+d578 1
+a578 1
+GetDeviceGeometry(PIORB_GEOMETRY const pIorb)
+d580 1
+a580 3
+    PHOSTDRIVE const  drvp = apHDrv[pIorb->iorbh.UnitHandle];
+
+    DEBMSG(DBG_LEVEL2,"\r\n[GetDeviceGeometry] entry");
+d583 1
+a583 1
+	DEBMSG(DBG_ALL,"\r\n[GetDeviceGeometry] structure too small");
+d587 1
+a587 1
+    if( !(drvp->OsFlags & OF_ALLOCATED) )
+d589 1
+a589 1
+	DEBMSG(DBG_ALL,"\r\n[GetDeviceGeometry] HD not allocated");
+d594 1
+a594 1
+    pIorb->pGeometry->TotalSectors	= drvp->child->size;
+d599 1
+a599 1
+    pIorb->pGeometry->TotalCylinders    = drvp->child->size / 64 / 32;
+d601 2
+a602 2
+    DEBMSG1(DBG_LEVEL2,"\r\n[GetDeviceGeometry] size = %lx sectors",(PVOID)&drvp->child->size);
+    ++drvp->ReqCnt;				/* no locking needed */
+d611 2
+a612 2
+ * CALL
+ *	GetUnitStatus(pIorb)
+d614 1
+d616 1
+d630 1
+a630 1
+GetUnitStatus(PIORB_UNIT_STATUS const pIorb)
+d632 2
+a633 4
+    PHOSTDRIVE const	devp = apHDrv[pIorb->iorbh.UnitHandle];
+
+    DEBMSG(DBG_LEVEL2,"\r\n[GetUnitStatus] entry");
+    if( (devp->child->flags & RDFLAG_ERROR) )
+d638 1
+a638 1
+    ++devp->ReqCnt;				/* no locking needed */
+a645 7
+
+
+/* **********************************************************************
+ * **** Task Time Processing (filter) ***********************************
+ * ******************************************************************* */
+
+
+d647 1
+a647 7
+ * CALL
+ *	NotifyIorb(pIorbh,ErrorCode)
+ * PARAMETER
+ *	pIorbh			I/O request buffer
+ *	ErrorCode		see DDK
+ * RETURNS
+ *	(nothing)
+a648 36
+ * DESCRIPTION
+ *	Return IORB to OS, setting errorcode and flags. 'pIorbh' may
+ *	be head of linked list or single request.
+ *
+ * REMARKS
+ */
+PUBLIC VOID NEAR _Cdecl
+NotifyIorb(PIORBH const pIorbh,USHORT ErrorCode)
+{
+    DEBMSG2(DBG_LEVEL2|DBG_PATH,"\r\n[NotifyIorb] entry (%p, %w)",(PVOID)pIorbh,ErrorCode);
+    if( ErrorCode )
+    {
+	DEBMSG1(DBG_ALL,"\r\nVUJRAID$ returns %w to OS/2",ErrorCode);
+    }
+
+    /* Set IORB_ERROR in pIorb->Status if there is a non-zero
+     * error code AND the RECOVERED ERROR bit is not set in
+     * the IORB status field. */
+
+    pIorbh->ErrorCode = ErrorCode;
+    pIorbh->Status |= (IORB_DONE
+		       | ((ErrorCode && !(pIorbh->Status & IORB_RECOV_ERROR))
+			  ? IORB_ERROR : 0));
+
+    if( (pIorbh->RequestControl & IORB_ASYNC_POST) )
+	CallADD(pIorbh->NotifyAddress, pIorbh);
+
+    return;
+}
+
+
+
+
+/*# ----------------------------------------------------------------------
+ * CALL
+ *	IorbEntry(pIorb)
+d650 1
+d652 1
+d657 1
+a657 1
+ *	Entry for IORB type of I/O.
+d661 2
+a662 2
+PUBLIC VOID FAR _loadds _Cdecl
+IorbEntry(PIORB const pIorb)
+d668 2
+d678 1
+d707 1
+a707 1
+	    DEBMSG2(DBG_ALL,"\r\nCommand %w, Modifier %w not supported",CommandCode,CommandModifier);
+d725 1
+a725 1
+	    AllocateUnit((PIORB_UNIT_CONTROL)pIorb);
+d735 1
+a735 1
+	    DeAllocateUnit((PIORB_UNIT_CONTROL)pIorb);
+d746 1
+a746 1
+	    ChangeUnitInfo((PIORB_UNIT_CONTROL)pIorb);
+d750 1
+a750 1
+	    DEBMSG2(DBG_ALL,"\r\nCommand %w, Modifier %w not supported",CommandCode,CommandModifier);
+d769 1
+a769 1
+	    GetDeviceGeometry((PIORB_GEOMETRY)pIorb);
+d773 1
+a773 1
+	    DEBMSG2(DBG_ALL,"\r\nCommand %w, Modifier %w not supported",CommandCode,CommandModifier);
+d793 1
+a793 1
+	    QueueDeviceIO(pIorb);
+d805 1
+a805 1
+	    QueueDeviceIO(pIorb);
+d817 1
+a817 1
+	    QueueDeviceIO(pIorb);
+d827 1
+a827 1
+	    DEBMSG2(DBG_ALL,"\r\nCommand %w, Modifier %w not supported",CommandCode,CommandModifier);
+d839 1
+a839 1
+	    DEBMSG2(DBG_ALL,"\r\nCommand %w, Modifier %w not supported",CommandCode,CommandModifier);
+d855 1
+a855 1
+	    GetUnitStatus((PIORB_UNIT_STATUS)pIorb);
+d859 1
+a859 1
+	    DEBMSG(DBG_ALL,"\r\nIOCM_GET_LOCK_STATUS not supported");
+d866 1
+a866 1
+	    DEBMSG2(DBG_ALL,"\r\nCommand %w, Modifier %w not supported",CommandCode,CommandModifier);
+d882 1
+a882 1
+	    DEBMSG2(DBG_ALL,"\r\nCommand %w, Modifier %w not supported",CommandCode,CommandModifier);
+d890 1
+a890 1
+	DEBMSG1(DBG_ALL,"\r\nReceived unknown command code %w",CommandCode);
+d896 95
+@
+
+
+1.9
+log
+@- Timer: beautified beeper frequency and duration
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.8 $
+ * $Date: 1999/05/12 01:45:32 $
+d16 3
+d53 1
+a53 1
+static char const id[]="$Id: iorb.c,v 1.8 1999/05/12 01:45:32 vitus Exp vitus $";
+d947 1
+a947 1
+	    if( cBeeps != 0 )
+a962 1
+
+@
+
+
+1.8
+log
+@- Timer: runs more often and calls routines at two different intervals
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.7 $
+ * $Date: 1999/04/17 00:16:56 $
+d16 3
+d50 1
+a50 1
+static char const id[]="$Id: iorb.c,v 1.7 1999/04/17 00:16:56 vitus Exp vitus $";
+d95 1
+a95 1
+    DEBMSG3(DBG_LEVEL2,"\r\n[HostdriveNotify] io %p, iorb %p, error %w",(PVOID)io,(PVOID)iorb,io->oserr);
+d900 1
+d939 4
+a942 5
+	/* Check state of all drives and call DevHelp_Beep() if any
+	 * drive is in state 'ERROR' or 'FAIL'. */
+
+	if( cBeeps != 0 )
+	    DevHelp_Beep(220, 500);
+d944 4
+@
+
+
+1.7
+log
+@- Timer: calls UpdateBuilds()
+- Timer: call DevHelp_Beep() if cBeep != 0
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.6 $
+ * $Date: 1998/12/13 22:29:09 $
+d16 4
+d47 1
+a47 1
+static char const id[]="$Id: iorb.c,v 1.6 1998/12/13 22:29:09 vitus Exp vitus $";
+d93 2
+d290 1
+a290 1
+	if( (devp->child->flags & RDFLAGS_ERROR) )
+d552 1
+a552 1
+    if( (devp->child->flags & RDFLAGS_ERROR) )
+d896 1
+a898 8
+    ++ulTimer;					/* free running counter */
+
+    /* Check state of all drives and call DevHelp_Beep() if any
+     * drive is in state 'ERROR' or 'FAIL'. */
+
+    if( cBeeps != 0 )
+	DevHelp_Beep(220, 500);
+
+d901 2
+a902 1
+     * do it after loading has completed. */
+d904 5
+a908 1
+    if( (fDriverFlags & DF_INIT2DONE)  &&  cBuildProcess != 0 )
+d910 1
+a927 1
+    /* Now start some IORBs for every host drive. */
+d929 18
+a946 2
+    for( i = 0; i < cHDrv; ++i )
+	StartManyIorb(apHDrv[i]);
+@
+
+
+1.6
+log
+@- updates HOSTDRIVE element 'ReqCnt'
+- changes for removed elements from HOSTDRIVE (flags, vrd, size)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.5 $
+ * $Date: 1998/09/20 14:28:35 $
+d9 4
+a12 4
+ * DDK says we have to saved SI,DI,DS,ES but all code I've seen
+ * only uses 'loadds' restoring only SI,DI,DS (and remember: CorelSCSI
+ * even changed DS!).  Nevertheless I will do a '_saveregs' now and
+ * save/restore all registers when calling other drivers...
+d16 4
+d37 2
+a38 2
+ * ----------------------------------------
+ * This code is Copyright Vitus Jensen 1998
+d43 1
+a43 1
+static char const id[]="$Id: iorb.c,v 1.5 1998/09/20 14:28:35 vitus Stab vitus $";
+d66 1
+a66 1
+/*#
+d69 1
+d72 1
+d74 2
+a75 1
+ * GLOBAL
+d86 1
+a86 2
+    PIORB_EXECUTEIO	iorb = io->request;
+    /*PHOSTDRIVE const drvp = apHDrv[iorb->iorbh.UnitHandle];*/
+d89 1
+d104 1
+a104 1
+/*#
+d112 1
+a112 1
+ * GLOBAL
+d114 1
+d117 1
+a117 1
+PRIVATE VOID NEAR
+d131 1
+a131 1
+	_fmemset(pLastIorb->ADDWorkSpace, 0, ADD_WORKSPACE_SIZE);
+d162 2
+d166 1
+a166 2
+ * GLOBAL
+ *	apHDrv[]
+d202 1
+a202 1
+/*#
+d209 1
+a209 1
+ * GLOBAL
+d251 1
+a251 1
+/*#
+d260 1
+a260 1
+ * GLOBAL
+d300 1
+a300 1
+/*#
+d309 1
+a309 1
+ * GLOBAL
+d371 1
+a371 1
+/*#
+d379 1
+a379 1
+ * GLOBAL
+d408 1
+a408 1
+/*#
+d416 1
+a416 1
+ * GLOBAL
+d444 1
+a444 1
+/*#
+d452 1
+a452 1
+ * GLOBAL
+d474 1
+a474 1
+/*#
+d482 1
+a482 1
+ * GLOBAL
+d523 1
+a523 1
+/*#
+d532 1
+a532 1
+ * GLOBAL
+d566 1
+a566 1
+/*#
+d574 1
+a574 1
+ * GLOBAL
+d608 1
+a608 1
+/*#
+d615 1
+a615 1
+ * GLOBAL
+a864 4
+
+
+
+
+a865 2
+ * NAME
+ *	Timer
+d869 1
+a869 4
+ *	none
+ * RETURNS
+ *	nothing
+ * GLOBAL
+d872 4
+d879 1
+d882 1
+a882 1
+ *	but doesn't enable interrupts.
+d893 14
+@
+
+
+1.5
+log
+@- returns minimum of all MaxCDBTransferLength
+- seperate code for IOCM_GET_LOCK_STATUS (returns error)
+- Timer: InsertVrio(vrio) instead of QueueVrio(vrio)
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.4 $
+ * $Date: 1998/06/26 22:39:33 $
+d7 1
+a7 1
+ * Request Time processing	- Timer processing
+d16 5
+d39 1
+a39 1
+static char const id[]="$Id: iorb.c,v 1.4 1998/06/26 22:39:33 vitus Exp vitus $";
+d134 1
+d149 1
+a149 1
+/*#
+d275 1
+a275 1
+	if( (devp->flags & RDFLAGS_ERROR) )
+d391 1
+d427 1
+d457 1
+d498 1
+a498 1
+    pIorb->pGeometry->TotalSectors	= drvp->size;
+d503 1
+a503 1
+    pIorb->pGeometry->TotalCylinders    = drvp->size / 64 / 32;
+d505 2
+a506 1
+    DEBMSG1(DBG_LEVEL2,"\r\n[GetDeviceGeometry] size = %lx sectors",(PVOID)&drvp->size);
+d537 1
+a537 1
+    if( (devp->flags & RDFLAGS_ERROR) )
+d542 1
+d860 1
+a860 1
+/*
+@
+
+
+1.4
+log
+@- switched to DDK macros (cli, sti, pushf)
+- uses CallADD()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.3 $
+ * $Date: 1998/05/29 01:45:43 $
+d16 4
+d31 7
+a37 3
+#pragma off (unreferenced)
+static char const id[]="$Id: iorb.c,v 1.3 1998/05/29 01:45:43 vitus Exp vitus $";
+#pragma on (unreferenced)
+d145 1
+d147 1
+d149 1
+d151 1
+d153 3
+d229 2
+a230 1
+    pAdapterInfo->MaxCDBTransferLength = 0;
+d564 1
+a564 1
+    DEBMSG2(DBG_LEVEL2|DBG_QUEUE,"\r\n[NotifyIorb] entry (%p, %w)",(PVOID)pIorbh,ErrorCode);
+d795 5
+a801 1
+	  case IOCM_GET_LOCK_STATUS:		/* never removable! */
+d878 1
+a878 2
+    /* Try to yank all queued VRIOs to their
+     * devices. */
+d888 1
+a888 1
+	    QueueVrio(vrio);
+d893 1
+a893 1
+    /* Now start same IORBs for every host drive. */
+@
+
+
+1.3
+log
+@- fine tuning of DEBMSG macro calls
+@
+text
+@d2 3
+a4 3
+ * $Source: d:/source/driver/raid/RCS/iorb.c,v $
+ * $Revision: 1.2 $
+ * $Date: 1998/04/08 01:11:08 $
+d14 10
+a23 1
+ * History: see bottom of file
+d28 1
+a28 1
+static char const id[]="$Id: iorb.c,v 1.2 1998/04/08 01:11:08 vitus Exp vitus $";
+d63 1
+a63 1
+PUBLIC void
+d69 1
+a69 1
+    DEBMSG3(DBG_LEVEL1,"\r\n[HostdriveNotify] io %p, iorb %p, error %w",(PVOID)io,(PVOID)iorb,io->oserr);
+d96 1
+a96 1
+PRIVATE void NEAR
+d102 1
+a102 1
+    DEBMSG(DBG_LEVEL3,"\r\n[QueueIorbChain] entry");
+d148 1
+a148 1
+    DEBMSG(DBG_LEVEL3,"\r\n[QueueDeviceIO] entry");
+d246 1
+a246 1
+	DEBMSG(DBG_LEVEL2,"\r\n[SetUnitInfo] collecting default UnitInfo");
+d480 1
+a480 1
+    DEBMSG1(DBG_LEVEL1,"\r\n[GetDeviceGeometry] size = %lx sectors",(PVOID)&drvp->size);
+d545 1
+a545 1
+PUBLIC void NEAR
+d564 2
+a565 5
+    {
+	SAVE_REGS();				/* better safe than sorry */
+	(*pIorbh->NotifyAddress)(pIorbh);
+	RESTORE_REGS();
+    }
+d585 1
+a585 1
+PUBLIC void FAR _saveregs _loadds _Cdecl
+d854 1
+a854 1
+    int	i;
+d858 3
+d874 2
+a884 11
+
+
+/* History:
+ *
+ * $Log: iorb.c,v $
+ * Revision 1.2  1998/04/08 01:11:08  vitus
+ * - added PUBLIC HostdriveNotify()
+ *
+ * Revision 1.1  1998/02/18 00:00:53  vitus
+ * Initial revision
+ */
+@
+
+
+1.2
+log
+@- added PUBLIC HostdriveNotify()
+@
+text
+@d3 2
+a4 2
+ * $Revision: 1.1 $
+ * $Date: 1998/02/18 00:00:53 $
+d19 1
+a19 1
+static char const id[]="$Id: iorb.c,v 1.1 1998/02/18 00:00:53 vitus Exp vitus $";
+d60 1
+a60 1
+    DEBMSG3(DBG_LEVEL2,"\r\n[HostdriveNotify] io %p, iorb %p, error %w",(PVOID)io,(PVOID)iorb,io->oserr);
+d93 1
+a93 1
+    DEBMSG(DBG_LEVEL2,"\r\n[QueueIorbChain] entry");
+d139 1
+a139 1
+    DEBMSG(DBG_LEVEL2,"\r\n[QueueDeviceIO] entry");
+d180 1
+a180 1
+    DEBMSG(DBG_LEVEL1,"\r\n[SetAdapterInfo] entry");
+d229 1
+a229 1
+    DEBMSG(DBG_LEVEL1,"\r\n[SetUnitInfo] entry");
+d232 1
+a232 1
+	DEBMSG(DBG_LEVEL2,"\r\n[SetUnitInfo] copying supplied new UnitInfo");
+d351 1
+a351 1
+    DEBMSG(DBG_LEVEL1,"\r\n[AllocateUnit] entry");
+d387 1
+a387 1
+    DEBMSG(DBG_LEVEL1,"\r\n[DeAllocateUnit] entry");
+d422 1
+a422 1
+    DEBMSG(DBG_LEVEL1,"\r\n[ChangeUnitInfo] entry");
+d539 1
+a539 1
+    DEBMSG(DBG_LEVEL1,"\r\n[NotifyIorb] entry");
+d879 3
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 4
+a5 4
+ * $Source$
+ * $Revision$
+ * $Date$
+ * $Locker$
+d19 1
+a19 1
+static char const id[]="$Id$";
+d37 1
+a37 1
+ * **** Debugging Data **************************************************
+d39 25
+a63 2
+#if defined(DEBUG)
+#endif /* DEBUG */
+d77 1
+d79 2
+d82 1
+d93 2
+d139 1
+d142 1
+d180 2
+d229 1
+d232 1
+a232 1
+	DEBMSG("\r\nCopying supplied new UnitInfo");
+d237 1
+d245 1
+d247 2
+d286 1
+a286 1
+    DEBMSG("\r\nGetDeviceTable()");
+d351 1
+a351 1
+    DEBMSG("\r\nAllocateUnit()");
+d354 1
+d387 1
+a387 1
+    DEBMSG("\r\nDeAllocateUnit()");
+d390 1
+d412 1
+a412 1
+ *	Save pointer to new unit info in device structure.  Will be	#
+d422 1
+a422 1
+    DEBMSG("\r\nChangeUnitInfo()");
+d450 1
+a450 1
+    DEBMSG("\r\nGetDeviceGeometry()");
+d453 1
+a456 1
+
+d459 1
+d471 1
+d501 1
+a501 2
+    DEBMSG("\r\nGetUnitStatus()");
+
+d539 1
+a539 1
+#if defined(DEBUG)
+d542 1
+a542 1
+	DEBMSG1("\r\nGDTX000$ returns %w to OS/2",ErrorCode);
+a543 1
+#endif
+d622 2
+a623 1
+	    ERRMSG2("\r\nCommand %w, Modifier %w not supported",CommandCode,CommandModifier);
+d665 2
+a666 1
+	    ERRMSG2("\r\nCommand %w, Modifier %w not supported",CommandCode,CommandModifier);
+d688 2
+a689 1
+	    ERRMSG2("\r\nCommand %w, Modifier %w not supported",CommandCode,CommandModifier);
+d742 2
+a743 1
+	    ERRMSG2("\r\nCommand %w, Modifier %w not supported",CommandCode,CommandModifier);
+d754 2
+a755 1
+	    ERRMSG2("\r\nCommand %w, Modifier %w not supported",CommandCode,CommandModifier);
+d777 2
+a778 1
+	    ERRMSG2("\r\nCommand %w, Modifier %w not supported",CommandCode,CommandModifier);
+d793 2
+a794 1
+	    ERRMSG2("\r\nCommand %w, Modifier %w not supported",CommandCode,CommandModifier);
+d801 2
+a802 1
+	ERRMSG1("\r\nReceived unknown command code %w",CommandCode);
+d878 3
+a880 1
+ * $Log$
+@

@@ -1,0 +1,12 @@
+file_id.diz
+SCSIOpt.doc
+SCSIOpt.history
+SCSIOpt.flt
+SCSIOpt.map
+SCSIOpt.sym
+SCSIOpt.ddp
+SCSIOpt.exe
+*.c
+*.asm
+*.h
+Makefile

@@ -1,0 +1,3749 @@
+head	1.11;
+access;
+symbols
+	VRAID_REL23:1.10
+	REL22:1.7
+	VRAIDv0_70:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.11
+date	2004.09.11.17.29.18;	author vitus;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.02.11.18.25.15;	author vitus;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.02.03.22.49.51;	author vitus;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2000.12.13.02.41.12;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2000.04.20.23.32.59;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.11.27.23.04.45;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	99.11.16.22.08.55;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	99.10.25.09.05.00;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	99.10.21.00.32.17;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	99.06.26.00.10.08;	author vitus;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.06.13.01.41.57;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@VRAID Documentation
+@
+
+
+1.11
+log
+@- describes Version 0.85: faster rebuild, init bugfix
+@
+text
+@.*
+.* $Source: r:/source/driver/raid/doc/RCS/vraid.rip,v $
+.* $Revision: 1.10 $
+.* $Date: 2001/02/11 18:25:15 $
+.* $Locker: vitus $
+.*
+.*      Written with EMACS 19.33, compiled with IPFC Version 4.00.000
+.*      Compile: ipfc -i -d:049 -c:437 vraid
+.*
+.* $Log: vraid.rip,v $
+.* Revision 1.10  2001/02/11 18:25:15  vitus
+.* - rebuild, declare as invalid
+.* - notes FLT and EXE as release version
+.*
+.* Revision 1.9  2001/02/03 22:49:51  vitus
+.* - bank account
+.* - order form
+.* - 1201DEMO key
+.*
+.* Revision 1.8  2000/12/13 02:41:12  vitus
+.* - many more NAMEIT symbols
+.* - describes array verification
+.* - history contains flt 0.84 and exe 0.84
+.*
+.* Revision 1.7  2000/04/20 23:32:59  vitus
+.* - filter ordering explained
+.* - filter: /!SHARE option
+.* - exe: -l:file option
+.* - registration seoerated into author and BMT micro (incl. links)
+.* - not selling level 3...
+.* - history includes VRAID22.ZIP
+.*
+.* Revision 1.6  1999/11/27 23:04:45  vitus
+.* - paragraph describing LX compression and OS/2 2.x
+.* - describes VRAID21.ZIP contents
+.*
+.* Revision 1.5  1999/11/16 22:08:55  vitus
+.* - filled :H3 res=ID_ADDPART.Add something to an &ARRAY.
+.*
+.* Revision 1.4  1999/10/25 09:05:00  vitus
+.* - halfway through to VRAID21 release.  DnD has to be described
+.* - more footnotes
+.* - uses definitions from vraid.def
+.*
+.* Revision 1.3  1999/10/21 00:32:17  vitus
+.* - Filter version 0.80 partly described
+.*
+.* Revision 1.2  1999/06/26 00:10:08  vitus
+.* - more general description, RAID levels
+.* - incorporated vraid.history
+.* - overwriting means...
+.* - SCSI problems/hangs when testing driver failures
+.* - history describes VRAID20.ZIP
+.*
+.* Revision 1.1  1999/06/13 01:41:57  vitus
+.* Initial revision
+.* ----------------------------------------
+.* This code is Copyright Vitus Jensen 1999
+.*
+:USERDOC.
+:TITLE.VRAID Documentation
+.NAMEIT SYMBOL=EXE TEXT='VSetup.exe'
+.NAMEIT SYMBOL=FLT TEXT='VRAID.FLT'
+.NAMEIT SYMBOL=PDEV TEXT='PHYSDEVICE'
+.NAMEIT SYMBOL=ARRAY TEXT='Array Drive'
+.NAMEIT SYMBOL=CFG TEXT='Config.Sys'
+.NAMEIT SYMBOL=LL TEXT='Logical Drive'
+.NAMEIT SYMBOL=EP TEXT='Extended Partition'
+.NAMEIT SYMBOL=SP TEXT='Secondary Partition'
+.NAMEIT SYMBOL=OS2DEV TEXT='OS/2 Device'
+.NAMEIT SYMBOL=OS2DRV TEXT='OS/2 Drive'
+.NAMEIT SYMBOL=LXLITE TEXT=':LINK REFID=lxlite REFTYPE=fn.LXLite:ELINK.'
+.NAMEIT SYMBOL=BUILD TEXT=':LINK REFID=Build REFTYPE=fn.Build:ELINK.'
+.NAMEIT SYMBOL=REBUILD TEXT=':LINK REFID=Rebuild REFTYPE=fn.Rebuild:ELINK.'
+.NAMEIT SYMBOL=FAIL TEXT=':LINK refid=Fail REFTYPE=fn.Fail:ELINK.'
+.NAMEIT SYMBOL=ERROR TEXT=':LINK refid=Error REFTYPE=fn.Error:ELINK.'
+.NAMEIT SYMBOL=MBR TEXT=':LINK REFID=MBR REFTYPE=fn.MBR:ELINK.'
+
+
+
+
+
+.* ======================================================================
+:H1 res=ID_GENERAL.General
+:P.
+Welcome to VRAID, the first (to my knowledge) Shareware RAID
+solution for OS/2.  Instead of buying an expensive RAID controller you
+add this driver to your system, connect some drives (the more the
+better) and are ready for operation!
+:P.
+This software :LINK REFID=features REFTYPE=fn.features:ELINK.&colon.
+
+:UL.
+:LI.:HP2.Single:EHP2. (an array containing a single disk or array)
+
+:LI.:HP2.Chaining:EHP2. (two or more disks or arrays combined by
+adding one behind the other)
+
+:LI.:HP2.Striping:EHP2. (RAID 0)
+
+:LI.:HP2.Mirroring:EHP2. (RAID 1)
+
+:LI.You can combine any combination of RAID levels to create the array
+OS/2 should use for file storage.  There is no
+:LINK REFID=limits REFTYPE=fn.limit:ELINK. on how complicated your
+array structure becomes.
+
+:LI.&BUILD. and &REBUILD. processes are done in the background.
+:EUL.
+
+:P.
+This software package should technically work on every OS/2 version
+above 2.0.  It was tested under Warp 4 and the new :HP1.Warp
+Server for E-Business:EHP1. (uni).  There are reports that it works
+well on a SMP machine (I currently have no test machine with multiple
+CPUs).
+
+
+.BR
+To get the archive a little smaller and as most people use OS/2 Warp 3
+or higher I used the new LX compression available in that version.  If
+you still run an older version you have to unpack &EXE. with
+&LXLITE. or contact me and I will send you an uncompressed &EXE..
+
+
+
+
+
+.* ======================================================================
+:H2.How is it done?
+:P.
+Well, &FLT. is a small filter driver which intercepts OS2DASD.DMD
+operation and combines non-removable disks of any kind to RAID arrays.
+This process is transparent to anything installed after &FLT..  For
+FAT, hpfs.ifs, jfs.ifs, ext2fs.ifs and any other software you might use a
+RAID array looks just like an ordinary disk.
+
+:P.
+To use VRAID you have to complete the following steps:
+
+:OL.
+:LI.Connect disks to any [SCSI or IDE or MFM or RLL or ESDI or ...]
+controller supported by OS/2.
+
+:LI.Install &FLT.
+
+:LI.Let &EXE. create VRAID partitions on all disks you want to use for
+arrays.
+
+:LI.Define arrays (using disk space inside VRAID partitions) via
+&EXE..
+
+:LI.Restart OS/2
+
+:EOL.
+
+:P.
+&FLT. will report your defined arrays to OS/2 as a new hard disk.  All
+you have to do now is to make use of your new "disk" and enjoy!
+
+:P.
+Installation and configuration is described in greater detail in later
+chapters.
+:P.
+See RAID.DOC for details how each RAID level works.
+
+
+
+
+
+
+.* ======================================================================
+:H2 RES=ID_AUTHOR.Author
+:P.
+Vitus Jensen, Dipl.-Ing. techn. inf.
+
+:PARML TSIZE=20 BREAK=NONE COMPACT.
+:PT.Address
+:PD.Tischlerstr. 8, D-30916 Isernhagen, Germany
+
+:PT.Bank Account
+:PD.Kto 476861-203, Postbank Hamburg, BLZ 20010020
+
+:PT.Fidonet
+:PD.2&colon.2474/424
+
+:PT.OS2Net
+:PD.81&colon.491/3035
+
+:PT.EMail
+:PD.vraid&atsign.gmx.de, Vitus_Jensen&atsign.gmx.de
+
+:PT.FAX
+:PD.+49-5136-893003 (thanks to Harald Pollack's FRec)
+
+:PT.BBS
+:PD.+49-5136-893003 (V34, V90S, X75)
+:EPARML.
+
+:P.
+Music: Louis Armstrong's Greatest Hits, Big T and Mighty Max,
+Billie Holiday Collection
+
+:P.
+Written for &FLT. Version: 0.82
+
+:P.
+BTW, if ever wondered about the name (Visual RAID Filter) of this
+thing: it's as visual as many products which use this attribute in
+their names.  Frankly, I couldn't make sense to it, either.
+
+
+
+
+
+
+.* ============================================================
+:H2 res=1020.Legal Stuff
+:P.
+The author disclaims all warranties as to this software, whether
+express or implied, including without limitation any implied
+warranties of merchantability, fitness for a particular purpose,
+functionality, data integrity or protection, in so far as permitted by
+applicable legislation.
+
+:P.
+All trademarks are property of their respective owners and appear
+for identification purposes only.
+
+
+
+
+
+
+.* ============================================================
+:H2 res=1030.Archive Contents
+:P.
+:PARML TSIZE=20 BREAK=NONE COMPACT.
+:PT.VRAID.inf
+:PD.this documentation
+
+:PT.&FLT.
+:PD.the filter itself
+
+:PT.VRAID.ddp
+:PD.installation script for DDINSTAL
+
+:PT.&EXE.
+:PD.graphical setup program
+
+:PT.raid.doc
+:PD.short explaination of RAID and RAID levels
+
+:PT.regme.exe
+:PD.inserts your registration code into &FLT.
+
+:PT.vraidpub.h
+:PD.public interface to &FLT. (for programmers)
+
+:PT.dsklayout.h
+:PD.describes how configuration data is saved to disk.
+
+:PT.VRAID.sym
+:PD.symbol file, to help in remote debugging once a problem occurs
+(and someone pays the telephone bill...)
+
+:PT.file_id.diz
+:PD.short description for BBS
+:EPARML.
+
+
+
+
+
+
+.* ============================================================
+:H1 res=2000.Driver Installation
+
+:P.
+Make a backup of your system.  You should not need it but better
+safe than sorry...
+
+:P.
+It is recommended that you have an OS/2 boot disk ready, just in
+case the system locks up during the boot process and you want to
+remove the driver.  On Warp you may use use the ALT-F1 menue for the
+same purpose (to boot to command line-only) with your original
+&CFG. (this "original" &CFG. is located in
+C&colon.\OS2\BOOT\CONFIG.X, make sure it's bootable!).
+
+:P.
+Execute DDINSTAL from an OS/2 command prompt or double-click
+the Device Driver Install object (located in the System Setup folder)
+if your system is Warp.  Change the source directory if neccessary and
+a selection list will open asking you to install the 'VRAID Filter'.
+Mark that line and click on OK.
+
+:P.
+This automatic install will place &FLT. and &EXE. in the root
+directory of your OS/2 boot drive.  &EXE. can be moved to any place
+you want but &FLT. must reside in the root or \OS2 or \OS2\BOOT.
+
+
+:P.
+Installation by hand is easy:
+
+:UL.
+:LI.Copy &FLT. to C&colon.\ or C&colon.\OS2\BOOT, assuming
+C&colon. is your boot drive.
+
+:LI.Copy &EXE. to a directory of your choice.  You may wish to create
+a program object for this file and place it on your desktop.
+
+:LI.Edit your C&colon.\&CFG. file (i.e. using the OS/2
+"System Editor")
+
+:SL.
+:LI.Add the following line to your &CFG.&colon.
+
+:LI.BASEDEV=&FLT. /V              (no subdirectory name!)
+:ESL.
+:EUL.
+
+:P.The position of 'BASEDEV=&FLT.' in &CFG. doesn't matter
+for VRAID operation.  But it may affect other filters&colon.
+
+:UL.
+:LI.Load DSKSLEEP.FLT before &FLT. so DSKSLEEP.FLT can see the
+original disks.  If you do it the other way round DSKSLEEP.FLT may try
+to stop a disk while &FLT. does a rebuild!
+
+:LI.Load PARTFILT.FLT (from EXT2FS or FAT32.IFS) behind &FLT..
+PARTFILT.FLT duplicates any disk with an FAT32 or EXT2FS partition
+which will duplicate any VRAID partition residing on the same disks.
+:EUL.
+
+:P.If you encounter problems try putting BASEDEV=&FLT. to either end
+of &CFG. (if this solves your problems please report with a listing of
+your &CFG.).
+
+
+:P.
+Changes to &CFG. require you to reboot your machine.  But
+before doing this you may want to look at chapter
+:LINK REFTYPE=hd RES=ID_CONFIGURATION.Configuration:ELINK. as defining
+RAID arrays doesn't require you to have &FLT. loaded.
+
+
+
+
+
+
+.* ============================================================
+:H2 res=2010.&FLT. Options
+:P.
+:PARML TSIZE=20 BREAK=NONE.
+:PT./V
+:PD.Verbose, display some usefull and unusefull information (this
+switch is always enabled in the unregistered version)
+
+:PT./DEBUG
+:PD.Displays even more messages.  Not generally usefull.
+
+:PT./!SHARE
+:PD.Don't share disks with OS/2.  Any disk with at least a PHYSDEV
+will be hidden (as in driver versions below 0.80) from OS/2.
+:EPARML.
+
+
+
+
+
+
+.* ============================================================
+:H1 res=ID_CONFIGURATION.Configuration
+:P.
+This chapter describes &EXE., a program to define RAID drives
+build by &FLT. on the next system startup.  Additional some
+settings/statistics of &FLT. may be changed/retrieved at runtime.
+
+:P.As it is difficult to discuss the whole matter (drives made out of
+drives which are known by OS/2 as drives) I deciced to put up a
+nomenclature.  Fairly simple:
+
+:UL.
+:LI.OS/2 Device
+.BR
+A disk accessable through OS/2 and going directly to the physical
+medium.  No translation by VRAID, this is a piece of hardware.
+
+:LI.Primary Partition
+.BR
+I think you know already what this term means&colon. a partition
+entered in the very first partition sector (&MBR.).
+
+:LI.Extended Partition
+.BR
+This is another well known term&colon. a partition described in the
+&MBR. and holding one or more partitions.
+
+:LI.Secondary Partition
+.BR
+This term is invented by me&colon. often a partition inside an
+&EP. ist called &LL..  But as &LL. sounds like drive letter assignment
+and not every &LL. is assigned a drive letter I will use the term &SP..
+
+:LI.&OS2DRV.
+.BR
+In most situations the same as &OS2DEV..  An &OS2DRV. contains zero or
+more partitions and every partition may contain a filesystem supported
+by OS/2.  A supported filesystem (FAT, HPFS, EXT2FS, ...) is assigned
+a drive letter.
+
+:LI.&PDEV.
+.BR
+Whenever a &OS2DEV. contains a VRAID partition (partition type 0x7C
+if you wonder) that partition is called a &PDEV..
+:P.
+&PDEV.s may become part of...
+
+:LI.&ARRAY. (Single, Striping, Chaining, Mirror, ...)
+.BR
+&ARRAY.s are build from &PDEV.s and may be part of other &ARRAY.s,
+building a freely definable disk structure.  The topmost &ARRAY. is
+reported by &FLT. to OS/2.  It looks to OS/2 like a normal disk and as
+has to be partitioned and formatted like usual.
+:EUL.
+
+
+
+
+
+
+.* ============================================================
+:H2.&EXE. Options
+:P.
+:PARML TSIZE=20 BREAK=NONE.
+:PT.-v
+:PD.Verbose, display some more usefull and unusefull information.  You
+may added a colon and a number to specify how much is displayed.
+Specifying -v without a number is the same like -v&colon.2.
+:P.
+Increasing this value is usefull if you recognize an odd behaviour of
+&EXE. and want to report this to the author.  Specify
+:HP1.-v&colon.2:EHP1. or :HP1.-v&colon.3:EHP1. and add the output to
+your error report.
+
+:PT.-l&colon.filename
+:PD.log messages to file.
+:EPARML.
+
+
+
+.* ------------------------------------------------------------
+:H2.Main Window
+:P.
+That's the window you see when you start &EXE..  It contains an
+action log and a menu bar to select tasks.
+:P.
+The amount of messages which appear inside the action log is controlled
+by option "-v".
+
+
+
+.* ------------------------------------------------------------
+:H3 res=3110.File Menu
+:P.
+This menu let you save or print the contents of the action log.
+
+:P.
+--- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+.BR
+None of the choices in the file menu are currently implemented.
+.BR
+--- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+
+
+
+
+.* ------------------------------------------------------------
+:H3 res=3120.Edit Menu
+:P.
+Entries "Cut", "Copy" and "Paste" interact with the action log and
+the clipboard (same actions as the usual CUA keys which work, too),
+"Clear log" clears the action log.
+
+
+
+
+.* ------------------------------------------------------------
+:H3 res=3130.Driver Menu
+:P.
+This menu is only enabled if an installed &FLT. is detected.
+Choices are to add the driver version or it's startup messages to the
+action log.
+:LINK refid=Beep REFTYPE=fn.Beeps:ELINK. generated
+internally in the &FLT. may be disabled here, too.
+
+
+
+
+.* ------------------------------------------------------------
+:H3 res=3140.Drives Menu
+:P.
+This menu contains the entry "Setup" which opens the Drive
+Definition Window (see
+:LINK reftype=hd res=ID_DRVDEF.below:ELINK.) and a "Dump..." choice.
+
+:P.
+Selecting "Dump..." opens a dialog where you can select which drive
+to dump.  Possible selections are the the index of an &OS2DRV.
+(index 0 - n-1) and the value "-1", meaning to dump all &OS2DRV.s.
+
+:P.
+This dump facility will add hexdumps of the following sectors into the
+action log&colon.
+
+:OL.
+:LI.partition sector
+
+:LI.first sector of VRAID partition (if available).  This sector
+describes the &PDEV.
+
+:LI.a sector for every array this &PDEV. is part of.
+:EOL.
+
+:P.
+The reason for the dump facility is to diagnose a situation where
+&FLT. no longer recognizes your &ARRAY. definitions.  Remove
+&FLT. from &CFG., reboot OS/2, start &EXE. and dump all drives.  The
+result will tell the experts (you? me?) what is wrong.
+
+
+
+
+.* ------------------------------------------------------------
+:H3 res=3150.Help
+
+:P.
+The only choice here is to display version information about
+&EXE. itself.  There is currently no online help for &EXE..
+
+
+
+
+
+
+.* ============================================================
+:H2 res=ID_DRVDEF.Drive Definition Window
+
+:P.
+Whenever you select Drives->Setup a new windows opens. It displays
+a container showing all devices found by &EXE..  Drives are found by
+quering &FLT. (if installed) and OS/2.
+
+:P.
+Existing &ARRAY.s are displayed in tree view showing which &ARRAY.s
+are made from which &PDEV..  There are several object types showing
+different device types.  They are:
+
+
+:UL.
+:LI.3D look grey boxes (&OS2DEV.s)
+.BR
+Displayed as :ARTWORK NAME='Free.bmp' RUNIN.
+
+:P.
+They are devices known to OS/2.  You may create a &PDEV. on them and
+afterwards use those to build a new array.
+
+
+:LI.2D drive with grey front (&PDEV.)
+.BR
+Displayed as :ARTWORK NAME='PDev.bmp' RUNIN.
+
+:P.
+A &PDEV., a drive where a VRAID partition resides.  Those objects
+build or can be used to build an array.
+
+
+:LI.2D drive with grey front and red cross (missing &PDEV.)
+.BR
+Displayed as :ARTWORK NAME='Missing.bmp' RUNIN.
+
+:P.
+A &PDEV. which is known to be part of an array but is missing
+from this computer.  Array is in state "failure" or "error".
+
+
+:LI.two 2D drives with grey front (&ARRAY.)
+.BR
+Displayed as :ARTWORK NAME='Array.bmp' RUNIN.
+
+:P.
+An array being build from &PDEV.s and available for OS/2 or
+being part of a larger array.
+
+
+:LI.2D drive with red front (&PDEV. not up-to-date)
+.BR
+Displayed as :ARTWORK NAME='InvalidPDev.bmp' RUNIN.
+
+:P.
+A &PDEV. being part of an array but this &PDEV. is not
+up-to-date in respect to the contents of the complete array.  A
+&BUILD. or &REBUILD. process is running or will start on reboot.  This
+process updates the device until it becomes up-to-date.
+
+
+:LI.two 2D drives with red front (&ARRAY. not up-to-date)
+.BR
+Displayed as :ARTWORK NAME='InvalidArray.bmp' RUNIN.
+
+:P.
+Same as above but the device displayed is an &ARRAY. (not at
+topmost level but being part of another array).
+:EUL.
+
+
+
+:P.
+Whenever you create a new &PDEV. two messages may appear in the
+action log:
+
+:SL.
+:LI."VORDev - missing PHYSDEV mark"
+:LI."VORDev - new PHYSDEV sector"
+:ESL.
+
+:P.
+Those messages are non-critical, they tell you that you are really
+creating a new &PDEV..
+
+
+
+
+.* ------------------------------------------------------------
+:H3 res=3210.Mouse Interaction
+
+:P.
+All navigation keys or mouse actions you know from other tree views
+(i.e. the drive objects) are working here as well.   But there are
+special considerations when it comes to clicking.  See here&colon.
+
+
+:DL break=all.
+:DT.Double clicking with first mouse button
+:DD.Selects a &PDEV. or &ARRAY..  Selected devices can be used to
+build &ARRAY.s.
+
+
+:DT.2nd mouse button click
+:DD.Display a context sensitive popup menu.  This menu allows you to
+create or destroy &PDEV.s, build an &ARRAY. from marked
+devices, destroy &ARRAY.s, remove a part of an &ARRAY. from
+the array, ...
+
+:P.
+Try the second mouse button everywhere to learn what's possible!
+
+
+:DT.Drag and Drop
+:DD.It is possible to drag an &ARRAY. or &PDEV. onto a RAID 1,
+4 or 5 array.  The dragged device will become part of the array.
+
+:P.
+Becoming part of an &ARRAY. means that the dropped device gets data
+from the array and will be overwritten.  This overwriting is either a
+&BUILD. or &REBUILD. (RAID 4 and 5 in &FAIL. state) starting on next
+reboot or the device is added as a spare (RAID 4 and 5) and will
+automatically replace a failed part of an array when it fails.
+
+:EDL.
+
+
+
+
+
+
+.* ============================================================
+:H2 res=3300.Sample actions
+
+:P.
+The following pages describe step-by-step how to do common tasks with
+&EXE..  As &EXE. is a PM program most people would say the interface
+is intuitive, but one never knows...
+
+
+
+
+.* ------------------------------------------------------------
+:H3 res=ID_CREATEPDEV.Create a &PDEV.
+
+:P.
+We assume it's the first time you create a &PDEV..
+
+:OL.
+:LI.Start &EXE.
+
+:LI.Select Drives->Setup
+
+:LI.after some drive activity you should see some grey 3D drive
+icons (:ARTWORK NAME='Free.bmp' RUNIN.).  Those objects represent your
+OS/2 disks.
+
+:LI.click on an &OS2DEV. using the 2nd mouse button
+.BR
+and select "Create physdevice".  A dialog will prompt you for data used to
+create a VRAID partition&colon.
+
+:UL.
+:LI.Select one of the areas of unused disk space under "Free area".
+.BR
+If there isn't already another partition on the disk, a single entry
+with the whole disk space will be shown.
+.BR
+Free areas include even free space inside extended partitions.
+
+:LI.Adjust the slider if you don't want to use all of the free area.
+The VRAID partition will be created at beginning of the free area.
+:EUL.
+
+:P.
+Note how the icon style changes after creation of the &PDEV..
+
+:LI.Stop &EXE. or
+:LINK reftype=hd res=ID_DEFINEARRAY.create &ARRAY.s:ELINK..
+:EOL.
+
+
+
+
+.* ------------------------------------------------------------
+:H3 res=ID_DESTROYPDEV.Destroy a &PDEV.
+
+:P.
+Destroying a &PDEV. will remove any configuration data from the disk,
+including the VRAID partition.
+
+
+:OL.
+:LI.Start &EXE.
+
+:LI.Select Drives->Setup
+
+:LI.After some drive activity you should see some grey 2D icons
+(:ARTWORK NAME='PDev.bmp' RUNIN.) representing &PDEV.s.  If the &PDEV.
+is still part of an &ARRAY. you have to
+:LINK reftype=hd res=ID_DESTROYARRAY.destroy:ELINK. it first.
+
+:LI.Click on a &PDEV. using the 2nd mouse button
+.BR
+and select "Destroy physdevice".  Confirm the action.
+
+:P.
+Note how the icon style changes afterwards.
+
+:LI.Stop &EXE. and reboot.
+:EOL.
+
+
+
+
+.* ------------------------------------------------------------
+:H3 res=ID_DEFINEARRAY.Define an &ARRAY.
+
+:P.
+You need something to build &ARRAY.s from. See
+:LINK reftype=hd res=ID_CREATEPDEV.here:ELINK. how to create
+&PDEV.s if you haven't already done this.
+
+
+:OL.
+:LI.Start &EXE.
+
+:LI.Select Drives->Setup
+
+:LI.Double click on one or more &PDEV. or &ARRAY. objects.  They
+will be get selected (greyed).
+
+:LI.Use 2nd mouse button and select "Combine drives...".  You will be
+prompted for a RAID level (don't select levels higher than your
+registration allows&colon. those arrays are ignored by your &FLT.).
+:P.
+The choosable RAID level is sensitive to the count of selected
+(greyed) objects.
+:HP2.Chaining:EHP2.,
+:HP2.Striping:EHP2.,
+:HP2.Mirroring:EHP2. require two or more parts,
+:HP2.RAID 4:EHP2. und
+:HP2.RAID 5:EHP2. require at least three.  
+:HP2.Single:EHP2. is only possible
+when you selected a single object (obvious, isn't it?).
+:P.
+Most RAID levels (all but :HP2.Chaining:EHP2.) can only handle
+equally-sized parts.  &EXE. will account for this by using the size of
+the smallest part.
+
+:LI.Repeat the last steps until you are satisfied.
+
+:LI.End &EXE. and reboot your machine to let &FLT. analyse the new
+situation.
+:EOL.
+
+
+
+
+.* ------------------------------------------------------------
+:H3 res=ID_DESTROYARRAY.Destroy an &ARRAY.
+
+:OL.
+:LI.Start &EXE.
+
+:LI.Select Drives->Setup
+
+:LI.Use 2nd mouse button on an &ARRAY. and select "Destroy array".
+Confirm the action.
+.BR
+It is only possible to destroy the topmost &ARRAY..  See
+:LINK reftype=hd res=ID_REMOVEPART.Remove part of an
+&ARRAY.:ELINK. for other actions.
+
+:LI.Repeat the last step until you are satisfied.
+
+:LI.Use the parts to create new arrays or end &EXE. and reboot your
+machine to let the changes take effect.
+:EOL.
+
+
+
+
+.* ------------------------------------------------------------
+:H3 res=ID_VERIFYARRAY.Verify &ARRAY. data
+
+:P.
+&ARRAY.s created using &EXE. versions below 0.84 should not be
+verified as there were never a &BUILD. process started/completed.
+This is no problem in normal operation or when any part of the
+&ARRAY. fails but a verify run will return data errors on those
+arrays.
+
+
+
+:OL.
+:LI.Start &EXE.
+
+:LI.Select Drives->Setup
+
+:LI.Use 2nd mouse button on an &ARRAY. and select "Verify array".
+
+:LI.While the verify is active you have buttons to temporary pause
+the process or to abort it completely.  &EXE. dedicates it's work to
+the verification process, you won't be able to do other configuration
+work in parallel to the verification.
+
+:LI.if any verify errors are encountered you have several choices:
+
+:UL.
+:LI.ignore the error and continue.
+:LI.abort the verification and start a &REBUILD. process.  It might be
+neccessary to select which part should be considered valid (if there
+is no majority on a sector contents).
+:LI.abort the verification and do nothing.  It is highly recommended
+that you do :HP1.not:EHP1. select this option if you value the data on
+the array.
+:EUL.
+
+:LI.Repeat the last steps until you are satisfied.
+
+:EOL.
+
+
+
+
+.* ------------------------------------------------------------
+:H3 res=ID_ADDPART.Add something to an &ARRAY.
+
+:P.
+You may add &ARRAY.s or &PDEV.s to :HP2.Chaining:EHP2. or
+:HP2.Mirroring:EHP2. objects.
+.BR
+Adding is done by means of drag-and-drop.  Pickup a the new part (only
+topmost icons are possible) and drop it to an &ARRAY.  The new part
+will be destroyed by this action (there is a message box asking
+whether this is OK).
+
+
+:UL.
+:LI.Adding to a :HP2.Chaining:EHP2. device:
+:P.
+Only possible if the :HP2.Chaining:EHP2. device is the topmost icon.
+The &ARRAY. drive will become larger by this action.  Create a new
+partition on the additional space or use something like :HP1.Partition
+Magic:EHP1. to enlarge an existing partition.
+
+
+:LI.Adding to a :HP2.Mirroring:EHP2. device:
+:P.
+Always possible.  The new part will increase redundancy.  A
+&REBUILD. process will be started on the next reboot.
+:EUL.
+
+
+
+
+.* ------------------------------------------------------------
+:H3 RES=ID_REMOVEPART.Remove part of an &ARRAY.
+
+:P.
+There may be several reasons why you want to remove part of an array
+while keeping the array definition.  One reason would be if a part of
+an :HP2.RAID 1:EHP2. array fails (&FLT. will warn you through regular
+:LINK refid=Beep REFTYPE=fn.Beeps:ELINK.) and you decided that the
+failed part will never be usuable again. So you wish to remove it from
+the array.
+
+:P.
+Take the following steps to do so&colon.
+
+:OL.
+:LI.Start &EXE.
+
+:LI.Select Drives->Setup
+
+:LI.Expand the &ARRAY. trees by clinking on all 'plus' signs.
+
+:LI.Locate the missing part.  It has an icon with a red cross through it.
+
+:LI.Use 2nd mouse button on the missing part and "Remove from array".
+
+:LI.End &EXE. and reboot your machine to let the changes take effect.
+:EOL.
+
+
+
+
+.* ------------------------------------------------------------
+:H3 RES=ID_INVALIDATEPART.Tell &FLT. that a part of an &ARRAY. is invalid
+
+:P.
+There may be sitations where you know more about your disks than
+&FLT.... Well, actually I can't think of such a situation but lets
+assume that you have a disk belonging to a :HP2.RAID 1:EHP2. array
+which makes funny noises and does intermediate shutdowns.  You should
+obviously replace the disk but lets assume you just want to rewrite
+the data on that particular disk.
+
+
+:P.
+Take the following steps to do so&colon.
+
+:OL.
+:LI.Start &EXE.
+
+:LI.Select Drives->Setup
+
+:LI.Expand the &ARRAY. trees by clinking on all 'plus' signs.
+
+:LI.Locate the interesting part.
+
+:LI.Use 2nd mouse button on that part and select "Declare as invalid".
+
+:LI.The array state changes to &REBUILD. and the part you clicked on
+gets an red icon.
+
+:LI.End &EXE. to let &FLT. do the work.
+:EOL.
+
+&FLT. will now react the same way as when it had detected the disk
+problem by itself (which it will have done in the example given above)
+and starts a rebuild process to copy all data from the remaining valid
+parts of the array to the invalid part.
+
+
+
+
+.* ------------------------------------------------------------
+:H3 RES=ID_REBUILDARRAY.Manually tell &FLT. to rebuild the array
+
+:P.
+You may tell &FLT. to rebuild the array data with doing a verify first
+or declaring any part of the array as invalid.  This will trigger a
+rebuild using all parts of the array as the data source.  Other than
+to demonstrate the effect of a rebuild I don't think this option is
+usefull for every day use.  It is defenitely usefull during
+development of &FLT..
+
+:P.
+Take the following steps start a rebuild&colon.
+
+:OL.
+:LI.Start &EXE.
+
+:LI.Select Drives->Setup
+
+:LI.Use 2nd mouse button on the &ARRAY. and select "Rebuild array".
+
+:LI.The array state changes to &REBUILD.
+
+:LI.End &EXE. to let &FLT. do the work.
+:EOL.
+
+
+
+
+
+
+.* ============================================================
+:H1.Security
+
+:P.RAID generally means increased security.  But as the only secure
+RAID level this driver currently implements is RAID 1 security isn't
+completely tested with all RAID levels.
+
+:P.On non-RAID 1 drives all drive errors are directly reported to OS/2
+(which may or may not survive this situation).
+
+:P.On RAID 1 drive errors aren't reported to OS/2 as long as there is
+one part of the array still working.  However, &FLT. will start
+:LINK REFID=Beep REFTYPE=fn.beeping:ELINK. every 10 seconds if it
+detects a drive error.  Once this happens you may either start
+&EXE. and remove the failed part from the array or -- if the failure
+is temporarly -- correct it and reboot the machine.  &FLT. will detect
+a failed part of an array when rebooting and will start a
+&REBUILD. process.
+
+:P.If you ever intend to simulate a drive failure :HP2.DON'T:EHP2. remove the
+SCSI cable but remove the power instead.  Or -- good idea -- use some
+hot-swappable drive bay.  If you remove the SCSI cable you may end up
+with a blown up SCSI controller.  You have been warned!
+
+:P.Please connect a LED to the LED connector of your SCSI controller
+and monitor it's state.  When you happen to pull the plug while the
+SCSI controller is busy doing I/Os on this device it may never detect
+the failure.  I have noticed that AHA154X.ADD from OS/2 Warp 4 has no
+timeout detection and waits forever!
+
+
+
+
+
+
+.* ======================================================================
+:H1.Registration
+
+:P.This package is Shareware meaning you may test before buy.  The
+archive you are looking at contains a non-crippled 'level 1' (see
+:LINK REFTYPE=HD RES=ID_DEMOKEY.Demonstration Key:ELINK. for
+'level 2') filter driver with the exception of the startup message
+which you may only disable in the registrated version.  The test
+period is 60 days, after that time I expect you to remove this
+software package from your system or register it.
+
+:P.
+You are encouraged to copy and pass on the
+:HP1.unregistered:EHP1. version of this driver, if the archive is
+distributed in it's original form (complete and unmodified).  Please
+don't charge any money for the distribution itself exceeding the costs
+of media, etc.
+.BR
+This includes the distribution in a software collection on CD-ROM.
+
+:P.
+On registration you will receive a key based on your name and the
+requested operation level of the driver.  This key has to be passed to
+the regme.exe program to change the startup logo and -- if you bought
+more than level 1 -- allow operation of higher RAID levels.  You will
+NOT receive a new archive.  Your key will remain valid for all
+versions of the driver.
+
+:P.The following keys are available:
+
+:TABLE COLS='8 35 10' RULES=both.
+:ROW.
+:C.Level 1
+:C.Spanning, Striping (RAID 0)
+:C.40,- EUR
+:ROW.
+:C.Level 2
+:C.Level 1 plus Mirroring (RAID 1)
+:C.70,- EUR
+:ROW.
+:C.Level 3
+:C.Level 2 plus RAID 4 and 5
+:C.:LINK REFID=nolevel3 REFTYPE=fn.100,- EUR:ELINK.
+:ETABLE.
+
+:P.If you want to upgrade your registration to a higher level: just
+pay the difference and you will receive a new key for that level.
+I.e. if you own level 1 and want to upgrade to level 2 the price will
+be 30,- EUR or the equivalent in another currency.
+
+:P.Upgrades are only available directly from the author.
+
+:P.For all orders: please :HP1.state clearly:EHP1. on which name the
+key should be based.  If you want the key to belong to a firm, state
+this in your order (if you use corporate paper you may end up with a
+key registrated to yourself when you wanted a license for "Obscore
+Software GmbH").
+
+
+
+.* ----------------------------------------------------------------------
+:H2.Registration through BMT Micro
+
+:ARTWORK NAME='BMTMicro.bmp' ALIGN=LEFT.
+
+:P.BMT Micro is a US company that is specialized on shareware
+registration to the world.  There are several ordering and payment
+methods available, see
+:LINK REFTYPE=launch OBJECT='netscape.exe'
+DATA='http://www.bmtmicro.com/'.
+http&colon.//www.bmtmicro.com/:ELINK.
+for details.  Even for european users this is probably the easiest way
+to register.
+
+:P.If you want to order online, BMT Micro supplies secure URLs for this
+purpose:
+
+:TABLE COLS='8 35 60' RULES=both.
+:ROW.
+:C.Level 1
+:C.Spanning, Striping (RAID 0)
+:C.:LINK REFTYPE=launch OBJECT='netscape.exe'
+DATA='https://secure.bmtmicro.com/ECommerce-OnSite/61900.html'.
+https&colon.//secure.bmtmicro.com/ECommerce-OnSite/61900.html:ELINK.
+
+:ROW.
+:C.Level 2
+:C.Level 1 plus Mirroring (RAID 1)
+:C.:LINK REFTYPE=launch OBJECT='netscape.exe'
+DATA='https://secure.bmtmicro.com/ECommerce-OnSite/61901.html'.
+https&colon.//secure.bmtmicro.com/ECommerce-OnSite/61901.html:ELINK.
+:ETABLE.
+
+:P.Please note that prices at BMT Micro are in US dollar.
+
+
+
+
+.* ----------------------------------------------------------------------
+:H2.Registration with the author
+
+:P.Ordering with the
+:LINK REFTYPE=hd RES=ID_AUTHOR.author:ELINK. can
+be done by EMail, FAX or snail mail.
+
+:P.Payment can be made through Eurocheque (europe) or postal money
+order or transfer to my
+:LINK REFTYPE=hd RES=ID_AUTHOR.bank account:ELINK..  If you decide to
+send this money inside a simple envelope (I'm fair but the postman may
+not <g>) use DM (Euro after 1.1.2002), or DKR or SEK as I travel those
+countries regulary.
+.BR
+It may be best to first test an electronic channel before sending
+money in any way.
+
+:P.Response will be through Fidonet crashmail (strongly preferred),
+Fidonet netmail, EMail or FAX.
+
+:P.If you cannot be reached electronically and don't have a friend who
+can, you may request an answer by snail mail.  Please add the
+estimated costs for the letter to the registration fee.  German users:
+simply include a self-addressed envelope (with stamps on it).  I will
+NOT return a key without at least some afford from your side to
+account for the costs of the reply mail!
+
+
+
+
+.* ----------------------------------------------------------------------
+:H3.Order Form
+
+To order from the author fill in the following form and then pass it
+to one of
+:LINK REFTYPE=hd RES=ID_AUTHOR.my addresses:ELINK..
+:P.
+
+:XMP.
+Please send me:
+
+  ___ keys for VRAID, level 1 (Spanning, Striping)
+                Price: 40,- EUR
+
+  ___ keys for VRAID, level 2 (level 1 plus Mirroring)
+                Price: 70,- EUR
+
+
+  Total:        EUR ________
+
+
+
+  The key(s) shall be based on the following string (personal or
+  company name):
+
+                            ______________________________________
+
+
+
+Personal Information:
+
+  Name:                     ______________________________________
+
+  email, netmail:           ______________________________________
+
+  Phone:                    __________________________________ (opt)
+
+  Fax:                      __________________________________ (opt)
+
+
+
+Payment Method:
+
+        ___ see enclosed eurocheque
+
+        ___ I will transfer to your bank account once you acknowledged
+            my order
+:EXMP.
+
+
+
+
+
+
+.* ----------------------------------------------------------------------
+:H2 RES=ID_DEMOKEY.Demonstration Key
+
+:P.If you are of the opinion that you won't buy a higher level of
+VRAID without actually testing RAID 1 support, I do understand this.
+Feel free to ask me for a demo key and I will mail you a key which
+will stop working after some time (usually 3 month).  You may than
+again request a key but I thing after 3 month of personal testing time
+should have figured out whether this software is usefull to you (see,
+I might ask questions! ;-).
+
+:P.To get started you may use the following key (it won't work after
+december 2001):
+
+:SL.
+:LI.User Name: 1201DEMO
+:LI.Code: 5E8D60207D284AC6
+:ESL.
+
+:P.Change to the directory where you copied &FLT. to and enter:
+
+:XMP.
+regme "1201DEMO" 5E8D60207D284AC6
+:EXMP.
+
+:P.If you want to register a driver in some other directory you may use
+the "-f" option to tell regme.exe which file to patch.
+
+:XMP.
+regme -f&colon.d&colon.\some\other\path\vraid.flt "User Name" key
+:EXMP.
+
+
+
+
+
+
+.* ============================================================
+:H1 res=6000.Source Code
+
+:P.Source code isn't available for this product.  Having said this I
+realize that having the source of a vital product is important to many
+people nowerdays.  I understand this (especially when seeing the
+unclear marketing directions of IBM's OS/2 folks) and you may contact
+me if your policy tends toward this idea.  We will most certainly work
+something out.
+
+:P.To give you some ideas what to expect:
+:UL.
+
+:LI.&FLT. is a pure 16 Bit driver and is written for an old version of
+Microsoft's C compiler for Microsoft OS/2.
+
+:LI.&EXE. is pure 32 Bit, written directly to the presentation manager
+API.  Compiled with IBM VisualAge for C++ 3.0.
+
+:LI.This documentation is pure IPF source.  No fancy toolkits.
+:eul.
+
+
+:nt.The archive already contains part of the source code:
+:UL.
+
+:LI.dsklayout.h
+
+:P.This files documents the way array information is saved to disk.
+Using the information you should be able to write a driver replacing
+&FLT. (i.e. for another OS) or to reconstruct any data stored on
+&ARRAY.s without using &FLT..
+
+:LI.vraidpub.h
+
+:P.This files documents to interface between &EXE. and &FLT..  Using
+information from this file and dsklayout.h you may write a replacement
+for &EXE..
+
+:eul.
+:ent.
+
+
+
+
+
+
+.* ======================================================================
+:h1 res=7000.History
+
+:P.Despite of the limited count of releases there is quite a large
+history of internal and published software versions.  All those
+versions are documented here...
+
+
+
+
+
+
+.* ======================================================================
+:h2 res=7100.&FLT. History
+
+
+:DL.
+
+:DT.Version 0.85
+:DD.
+:UL compact.
+:LI.build uses larger I/O size, this speeds up the process
+:LI.init code could "loose" parts while looking for arrays.  fixed.
+:EUL.
+
+
+:DT.Version 0.84 - 11/02-2001, published in VRAID23.ZIP
+:DD.
+:UL compact.
+:LI.IOCtls to verify arrays
+:LI.IOCtls to modify array children, clarified build vs rebuild
+:EUL.
+
+
+:DT.Version 0.82 - 15/04-2000, published in VRAID22.ZIP
+:UL compact.
+:LI.VRAID partition inside extended partitions are found and used.
+:LI.the disk sharing introduced in version 0.80 may be disabled via
+commandline switch "/!SHARE".
+:LI.resource locking now truly SMB compatible (but there were
+reports it worked before so the old code might have been 'Warp Server
+compatible').
+:EUL.
+
+:DT.Version 0.80 - 27/11-1999, published in VRAID21.ZIP
+:DD.
+:UL compact.
+:LI.Disks containing a VRAID partition now remain accessable to
+OS/2.  This means you can have a VRAID and a HPFS partition on the same disk
+and can access both when &FLT. is loaded.  In previous versions you
+had no access to the HPFS partition...
+:LI.Smaller memory footprint due to new segment layout.
+:EUL.
+
+
+:DT.Version 0.71
+:DD.
+:UL compact.
+:LI.Changes for WatCom C 10.5 (only minor to circumvent bugs
+of that compiler).  The compiler change has been stopped as WatCom C is no
+longer a maintained software package.
+:LI.Driver doesn't update disk when build processes where stopped due to &EXE.
+:EUL.
+
+
+:dt.Version 0.70 - 26/06-1999, published in VRAID20.ZIP
+:dd.
+:ul compact.
+:LI.complete support of RAID 1 arrays.  Fully tested disk failures,
+reading or failed and/or removed disks.  He, it's working now!
+:LI.changed the way a registration key is build and checked.  Old keys
+won't work with this driver release and vice versa!  Registrated users
+will get an updated key.
+:LI.added demo key code (timebombed) for registration level 2 and above.
+:eul.
+
+
+:dt.Version 0.66 - 02/06-1999
+:dd.
+:ul compact.
+:LI.build process saves state on shutdown and completion
+:LI.tested RAID 1 code: OK, drive failure has to be tested
+:LI.ignores disks with VRAID partition but no &PDEV.
+configuration.  That way you don't have to remove &FLT. from
+&CFG. when removing a disk from VRAID's disk pool.
+:eul.
+
+
+:dt.Version 0.60 - 22/12-1998, published in VRAID10.ZIP
+:dd.
+:ul compact.
+:LI.Added IOCtls to support VSETUP's detection "OS/2 device = Array
+Drive"
+:LI.Memory is now allocated as "LOCKTYPE_LONG_ANYMEM", should work on
+machines with less than 16MB, too
+:LI.actually implemented registration code
+:eul.
+
+
+:DT.Version 0.51 - 6/11-1998, published as beta version
+:DD.
+:UL compact.
+:LI.smaller changes (WAIT_IS_INTERRUPTABLE)
+:LI.switched from timebomb to "not registered" mode
+:eul.
+
+
+
+:dt.Version 0.50 - 7/10-1998, published as beta version
+:dd.
+:ul compact.
+:LI.added IOCtls to allow VSetup.exe access disks when &FLT. is
+installed.  Incomplete but needs some information about kernel and
+OS2DASD working.
+
+:LI.added "timebomb" code
+:eul.
+
+
+
+:dt.Version 0.40 - September 1998
+:dd.
+
+:ul compact.
+:LI.fixed nasty bug causing hangs or traps with HPFS386.  Didn't
+happen with simple HPFS...
+:eul.
+
+
+
+:dt.Version 0.30 - 25/6-1998
+:dd.
+:ul compact.
+:LI.stable enough to install it on a working machine (Warp Server
+Advanced with HPFS386)
+
+:LI.changed to HOSTDRIVE -> VRAIDRIVE -> &PDEV. workers because
+setup program happened to work that way (tip: write setup first and
+driver afterwards, seems to eliminate a rework <g>).
+:eul.
+
+
+
+:dt.Version 0.20 - 29/5-1998
+:dd.
+:ul compact.
+:LI.changed layout of administrative sectors
+:eul.
+
+
+
+:dt.Version 0.10 - 8/4-1998
+:dd.
+:ul compact.
+:LI.accepts single, stripe, chain
+:eul.
+
+:edl.
+
+
+
+
+
+
+.* ======================================================================
+:H2 RES=7200.&EXE. History
+
+:DL.
+
+:DT.Version 0.84 - 11/02-2001, published in VRAID23.ZIP
+:DD.
+:UL compact.
+:LI.when RAID 1 arrays are created a &BUILD. process is started
+immediately.
+:LI.user interface to verify arrays, start &REBUILD. processes,
+declare a child invalid, remove a child, ...
+:EUL.
+
+:DT.Version 0.83 (send as 0.82 to some users with partitioning problems)
+:DD.
+:UL compact.
+:LI.corrected creation of secondary partitions.  Whenever two or more
+&LL.s did already exist a self-referencing table was created which
+caused an endless loop on reboot (inside OS2DASD.DMD).
+:LI.added precessing of changes in most presentation parameters.  Just
+drop colors, fonts etc to &EXE.'s windows and be suprised what is
+retained.
+:EUL.
+
+:DT.Version 0.82 - 15/04-2000, published in VRAID22.ZIP
+:DD.
+:UL compact.
+:LI.creates VRAID partition inside extended partitions.
+:LI.area dialog shows selected percentage as MB value.
+:LI.hopefully fixed the overrun which prevented PHYSDEVs with more
+than 9GB.
+:EUL.
+
+
+:DT.Version 0.81 - 27/11-1999, published in VRAID21.ZIP
+:DD.
+:UL compact.
+:LI.modified to handle disks accessable through &FLT. and OS/2.  See
+&FLT. version 0.80.
+:LI.does no longer try to lock any disk from other programs (FDISK
+doesn't do it neither).
+:LI.prohibits restart of build processes if arrays were modified
+:EUL.
+
+
+
+:dt.Version 0.80 - 26/06-1999, published in VRAID20.ZIP
+:dd.
+:ul compact.
+:LI.menu entry to disable driver beeping
+:LI.add disk space to Mirror/Chain with DnD
+:LI.remove members of Mirror
+:LI.supports new layout of configuration sectors (Mirror)
+:eul.
+
+
+
+:dt.Version 0.71 -  30/4-1998, published in VSETUP071.ZIP
+:dd.
+:ul compact.
+:LI.fixed a nasty bug which could lead to overwriting other partitions
+or even the MBR!  Don't use any vsetup.exe below 0.71!
+:LI.doesn't accept partition sizes below 10MB
+:eul.
+
+
+:dt.Version 0.70 -  25/3-1998, published in VSETUP07.ZIP
+:dd.
+:ul compact.
+:LI.asks user whether it's OK to write to a "non-lockable"
+disk. Suggestion from pdd@@os2ss.com
+:LI.completely recoded in C++, all arrays/container icons are objects!
+:LI.displays internal IDs in icon descriptions.  Will be used when
+drag'n drop is implemented.
+:LI.corrected Drives->Dump code
+:eul.
+
+
+:dt.Version 0.60 -  22/12-1998, published in VRAID10.ZIP
+:dd.
+:ul compact.
+:LI.added code to detect OS/2 devices which are array
+drives. Hopefully this will work in any situation.  The effect is that
+you no longer need to remove &FLT. if you want to modify or create &ARRAY.s.
+:LI.displays which OS/2 devices are &ARRAY.s
+:LI.removed that "beta, beta" warning
+:eul.
+
+
+:dt.Version 0.52 -  24/11-1998, published as beta version
+:dd.
+:ul compact.
+:LI.BUGFIX: the code which searches OS/2 devices was removed from
+0.51.  Sorry about that, hopefully this version will finally work (?)
+:eul.
+
+
+:dt.Version 0.51 -  6/11-1998, published as beta version
+:dd.
+:ul compact.
+:LI.modifies &PDEV.s when &FLT. is installed but new PYHSDEVICEs
+can't be defined (OS/2 device aren't scanned at all)
+:LI.BUGFIX: see above, modify all already created &PDEV.s
+:LI.BUGFIX: removed SYS3175 when not specifying array type or
+partition position
+:LI.BUGFIX: 0.50 was published as debug version &colon.-(
+:eul.
+
+
+:dt.Version 0.50 - 7/10-1998, published as beta version
+:dd.
+:ul compact.
+:LI.added "beta, beta" messages
+:LI.added code to :hp1.display:ehp1. configuration when &FLT. is loaded
+:eul.
+
+
+:dt.Version 0.30 - August 1998
+:dd.
+:ul compact.
+:LI.working code
+:eul.
+
+:edl.
+
+
+
+
+
+
+.* ============================================================
+:H1 res=8000.ToDo List
+:P.
+VRAID isn't complete yet and may in fact never become.  There are
+numerous ways to enhance configuration or operation.  However some
+things have already been reported as annoying or missing and will
+therefore been looked at.  This includes but is not limited the
+following items:
+
+:UL.
+:LI.there situations where a &REBUILD. should be started automatically
+but &FLT. of today needs a reboot.  Perhaps &FLT. could scan bad disks
+in the background or &EXE. get's an option to force this scanning.
+
+:LI.to better handle failed disks I am considering adding timeout
+detection to &FLT..  This stuff should definitely handled inside the
+responsible ADD but I'm so feed up how the adaptec driver I'm using
+handles it :HP2.not:EHP2. that I might take the time and code this
+inside &FLT..
+
+:LI.RAID levels 4,5
+
+:LI.Resource Manager Calls (plug n' pray <g>)
+:EUL.
+
+:P.
+More?  IOCtls?  Documentation?  Netmail any ideas.
+
+
+
+
+
+
+.* ============================================================
+.* Footnotes
+.* ============================================================
+
+
+:FN ID=Features.:P.
+As this is work in process only some RAID levels are
+implemented. However, the intention is to supply all major RAID
+levels to the average OS/2 user.
+:EFN.
+
+:FN ID=Limits.:P.
+Well, there is a memory limitation in &FLT. but I don't expect you to
+reach this.
+:EFN.
+
+:FN ID=nolevel3.:P.
+As there is currently no working level 3 (e.g. RAID 5) code I will
+not accept level 3 orders.
+:EFN.
+
+:FN ID=Error.:P.
+An &ARRAY. is in :HP1.error:EHP1. state when there is data missing.
+You can no longer access all of your data (you might not even able to
+mount any filesystems residing on the &ARRAY.).
+:P.
+You should have a look to your backups...
+:EFN.
+
+:FN ID=Fail.:P.
+An &ARRAY. is in :HP1.fail:EHP1. state when there is no longer
+redundancy.  You can still access all data on the &ARRAY., there is no
+data loss.  But the next failure will switch your &ARRAY. into
+&ERROR. state.
+:P.
+For obvious resons a
+:HP2.Single:EHP2.,
+:HP2.Chaining:EHP2. or
+:HP2.Striping:EHP2. device will never enter
+:HP1.fail:EHP1. state&colon. it will enter &ERROR. state (Chaining,
+Striping) or disappear completely (Single).
+:EFN.
+
+:FN ID=Build.:P.
+A :HP1.Build:EHP1. is the first time creation of an disk array.
+:EFN.
+
+:FN ID=Rebuild.:P.
+A :HP1.Rebuild:EHP1. is the automatic recreation of a disk array once
+a failure has been detected and corrected.
+:EFN.
+
+:FN ID=Beep.:P.
+&FLT. will beep regularly (once every 5 seconds) when a disk
+failure resulting in a loss of redundancy is detected.  You should
+replace the failed device as soon as possible.
+:EFN.
+
+:FN ID=MBR.:P.
+The :HP1.MBR:EHP1. reside on physical sector 0 on every disk and holds
+up to 4 partition entries.
+:EFN.
+
+:FN ID=lxlite.:P.
+LXLite V1.2.1  By Andrew Zabolotny. An OS/2 executables packer. Lots
+of features, maximal compression, nice interface (GNU) EN.
+.BR
+Available on http&colon.//hobbes.nmsu.edu as lxlt121.zip.
+:EFN.
+
+
+:EUSERDOC.
+.* ==== End of Document =================================================
+@
+
+
+1.10
+log
+@- rebuild, declare as invalid
+- notes FLT and EXE as release version
+@
+text
+@d3 2
+a4 2
+.* $Revision: 1.9 $
+.* $Date: 2001/02/03 22:49:51 $
+d11 4
+d1326 8
+@
+
+
+1.9
+log
+@- bank account
+- order form
+- 1201DEMO key
+@
+text
+@d3 2
+a4 2
+.* $Revision: 1.8 $
+.* $Date: 2000/12/13 02:41:12 $
+d11 5
+d649 1
+a649 1
+:DD.Display a contents sensitive popup menu.  This menu allows you to
+d829 10
+a838 1
+:H3 res=ID_VERIFYARRAY.Verify &ARRAY. data.
+a845 6
+.BR
+&ARRAY.s created using &EXE. versions below 0.90 should not be
+verified as there were never a &BUILD. process started/completed.
+This is no problem in normal operation or when any part of the
+&ARRAY. fails but a array verify will return data errors on any
+unwritten sectors.
+d847 6
+a852 1
+:LI.if any verify errors are encountered you may several choices:
+d860 2
+a861 1
+that you do :HP1.not:EHP1. select this option.
+a901 2
+
+
+d933 69
+d1150 1
+a1150 1
+:BR.
+d1323 1
+a1323 1
+:DT.Version 0.84
+d1466 1
+a1466 1
+:DT.Version 0.84
+d1602 9
+a1610 5
+:LI.whenever a &BUILD. or &REBUILD. is started the next boot might
+hang the machine very early (while still displaying the boot logo).
+This is a bug somewhere inside &FLT. which I haven't found yet.  Just
+press Ctrl-Alt-Delete when you encounter this situation, you won't
+loose any data.
+@
+
+
+1.8
+log
+@- many more NAMEIT symbols
+- describes array verification
+- history contains flt 0.84 and exe 0.84
+@
+text
+@d3 2
+a4 2
+.* $Revision: 1.7 $
+.* $Date: 2000/04/20 23:32:59 $
+d11 5
+d172 3
+d182 1
+a182 1
+:PD.Vitus_Jensen&atsign.gmx.de
+d1012 1
+a1012 1
+this in your mailing (if you use corporate paper you may end up with a
+a1017 34
+
+
+.* ----------------------------------------------------------------------
+:H2.Registration with the author
+
+:P.Ordering with the
+:LINK REFTYPE=hd RES=ID_AUTHOR.author:ELINK. can
+be done by EMail, FAX or snail mail.
+
+:P.Payment can be made through Eurocheque (europe) or postal money
+order or transfer to my bank account.  If you decide to send this
+money inside a simple envelope (I'm fair but the postman may not <g>)
+use DM, DKR or SEK as I travel those countries regulary.
+
+:P.Response will be through Fidonet crashmail (strongly preferred),
+Fidonet netmail, EMail or FAX.
+
+:P.If you cannot be reached electronically and don't have a friend who
+can, you may request an answer by snail mail.  Please add the
+estimated costs for the letter to the registration fee.  German users:
+simply include a self-addressed envelope (with stamps on it).  I will
+NOT return a key without at least some afford from your side to
+account for the costs of the reply mail!
+
+:P.For all orders: please WRITE YOUR NAME CLEAR as the key will be
+based on it and supply a way to return the key back to you.  It may be
+best to first test an electronic channel before sending money in any
+way.  If you want the key to belong to a firm, state this in your
+mailing (if you use corporate paper you may end up with a key
+registrated to yourself when you wanted a license for "Obscore
+Software GmbH").
+
+
+
+d1029 2
+a1030 1
+for details.
+d1055 85
+d1149 1
+a1149 1
+I might ask questions!).
+d1152 1
+a1152 1
+june 2001):
+d1155 2
+a1156 2
+:LI.User Name: 0601DEMO
+:LI.Code: 06195C4469901A06
+d1162 1
+a1162 1
+regme "0601DEMO" 06195C4469901A06
+d1246 1
+d1390 2
+a1391 1
+:LI.user interface to verify arrays
+d1521 1
+a1521 1
+:LI.whenever a &BUILD. or &REBUILD. is started the next boot will
+@
+
+
+1.7
+log
+@- filter ordering explained
+- filter: /!SHARE option
+- exe: -l:file option
+- registration seoerated into author and BMT micro (incl. links)
+- not selling level 3...
+- history includes VRAID22.ZIP
+@
+text
+@d3 2
+a4 2
+.* $Revision: 1.6 $
+.* $Date: 1999/11/27 23:04:45 $
+d11 8
+d53 11
+a63 1
+
+d77 1
+a77 1
+This software :LINK REFID=features reftype=fn.features:ELINK.&colon.
+d94 1
+a94 3
+:LI.:LINK REFID=Build REFTYPE=fn.Build:ELINK. and
+:LINK REFID=Rebuild REFTYPE=fn.Rebuild:ELINK. processes are done in
+the background.
+d99 6
+a104 2
+above 2.0.  There are reports that &FLT. works on the new :HP1.Warp
+Server for E-Business:EHP1..
+d108 3
+a110 2
+you still run an older version contact me and I will send you EXEs
+without compression.
+d121 2
+a122 2
+FAT, hpfs.ifs, ext2fs.ifs and any other software you use a RAID array
+looks just as an ordinary disk.
+d125 1
+a125 1
+This means you have to do the following steps:
+a140 3
+:LI.&FLT. will report your defined arrays to OS/2.
+
+:LI.Use your larger, faster or safer array and enjoy!
+d143 3
+d148 3
+d328 1
+a328 1
+:LINK REFTYPE=HD RES=ID_CONFIGURATION.Configuration:ELINK. as defining
+d369 1
+a369 1
+:LI.OS/2 device
+d374 6
+a379 1
+:LI.OS/2 drive
+d381 12
+a392 1
+In most situations the same as above.  An OS/2 drive contains zero or
+d399 1
+a399 1
+Whenever a OS/2 device contains a VRAID partition (partition type 0x7C
+d408 2
+a409 1
+reported by &FLT. to OS/2 and accessible by FDISK as a whole.
+d479 1
+a479 1
+:LINK refid=Beep reftype=fn.Beeps:ELINK. generated
+d494 2
+a495 2
+to dump.  Possible selections are the the index of an OS/2 drive
+(index 0 - n-1) and the value "-1", meaning to dump all OS/2 drives.
+d546 1
+a546 1
+:LI.3D look grey boxes (OS/2 devices)
+d589 2
+a590 5
+:LINK refid=Build reftype=fn.Build:ELINK. or
+:LINK refid=Rebuild reftype=fn.Rebuild:ELINK. process is running or will
+start on reboot.  This process updates the device until it
+becomes up-to-date.
+
+d652 2
+a653 4
+:LINK refid=Build reftype=fn.Build:ELINK. (RAID 1) or
+:LINK refid=Rebuild reftype=fn.Rebuild:ELINK. (RAID 4 and 5 in
+:LINK refid=Fail reftype=fn.Fail:ELINK. state) starting on next reboot
+or the device is added as a spare (RAID 4 and 5) and will
+d689 1
+a689 1
+:LI.click on an OS/2 device using the 2nd mouse button
+d816 34
+d874 1
+a874 2
+:LINK refid=Rebuild reftype=fn.Rebuild:ELINK. process will be started
+on the next reboot.
+d889 1
+a889 1
+:LINK refid=Beep reftype=fn.Beeps:ELINK.) and you decided that the
+d931 2
+a932 2
+a failed part of an array when rebooting and will start a 
+:LINK REFID=Rebuild REFTYPE=fn.Rebuild:ELINK. process.
+d1016 1
+a1016 1
+:LINK REFTYPE=HD RES=ID_AUTHOR.author:ELINK. can
+d1091 2
+a1092 3
+:P.
+To get started you may use the following key (it won't work after
+august 2000):
+d1094 4
+a1097 4
+:sl.
+:LI.User Name: 0800DEMO
+:LI.Code: 0697F28752AE16B6
+:esl.
+d1099 1
+a1099 2
+:P.
+Change to the directory where you copied &FLT. to and enter:
+d1101 3
+a1103 3
+:xmp.
+regme "0800DEMO" 0697F28752AE16B6
+:exmp.
+d1105 1
+a1105 1
+If you want to register a driver in some other directory you may use
+d1108 1
+a1108 1
+:xmp.
+d1110 1
+a1110 1
+:exmp.
+d1182 7
+d1199 3
+a1201 3
+:dt.Version 0.80 - 27/11-1999, published in VRAID21.ZIP
+:dd.
+:ul compact.
+d1207 1
+a1207 1
+:eul.
+d1210 3
+a1212 3
+:dt.Version 0.71
+:dd.
+:ul compact.
+d1217 1
+a1217 1
+:eul.
+d1324 19
+d1459 1
+a1459 2
+:LI.whenever a :LINK refid=Build reftype=fn.Build:ELINK. or :LINK
+refid=Rebuild reftype=fn.Rebuild:ELINK. is started the next boot will
+d1483 1
+a1483 2
+:FN ID=Features.
+:P.
+d1489 1
+a1489 2
+:FN ID=Limits.
+:P.
+d1494 2
+a1495 2
+:FN ID=nolevel3.
+:P.As there is currently no working level 3 (e.g. RAID 5) code I will
+d1499 1
+a1499 2
+:FN ID=Error.
+:P.
+d1507 1
+a1507 2
+:FN ID=Fail.
+:P.
+d1511 1
+a1511 1
+:LINK refid=Error reftype=fn.Error:ELINK. state.
+d1517 2
+a1518 3
+:HP1.fail:EHP1. state&colon. it will enter
+:LINK refid=Error reftype=fn.Error:ELINK. state (Chaining, Striping)
+or disappear completely (Single).
+d1521 1
+a1521 2
+:FN ID=Build.
+:P.
+d1525 1
+a1525 2
+:FN ID=Rebuild.
+:P.
+d1530 1
+a1530 2
+:FN ID=Beep.
+:P.
+d1534 12
+@
+
+
+1.6
+log
+@- paragraph describing LX compression and OS/2 2.x
+- describes VRAID21.ZIP contents
+@
+text
+@d3 2
+a4 2
+.* $Revision: 1.5 $
+.* $Date: 1999/11/16 22:08:55 $
+d11 4
+d59 1
+a59 1
+This software :LINK refid=features reftype=fn.features:ELINK.&colon.
+d73 1
+a73 1
+:LINK refid=limits reftype=fn.limit:ELINK. on how complicated your
+d76 2
+a77 2
+:LI.:LINK refid=Build reftype=fn.Build:ELINK. and
+:LINK refid=Rebuild reftype=fn.Rebuild:ELINK. processes are done in
+d83 2
+a84 2
+above 2.0.  I haven't tested it on :HP1.Warp Server for
+E-Business:EHP1. yet, but I don't expect any problems.
+d135 1
+a135 1
+:H2 res=1010.Author
+d164 1
+a164 1
+Written for &FLT. Version: 0.80
+d283 17
+a299 6
+:P.
+The position of 'BASEDEV=&FLT.' in &CFG. doesn't matter
+for VRAID operation.  But it may affect other filters (i.e. load
+DSKSLEEP.FLT before &FLT.!).  If, however, you encounter problems
+try putting BASEDEV=&FLT. to either end of &CFG. (if this solves
+your problems please report with a listing of your &CFG.).
+d313 1
+a313 1
+:H2 res=2010.Options
+d322 4
+d377 21
+a397 1
+:H2 res=3100.Main Window
+d403 1
+a403 7
+by an parameter to &EXE..  Use :HP1.-v&colon.<number>:EHP1. to specify the
+amount of messages.  <number> defaults to 1, higher numbers specify
+more messages.  Increasing this value is usefull if you recognize an
+odd behaviour of &EXE. and want to report this to the author.  Specify
+:HP1.-v&colon.2:EHP1. or :HP1.-v&colon.3:EHP1. and add the output to your
+error report.
+
+d660 1
+d663 2
+d814 1
+a814 1
+:H3 res=ID_REMOVEPART.Remove part of an &ARRAY.
+d847 1
+a847 1
+:H1 res=4000.Security
+d849 1
+a849 2
+:P.
+RAID generally means increased security.  But as the only secure
+d853 1
+a853 2
+:P.
+On non-RAID 1 drives all drive errors are directly reported to OS/2
+d856 1
+a856 2
+:P.
+On RAID 1 drive errors aren't reported to OS/2 as long as there is
+d858 1
+a858 1
+:LINK refid=Beep reftype=fn.beeping:ELINK. every 10 seconds if it
+d863 1
+a863 1
+:LINK refid=Rebuild reftype=fn.Rebuild:ELINK. process.
+d865 1
+a865 2
+:P.
+If you ever intend to simulate a drive failure :hp2.DON'T:ehp2. remove the
+d870 1
+a870 2
+:P.
+Please connect a LED to the LED connector of your SCSI controller
+d881 2
+a882 2
+.* ============================================================
+:H1 res=5000.Registration
+d884 7
+a890 7
+:P.
+This package is Shareware meaning you may test before buy.  The
+archive you are looking at contains a non-crippled 'level 1' filter
+driver with the exception of the startup message which you may only
+disable in the registrated version.  The test period is 60 days, after
+that time I expect you to remove this software package from your
+system or register it.
+d911 14
+a924 14
+:table cols='8 40 10' rules=both.
+:row.
+:c.Level 1
+:c.Spanning, Striping (RAID 0)
+:c.40,- EUR
+:row.
+:c.Level 2
+:c.Level 1 plus Mirroring (RAID 1)
+:c.70,- EUR
+:row.
+:c.Level 3
+:c.Level 2 plus RAID 4 and 5
+:c.100,- EUR
+:etable.
+d931 20
+a950 1
+:P.Payment may be made through Eurocheque (europe) or postal money
+d975 4
+d980 26
+d1007 1
+a1008 2
+.* ============================================================
+:H2 res=5010.Demonstration Key
+d1010 5
+a1014 2
+:P.
+If you are of the opinion that you won't buy a higher level of
+d1038 7
+d1113 11
+a1123 1
+:dl.
+a1161 1
+
+a1162 1
+
+a1173 1
+
+a1175 1
+
+d1180 3
+a1182 3
+:dt.Version 0.51 - 6/11-1998, published as beta version
+:dd.
+:ul compact.
+a1183 1
+
+d1246 12
+a1257 1
+:h2 res=7200.&EXE. History
+a1258 1
+:dl.
+d1260 3
+a1262 3
+:dt.Version 0.81 - 27/11-1999, published in VRAID21.ZIP
+:dd.
+:ul compact.
+d1268 1
+a1268 1
+:eul.
+a1372 6
+:LI.support logical drives as VRAID partition (i.e. a partition inside
+an "extended" partition).
+.BR
+The reason is that primary partition enries are a scarce
+resource&colon. there is only room for four entries.
+
+d1404 5
+d1453 1
+a1453 1
+:euserdoc.
+@
+
+
+1.5
+log
+@- filled :H3 res=ID_ADDPART.Add something to an &ARRAY.
+@
+text
+@a1 1
+.*
+d3 2
+a4 2
+.* $Revision: 1.4 $
+.* $Date: 1999/10/25 09:05:00 $
+d11 3
+d77 11
+a88 2
+:P.
+How is it done?
+d90 2
+d942 1
+a942 1
+january 2000):
+d945 2
+a946 2
+:LI.User Name: 0100DEMO
+:LI.Code: 065A11F0ED488AC6
+d953 1
+a953 1
+regme "0100DEMO" 065A11F0ED488AC6
+d1026 1
+a1026 1
+:dt.Version 0.80
+d1156 1
+a1156 1
+:dt.Version 0.81
+d1159 4
+a1162 3
+:LI.ignores disks accessable through &FLT. and OS/2.  See
+&FLT. version 0.80.  Also does no longer try to lock any disk from
+other programs (FDISK doesn't do it neither).
+d1262 7
+@
+
+
+1.4
+log
+@- halfway through to VRAID21 release.  DnD has to be described
+- more footnotes
+- uses definitions from vraid.def
+@
+text
+@a0 1
+.* -*- indent-tabs-mode: nil -*-
+d2 4
+a5 3
+.* $Source: r:/source/driver/raid/doc/RCS/vraid.ipf,v $
+.* $Revision: 1.3 $
+.* $Date: 1999/10/21 00:32:17 $
+d11 6
+a16 1
+.* $Log: vraid.ipf,v $
+d734 26
+d1147 2
+a1148 1
+&FLT. version 0.80.
+@
+
+
+1.3
+log
+@- Filter version 0.80 partly described
+@
+text
+@d3 3
+a5 3
+.* $Source: r:/source/driver/raid/RCS/vraid.ipf,v $
+.* $Revision: 1.2 $
+.* $Date: 1999/06/26 00:10:08 $
+d12 3
+d27 9
+a35 7
+:userdoc.
+:title.VRAID Documentation
+.nameit symbol=EXE text='VSetup.exe'
+.nameit symbol=FLT text='VRAID.FLT'
+.nameit symbol=OS2 text='OS/2'
+.nameit symbol=PDEV text='PHYSDEVICE'
+.nameit symbol=ARRAY text='Array Drive'
+d41 4
+a44 4
+:h1 res=1000.General
+
+:p.Welcome to VRAID, the first (to my knowledge) shareware RAID
+solution for &OS2..  Instead of buying an expensive RAID controller you
+d47 10
+d58 1
+a58 1
+:p.This software :link refid=features reftype=fn.features:elink.&colon.
+d60 4
+a63 12
+:ul.
+:li.Single (an array containing a single disk or array)
+:li.Chaining (two or more disks or arrays combined by adding one behind the other)
+:li.Striping (RAID 0)
+:li.Mirroring (RAID 1)
+:li.You can combine any combination of RAID levels to create the array
+&OS2. should use for file storage.  There is no :link refid=limits
+reftype=fn.limit:elink. on how complicated your array structure
+becomes.
+:li.:link refid=Build reftype=fn.Build:elink. and :link refid=Rebuild
+reftype=fn.Rebuild:elink. Processes are done in the background.
+:eul.
+d65 4
+a69 1
+:p.How is it done?
+d71 2
+a72 5
+:p.Well, &FLT. is a small filter driver which intercepts
+OS2DASD.DMD operation and combines non-removable disks of any kind to
+RAID arrays.  This process is transparent to anything installed after
+&FLT..  For FAT, hpfs.ifs, ext2fs.ifs and any other software you use a
+RAID array looks just as an ordinary disk.
+d74 6
+a79 1
+:p.This means you have to do the following steps:
+d81 2
+a82 1
+:ol.
+d84 3
+a86 2
+:li. Connect disks to any [SCSI or IDE or MFM or RLL or ESDI or ...]
+controller supported by &OS2..
+d88 1
+a88 1
+:li.Install &FLT.
+d90 1
+a90 1
+:li.Let &EXE. create VRAID partitions on all disks you want to use for
+d93 1
+a93 1
+:li.Define arrays (using disk space inside VRAID partitions) via
+d96 3
+a98 1
+:li.Restart &OS2.
+d100 2
+a101 1
+:li.&FLT. will report your defined arrays to &OS2..
+d103 3
+a105 2
+:li. Use your larger, faster or safer array and enjoy!
+:eol.
+a107 1
+:p.See RAID.DOC for details how each RAID level works.
+d113 7
+a119 1
+:h2 res=1010.Author
+d121 2
+a122 1
+:p.Vitus Jensen, Dipl.-Ing. techn. inf.
+d124 2
+d127 2
+a128 14
+:parml tsize=20 break=none compact.
+:pt.Address
+:pd.Tischlerstr. 8, D-30916 Isernhagen, Germany
+:pt.Fidonet
+:pd.2&colon.2474/424
+:pt.OS2Net
+:pd.81&colon.491/3035
+:pt.EMail
+:pd.Vitus_Jensen&atsign.gmx.de
+:pt.FAX
+:pd.+49-5136-893003 (thanks to Harald Pollack's FRec)
+:pt.BBS
+:pd.+49-5136-893003 (V34, V90S, X75)
+:eparml.
+d130 9
+a138 1
+:p.Music: Louis Armstrong's Greatest Hits, Big T and Mighty Max,
+d141 2
+a142 1
+:p.Written for &FLT. Version: 0.80
+d144 2
+a145 1
+:p.BTW, if ever wondered about the name (Visual RAID Filter) of this
+a151 2
+.* ======================================================================
+:h2 res=1020.Legal Stuff
+d153 5
+a157 1
+:p.The author disclaims all warranties as to this software, whether
+d163 2
+a164 1
+:p.All trademarks are property of their respective owners and appear
+a169 2
+.* ======================================================================
+:h2 res=1030.Archive Contents
+d171 38
+a208 22
+:parml tsize=20 break=none compact.
+:pt.VRAID.inf
+:pd.this documentation
+:pt.&FLT.
+:pd.the filter itself
+:pt.VRAID.ddp
+:pd.installation script
+:pt.&EXE.
+:pd.setup program
+:pt.raid.doc
+:pd.short explaination of RAID and RAID levels
+:pt.regme.exe
+:pd.inserts your registration code into &FLT.
+:pt.vraidpub.h
+:pd.public interface to &FLT. (for programmers)
+:pt.dsklayout.h
+:pd.describes how configuration data is saved to disk.
+:pt.VRAID.sym
+:pd.symbol file, to help debugging
+:pt.file_id.diz
+:pd.short description for BBS
+:eparml.
+d213 2
+a214 2
+.* ======================================================================
+:h1 res=2000.Driver Installation
+d216 2
+a217 1
+:p.Make a backup of your system.  You should not need it but better
+d220 2
+a221 1
+:p.It is recommended that you have an &OS2. boot disk ready, just in
+d225 2
+a226 2
+Config.Sys (this "original" Config.sys is located in
+C&colon.\os2\boot\Config.x, make sure it's bootable!).
+d228 2
+a229 1
+:p.Execute DDINSTAL from an &OS2. command prompt or double-click
+d235 4
+a238 2
+:p.This automatic install will place &FLT. and &EXE. in the root
+directory of your &OS2. boot drive.
+a239 2
+:p.Installation by hand is easy:
+:ul.
+d241 5
+a245 1
+:li.Copy &FLT. to C&colon.\ or C&colon.\os2\boot, assuming
+d248 1
+a248 1
+:li.Copy &EXE. to a directory of your choice.  You may wish to create
+d251 1
+a251 1
+:li.Edit your C&colon.\Config.Sys file (i.e. using the &OS2.
+d254 6
+a259 5
+:sl.
+:li.Add the following line to your Config.Sys&colon.
+:li.BASEDEV=&FLT. /V              (no subdirectory name!)
+:esl.
+:eul.
+d261 2
+a262 1
+:p.The position of 'BASEDEV=&FLT.' in Config.Sys doesn't matter
+d265 2
+a266 2
+try putting BASEDEV=&FLT. to either end of Config.Sys (if this solves
+your problems please report with a listing of your Config.Sys).
+d268 5
+a272 4
+:p.Changes to Config.sys require you to reboot your machine.  But
+before doing this you may want to look at chapter :link reftype=hd
+res=3000.Configuration:elink. as defining RAID arrays doesn't
+require you to have &FLT. loaded.
+a276 2
+.* ======================================================================
+:h2 res=2010.Options
+a277 2
+:parml tsize=20 break=none compact.
+:pt./V
+d279 6
+a284 1
+:pd.Verbose, display some usefull and unusefull information (this
+d287 3
+a289 2
+:pt./DEBUG
+:pd.Displays even more messages.  Not generally usefull.
+a290 1
+:eparml.
+a294 2
+.* ======================================================================
+:h1 res=3000.Configuration
+d296 4
+a299 1
+:p.This chapter describes &EXE., a program to define RAID drives
+d303 2
+a304 2
+:p.As it is difficult to discuss the whole matter (drives made out of
+drives which are known by &OS2. as drives) I deciced to put up a
+d307 26
+a332 2
+:ul.
+:li.&OS2. devices / &OS2. drives
+a333 17
+:p.Those spinning things as you have known them ever.  Every device
+contains one or more partitions and every partition may contain a
+filesystem supported by &OS2..  A supported filesystem (FAT, HPFS,
+EXT2FS, ...) is assigned a drive letter.
+
+:li.&PDEV.
+
+:p.Whenever a &OS2. device contains a VRAID partition (partition type 0x7C
+if you wonder) that partition is called a &PDEV..  &PDEV.s may
+become part of...
+
+:li.&ARRAY. (Single, Striping, Chaining, Mirror, ...)
+
+:p.&ARRAY.s are build from &PDEV.s and may be part of other
+&ARRAY.s, building a freely definable disk structure.  The topmost
+&ARRAY. is reported by &FLT. to &OS2. and accessible by FDISK as a
+whole.
+a334 1
+:eul.
+d339 4
+a342 4
+.* ======================================================================
+:h2 res=3100.Main Window
+
+:p.That's the window you see when you start &EXE..  It contains an
+d344 3
+a346 3
+
+:p.The amount of messages which appear inside the action log is controlled
+by an parameter to &EXE..  Use :hp1.-v&colon.<number>:ehp1. to specify the
+d350 1
+a350 1
+:hp1.-v&colon.2:ehp1. or :hp1.-v&colon.3:ehp1. and add the output to your
+a354 4
+.* ----------------------------------------------------------------------
+:h3 res=3110.File Menu
+
+:p.This menu let you save or print the contents of the action log.
+d356 4
+a359 1
+:p.--- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+d361 6
+a366 1
+:p.None of the choices in the file menu are currently implemented.
+a367 1
+:p.--- beta --- beta --- beta --- beta --- beta --- beta --- beta ---
+d371 4
+a374 5
+
+.* ----------------------------------------------------------------------
+:h3 res=3120.Edit Menu
+
+:p.Entries "Cut", "Copy" and "Paste" interact with the action log and
+d381 4
+a384 4
+.* ----------------------------------------------------------------------
+:h3 res=3130.Driver Menu
+
+:p.This menu is only enabled if an installed &FLT. is detected.
+d386 2
+a387 1
+action log.  :link refid=Beep reftype=fn.Beeps:elink. generated
+d393 11
+a403 2
+.* ----------------------------------------------------------------------
+:h3 res=3140.Drives Menu
+d405 3
+a407 2
+:p.This menu contains the entry "Setup" which opens the Drive
+Definition Window (see below) and a "Dump..." choice.
+d409 2
+a410 4
+:p.Selecting "Dump..." opens a dialog where you can select which drive
+to dump.  Possible selections are the physical disks as known by &OS2.
+(index 0 - n-1) and the value "-1", meaning to dump all physical
+disks.
+d412 2
+d415 2
+d418 5
+a423 2
+.* ----------------------------------------------------------------------
+:h3 res=3150.Help
+a424 2
+:p.The only choice here is to display version information about
+&EXE. itself.
+d427 2
+d430 3
+a433 2
+.* ======================================================================
+:h2 res=3200.Drive Definition Window
+a434 3
+:p.Whenever you select Drives->Setup a new windows opens. It displays
+a container showing all devices found by &EXE..  Drives are found by
+quering &FLT. (if installed) and &OS2..
+a435 3
+:p.Existing arrays are displayed in tree view showing which &ARRAY.s
+are made from which &PDEV..  There are several icon types showing
+different device types.  They are:
+a436 2
+:ul.
+:li.3D look grey boxes (&OS2. devices)
+a437 1
+:p.Displayed as :artwork name='Setup/free.bmp' runin.
+d439 2
+a440 4
+:p.They are devices known to &OS2. but not inuse by &OS2.
+(mostly because there are no partitions or no &OS2.-supported
+filesystems on them).  You may create a &PDEV. of them and
+afterwards use those to build a new array.
+d442 4
+d447 4
+a450 1
+:li.3D look white boxes (&OS2. devices inuse by &OS2.)
+a451 1
+:p.Displayed as :artwork name='Setup/locked.bmp' runin.
+d453 4
+a456 29
+:p.Devices known to &OS2. :hp1.and:ehp1. inuse by &OS2. (there is at
+least one partition and an &OS2.-supported filesystem resides in it).
+You can't build a &ARRAY. from this type of icon.
+
+:p.Whenever &EXE. hits such a device during it's drive scan, the
+following message box will appear:
+
+:cgraphic.
+      ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+      ³ Can't lock physical disk N, ignore this ³
+      ³ error and allow writing?                ³
+      ³                                         ³
+      ³ ÚÄÄÄ¿   ÚÄÄÄ¿                           ³
+      ³ ³Yes³   ³No ³                           ³
+      ³ ÀÄÄÄÙ   ÀÄÄÄÙ                           ³
+      ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+:ecgraphic.
+
+Where N is a zerobased index over all &OS2. accessable disks.  Usually
+this means the situation described above (disk contains FAT, HPTS,
+EXT2 or NTFS partition) and that &EXE. shouldn't write to this device.
+But as &OS2. isn't errorfree this message does sometimes appear on
+disks which don't have an &OS2. partition and therefore you are asked
+what you do think about disk N.  Answer "Yes" if disk N is free to be
+used by VRAID, answer "No" if it contains an &OS2. related partition
+and no free additional room.
+
+:p.If you answer "No" the disk will get a 3D look white box.  If you
+answer "Yes" the disk will get a 3D look grey box.
+d458 3
+a461 1
+:li.2D drive with grey front (&PDEV.)
+d463 3
+a465 1
+:p.Displayed as :artwork name='Setup/PDev.bmp' runin.
+d467 2
+a468 1
+:p.A &PDEV., a drive where a VRAID partition resides.  Those icons
+d472 3
+a474 3
+:li.2D drive with grey front and red cross (missing &PDEV.)
+
+:p.Displayed as :artwork name='Setup/Missing.bmp' runin.
+d476 2
+a477 1
+:p.A &PDEV. which is known to be part of an array but is missing
+d481 3
+a483 1
+:li.2D drive with white front (&PDEV., ARRAY inuse by &OS2.)
+d485 3
+a487 1
+:p.Displayed as :artwork name='Setup/DisabledPDev.bmp' runin.
+a488 3
+:p.A &PDEV. being part of an array but the array is inuse by &OS2.
+and may not be modified.  This icon shouldn't appear in VSETUP 0.51
+and above.
+d490 11
+a501 1
+:li.two 2D drives with grey front (&ARRAY.)
+a502 1
+:p.Displayed as :artwork name='Setup/Array.bmp' runin.
+d504 3
+a506 2
+:p.An array being build from &PDEV.s and available for &OS2. or
+being part of a larger array.
+d508 4
+a512 1
+:li.two 2D drives with white front (&ARRAY. inuse by &OS2.)
+a513 1
+:p.Displayed as :artwork name='Setup/DisabledArray.bmp' runin.
+d515 3
+a517 1
+:p.Same as above but the array is inuse by &OS2..
+d519 4
+d524 3
+a526 1
+:li.2D drive with red front (&PDEV. not up-to-date)
+a527 1
+:p.Displayed as :artwork name='Setup/InvalidPDev.bmp' runin.
+a528 4
+:p.A &PDEV. being part of an array but this PYHSDEVICE is not
+up-to-date in respect to the contents of the comlete array.  A build
+process is running or will start on reboot.  This build proces updates
+this device until it becomes up-to-date.
+d531 2
+a532 1
+:li.two 2D drives with red front (&ARRAY. not up-to-date)
+d534 4
+a537 1
+:p.Displayed as :artwork name='Setup/InvalidArray.bmp' runin.
+a538 2
+:p.Same as above but the device displayed is an &ARRAY. (not at
+topmost level but being part of another array).
+d540 4
+a543 1
+:eul.
+d546 5
+d552 2
+a553 2
+:p.Whenever you create a new &PDEV. two messages may appear in the
+action log:
+a554 4
+:sl.
+:li."VORDev - missing PHYSDEV mark"
+:li."VORDev - new PHYSDEV sector"
+:esl.
+d556 3
+a558 2
+:p.Those messages are non-critical, they tell you that you are really
+creating a new &PDEV..
+d560 8
+d569 1
+a571 2
+.* ----------------------------------------------------------------------
+:h3 res=3210.Mouse Interaction
+a572 1
+:dl break=all.  :dt.Double clicking with first mouse button
+a573 2
+:dd.Selects a &PDEV. or &ARRAY..  Selected devices can be used
+to build &ARRAY.s.
+a574 1
+:dt.2nd mouse button click
+d576 2
+a577 4
+:dd.Display a contents sensitive popup menu.  This menu allows you to
+create or destroy &PDEV.s, build an &ARRAY. from marked
+devices, destroy &ARRAY.s, remove a part of an &ARRAY. from
+the array, ...
+d579 4
+a582 1
+:p.Try the second mouse button everywhere to learn what's possible!
+a583 1
+:dt.Drag and Drop
+a584 2
+:dd.It is possible to drag an &ARRAY. or &PDEV. onto a RAID 1,
+4 or 5 array.  The dragged device will become part of the array.
+a585 6
+:p.Becoming part of an array means that the dropped device gets data
+from the array and will be overwritten.  This overwriting is either a
+build (RAID 1) or rebuild (RAID 4 and 5 in :hp2.fail:ehp2. state)
+starting on next reboot or the device is added as a spare (RAID 4 and
+5) and will get overwritten by a rebuild on next switch to
+:hp2.fail:ehp2. state.
+d587 2
+a588 1
+:edl.
+d590 2
+d593 2
+d596 1
+d598 3
+a600 2
+.* ======================================================================
+:h2 res=3300.Sample actions
+d602 4
+a605 1
+:p.The following pages describe step-by-step how to do common tasks.
+d607 4
+d612 3
+d616 2
+d619 3
+a621 2
+.* ----------------------------------------------------------------------
+:h3 res=3310.Create a &PDEV.
+a622 2
+:ol.
+:li.Start &EXE.
+a623 1
+:li.Select Drives->Setup
+d626 2
+a627 2
+:li.after some drive activity you should see 3D drive icons, some
+white and some grey.
+d629 3
+a631 3
+:p.Please remember that a "Can't lock physical disk N, ignore this
+error and allow writing?" message box may appear.  See :link
+reftype=hd res=3200.above:elink. for details.
+a632 3
+:p.If you only see white icons you replied "No" to all message boxes
+described in :link reftype=hd res=3200.here:elink.  You can't create
+&PDEV.s this way.
+d634 2
+d637 1
+a637 1
+:li.click on an &OS2. device using the 2nd mouse button
+d639 4
+a642 2
+:p.select "Create physdevice".  You will be prompted for data used to
+create a VRAID partition.  Note how the icon style changes.
+d644 3
+d648 2
+a649 2
+:li.Stop &EXE. or :link reftype=hd res=3320.create &ARRAY.s:elink..
+:eol.
+d651 2
+a655 2
+.* ----------------------------------------------------------------------
+:h3 res=3320.Define an &ARRAY.
+d657 2
+a658 2
+:ol.
+:li.Start &EXE.
+d660 4
+a663 1
+:li.Select Drives->Setup
+d666 2
+a667 2
+:li.See :link reftype=hd res=3310.here:elink. how to create
+&PDEV.s if you haven't already done this.
+d669 1
+d671 1
+a671 1
+:li.double click on one or more &PDEV. or &ARRAY. icons.  They
+d674 23
+a697 3
+:li.use 2nd mouse button and select "Combine drives...".  You will be
+prompted for a RAID level (don't select levels higher than your
+registration allows: those arrays are ignored by &FLT.).
+a698 3
+:p.The choosable RAID level is sensitive to the count of selected
+(greyed) icons.  Chaining, Striping, Mirroring require 2 or more
+parts, RAID 4 und 5 require at least three.
+d701 2
+a702 2
+:li.repeat the last steps until you are satisfied.  Reboot your
+machine to let &FLT. analyse the new situation.
+d704 2
+a705 1
+:eol.
+d707 1
+d709 6
+d716 1
+d718 3
+a720 2
+.* ----------------------------------------------------------------------
+:h3 res=3330.Destroy an &ARRAY.
+a721 2
+:ol.
+:li.Start &EXE.
+a722 1
+:li.Select Drives->Setup
+a723 1
+:li.Use 2nd mouse button on an &ARRAY. and select "Destroy array".
+d725 2
+a726 1
+:li.Repeat the last step until you are satisfied.
+d728 1
+a728 2
+:p.Use the parts to create new arrays or end &EXE. and reboot your
+machine to let the changes take effect.
+a729 1
+:eol.
+d733 2
+a734 2
+.* ----------------------------------------------------------------------
+:h3 res=3340.Remove part of a RAID 1 array
+d736 7
+a742 4
+:p.When a part of an RAID 1 array fails, &FLT. will warn you through
+regular beeps (every 10 secands).  Once you decide that the failed
+part will never be usuable again you may wish to remove it from the
+array.
+d744 2
+a745 1
+:p.Do the following:
+d747 2
+a748 2
+:ol.
+:li.Start &EXE.
+d750 1
+a750 1
+:li.Select Drives->Setup
+d752 1
+a752 1
+:li.Expand &ARRAY. display by clinking on all 'plus' signs.
+d754 1
+a754 2
+:li.Locate the missing part.  It has an icon with a red cross through
+it.
+d756 1
+a756 1
+:li.Use 2nd mouse button on the missing part and "Remove from array".
+d758 2
+a759 2
+:li.reboot your machine to let the changes take effect.
+:eol.
+d766 2
+a767 2
+.* ======================================================================
+:h1 res=4000.Security
+d769 2
+a770 1
+:p.RAID generally means increased security.  But as the only secure
+d774 2
+a775 1
+:p.On non-RAID 1 drives all drive errors are directly reported to &OS2.
+d778 2
+a779 2
+
+:p.On RAID 1 drive errors aren't reported to &OS2. as long as there is
+d781 6
+a786 6
+beeping every 10 seconds if it detects a drive error.  Once this
+happens you may either start &EXE. and remove the failed part from
+the array or -- if the failure is temporarly -- correct it and reboot
+the machine.  &FLT. will detect a failed part of an array when
+rebooting and will update it until it contains the same data as the
+rest of the array.
+d788 2
+a789 1
+:p.If you ever intend to simulate a drive failure :hp2.DON'T:ehp2. remove the
+d794 2
+a795 1
+:p.Please connect a LED to the LED connector of your SCSI controller
+d798 1
+a798 1
+the failure.  I have noticed that AHA154X.ADD from &OS2. Warp 4 has no
+a802 2
+.* ======================================================================
+:h1 res=5000.Registration
+d804 7
+a810 1
+:p.This package is shareware meaning you may test before buy.  The
+d812 2
+a813 2
+driver with the exception of the startup message which may only be
+disabled in the registrated version.  Test period is 60 days, after
+d817 8
+a824 4
+:p.You are encouraged to copy and pass on the unregistered version of
+this driver, if the archive is distributed in it's original form
+(complete and unmodified).  Please don't charge any money for the
+distribution itself exceeding the costs of media, etc.
+d826 2
+a827 1
+:p.On registration you will receive a key based on your name and the
+d834 1
+a834 1
+:p.The following keys are available:
+d851 1
+a851 1
+:p.If you want to upgrade your registration to a higher level: just
+d856 1
+a856 1
+:p.Payment may be made through Eurocheque (europe) or postal money
+d861 1
+a861 1
+:p.Response will be through Fidonet crashmail (strongly preferred),
+d864 1
+a864 1
+:p.If you cannot be reached electronically and don't have a friend who
+d871 1
+a871 1
+:p.For all orders: please WRITE YOUR NAME CLEAR as the key will be
+a881 2
+.* ======================================================================
+:h2 res=5010.Demonstration Key
+d883 6
+a888 1
+:p.If you are of the opinion that you won't buy a higher level of
+d891 4
+a894 1
+will stop working after some time (usually 3 month).
+d896 2
+a897 1
+:p.To get started you may use the following key (it won't work after
+d901 2
+a902 2
+:li.User Name: 0100DEMO
+:li.Code: 065A11F0ED488AC6
+d905 2
+a906 1
+:p.Change to the directory where you copied &FLT. to and enter:
+a914 2
+.* ======================================================================
+:h1 res=6000.Source Code
+d916 5
+a920 1
+:p.Source code isn't available for this product.  Having said this I
+d927 2
+a928 2
+:p.To give you some ideas what to expect:
+:ul.
+d930 1
+a930 1
+:li.&FLT. is a pure 16 Bit driver and is written for an old version of
+d933 1
+a933 1
+:li.&EXE. is pure 32 Bit, written directly to the presentation manager
+d936 1
+a936 1
+:li.This documentation is pure IPF source.  No fancy toolkits.
+d941 1
+a941 1
+:ul.
+d943 1
+a943 1
+:li.dsklayout.h
+d945 1
+a945 1
+:p.This files documents the way array information is saved to disk.
+d950 1
+a950 1
+:li.vraidpub.h
+d952 1
+a952 1
+:p.This files documents to interface between &EXE. and &FLT..  Using
+d962 2
+d967 1
+a967 1
+:p.Despite of the limited count of releases there is quite a large
+d974 2
+d985 2
+a986 2
+:li.Disks containing a VRAID partition now remain accessable to
+&OS2..  This means you can have a VRAID and a HPFS partition on the same disk
+d989 1
+a989 1
+:li.Smaller memory footprint due to new segment layout.
+d996 1
+a996 1
+:li.Changes for WatCom C 10.5 (only minor to circumvent bugs
+d999 1
+a999 1
+:li.Driver doesn't update disk when build processes where stopped due to &EXE.
+d1006 1
+a1006 1
+:li.complete support of RAID 1 arrays.  Fully tested disk failures,
+d1008 1
+a1008 1
+:li.changed the way a registration key is build and checked.  Old keys
+d1011 1
+a1011 1
+:li.added demo key code (timebombed) for registration level 2 and above.
+d1018 1
+a1018 1
+:li.build process saves state on shutdown and completion
+d1020 1
+a1020 1
+:li.tested RAID 1 code: OK, drive failure has to be tested
+d1022 1
+a1022 1
+:li.ignores disks with VRAID partition but no &PDEV.
+d1024 1
+a1024 1
+Config.Sys when removing a disk from VRAID's disk pool.
+d1031 1
+a1031 1
+:li.Added IOCtls to support VSETUP's detection "OS/2 device = Array
+d1034 1
+a1034 1
+:li.Memory is now allocated as "LOCKTYPE_LONG_ANYMEM", should work on
+d1037 1
+a1037 1
+:li.actually implemented registration code
+d1044 1
+a1044 1
+:li.smaller changes (WAIT_IS_INTERRUPTABLE)
+d1046 1
+a1046 1
+:li.switched from timebomb to "not registered" mode
+d1054 1
+a1054 1
+:li.added IOCtls to allow VSetup.exe access disks when &FLT. is
+d1058 1
+a1058 1
+:li.added "timebomb" code
+d1067 1
+a1067 1
+:li.fixed nasty bug causing hangs or traps with HPFS386.  Didn't
+d1076 1
+a1076 1
+:li.stable enough to install it on a working machine (Warp Server
+d1079 1
+a1079 1
+:li.changed to HOSTDRIVE -> VRAIDRIVE -> &PDEV. workers because
+d1089 1
+a1089 1
+:li.changed layout of administrative sectors
+d1097 1
+a1097 1
+:li.accepts single, stripe, chain
+d1115 1
+a1115 1
+:li.ignores disks accessable through &FLT. and &OS2..  See
+d1117 1
+a1117 1
+:li.prohibits restart of build processes if arrays were modified
+d1125 4
+a1128 4
+:li.menu entry to disable driver beeping
+:li.add disk space to Mirror/Chain with DnD
+:li.remove members of Mirror
+:li.supports new layout of configuration sectors (Mirror)
+d1136 1
+a1136 1
+:li.fixed a nasty bug which could lead to overwriting other partitions
+d1138 1
+a1138 1
+:li.doesn't accept partition sizes below 10MB
+d1145 1
+a1145 1
+:li.asks user whether it's OK to write to a "non-lockable"
+d1147 2
+a1148 2
+:li.completely recoded in C++, all arrays/container icons are objects!
+:li.displays internal IDs in icon descriptions.  Will be used when
+d1150 1
+a1150 1
+:li.corrected Drives->Dump code
+d1157 1
+a1157 1
+:li.added code to detect OS/2 devices which are array
+d1160 2
+a1161 2
+:li.displays which OS/2 devices are &ARRAY.s
+:li.removed that "beta, beta" warning
+d1168 1
+a1168 1
+:li.BUGFIX: the code which searches OS/2 devices was removed from
+d1176 1
+a1176 1
+:li.modifies &PDEV.s when &FLT. is installed but new PYHSDEVICEs
+d1178 2
+a1179 2
+:li.BUGFIX: see above, modify all already created &PDEV.s
+:li.BUGFIX: removed SYS3175 when not specifying array type or
+d1181 1
+a1181 1
+:li.BUGFIX: 0.50 was published as debug version &colon.-(
+d1188 2
+a1189 2
+:li.added "beta, beta" messages
+:li.added code to :hp1.display:ehp1. configuration when &FLT. is loaded
+d1196 1
+a1196 1
+:li.working code
+d1206 4
+a1209 4
+.* ======================================================================
+:h1 res=8000.ToDo List
+
+:p.VRAID isn't complete yet and may in fact never become.  There are
+d1215 15
+a1229 3
+:ul.
+:li.support logical drives as VRAID partition (i.e. a partition inside
+an "extended" partition)
+a1230 1
+:li.RAID levels 4,5
+a1231 2
+:li.Resource Manager Calls (plug n' pray <g>)
+:eul.
+a1232 1
+:p.More?  IOCtls?  Documentation?  Netmail any ideas.
+d1235 3
+d1240 3
+a1242 2
+:fn id=Features.
+:p.As this is work in process only some RAID levels are
+d1244 48
+a1291 15
+levels to the average &OS2. user.
+:efn.
+:fn id=Limits.
+:p.Well, there is a memory limitation in &FLT. but I don't expect you
+to reach this.
+:efn.
+:fn id=Build.
+:p.A :hp1.Build:ehp1. is the first time creation of an disk array.
+:efn.
+:fn id=Rebuild.
+:p.A :hp1.Rebuild:ehp1. is the automatic recreation of a disk array
+once a failure has been detected and corrected.
+:efn.
+:fn id=Beep.
+:p.&FLT. will beep regularly (once every 5 seconds) when a disk
+d1294 1
+a1294 1
+:efn.
+@
+
+
+1.2
+log
+@- more general description, RAID levels
+- incorporated vraid.history
+- overwriting means...
+- SCSI problems/hangs when testing driver failures
+- history describes VRAID20.ZIP
+@
+text
+@d4 2
+a5 2
+.* $Revision: 1.1 $
+.* $Date: 1999/06/13 01:41:57 $
+d8 2
+a9 2
+.*	Written with EMACS 19.33, compiled with IPFC Version 4.00.000
+.*	Compile: ipfc -i -d:049 -c:437 vraid
+d12 7
+d28 4
+d39 1
+a39 1
+solution for OS/2.  Instead of buying an expensive RAID controller you
+d43 16
+d72 1
+a72 1
+controller supported by OS/2.
+d82 1
+a82 1
+:li.Restart OS/2
+d84 1
+a84 2
+:li.&FLT. will hide drives with a VRAID partition from OS/2 and will
+instead report your defined arrays to OS/2.
+a89 18
+:p.As this is work in process only some RAID levels are
+implemented. However, it's intention is to supply all major RAID
+levels to the average OS/2 user.
+
+:p.Currently implemented:
+:ul compact.
+:li.Single (an array containing a single disk or array)
+:li.Chaining (two or more disks or arrays combined by adding one behind the other)
+:li.Striping (RAID 0)
+:li.Mirroring (RAID 1)
+:eul.
+
+:p.You can combine any combination of RAID levels to create the array
+OS/2 should use for file storage.  There is no limit on how
+complicated your array structure becomes (well, there is a memory
+limitation in &FLT. but I don't expect you to reach this).
+
+
+d113 1
+a113 1
+:pd.+49-5136-893003 (V34+, X75)
+d119 1
+a119 1
+:p.Written for &FLT. Version: 0.70
+d178 1
+a178 1
+:p.It is recommended that you have an OS/2 boot disk ready, just in
+d185 1
+a185 1
+:p.Execute DDINSTAL from an OS/2 command prompt or double-click
+d192 1
+a192 1
+directory of your OS/2 boot drive.
+d203 1
+a203 1
+:li.Edit your C&colon.\Config.Sys file (i.e. using the OS/2
+d215 1
+a215 1
+try putting BASEDEV=&FLT. to top of Config.Sys (if this solves
+d251 1
+a251 1
+drives which are known by OS/2 as drives) I deciced to put up a
+d255 1
+a255 1
+:li.OS/2 devices / OS/2 drives
+d259 1
+a259 1
+filesystem supported by OS/2.  A supported filesystem (FAT, HPFS,
+d262 12
+a273 18
+:p.Whenever at least a single drive letter is assigned in this way the
+whole device is declared "inuse by OS/2" as we cannot remove it from
+the system without affecting OS/2's operation in some way (this isn't
+the whole story: the WPS accesses it, if you boot to PM-only the drive
+may be "free").
+
+:li.PHYSDEVICE
+
+:p.Whenever a device contains a VRAID partition (partition type 0x7C
+if you wonder) it is called a PHYSDEVICE.  PHYSDEVICEs are hidden by
+&FLT. and PHYSDEVICEs may become part of...
+
+:li.ARRAY DRIVE (Single, Striping, Chaining, Mirror, ...)
+
+:p.ARRAY DRIVEs are build from PHYSDEVICEs and may be part of other
+ARRAY DRIVEs, building a freely definable disk structure.  The topmost
+ARRAY DRIVE is reported to OS/2 by &FLT. and accessible by FDISK as a
+whole if that driver is loaded.
+d314 1
+a314 1
+the clipboard (same actions as the usual system keys which work, too),
+d323 1
+a323 1
+:p.The menu is only enabled if an installed &FLT. is detected.
+d325 2
+a326 2
+action log.  Beeps generated internally in the &FLT. may be disabled
+here, too.
+d338 1
+a338 1
+to dump.  Possible selections are the physical disks as known by OS/2
+d359 1
+a359 1
+quering &FLT. (if installed) and OS/2.
+d361 3
+a363 3
+:p.Existing arrays are displayed in tree view showing which arrays are
+made from which physical devices.  There are several icon types
+showing different device types.  They are:
+d366 1
+a366 1
+:li.3D look grey boxes (OS/2 devices)
+d370 3
+a372 3
+:p.They are physical devices known to OS/2 but not inuse by OS/2
+(mostly because there are no partitions or no OS/2-supported
+filesystems on them).  You may create a PHYSDEVICE of them and
+d376 1
+a376 1
+:li.3D look white boxes (OS/2 devices inuse by OS/2)
+d380 3
+a382 3
+:p.Physical devices known to OS/2 :hp1.and:ehp1. inuse by OS/2 (there
+is at least one partition and an OS/2-supported filesystem resides in
+it).  You can't build a drive array from this type of icon.
+d398 1
+a398 1
+Where N is a zerobased index over all OS/2 accessable disks.  Usually
+d400 6
+a405 6
+EXT2 or NTFS partition) and the disk shouldn't be used (and hidden) by
+VRAID.  But as OS/2 isn't errorfree this message does sometimes appear
+on disks which don't have an OS/2 partition and therefore you are
+asked what you do think about disk N.  Answer "Yes" if disk N is free
+to be used by VRAID, answer "No" if it contains an OS/2 related
+partition.
+d411 1
+a411 1
+:li.2D drive with grey front (PHYSDEVICE)
+d415 1
+a415 1
+:p.A PHYSDEVICE, a drive where a VRAID partition resides.  Those icons
+d419 1
+a419 1
+:li.2D drive with grey front and red cross (missing PHYSDEVICE)
+d423 1
+a423 1
+:p.A PHYSDEVICE which is known to be part of an array but is missing
+d427 1
+a427 1
+:li.2D drive with white front (PHYSDEVICE, ARRAY inuse by OS/2)
+d431 1
+a431 1
+:p.A PHYSDEVICE being part of an array but the array is inuse by OS/2
+d436 1
+a436 1
+:li.two 2D drives with grey front (ARRAY DRIVE)
+d440 1
+a440 1
+:p.An array being build from PHYSDEVICEs and available for OS/2 or
+d444 1
+a444 1
+:li.two 2D drives with white front (ARRAY DRIVE inuse by OS/2)
+d448 1
+a448 1
+:p.Same as above but the array is inuse by OS/2.
+d451 1
+a451 1
+:li.2D drive with red front (PHYSDEVICE not up-to-date)
+d455 1
+a455 1
+:p.A PHYSDEVICE being part of an array but this PYHSDEVICE is not
+d461 1
+a461 1
+:li.two 2D drives with red front (ARRAY DRIVE not up-to-date)
+d465 1
+a465 1
+:p.Same as above but the device displayed is an ARRAY DRIVE (not at
+d472 1
+a472 1
+:p.Whenever you create a new PHYSDEVICE two messages may appear in the
+d481 1
+a481 1
+creating a new PHYSDEVICE.
+d491 2
+a492 2
+:dd.Selects a PHYSDEVICE or ARRAY DRIVE.  Selected devices can be used
+to build ARRAY DRIVEs.
+d497 2
+a498 2
+create or destroy PHYSDEVICEs, build an ARRAY DRIVE from marked
+devices, destroy ARRAY DRIVEs, remove a part of an ARRAY DRIVE from
+d505 1
+a505 1
+:dd.It is possible to drag an ARRAY DRIVE or PHYSDEVICE onto a RAID 1,
+d529 1
+a529 1
+:h3 res=3310.Create a PHYSDEVICE
+d546 1
+a546 1
+PHYSDEVICEs this way.
+d549 1
+a549 1
+:li.click on an OS/2 device using the 2nd mouse button
+d555 1
+a555 1
+:li.Stop &EXE. or :link reftype=hd res=3320.create ARRAY DRIVEs:elink..
+d562 1
+a562 1
+:h3 res=3320.Define an ARRAY DRIVE
+d571 1
+a571 1
+PHYSDEVICEs if you haven't already done this.
+d574 1
+a574 1
+:li.double click on one or more PHYSDEVICE or ARRAY DRIVE icons.  They
+d596 1
+a596 1
+:h3 res=3330.Destroy an ARRAY DRIVE
+d603 1
+a603 1
+:li.Use 2nd mouse button on an ARRAY DRIVE and select "Destroy array".
+d629 1
+a629 1
+:li.Expand ARRAY DRIVE display by clinking on all 'plus' signs.
+d651 1
+a651 1
+:p.On non-RAID 1 drives all drive errors are directly reported to OS/2
+d655 1
+a655 1
+:p.On RAID 1 drive errors aren't reported to OS/2 as long as there is
+d672 1
+a672 1
+the failure.  I have noticed that AHA154X.ADD from OS/2 Warp 4 has no
+d786 1
+a786 1
+Microsoft's C compiler for OS/2.
+d803 1
+a803 1
+array drives without using &FLT..
+d830 1
+d832 22
+d858 1
+a858 2
+readding or failed and/or removed disks.  He, it's working now!
+
+a861 1
+
+d873 1
+a873 1
+:li.ignores disks with VRAID partition but no PHYSDEVICE
+d930 1
+a930 1
+:li.changed to HOSTDRIVE -> VRAIDRIVE -> PHYSDEVICE workers because
+d961 11
+a972 1
+:dl.
+d1010 2
+a1011 3
+you no longer need to remove &FLT. if you want to modify or create
+array drives.
+:li.displays which OS/2 devices are array drives
+d1027 1
+a1027 1
+:li.modifies PHYSDEVICEs when &FLT. is installed but new PYHSDEVICEs
+d1029 1
+a1029 1
+:li.BUGFIX: see above, modify all already created PHYSDEVICEs
+a1066 2
+:li.allow parallel use of a disk by OS/2 and &FLT..
+
+d1078 23
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d1 1
+d3 4
+a6 4
+.* $Source$
+.* $Revision$
+.* $Date$
+.* $Locker$
+d11 3
+a13 1
+.* $Log$
+d29 2
+a30 1
+add a driver to your system and are ready for operation!
+d36 3
+a38 1
+RAID arrays.
+d49 2
+a50 1
+:li.Let &EXE. create a VRAID partition on some disks.
+d63 1
+d66 14
+a79 1
+levels to the average OS/2 user.  One day.
+d81 2
+a82 2
+:p.Currently implemented: Single, Chaining, Striping (RAID 0) and
+Mirroring (RAID 1). See RAID.DOC for details.
+d103 1
+a103 1
+:pd.+49-5136-893003 (thanks to Harald Pollack&apos.s FRec)
+d108 2
+a109 1
+:p.Music: Louis Armstrong's Greatest Hits, Big T and Mighty Max
+d140 1
+a140 1
+:pd.this text
+a144 2
+:pt.VRAID.history
+:pd.version history
+d150 1
+a150 1
+:pd.to insert your registration code into &FLT.
+d172 4
+a175 4
+remove the driver.  On Warp you may use use ALT&dash.F1, C for the
+same purpose (to boot to command line&dash.only) with your orginal
+Config.Sys (this &odq.original&cdq. Config.sys is located in
+C&colon.&bsl.os2&bsl.boot&bsl.Config.x, make sure it's bootable!).
+d177 1
+a177 1
+:p.Execute DDINSTAL from an OS/2 command prompt or double&dash.click
+d189 1
+a189 1
+:li.Copy &FLT. to C&colon.&bsl. or C&colon.&bsl.os2&bsl.boot, assuming
+d195 1
+a195 1
+:li.Edit your C&colon.&bsl.Config.Sys file (i.e. using the OS/2
+d212 1
+a212 1
+res=3000.Configuration:elink. as configuring RAID arrays doesn't
+d285 1
+a285 1
+by an paramether to &EXE..  Use :hp1.-v&colon.<number>:ehp1. to specify the
+d323 2
+a324 1
+action log.
+d464 1
+a464 1
+topmost level but being part of another array.
+d506 7
+d605 1
+a605 1
+:p.Use the parts to create new arrays or end &EXE. And reboot your
+d617 1
+a617 1
+part will never be usuablew again you may wish to remove it from the
+d654 1
+a654 1
+one part of the array still working.  However, VRAID will start
+d656 1
+a656 1
+happens you may either start VSetup and remove the failed part from
+d658 1
+a658 1
+the machine.  VRAID will detect a failed part of an array when
+d662 1
+a662 1
+:p.If you ever intend to simulate a drive failure *DON'T* remove the
+d667 5
+d739 2
+a740 2
+registrated to "Obscore Software GmbH" when you wanted a private
+license).
+d829 1
+a829 1
+:dt.Version 0.70 -
+d832 3
+d842 1
+d856 1
+a856 1
+:dt.Version 0.60 - 22/12-1998, published
+d869 1
+a869 1
+:dt.Version 0.51 - 6/11-1998, published
+d879 1
+a879 1
+:dt.Version 0.50 - 7/10-1998, published
+d940 1
+a940 1
+:dt.Version 0.80
+d943 1
+d946 1
+d951 1
+a951 1
+:dt.Version 0.71 -  30/4-1998, published
+d960 1
+a960 1
+:dt.Version 0.70 -  25/3-1998, published
+d972 1
+a972 1
+:dt.Version 0.60 -  22/12-1998, published
+d984 1
+a984 1
+:dt.Version 0.52 -  24/11-1998, published
+d992 1
+a992 1
+:dt.Version 0.51 -  6/11-1998, published
+d1004 1
+a1004 1
+:dt.Version 0.50 - 7/10-1998, published
+d1008 1
+a1008 1
+:li.added code to *display* configuration when &FLT. is loaded
+d1035 1
+a1035 1
+:li.allow parallel use of a disk by OS/2 and VRAID
+@

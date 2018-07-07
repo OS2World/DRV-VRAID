@@ -1,0 +1,1 @@
+@etags *.c *.asm *.h

@@ -1,0 +1,51 @@
+head	1.1;
+access;
+symbols
+	VSETUPv0_84:1.1
+	VSETUP_82:1.1
+	VSETUPv0_80:1.1
+	VSETUPv0_71:1.1
+	VSETUPv0_70:1.1
+	VSETUPv0_60:1.1
+	VSETUPv0_52:1.1
+	VSETUPv0_51:1.1
+	VSETUPv0_50:1.1
+	VSETUPv0_20:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	98.04.28.22.32.23;	author vitus;	state Stab;
+branches;
+next	;
+
+
+desc
+@Dialog "VSetup - ini file location"
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@#ifndef OS2_INCLUDED
+   #include <os2.h>
+#endif
+DLGINCLUDE 6 "D:\SOURCE\driver\raid\Setup\resources.H"
+
+DLGTEMPLATE IDW_INILOCATION LOADONCALL MOVEABLE DISCARDABLE
+BEGIN
+    DIALOG  "VSetup - ini file location", IDW_INILOCATION, 66, 92, 200, 47, 
+            FS_NOBYTEALIGN | WS_VISIBLE, FCF_TITLEBAR
+    BEGIN
+        ENTRYFIELD      "", EF_INILOCATION, 65, 31, 121, 8, ES_MARGIN
+                        CTLDATA 8, 32, 0, 0
+        LTEXT           "Directory", -1, 11, 31, 50, 8
+        DEFPUSHBUTTON   "OK", DID_OK, 12, 6, 40, 14
+        PUSHBUTTON      "Cancel", DID_CANCEL, 61, 6, 40, 14
+    END
+END
+@

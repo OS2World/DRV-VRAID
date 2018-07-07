@@ -1,0 +1,15 @@
+#ifndef OS2_INCLUDED
+   #include <os2.h>
+#endif
+DLGINCLUDE 5 "D:\SOURCE\driver\raid\Setup\resources.H"
+
+DLGTEMPLATE IDW_ABOUT LOADONCALL MOVEABLE DISCARDABLE
+BEGIN
+    DIALOG  "Product Information", IDW_ABOUT, 121, 56, 200, 91, 
+            FS_NOBYTEALIGN | WS_VISIBLE, FCF_TITLEBAR
+    BEGIN
+        DEFPUSHBUTTON   "OK", DID_OK, 80, 5, 38, 12, WS_GROUP
+        LTEXT           "<empty>", ST_DESCRIPTION, 10, 22, 179, 60, 
+                        DT_WORDBREAK
+    END
+END

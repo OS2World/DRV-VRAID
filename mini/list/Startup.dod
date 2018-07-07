@@ -1,0 +1,242 @@
+Microsoft (R) Macro Assembler Version 6.00B 		    06/26/01 01:46:32
+Startup.asm						     Page 1 - 1
+
+
+				;*
+				;* $Source: r:/source/driver/mini/RCS/startup.asm,v $
+				;* $Revision: 1.1 $
+				;* $Date: 2000/06/12 01:42:52 $
+				;* $Locker:  $
+				;*
+				;*	Assembler Helper to order segments
+				;*
+				;* $Log: startup.asm,v $
+				;* Revision 1.1  2000/06/12 01:42:52  vitus
+				;* Initial revision
+				;*
+				;* ----------------------------------------
+				;* Author: Vitus Jensen, 2:2474/424, 1997
+				;*
+				.286c						; at least!
+
+					PUBLIC	_DiskDDHeader
+					PUBLIC	_szDriverName
+
+				INCLUDE	devhdr.inc				; device header format
+ = 0008			      C DEV_CBNAME	EQU	8 
+			      C 
+ 001A			      C SysDev	STRUC
+ 0000  00000000		      C SDevNext	DD	?
+ 0004  0000		      C SDevAtt	DW	?
+ 0006  0000		      C SDevStrat	DW	?
+ 0008  0000		      C SDevInt	DW	?
+ 000A  0001 [		      C SDevName        DB      "        "
+        20 20 20 20 20 20
+        20 20
+       ]
+			      C 
+ 0012  0000		      C SDevProtCS	DW	?
+ 0014  0000		      C SDevProtDS	DW	?
+ 0016  0000		      C SDevRealCS	DW	?
+ 0018  0000		      C SDevRealDS	DW	?
+			      C SysDev	ENDS
+			      C 
+			      C 
+ 001E			      C SysDev3	STRUC
+ 0000  001A [		      C SysDevBef3	DB	SIZE SysDev DUP (?)
+        00
+       ]
+ 001A  00000000		      C SDevCaps	DD	?
+			      C SysDev3	ENDS
+			      C 
+ = 0001			      C DEV_IOCTL2	EQU	0001H  
+ = 0002			      C DEV_16MB	EQU	0002H  
+ = 0004			      C DEV_PARALLEL	EQU	0004H  
+ = 0008			      C DEV_ADAPTER_DD	EQU	0008H  
+ = 0010			      C DEV_INITCOMPLETE	EQU	0010H  
+ = 0020			      C DEV_SAVERESTORE	EQU	0020H 
+ = 0001			      C DEV_CIN	EQU	0001H   
+ = 0002			      C DEV_COUT	EQU	0002H   
+ = 0004			      C DEV_NULL	EQU	0004H   
+ = 0008			      C DEV_CLOCK	EQU	0008H   
+ = 0010			      C DEV_SPEC	EQU	0010H   
+ = 0020			      C DEV_ADD_ON	EQU	0020H   
+ = 0040			      C DEV_GIOCTL	EQU	0040H   
+ = 0380			      C DEV_FCNLEV	EQU	0380H   
+ = 0800			      C DEV_30	EQU	0800H   
+ = 1000			      C DEV_SHARE	EQU	1000H   
+ = 2000			      C DEV_NON_IBM	EQU	2000H   
+ = 4000			      C DEV_IOCTL	EQU	4000H   
+ = 8000			      C DEV_CHAR_DEV	EQU	8000H   
+ = 0000			      C DEVLEV_0	EQU	0000H       
+ = 0080			      C DEVLEV_1	EQU	0080H       
+ = 0100			      C DEVLEV_2	EQU	0100H       
+ = 0180			      C DEVLEV_3	EQU	0180H       
+			      C Dev_FuncLev     macro   ReqLev, DevAttr
+			      C         and     DevAttr,DEV_FCNLEV          
+			      C         cmp     DevAttr,ReqLev              
+			      C                                             
+			      C endm
+			      C 
+			      C 
+
+
+					;; The very first segment has to contain the
+					;; device driver header.  Use own segment for
+					;; this purpose (but in DGROUP).
+
+ 0000				DDHeader	SEGMENT DWORD PUBLIC 'CONST'
+
+ 0000 FFFFFFFF			_DiskDDHeader	DD	-1
+ 0004  8980					DW	DEV_CHAR_DEV OR DEV_30 OR DEVLEV_3
+ 0006  0000 R					DW	OFFSET AsmStrategy
+ 0008  0000					DW	0
+ 000A 4D 69 6E 69 24 20		_szDriverName	DB	"Mini$   "
+       20 20
+ 0012  0000					DW	0
+ 0014  0000					DW	0
+ 0016  0000					DW	0
+ 0018  0000					DW	0
+ 001A  0000001B					DD	DEV_INITCOMPLETE OR DEV_ADAPTER_DD OR DEV_16MB OR DEV_IOCTL2
+ 001E  0000					DW	0
+
+ 0020				DDHeader	ENDS
+
+ 0000				CONST		SEGMENT DWORD PUBLIC 'CONST'	; places strings here
+ 0000				CONST		ENDS
+
+ 0000				LIBDATA		SEGMENT DWORD PUBLIC 'DATA'
+ 0000				LIBDATA		ENDS
+
+ 0000				_DATA		SEGMENT DWORD PUBLIC 'DATA'
+ 0000				_DATA		ENDS
+
+ 0000				_BSS		SEGMENT DWORD PUBLIC 'BSS'
+ 0000				_BSS		ENDS
+
+
+
+					;; Start of code segments
+					;; There is really code contained: small stubs
+					;; to call C routines and save/restore registers.
+
+ 0000				_TEXT		SEGMENT DWORD PUBLIC 'CODE'
+
+					EXTRN	_Strategy : NEAR		; C routines
+
+
+ 0000				AsmStrategy	PROC	FAR
+ 0000  06					push	es
+ 0001  53					push	bx
+ 0002  E8 0000 E				call	_Strategy
+ 0005  83 C4 04					add	sp, 4
+ 0008  CB					retf
+ 0009				AsmStrategy	ENDP
+
+
+ 0009				_TEXT		ENDS
+
+ 0000				CODE		SEGMENT DWORD PUBLIC 'CODE'
+ 0000				CODE		ENDS
+
+ 0000				LIBCODE		SEGMENT DWORD PUBLIC 'CODE'
+ 0000				LIBCODE		ENDS
+
+
+					;; Group segments together
+
+				DGROUP		GROUP	CONST, _BSS, DDHeader, LIBDATA, _DATA
+				StaticGroup	GROUP	CODE, LIBCODE, _TEXT
+
+					END
+Microsoft (R) Macro Assembler Version 6.00B 		    06/26/01 01:46:32
+Startup.asm						     Symbols 2 - 1
+
+
+
+
+Macros:
+
+                N a m e                 Type
+
+Dev_FuncLev  . . . . . . . . . .	Proc
+
+
+Structures and Unions:
+
+                N a m e                  Size
+                                         Offset      Type
+
+SysDev3  . . . . . . . . . . . .	 001E
+  SysDevBef3 . . . . . . . . . .	 0000	     Byte
+  SDevCaps . . . . . . . . . . .	 001A	     DWord
+SysDev . . . . . . . . . . . . .	 001A
+  SDevNext . . . . . . . . . . .	 0000	     DWord
+  SDevAtt  . . . . . . . . . . .	 0004	     Word
+  SDevStrat  . . . . . . . . . .	 0006	     Word
+  SDevInt  . . . . . . . . . . .	 0008	     Word
+  SDevName . . . . . . . . . . .	 000A	     Byte
+  SDevProtCS . . . . . . . . . .	 0012	     Word
+  SDevProtDS . . . . . . . . . .	 0014	     Word
+  SDevRealCS . . . . . . . . . .	 0016	     Word
+  SDevRealDS . . . . . . . . . .	 0018	     Word
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+DGROUP . . . . . . . . . . . . .	GROUP
+DDHeader . . . . . . . . . . . .	16 Bit	 0020	  DWord	  Public  'CONST'	 
+CONST  . . . . . . . . . . . . .	16 Bit	 0000	  DWord	  Public  'CONST'	 
+LIBDATA  . . . . . . . . . . . .	16 Bit	 0000	  DWord	  Public  'DATA'	
+_DATA  . . . . . . . . . . . . .	16 Bit	 0000	  DWord	  Public  'DATA'	
+_BSS . . . . . . . . . . . . . .	16 Bit	 0000	  DWord	  Public  'BSS'  
+StaticGroup  . . . . . . . . . .	GROUP
+_TEXT  . . . . . . . . . . . . .	16 Bit	 0009	  DWord	  Public  'CODE'	
+CODE . . . . . . . . . . . . . .	16 Bit	 0000	  DWord	  Public  'CODE'	
+LIBCODE  . . . . . . . . . . . .	16 Bit	 0000	  DWord	  Public  'CODE'	
+
+
+Procedures,  parameters and locals:
+
+                N a m e                 Type     Value    Attr
+
+AsmStrategy  . . . . . . . . . .	P Far	 0000	  _TEXT	Length= 0009 Private
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+DEBUG  . . . . . . . . . . . . .	Text   	 
+DEVLEV_0 . . . . . . . . . . . .	Number	 0000h	 
+DEVLEV_1 . . . . . . . . . . . .	Number	 0080h	 
+DEVLEV_2 . . . . . . . . . . . .	Number	 0100h	 
+DEVLEV_3 . . . . . . . . . . . .	Number	 0180h	 
+DEV_16MB . . . . . . . . . . . .	Number	 0002h	 
+DEV_30 . . . . . . . . . . . . .	Number	 0800h	 
+DEV_ADAPTER_DD . . . . . . . . .	Number	 0008h	 
+DEV_ADD_ON . . . . . . . . . . .	Number	 0020h	 
+DEV_CBNAME . . . . . . . . . . .	Number	 0008h	 
+DEV_CHAR_DEV . . . . . . . . . .	Number	 8000h	 
+DEV_CIN  . . . . . . . . . . . .	Number	 0001h	 
+DEV_CLOCK  . . . . . . . . . . .	Number	 0008h	 
+DEV_COUT . . . . . . . . . . . .	Number	 0002h	 
+DEV_FCNLEV . . . . . . . . . . .	Number	 0380h	 
+DEV_GIOCTL . . . . . . . . . . .	Number	 0040h	 
+DEV_INITCOMPLETE . . . . . . . .	Number	 0010h	 
+DEV_IOCTL2 . . . . . . . . . . .	Number	 0001h	 
+DEV_IOCTL  . . . . . . . . . . .	Number	 4000h	 
+DEV_NON_IBM  . . . . . . . . . .	Number	 2000h	 
+DEV_NULL . . . . . . . . . . . .	Number	 0004h	 
+DEV_PARALLEL . . . . . . . . . .	Number	 0004h	 
+DEV_SAVERESTORE  . . . . . . . .	Number	 0020h	 
+DEV_SHARE  . . . . . . . . . . .	Number	 1000h	 
+DEV_SPEC . . . . . . . . . . . .	Number	 0010h	 
+_DiskDDHeader  . . . . . . . . .	DWord	 0000	  DDHeader	Public
+_Strategy  . . . . . . . . . . .	L Near	 0000	  _TEXT	External
+_szDriverName  . . . . . . . . .	Byte	 000A	  DDHeader	Public
+
+	   0 Warnings
+	   0 Errors

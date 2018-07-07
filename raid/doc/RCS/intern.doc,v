@@ -1,0 +1,629 @@
+head	1.8;
+access;
+symbols
+	VRAID_REL23:1.7
+	REL22:1.6
+	VRAIDv0_70:1.4
+	VRAIDv0_60:1.2
+	VRAIDv0_51:1.2
+	VRAIDv0_50:1.2
+	VRAIDv0_40:1.2
+	VRAIDv0_30:1.1
+	ALPHA1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.8
+date	2004.09.11.17.29.47;	author vitus;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.02.03.16.52.37;	author vitus;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2000.04.15.23.27.54;	author vitus;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	99.11.16.22.10.33;	author vitus;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	99.06.25.23.45.10;	author vitus;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	99.06.20.20.27.17;	author vitus;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	98.07.13.01.13.34;	author vitus;	state Stab;
+branches;
+next	1.1;
+
+1.1
+date	98.03.10.02.41.51;	author vitus;	state Exp;
+branches;
+next	;
+
+
+desc
+@Virtual RAID Filter - Driver Dokumentation
+@
+
+
+1.8
+log
+@- Merker fÅr DOS32FLATDS
+@
+text
+@-*- Mode: indented-text -*-
+--- $Id: intern.doc,v 1.7 2001/02/03 16:52:37 vitus Exp vitus $
+
+    Visual RAID Filter - Treiber Dokumentation
+
+DurchzufÅhrende Tests
+
+    Ausfall im Build
+
+	Neues Array erzeugen, rebooten.  Dann eine Platte abziehen.
+	Das Array sollte entweder sofort in den ERROR State gehen
+	(einfachste Lîsung) oder den Build ohne dieses Kind
+	fortsetzen.  Wenn die abgezogene Platte das Kind mit den
+	gÅltigen Daten ("Master") war, dann mu· ein neuer Master
+	definiert wrden und der Build Proze· mit ihm neu gestartet
+	werden.
+
+    Ausfall im Rebuild
+
+	Rebuild Åber vsetup.exe startet, Platte abziehen (es mu· nicht
+	gebootet werden).  Der Rebuild mu· sofort gestoppt werden und
+	das Array in den Fail oder evtl Error (falls "declare as
+	invalid" benutzt wurde) State gehen.
+
+
+Speicherzugriffe
+
+    Lineare Adressen kînnen in 16:32 Zeiger umgewandelt werden, durch
+    Verwendung von DOS32FLATDS.
+
+
+
+Messungen
+
+    Verwendete Benchmarks und ihre Characteristiken
+
+    IoZone v1.09
+
+	Schreibt eine gro·e Datei sequentiell und liest sie dann,
+	ebenfalls sequentiell.  Die Lese-Performance ist von der
+	Schreib-Performance abhÑngig, da parallel zum Lesen den
+	HPFS-Cache flusht.
+
+    IoStone
+
+	Liest doppelt soviel wie er schreibt.  Verteilung der I/Os
+	unbekannt, das Ergebnis wird Åber den Durchschnitt berechnet.
+
+    PDB v0.01
+
+	--------------------------------------------------
+	The test is divided into 2 parts:
+
+	Part 1:
+	Sequential write to create the file
+	Random read
+	Random write with the same data
+
+	Part 2:
+	Sequential read of the entire file
+	Random read
+	Random write of changed data
+	--------------------------------------------------
+
+	Die Gesamtzeit des Vorgangs ergibt die Performance.  Die
+	Lese-Performance wird *nicht* ausschlieslich durch den Flush
+	bestimmt (in der Tat Ñndern sich die Werte kaum, wenn man ein
+	Cache Flush vor "Part 2" einfÅgt).
+
+
+
+    22/6-1999 - 0.70 - 486DX-50 - HPFS 1536/32
+
+
+	IoZone 8				write / read (KB/s)
+
+	    IBM 150MB:				635 / 657
+	    Stripe aus 3 IBM 150MB:		752 / 455
+	    Mirror aus 2 IBM 150MB:		590 / 240
+	    Quantum 510MB:			1028 / 287
+	    Mirror aus 1 Quantum 510MB:		1043 / 686
+	    Stripe aus 3 IBM 150MB,		507 / 258	    (build)
+	     gespiegelt auf Quantum 510MB:      531 / 353	    (ready)
+
+
+	IoStone					iostones/s
+
+	    IBM 150MB:				32787-37038-38462
+	    Stripe aus 3 IBM 150MB:		32259
+	    Mirror aus 2 IBM 150MB:		31747-38462
+	    Quantum 510MB:			37736
+	    Mirror aus 1 Quantum 510MB:		31250-40817
+	    Stripe aus 3 IBM 150MB,		29851		(build)
+	     gespiegelt auf Quantum 510MB:      35715		(ready)
+
+
+	PDB32 32 64				seconds
+
+	    IBM 150MB:				127,6
+	    Stripe aus 3 IBM 150MB:		123,8
+	    Mirror aus 2 IBM 150MB:		116,0
+	    Quantum 510MB:			66,6
+	    Mirror aus 1 Quantum 510MB:		61,5
+	    Stripe aus 3 IBM 150MB,		153,2		(build)
+	     gespiegelt auf Quantum 510MB:      88.4		(ready)
+
+
+	copy /b datei nul (64MB)
+
+	    IBM 150MB:				867 KB/s
+	    Stripe aus 3 IBM 150MB:
+	    Quantum 510MB:
+	    Mirror aus 1 Quantum 510MB:		1543 KB/s
+	    Stripe aus 3 IBM 150MB,
+	     gespiegelt auf Quantum 510MB:      1055 KB/s          (ready)
+
+
+    19/4-98
+	Stripe aus 2 IBM 150: 1.4 MB/s Lesen (96MB)
+	Stripe aus 3 IBM 150: 1.4 MB/s Lesen (102MB)
+
+
+
+Gleichzeitig FS und VRAID Partition in Benutzung
+
+    Damit  ist    VRAID.FLT zusÑtzlich   ein   Ñhnlicher   Filter  wie
+    DSKSleep.flt.  Der Unterschied  besteht  darin, da· DSKSleep  sich
+    als Filter eintrÑgt, aber VRAID.FLT schon  das ganze Device belegt
+    und    daher sinnvollerweise    gar   nicht  mehr    den Weg  Åber
+    'FilterADDHandle' gehen kann.
+
+    Also legt VRAID.FLT intern  ein weiteres Device (BaseUnit) an, da·
+    nur als Router zum ADD fungiert.  Allocate/Deallocate werden lokal
+    behandelt     (das  echte Device  ist    ja   schon allokiert) und
+    IOCC_CONFIGURATION ist ein   Spezialfall: es mu· die  Arrays *und*
+    die   Router melden  und  fÅr letzteres  sollte   man  sich in den
+    BaseUnits' die Original-Unitinfo merken.
+
+    Alle andere Requests gehen an den ADD,  VRAID.FLT mu· *nicht* nach
+    dem ADD wieder drankommen.
+
+    Um  echte Host Drives    und BaseUnit's unterscheiden  zu  kînnen,
+    definieren wir 'UnitHandle' als Adresse  des Eintrags in 'apBDisk'
+    oder 'apHDrv'.  Durch Vergleich mit den Adressen/LÑngen der beiden
+    Tabellen   kommen wir dann  sehr  schnell  auf den  entsprechenden
+    Eintrag.
+
+
+
+
+Zu Testen vor jedem Release
+
+    RAID1, Ausfall wÑhrend Betrieb
+
+	-> Array geht in Fail State.
+
+    RAID1, Ausfall wÑhrend Rebuild
+
+	-> Array geht in Fail State
+
+    RAID1, Ausfall wÑhrend Build
+
+	-> Array geht entweder in Error State oder -- bei zwei
+	   Children -- Array stoppt den Build und definiert das andere
+	   Child als Valid.
+
+
+
+
+
+PHYSDEV zerstîren
+
+    Ein  bi·chen kompliziert.   Entfernen wir nun  die VRAID Partition
+    oder nicht?
+
+    Wenn  wir sie  zerstîren  und in VSetup  eine  seperate Klasse fÅr
+    Dinger  erzeugen,  die im Treiber noch   PYHSDEVICE sind, aber die
+    Partition schon verloren haben, dann  wÑren wir auf einer Linie it
+    VORDev und  VOS2Disk.  Allerdings kînnte  man  das auch  durch das
+    Vorhandensein eines SEC_PHYSDEV triggern...
+
+    -> Zur  Zeit ist  es  keine spezielle Klasse,  sondern ein VFRDev.
+    Vom Icon evtl unschîn, aber es funktioniert.
+
+
+
+PHYSDEV Partition zerstîren
+
+    VSetup kînnte jetzt auch die Partition eines PDEV entfernen, da
+    alle PDEVs ja gleichzeitig auch OS/2 Disks sind!
+
+    Mhmm, nicht wenn /!SHARE gesetzt ist
+
+    Au·erdem ist das eine grî·ere énderung im VSetup:
+
+    -> das VORDev mu· sich bei der Erzeugung merken, wo die
+       Partitionstabelle liegt, die zustÑndig ist.  Bei der Zerstîrung
+       wird das abgefragt, ein VOS2Disk wird erzeugt (mu· sowieso),
+       dort ein PartTable Objekt fÅr die Tabelle erzeugt, eine
+       passende Partition gefunden und zerstîrt.
+
+    -> VFRDev mu· sich sogar noch merken, auf welcher OS/2 Disk es
+       liegt!  Dann darf fÅr die Disk extra ein VOS2Disk Objekt erzeugt
+       werden und mit den weiteren Schritten wie oben fortgesetzt
+       werden.
+
+    Fazit: ist zu machen.   Aber lohnt der  Aufwand?  Wenn  mal jemand
+    anders mitprogrammiert, dann ist  das evtl eine reizvolle  Aufgabe
+    (ist  vîllig   seperat  vom   Åbrigen   Leben   der   Programme zu
+    implementieren und zu testen).
+
+
+
+Ideensammlung, Technik
+
+    Erste Implementation nur mit RAID 0 und Ñhnlich.  NÑchste Stufe
+    ist RAID 1 (kann man Build und Ausfall mit testen).  Danach RAID
+    5.
+
+    Kein gleichzeitiger Zugriff von OS/2 auf die beteiligten Platten
+    (macht nur Probleme).
+
+    -> dieser gleichzeitige Zugriff   ist   in den  heutigen    Zeiten
+    zwingend nîtig.  Heutzutage  haben   die  meisten IDE  und   damit
+    hîchstens 2 Platten frei (plus Boot und CD-ROM).
+
+
+    Der Filter enthÑlt keinerlei Cache, bzw nur die unbedingt zum
+    Betrieb nîtigen Puffer (einstellbar, kann man ja an OS/2
+    weiterliefern als maximale Grî·e eines I/Os).
+
+    Der Filter versteckt mehrere Platten und spiegelt OS/2 nur eine
+    einzige vor.  Erkennung, welche gespiegelt werden sollen Åber
+    Marken auf den Platten.
+
+    Diese Marken befinden sich auf den ersten Sektoren der Platten.
+    Diese Sektoren werden vor OS/2 versteckt (Offset).
+
+    Damit auf die Platten unter DOS oÑ nicht einfach geschrieben wird
+    oder ein Laufwerk gefunden wird (Buchstabensalat), enthÑlt der
+    echte Sektor 0 eine Partitionstabelle, die eine Partition
+    beschreibt, die die komplette echte Platte beinhaltet.  Typ
+    mîglichst abwegig.
+
+    Es ist daher nicht mîglich, die  Bootplatte in's RAID einzubinden.
+    RAID auf Partitionsebene ist nicht angestrebt.
+
+    Ebenso ist Hot-/Warm-Plug kein erstes Ziel.  Die externen Probleme
+    (Abschlu·, Stîrungen) sind ohne externe Ma·nahmen zu gro·.
+
+    RAID 1
+
+	Jedes RAID-Laufwerk, das OS/2 kennt, bekommt eine Struktur.
+	Aktive (und inaktive) I/Os fÅr dieses Laufwerk werden hier
+	eingetragen.  Aktive I/Os an die Subplatten bekommen einen Link
+	auf den Original I/O, der wiederum einen Counter enthÑlt.  Ist
+	dieser Counter auf 0, so wurden alle I/Os an Subplatten
+	beendet und der OS/2 I/O ist fertig.
+
+	Gelesen wird bei RAID 1 immer abwechselnd von einer der
+	beteiligten Platten.  Es gibt sicherlich intelligentere
+	Methoden, allerdings dÅrfte das im Mittel keine gro·en
+	Vorteile bringen.
+
+	Insbesondere bringt das gleichzeitige Lesen von beiden Platten
+	vmtl mehr Probleme als Vorteile.
+
+
+    RAID 0
+
+	Evtl die zweite Implementation, Chaining finde ich persînlich
+	vîllig sinnlos.  TW legt gerade Wert auf diesen Level.  Also 0
+	und 1 implementieren, damit hat man auch ein gutes Design.
+
+
+    RAID 4 oder 5
+
+	Das ist natÅrlich der Verkaufsschlager.  RAID 0 ist nicht der
+	Hit, RAID 1 kann der LAN Server schon so.
+
+	Eine Besonderheit ist, da· der Filter hier deutlich mehr
+	Speicher benîtigt, da er alle Platten lesen mu·.  Auch sind
+	hier solche Lîsungen wie von vortex im Vorteil, da sie einen
+	gro·en Cache haben, der fÅr die Berechnung einer neuen
+	XOR-Summe gebraucht werden kann.
+
+	SpÑtestens hier wÑre ein Wechsel auf 32bit angebracht.
+
+
+
+Ideensammlung, Anderes
+
+    Der Filter sollte entweder teure Shareware oder kommerziell sein.
+    Leider erhîht das den Aufwand, denn das Ding mu· dann auch
+    professionell aussehen.  DafÅr kann sich die Arbeitszeit auch
+    armortisieren.
+
+    Wie stellt man aber bei Shareware die maximale LÑnge der Testphase
+    sicher?  Vmtl Åber die eigenen Marken auf den Platten und die
+    Echtzeituhr.  Vergl Gedanken zur Demoversion bei vortex.
+
+
+
+Lieferumfang der Software
+
+    Filter Treiber		<100KB
+
+    Einrichtprogramm		open end
+
+	IMHO ist es gÅnstiger, dieses Programm als VIO zu
+	programmieren.  Damit hat man zumindest eine Chance, von
+	Bootdisketten heraus das System aufzubauen.
+
+	Einsatz von DOS-Programmen ist zu vermeiden, es gibt auch
+	keinerlei Grund mehr fÅr ihre Existenz.
+
+	-> Das Einrichtprogramm (VSetup) ist Presentation Manager.
+	Die Arbeit der Kunden ist damit einfacher, als sich das Ganze
+	durch Textbeschreibung vorzustellen.
+
+
+    Dokumentation
+
+	ASCII, Postscript
+
+	-> INF ist kaum Aufwand, wenn man nicht zu fancy wird.
+	Also streiche ASCII.
+
+
+    Verkaufspreis der fertigen Software (RAID 0 1 4 5): 1000,- bis
+    2000,-.  Der Preis ist zu hoch, HÑlfte ist mîglich.
+
+    Vergleiche c't (Leitz Ordner) Bericht Åber neues Software RAID
+    Produkt fÅr Windows.
+
+    -> Preise sind zur Zeit 40,-, 70,- und 100,- EUR.
+
+
+
+Design
+
+    FÅr jeden RAID-Level eine Sourcedatei.  Alle Zwischenstufen Åber
+    VRDEVICE Structuren verketten.  Siblings bilden ein zusammen
+    Laufwerk, Child implementieren ihren Parent.  Nein, Tabelle pro
+    Source aufbauen und verwalten.  Lebt doch nur bis zum Reboot.
+
+
+    I/O werden als IORBs entgegengenommen und Åber VRIOs
+    weitergeleitet.  Im Prinzip kînnte man auch die nîtigen Daten
+    (Command, pSGList, cSGList, blk, bcnt) in den VRIO mit aufnehmen,
+    aber durch die Referenz zum IORB haben wir ja etwas Speicher
+    umsonst mitbekommen (ADD_WORKSPACE).  Mu· allerdings zwischen den
+    Childs geteilt werden. Mhmm...
+
+    -> Kopiere die 4 Elemente des Requests zusÑtzlich und machen den
+    IORB unbrauchbar (indem PVOID verwendet wird).
+
+
+    Es gibt pro Sourcedatei 1 îffentliche und 3 Åber Zeiger im
+    VRDHEADER exportierte Funktionen.  Die îffnentliche ist XxxxCreate
+    und erzeigt eine Struktur, dessen Aufbau nur dieser Source kennt
+    (bis auf Header).  Die Åber Zeiger exportierten Funktionen sind:
+
+    worker	nimmt I/Os entgegen und verteilt sie an Childs.  I/Os
+		kînnen den Datenbereich oder den Admin-Bereich
+		betreffen (gibt Flags).
+
+    notify	wird von Childs aufgerufen, wenn sie einen I/O
+		fertiggestellt haben
+
+    update	wird mit dem aktuellen Inhalt des Admin-Sektors mit
+		der eigenen Konfigugaration aufgerufen.  Diese
+		Funktion kann ihn dann modifizieren und zurÅckgeben,
+		ob er geschrieben werden soll.
+
+		Diese FunktionalitÑt sollte regelmÑ·ig genutzt werden.
+
+
+    Die letzte Notify Routinen mu· dann wissen, wie der I/O zu beenden
+    ist.  Z.Z. wenn *notify == NULL, dann HostdriveNotify() aufrufen.
+    Vielleicht kann der den IORB analysieren und/oder ein Proc/Block
+    Schema beenden?
+
+
+    TYPE_SINGLE tun den tatsÑchlichen I/O.  Die dazu nîtigen Werte
+    befinden sich in einer zugekettenen PHYSDEVICE struktur.  Alle
+    Child benachrichten ihre Parent vom den Ergebnis der Aktion.  Alle
+    Childs bekommen als Parameter 'self', den IORB und einen Offset in
+    Sektoren.
+
+    Anmelden an OS/2 mu· dafÅr sorgen, da· ein IORB passend teilbar
+    ist (S/G List splitbar).
+
+    Multi-I/O bis in unterste Schichten ist zwingend notwendig, sonst
+    bekommen wir das Mirror-Update nie auf die Reihe!
+
+    FÅr jedes PHYSDEVICE wird regelmÑ·ig (bei Nichtbenutzung) ein I/O
+    kreiert, der die VerfÅgbarkeit testet.  Kollidiert allerdings mit
+    DSKSleep. :-(
+
+    Was passiert, wenn der Speicher fÅr weitere Operationen nicht
+    ausreicht (kein VRIO oder IORB)?  Vielleicht in eine Queue, die
+    via Timer weiterbearbeitet wird?  Dann aber doch alle VRIO einer
+    Routine allokieren und hinterher an die Childs schicken.  Diese
+    versuchen das gleiche, aber speichern den VRIO wenn es nicht klappt.
+
+ *	Alle neuen VRIO allokieren und dann erst zu den Child schicken?
+ *	Wenn kein Speicher mehr, dann Kommando zurÅck und letzendlich
+ *	kommt der original IORB wieder in einen Queue?
+ *	Geht nicht, tieferliegende Routinen brauchen ja ebenfalls noch
+ *	Speicher!
+ *
+ *	Lîsung: alle VRIO allokieren.  Wenn das ging, dann alle an die
+ *	tieferen Routinen absetzen.  Wenn nicht, diesen VRIO in eine Liste
+ *	fÅr spÑtere Abarbeitung einfÅgen.
+ *	Tiefere Routinen machen es ebenso, damit gibt es nur eine Liste:
+ *	die mit VRIOs, die noch gestartet werden mÅssen. Das zustÑndige
+ *	VRDEVICE ist dort schon eingetraten und der worker auch!
+@
+
+
+1.7
+log
+@+ DurchzufÅhrende Tests
+@
+text
+@d2 1
+a2 1
+--- $Id: intern.doc,v 1.6 2000/04/15 23:27:54 vitus Exp vitus $
+d24 6
+@
+
+
+1.6
+log
+@+ PHYSDEV Partition zerstîren
+@
+text
+@d2 23
+a24 1
+--- $Id: intern.doc,v 1.5 1999/11/16 22:10:33 vitus Exp vitus $
+a25 1
+    Visual RAID Filter - Driver Dokumentation
+d145 15
+a159 1
+RAID 1,4,5 Build:
+a160 2
+    Mu· im     Hintergrund laufen.  VSETUP    startet  den  Build beim
+    Verlassen oder auf Anforderung oder er wird beim Laden gestartet.
+a161 7
+    Es  mu· keineswegs ein    Timer  die nîtigen VRIOs   erzeugen: man
+    erzeugt ein paar und deren Antworten erzeugen  die nÑchsten und so
+    weiter.
+
+    -> Das fÅhrt  aber evtl dazu, da· der  Stack ÅberlÑuft (I/O werden
+    beendigt bevor die Start I/O Routine durch ist; die I/Os rufen die
+    Start I/O Routine).  Also erzeugen wir einige I/Os pro Timer.
+@
+
+
+1.5
+log
+@- mehr Performance Werte
+- Gleichzeitig FS und VRAID Partition in Benutzung
+@
+text
+@d2 1
+a2 1
+--- $Id: intern.doc,v 1.4 1999/06/25 23:45:10 vitus Exp vitus $
+d152 27
+@
+
+
+1.4
+log
+@- Banchmarks mit VRAID.FLT v0.70
+@
+text
+@d2 1
+a2 1
+--- $Id: intern.doc,v 1.3 1999/06/20 20:27:17 vitus Exp vitus $
+d48 1
+a48 1
+	IoZone 8				write / read
+d51 6
+a56 5
+	    Stripe aus 3 IBM 150MB:		752 / 455 KB/s	
+	    Quantum 510MB:			1028 / 287 KB/s
+	    Mirror aus 1 Quantum 510MB:		1043 / 686 KB/s
+	    Stripe aus 3 IBM 150MB,		507 / 258 KB/s	    (build)
+	     gespiegelt auf Quantum 510MB:      531 / 353 KB/S      (ready)
+d63 1
+d74 1
+d96 28
+a242 4
+
+Zu tun
+
+    gleichzeitig Benutzung der anderen Partitionen auf einer Platte?
+@
+
+
+1.3
+log
+@- Ideen bis zur FLT Version 0.80
+@
+text
+@d2 1
+a2 1
+--- $Id: intern.doc,v 1.2 1998/07/13 01:13:34 vitus Stab vitus $
+d4 1
+a4 1
+    Virtual RAID Filter - Driver Dokumentation
+d7 80
+@
+
+
+1.2
+log
+@- Messungen
+@
+text
+@d2 1
+a2 1
+--- $Id: vraid.doc,v 1.1 1998/03/10 02:41:51 vitus Exp vitus $
+d13 30
+d46 10
+a55 1
+    Erste Implementation nur mit RAID 1.
+a56 1
+    Nur ganze Platten werden in's RAID genommen.
+d135 1
+a135 6
+    Ein Testrechner wÑre nicht schlecht, aber da mu· vmtl der eigene
+    herhalten.  DafÅr mu· der Source dann auf's Netz und der zweite PC
+    zum Mitlesen dienen.
+
+    Unbedingt mehrere kleine Platten billig besorgen.  Wenn von TW
+    nichts kommt, dann TOS2.MISC und FLEA.
+d151 5
+d160 4
+d170 2
+d178 40
+a217 1
+    Laufwerk, Child implementieren ihren Parent.
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d2 1
+a2 1
+--- $Id$
+d6 6
+d86 1
+a86 1
+    Leider erhîht das den Aufwand, denn das Ding mu· dann acuh
+d124 3
+@
